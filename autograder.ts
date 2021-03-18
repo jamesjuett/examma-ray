@@ -884,7 +884,7 @@ export class Section {
   public readonly title: string;
   public readonly html_description: string;
   public readonly html_reference?: string;
-  public readonly builder: SectionBuilder;
+  public readonly builder: SectionBuilder | SectionBuilder[];
 
   public constructor (spec: SectionSpecification) {
 
@@ -909,6 +909,15 @@ export class Section {
     //   raw_referenceMaterial: <string>json["referenceMaterial"],
     //   referenceMaterial: mk2html(<string>json["referenceMaterial"]),
     // }
+  }
+
+  public buildRandomizedQuestions(exam: Exam, student: Student, rand: Randomizer) {
+    if (Array.isArray(this.builder)) {
+      return this.builder.flatMap(builder => builder(exam, student, rand))
+    }
+    else {
+      return this.builder(exam, student, rand);
+    }
   }
 
 }
@@ -945,12 +954,20 @@ export class AssignedSection {
       renderUngradedBadge(this.pointsPossible);
     return `
       <div id="section${this.sectionIndex}" class="badge badge-primary examma-ray-section-heading">${scoreBadge} ${this.sectionIndex}: ${this.section.title}</div>
-      <div class="examma-ray-section-container">
-        <div class="examma-ray-section-description">${this.section.html_description}</div>
-        <h6>Reference Material</h6>
-        <div class="examma-ray-section-reference">${this.section.html_reference}</div>
-        ${this.assignedQuestions.map(aq => aq.renderReport()).join("<br />")}
-      </div>
+      <table class="examma-ray-section-container">
+        <tr>
+          <td>
+            <div class="examma-ray-section-description">${this.section.html_description}</div>
+            ${this.assignedQuestions.map(aq => aq.renderReport()).join("<br />")}
+          </td>
+          <td>
+            <div class="examma-ray-section-reference">
+              <h6>Reference Material</h6>
+              ${this.section.html_reference}
+            </div>
+          </td>
+        </tr>
+      </table>
     `;
   }
 }
@@ -1069,7 +1086,7 @@ export type SectionSpecification = {
   readonly title: string;
   readonly mk_description: string;
   readonly mk_reference?: string;
-  readonly builder: SectionBuilder;
+  readonly builder: SectionBuilder | SectionBuilder[];
 }
 
 export function RANDOM_BY_TAG(tag: string, n: number) {
@@ -1138,16 +1155,18 @@ export class Exam {
     this.sections.push(section);
   }
 
-  public buildAssignedExam(student: Student) {
+  public assignRandomizedExam(student: Student) {
+    assert(!this.submissionsByUniqname[student.uniqname], "Student is already assigned an exam.");
     let ae = new AssignedExam(this, student,
       this.sections.map((section, s_i) => new AssignedSection(
         section, s_i,
-        section.builder(this, student, new Randomizer(student.uniqname + "_" + section.id)).map(
+        section.buildRandomizedQuestions(this, student, new Randomizer(student.uniqname + "_" + section.id)).map(
           (question, q_i) => new AssignedQuestion(this, question, s_i, q_i, "")
         )
       ))
     );
     this.submissions.push(ae);
+    this.submissionsByUniqname[student.uniqname] = ae;
     return ae;
   }
 
@@ -1463,10 +1482,23 @@ export function writeAGFile(filename: string, body: string) {
         margin-left: 7px;
       }
 
+      .examma-ray-section-container td {
+        vertical-align: top;
+      }
+
       .examma-ray-section-description,
       .examma-ray-section-reference {
         font-size: 75%;
       }
+      
+      .examma-ray-section-reference {
+        position: sticky;
+        top: 0;
+        max-height: 100vh;
+        overflow-y: auto;
+        padding: 5px;
+      }
+
 
       .examma-ray-section-container .h1,
       .examma-ray-section-container .h2,
