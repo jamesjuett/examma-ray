@@ -13,11 +13,13 @@ import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics
 import minimist from 'minimist';
 import { exception } from 'console';
 import { RandomSeed, create as createRNG } from 'random-seed';
+import { CLIPBOARD } from './icons';
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 function assert(condition: any, message: string = "") : asserts condition {
   if (!condition) {
+    message && console.log(message.red);
     throw new Error(message);
   }
 };
@@ -39,7 +41,7 @@ export type QuestionKind =
 type MCResponse = {
   kind: "multiple_choice",
   radio: boolean,
-  selections: string[],
+  choices: string[],
   maxSelections: number
 };
 
@@ -75,6 +77,11 @@ type SubmissionType<QT extends QuestionKind> =
 
 export const MALFORMED_SUBMISSION = Symbol("malformed_submission");
 export const BLANK_SUBMISSION = Symbol("blank_submission");
+
+export enum RenderMode {
+  ORIGINAL = "ORIGINAL",
+  GRADED = "GRADED",
+}
 
 function isNumericArray(x: any) : x is readonly number[] {
   return Array.isArray(x) && x.every(elem => typeof elem === "number");
@@ -139,6 +146,42 @@ function parse_submission<QT extends QuestionKind>(questionKind: QT, rawSubmissi
 }
 
 
+
+function DEFAULT_MC_RENDERER(question: Question<"multiple_choice">) {
+  return `
+    <form>
+    ${question.response.choices.map((item,i) => `
+      <div>
+        <input type="radio" name="${question.id}_choice" value="${question.id}_choice"/>
+        <label class="examma-ray-mc-option">${mk2html(item)}</label>
+      </div>`
+    ).join("")}
+    </form>
+  `;
+}
+
+function DEFAULT_CODE_FITB_RENDERER(question: Question<"code_fitb">) {
+  return `TODO
+  `;
+}
+
+function DEFAULT_SAS_RENDERER(question: Question<"select_a_statement">) {
+  return `TODO
+  `;
+}
+
+export const RESPONSE_RENDERERS : {
+  [QT in QuestionKind]: (question: Question<QT>) => string
+} = {
+  "multiple_choice": DEFAULT_MC_RENDERER,
+  "code_fitb": DEFAULT_CODE_FITB_RENDERER,
+  "select_a_statement": DEFAULT_SAS_RENDERER,
+}
+
+function render_response<QT extends QuestionKind>(question: Question<QT>) : string {
+  return (<(question: Question<QT>) => string>RESPONSE_RENDERERS[question.kind])(question);
+}
+
 export type QuestionSpecification<QT extends QuestionKind = QuestionKind> = {
   id: string,
   points: number,
@@ -170,6 +213,10 @@ export class Question<QT extends QuestionKind = QuestionKind> {
     this.kind = spec.kind;
     this.response = spec.response;
     this.html_description = mk2html(spec.mk_description);
+  }
+
+  public renderResponse() {
+    return render_response(this);
   }
 
 };
@@ -229,45 +276,41 @@ export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
     this.setPointsEarned(exception.adjustedScore);
   }
 
-  public renderQuestion() {
+  public render(mode: RenderMode) {
 
-    let header_html = `<b>${this.unifiedIndex}</b>${renderPointsWorthBadge(this.question.pointsPossible)}`
-    
-    return `
-    <div class="card-group">
-      <div class="card examma-ray-question">
-        <div class="card-header">
-          ${header_html}
-        </div>
-        <div class="card-body">
-          <div class="examma-ray-question-description">
-            ${this.question.html_description}
-          </div>
-        </div>
-      </div>
-    </div>`
-  }
-
-  public renderReport() {
-
-    let question_header_html = `<b>${this.unifiedIndex}</b>
-      ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`
-
-    let graded_html: string;
-    let exception_html = "";
-    
-    if (this.isGraded()) {
-      graded_html = this.gradedBy.renderReport(this.question, this.submission);
-      exception_html = this.renderExceptionIfPresent();
+    let question_header_html = `<b>${this.unifiedIndex}</b>`;
+    if (mode === RenderMode.ORIGINAL) {
+      question_header_html += ` ${renderPointsWorthBadge(this.question.pointsPossible)}`;
+      return renderQuestion(this.question.id, this.question.html_description, question_header_html, "", this.question.renderResponse());
     }
     else {
-      graded_html = `
-      <div class="alert alert-danger" role="alert">
-        NOT GRADED
-      </div>`; 
-    }
+      question_header_html += ` ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
+    
+      let graded_html: string;
+      let exception_html = "";
+      
+      if (this.isGraded()) {
+        graded_html = this.gradedBy.renderReport(this.question, this.submission);
+        exception_html = this.renderExceptionIfPresent();
+      }
+      else {
+        graded_html = `
+        <div class="alert alert-danger" role="alert">
+          NOT GRADED
+        </div>`; 
+      }
 
-    return renderQuestion(this.question, question_header_html, exception_html, graded_html);
+      return renderQuestion(this.question.id, this.question.html_description, question_header_html, exception_html, graded_html);
+    }
+  }
+
+  public renderSaver() {
+    return `
+      <div>
+        <textarea id="question-saver-text-${this.question.id}"></textarea>
+        <button class="btn btn-sm examma-ray-question-saver-button" id="question-${this.question.id}-saver-button">Mark as Saved</button>
+      </div>
+    `;
   }
 
   private renderExceptionIfPresent() {
@@ -320,16 +363,16 @@ function mk2html(mk: string) {
   // }
 }
 
-export function renderQuestion(question: Question, header: string, exception: string, gradingReport: string) {
+function renderQuestion(id: string, description: string, header: string, exception: string, gradingReport: string) {
   return `
-  <div class="card-group">
+  <div id="question-${id}" class="examma-ray-question card-group">
     <div class="card">
       <div class="card-header">
         ${header}
       </div>
       <div class="card-body">
         <div class="examma-ray-question-description">
-          ${question.html_description}
+          ${description}
         </div>
         <div class="examma-ray-question-exception">
           ${exception}
@@ -417,7 +460,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice">{
 
     let report = `
       <form>
-      ${question.response.selections.map((item,i) => `
+      ${question.response.choices.map((item,i) => `
         <div><input type="radio" ${i === chosen ? "checked" : "disabled"}/>
         <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item)}</label></div>`).join("")}
       </form>
@@ -458,7 +501,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice">{
     let percentCorrect = numCorrect / submissions.length;
 
     return `
-      ${hist.map((count, i) => `<div class="examma-ray-mc-option">${renderNumBadge(count)} ${i === this.correctIndex ? CHECK_ICON : RED_X_ICON} ${mk2html(question.response.selections[i])}</div>`).join("")}
+      ${hist.map((count, i) => `<div class="examma-ray-mc-option">${renderNumBadge(count)} ${i === this.correctIndex ? CHECK_ICON : RED_X_ICON} ${mk2html(question.response.choices[i])}</div>`).join("")}
       <div class="examma-ray-mc-option">${renderNumBadge(numBlank)} ${RED_X_ICON} BLANK</div>
     `;
   }
@@ -502,7 +545,7 @@ export class SummationMCGrader implements Grader<"multiple_choice">{
 
     return `
       <form class="examma-ray-summation-grader">
-      ${question.response.selections.map((item,i) => {
+      ${question.response.choices.map((item,i) => {
         let chosen = submission.indexOf(i) !== -1;
         return `
           <div><span ${!chosen ? 'style="visibility: hidden"': ""}>${renderPointAdjustmentBadge(this.pointValues[i])}</span><input type="checkbox" ${chosen ? "checked" : ""} style="pointer-events: none;" />
@@ -923,6 +966,7 @@ export class Section {
 }
 
 
+
 export class AssignedSection {
 
   public readonly pointsPossible: number;
@@ -948,26 +992,59 @@ export class AssignedSection {
     asMutable(this).isFullyGraded =this.assignedQuestions.every(aq => aq.isGraded());
   }
 
-  public renderReport() {
-    let scoreBadge = this.assignedQuestions.every(aq => aq.isGraded()) ?
-      renderScoreBadge(this.assignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0), this.pointsPossible) :
-      renderUngradedBadge(this.pointsPossible);
+  private renderHeader(mode: RenderMode) {
+    let badge = mode === RenderMode.ORIGINAL
+      ? renderPointsWorthBadge(this.pointsPossible, "badge-light")
+      : this.isFullyGraded
+        ? renderScoreBadge(this.pointsEarned!, this.pointsPossible)
+        : renderUngradedBadge(this.pointsPossible);
+    let heading = mode === RenderMode.ORIGINAL
+      ? `${this.sectionIndex}: ${this.section.title} ${badge}`
+      : `${badge} ${this.sectionIndex}: ${this.section.title}`;
+
     return `
-      <div id="section${this.sectionIndex}" class="badge badge-primary examma-ray-section-heading">${scoreBadge} ${this.sectionIndex}: ${this.section.title}</div>
-      <table class="examma-ray-section-container">
-        <tr>
-          <td>
-            <div class="examma-ray-section-description">${this.section.html_description}</div>
-            ${this.assignedQuestions.map(aq => aq.renderReport()).join("<br />")}
-          </td>
-          <td>
-            <div class="examma-ray-section-reference">
-              <h6>Reference Material</h6>
-              ${this.section.html_reference}
-            </div>
-          </td>
-        </tr>
-      </table>
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">${heading}</div> ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
+        ${mode === RenderMode.ORIGINAL ? this.renderSaver() : ""}
+      </div>`;
+  }
+
+  private renderSaver() {
+    return `
+      <div class="examma-ray-section-saver collapse" id="section-${this.section.id}-saver">
+        ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+      </div>
+    `;
+  }
+
+  private renderSaverButton() {
+    return `
+      <button id="section-${this.section.id}-saver-button" class="btn btn-warning btn-sm examma-ray-section-saver-button" data-toggle="collapse" data-target="#section-${this.section.id}-saver" aria-expanded="false" aria-controls="section-${this.section.id}-saver">
+       ${CLIPBOARD} <span style="vertical-align: middle;">Save your answers!</span>
+      </button>
+    `;
+  }
+
+  public render(mode: RenderMode) {
+    return `
+      <div id="section-${this.section.id}" class="examma-ray-section">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              ${this.renderHeader(mode)}
+              <div class="examma-ray-section-description">${this.section.html_description}</div>
+              ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
+            </td>
+            <td>
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material</h6>
+                ${this.section.html_reference}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
     `;
   }
 }
@@ -1012,7 +1089,7 @@ export class AssignedExam {
       </ul>`
   }
 
-  public renderReport() {
+  public render(mode: RenderMode) {
     return `<div class="container-fluid">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
@@ -1022,26 +1099,11 @@ export class AssignedExam {
           ${this.renderNav()}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
-          <div class="text-center mb-3 border-bottom">
-            <h2>${this.exam.title}</h2>
-            <h6>${this.student.name} (${this.student.uniqname})</h6>
-            <div class="alert alert-warning alert-dismissible fade show" style="display: inline-block; max-width: 40rem;" role="alert">
-              <strong>Important!</strong> The section/question indices you see here will not be consecutive. 
-              They reflect the randomized questions you received when you took the exam, which were drawn from
-              a much larger question bank.
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-          </div>
-          ${this.renderAllSectionReports()}
+          ${this.exam.renderHeader(this.student)}
+          ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
         </div>
       </div>
     </div>`;
-  }
-
-  public renderAllSectionReports() {
-    return this.assignedSections.map(section => section.renderReport()).join("<br />");
   }
 
 }
@@ -1063,12 +1125,12 @@ export class Randomizer {
   };
 
   public choose<T>(choices: readonly T[]) {
-    assert(choices.length > 0);
+    assert(choices.length > 0, "No choices available.");
     return choices[this.rng.range(choices.length)];
   };
   
   public chooseN<T>(choices: readonly T[], n: number) {
-    assert(choices.length >= n);
+    assert(choices.length >= n, "Number to randomly choose is larger than number of choices.");
     return choices
       .slice()
       .map(c => ({i: this.rng.random(), c: c}))
@@ -1095,7 +1157,16 @@ export function RANDOM_BY_TAG(tag: string, n: number) {
   }
 }
 
-const NUM_META_ROWS = 6;
+
+
+export type ExamSpecification = {
+  title: string,
+  pointsPossible: number,
+  mk_intructions: string,
+  mk_announcements?: string[],
+  graders?: GraderMap,
+  exceptions?: ExceptionMap
+};
 
 export class Exam {
 
@@ -1113,11 +1184,16 @@ export class Exam {
   public readonly submissions: AssignedExam[] = [];
   public readonly submissionsByUniqname: {[index:string]: AssignedExam | undefined} = {};
 
-  public constructor(title: string, pointsPossible: number, graderMap: GraderMap = {}, exceptionMap: ExceptionMap = {}) {
-    this.title = title;
-    this.pointsPossible = pointsPossible;
-    this.graderMap = graderMap;
-    this.exceptionMap = exceptionMap;
+  public readonly html_instructions: string;
+  public readonly html_announcements: readonly string[];
+
+  public constructor(spec: ExamSpecification) {
+    this.title = spec.title;
+    this.html_instructions = mk2html(spec.mk_intructions);
+    this.pointsPossible = spec.pointsPossible;
+    this.graderMap = spec.graders ?? {};
+    this.exceptionMap = spec.exceptions ?? {};
+    this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
   }
 
   public addGraders(graderMap: GraderMap) {
@@ -1168,6 +1244,44 @@ export class Exam {
     this.submissions.push(ae);
     this.submissionsByUniqname[student.uniqname] = ae;
     return ae;
+  }
+
+  public addAnnouncement(announcement_mk: string) {
+    asMutable(this.html_announcements).push(mk2html(announcement_mk));
+  }
+
+  public renderHeader(student: Student) {
+    return `
+      <div class="examma-ray-header">
+        <div class="text-center mb-3 border-bottom">
+          <h2>${this.title}</h2>
+          <h6>${student.name} (${student.uniqname})</h6>
+        </div>
+        <div>
+          ${this.renderInstructions()}
+          ${this.renderAnnouncements()}
+        </div>
+      </div>
+    `;
+  }
+
+  public renderInstructions() {
+    return `<div class="examma-ray-instructions">
+      ${this.html_instructions}
+    </div>`
+  }
+
+  public renderAnnouncements() {
+    return `<div class="examma-ray-announcements">
+      ${this.html_announcements.map(a => `
+        <div class="alert alert-warning alert-dismissible fade show" style="display: inline-block; max-width: 40rem;" role="alert">
+          ${a}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>`
+      )}
+    </div>`;
   }
 
   // public loadRandomizedStudent(submissionsFilename: string) {
@@ -1308,15 +1422,15 @@ export class Exam {
     this.submissions.forEach(s => s.gradeAll(this.graderMap));
   }
 
-  public renderReports() {
+  public render(mode: RenderMode) {
     mkdirSync("out/students/", {recursive: true});
     [...this.submissions].sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       // .filter(s => s.pointsEarned)
-      .forEach((s, i, arr) => {
-        console.log(`${i}/${arr.length} Rendering full exam report for: ${s.student.uniqname}...`);
+      .forEach((ex, i, arr) => {
+        console.log(`${i}/${arr.length} Rendering full exam report for: ${ex.student.uniqname}...`);
 
         
-        writeAGFile(`out/students/${s.student.uniqname}.html`, s.renderReport());
+        writeAGFile(`out/students/${ex.student.uniqname}.html`, ex.render(mode));
       });
 
   }
@@ -1359,6 +1473,7 @@ export function writeAGFile(filename: string, body: string) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha512-PEsccDx9jqX6Dh4wZDCnWMaIO3gAaU0j46W//sSqQhUQxky6/eHZyeB3NrXD2xsyugAKd4KPiDANkcuoEa2JuA==" crossorigin="anonymous"></script>
+    <script src="js/frontend.js"></script>
     <script>
       $(function() {
         $('button.examma-ray-blank-saver').on("click", function() {
@@ -1372,6 +1487,7 @@ export function writeAGFile(filename: string, body: string) {
           $(".checked-submissions-modal").modal("show")
         })
       });
+
     </script>
     <style>
       html {
@@ -1474,15 +1590,26 @@ export function writeAGFile(filename: string, body: string) {
       }
 
       .examma-ray-section-heading {
-        font-size: 1.2em;
         margin-bottom: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #dedede;
+        padding: 5px;
+        margin-bottom: 5px;
+        border-bottom: solid 1px #aaa;
       }
 
-      .examma-ray-section-container {
+      .examma-ray-section-heading > .badge {
+        font-size: 1.2em;
+        vertical-align: middle;
+      }
+
+      .examma-ray-section-contents {
         margin-left: 7px;
       }
 
-      .examma-ray-section-container td {
+      .examma-ray-section-contents td {
         vertical-align: top;
       }
 
@@ -1500,18 +1627,18 @@ export function writeAGFile(filename: string, body: string) {
       }
 
 
-      .examma-ray-section-container .h1,
-      .examma-ray-section-container .h2,
-      .examma-ray-section-container .h3,
-      .examma-ray-section-container .h4,
-      .examma-ray-section-container .h5,
-      .examma-ray-section-container .h6,
-      .examma-ray-section-container h1,
-      .examma-ray-section-container h2,
-      .examma-ray-section-container h3,
-      .examma-ray-section-container h4,
-      .examma-ray-section-container h5,
-      .examma-ray-section-container h6 {
+      .examma-ray-section-contents .h1,
+      .examma-ray-section-contents .h2,
+      .examma-ray-section-contents .h3,
+      .examma-ray-section-contents .h4,
+      .examma-ray-section-contents .h5,
+      .examma-ray-section-contents .h6,
+      .examma-ray-section-contents h1,
+      .examma-ray-section-contents h2,
+      .examma-ray-section-contents h3,
+      .examma-ray-section-contents h4,
+      .examma-ray-section-contents h5,
+      .examma-ray-section-contents h6 {
         font-size: 1rem;
     }
 
@@ -1628,6 +1755,10 @@ export function writeAGFile(filename: string, body: string) {
       .examma-ray-students-overview .progress {
         width: 7em;
         background-color: #c8c8c8;
+      }
+
+      .examma-ray-section-saver-button {
+        float: right;
       }
 
 
@@ -1785,8 +1916,8 @@ function renderNumBadge(num: number | string) {
   return `<span class="badge badge-secondary" style="width: 2.5em">${num}</span>`
 }
 
-function renderPointsWorthBadge(num: number) {
-  return `<span class="badge badge-secondary">${num} points</span>`
+function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
+  return `<span class="badge ${cssClass}">${num} ${num === 1 ? "point" : "points"}</span>`
 }
 
 let percentCorrectScale = chroma.scale(["#dc3545", "#ffc107", "#28a745"]).mode("lab");

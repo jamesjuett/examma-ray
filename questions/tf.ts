@@ -9,7 +9,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -26,7 +26,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -43,7 +43,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -60,7 +60,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -77,7 +77,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -94,7 +94,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -111,7 +111,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -128,7 +128,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -145,7 +145,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -162,7 +162,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -179,7 +179,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -196,7 +196,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -213,7 +213,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -230,7 +230,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -247,7 +247,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -264,7 +264,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -281,7 +281,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -298,7 +298,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -315,7 +315,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -332,7 +332,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -349,7 +349,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -366,7 +366,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -383,7 +383,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -400,7 +400,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -417,7 +417,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -434,7 +434,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -451,7 +451,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -468,7 +468,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -485,7 +485,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -502,7 +502,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -519,7 +519,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -536,7 +536,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -553,7 +553,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
@@ -570,7 +570,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
     "kind": "multiple_choice",
     "response": {
       "kind": "multiple_choice",
-      "selections": [
+      "choices": [
         "True",
         "False"
       ],
