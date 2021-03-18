@@ -152,7 +152,7 @@ function DEFAULT_MC_RENDERER(question: Question<"multiple_choice">) {
     <form>
     ${question.response.choices.map((item,i) => `
       <div>
-        <input type="radio" name="${question.id}_choice" value="${question.id}_choice"/>
+        <input type="radio" name="${question.id}_choice" value="${question.id}_choice_${i}"/>
         <label class="examma-ray-mc-option">${mk2html(item)}</label>
       </div>`
     ).join("")}
@@ -216,7 +216,7 @@ export class Question<QT extends QuestionKind = QuestionKind> {
   }
 
   public renderResponse() {
-    return render_response(this);
+    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this)}</div>`;
   }
 
 };
@@ -307,7 +307,7 @@ export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
   public renderSaver() {
     return `
       <div>
-        <textarea id="question-saver-text-${this.question.id}"></textarea>
+        <textarea class="form-control" id="question-${this.question.id}-saver-text"></textarea>
         <button class="btn btn-sm examma-ray-question-saver-button" id="question-${this.question.id}-saver-button">Mark as Saved</button>
       </div>
     `;
@@ -927,6 +927,7 @@ export class Section {
   public readonly title: string;
   public readonly html_description: string;
   public readonly html_reference?: string;
+  public readonly html_saverMessage: string;
   public readonly builder: SectionBuilder | SectionBuilder[];
 
   public constructor (spec: SectionSpecification) {
@@ -934,6 +935,7 @@ export class Section {
     this.id = spec.id;
     this.title = spec.title;
     this.html_description = mk2html(spec.mk_description);
+    this.html_saverMessage = mk2html(spec.mk_saver_message)
     this.html_reference = spec.mk_reference && mk2html(spec.mk_reference);
     this.builder = spec.builder;
 
@@ -1005,21 +1007,36 @@ export class AssignedSection {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">${heading}</div> ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
-        ${mode === RenderMode.ORIGINAL ? this.renderSaver() : ""}
       </div>`;
   }
 
-  private renderSaver() {
+  public renderSaver() {
+
     return `
-      <div class="examma-ray-section-saver collapse" id="section-${this.section.id}-saver">
-        ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+      <div id="section-${this.section.id}-saver" class="examma-ray-section-saver modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Your Answers: Section ${this.sectionIndex}: ${this.section.title}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div style="text-align: center;">
+              <div class="alert alert-danger">${this.section.html_saverMessage}</div>
+            </div>
+            ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+          </div>
+        </div>
       </div>
-    `;
+    </div>
+  `;
   }
 
   private renderSaverButton() {
     return `
-      <button id="section-${this.section.id}-saver-button" class="btn btn-warning btn-sm examma-ray-section-saver-button" data-toggle="collapse" data-target="#section-${this.section.id}-saver" aria-expanded="false" aria-controls="section-${this.section.id}-saver">
+      <button id="section-${this.section.id}-saver-button" class="btn btn-warning btn-sm examma-ray-section-saver-button" data-toggle="modal" data-target="#section-${this.section.id}-saver" aria-expanded="false" aria-controls="section-${this.section.id}-saver">
        ${CLIPBOARD} <span style="vertical-align: middle;">Save your answers!</span>
       </button>
     `;
@@ -1101,6 +1118,8 @@ export class AssignedExam {
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
+          ${mode === RenderMode.ORIGINAL ? this.assignedSections.map(section => section.renderSaver()) : ""}
+
         </div>
       </div>
     </div>`;
@@ -1141,6 +1160,8 @@ export class Randomizer {
 
 }
 
+export const DEFAULT_SAVER_MESSAGE_GRADESCOPE = `**Important!** This page DOES NOT save your work. The buttons DO NOT actually save anything. You must copy answers from here to Gradescope. Mark your work as saved here to help keep track of what you have copied.`;
+
 export type SectionBuilder = (exam: Exam, student: Student, rand: Randomizer) => readonly Question[];
 
 export type SectionSpecification = {
@@ -1148,6 +1169,7 @@ export type SectionSpecification = {
   readonly title: string;
   readonly mk_description: string;
   readonly mk_reference?: string;
+  readonly mk_saver_message: string;
   readonly builder: SectionBuilder | SectionBuilder[];
 }
 
@@ -1756,6 +1778,12 @@ export function writeAGFile(filename: string, body: string) {
         width: 7em;
         background-color: #c8c8c8;
       }
+
+      .examma-ray-section-saver .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
 
       .examma-ray-section-saver-button {
         float: right;
