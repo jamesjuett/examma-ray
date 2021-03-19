@@ -9,21 +9,74 @@ const SECTION_SAVED_CHANGES = `${CLIPBOARD_CHECK} <span style="vertical-align: m
 function setButtonStatus(button: JQuery, isSaved: boolean, html: string) {
   if (isSaved) {
     button
-      .data("saved", true)
       .html(html)
       .removeClass("btn-warning")
       .addClass("btn-success");
   }
   else {
     button
-      .data("saved", false)
       .html(html)
       .removeClass("btn-success")
       .addClass("btn-warning");
   }
 }
 
+function extractQuestionAnswers(this: HTMLElement) {
+  let question = $(this);
+  let response = question.find(".examma-ray-question-response");
+  return {
+    id: question.attr("id"),
+    response: extract_response(response.data("response-kind"), response)
+  }
+}
+
+function extractSectionAnswers(this: HTMLElement) {
+  let section = $(this);
+  return {
+    id: section.attr("id"),
+    questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
+  }
+}
+
+function extractExamAnswers() {
+  return {
+    uniqname: "TODO",
+    name: "TODO",
+    timestamp: Date.now(),
+    sections: $(".examma-ray-section").map(extractSectionAnswers).get()
+  }
+}
+
+function prepareAnswersDownloadFile() {
+  let blob = new Blob([JSON.stringify(extractExamAnswers())], {type: "application/json"});
+  let url  = URL.createObjectURL(blob);
+
+  $("#exam-saver-download-link")
+    .attr("download", "exam-answers.json")
+    .attr("href", url)
+    .removeClass("disabled");
+
+  $("#exam-saver-download-status").html("Click here to download your answers.");
+}
+
+function updateExamSaverModal() {
+  $("#exam-saver-download-status").html("Preparing download file...");
+  $("#exam-saver-download-link")
+    .removeAttr("href")
+    .removeAttr("download")
+    .addClass("disabled");
+
+  setTimeout(prepareAnswersDownloadFile);
+}
+
 $(function() {
+
+  // Set up exam saver modal
+  $('#exam-saver').on('shown.bs.modal', function () {
+    updateExamSaverModal();
+  })
+
+
   setButtonStatus($(".examma-ray-question-saver-button"), true, SAVED_CHANGES);
     
   $(".examma-ray-section").each(function() {
@@ -39,7 +92,7 @@ $(function() {
     setButtonStatus($(`#${section_id}-saver-button`), true, SECTION_SAVED_CHANGES);
     
     section.find(".examma-ray-question").each(function(i){
-      statuses.push(false);
+      statuses.push(true);
       let question = $(this);
       let question_id = $(this).attr("id");
       let response = question.find(".examma-ray-question-response");
@@ -47,7 +100,7 @@ $(function() {
       question.find(":input").on("change", function() {
 
         // Update corresponding save text
-        $(`#${question_id}-saver-text`).val(extract_response(response.data("response-kind"), response));
+        $(`#${question_id}-saver-text`).html(extract_response(response.data("response-kind"), response));
 
 
         // Update corresponding question save button to have unsaved changes

@@ -13,7 +13,7 @@ import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics
 import minimist from 'minimist';
 import { exception } from 'console';
 import { RandomSeed, create as createRNG } from 'random-seed';
-import { CLIPBOARD } from './icons';
+import { CLIPBOARD, FILE_DOWNLOAD } from './icons';
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
@@ -306,8 +306,8 @@ export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
 
   public renderSaver() {
     return `
-      <div>
-        <textarea class="form-control" id="question-${this.question.id}-saver-text"></textarea>
+      <div class="form-row">
+        <div class="form-control col-auto" id="question-${this.question.id}-saver-text"></div>
         <button class="btn btn-sm examma-ray-question-saver-button" id="question-${this.question.id}-saver-button">Mark as Saved</button>
       </div>
     `;
@@ -1026,7 +1026,9 @@ export class AssignedSection {
             <div style="text-align: center;">
               <div class="alert alert-danger">${this.section.html_saverMessage}</div>
             </div>
-            ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+            <div>
+              ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+            </div>
           </div>
         </div>
       </div>
@@ -1106,6 +1108,14 @@ export class AssignedExam {
       </ul>`
   }
 
+  public renderSaverButton() {
+    return `
+      <div class="examma-ray-exam-saver-status">
+        <div><button class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Download Answers</button></div>
+        <div class="examma-ray-exam-saver-last-download" style="margin: 5px;">Last downloaded 2 minutes ago</div>
+      </div>`
+  }
+
   public render(mode: RenderMode) {
     return `<div class="container-fluid">
       <div class="row">
@@ -1114,6 +1124,7 @@ export class AssignedExam {
             ${this.renderGrade()}
           </h3>
           ${this.renderNav()}
+          ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.exam.renderHeader(this.student)}
@@ -1789,21 +1800,28 @@ export function writeAGFile(filename: string, body: string) {
         float: right;
       }
 
+      .examma-ray-exam-saver-status {
+        position: absolute;
+        bottom: 5px;
+        text-align: center;
+      }
+
 
     </style>
     <body>
       ${body}
-      <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
+      <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Selected Answers</h5>
+              <h5 class="modal-title">Download Answers</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
-            <div class="modal-body">
-              <pre><code class="checked-submissions-content"></code></pre>
+            <div class="modal-body" style="text-align: center;">
+              <div id="exam-saver-download-status"></div>
+              <a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a>
             </div>
           </div>
         </div>
