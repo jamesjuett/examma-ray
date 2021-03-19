@@ -11,27 +11,11 @@ import 'colors';
 import chroma from 'chroma-js'
 import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics'
 import minimist from 'minimist';
-import { exception } from 'console';
 import { RandomSeed, create as createRNG } from 'random-seed';
 import { CLIPBOARD, FILE_DOWNLOAD } from './icons';
+import { BLANK_SUBMISSION, FITBSubmission, MCSubmission, parse_submission, QuestionKind, SASSubmission, SubmissionType } from './parsers';
+import { asMutable, assert, Mutable } from './util';
 
-export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
-
-function assert(condition: any, message: string = "") : asserts condition {
-  if (!condition) {
-    message && console.log(message.red);
-    throw new Error(message);
-  }
-};
-
-export function asMutable<T>(obj: T) : Mutable<T> {
-    return <Mutable<T>>obj;
-}
-
-export type QuestionKind =
- "multiple_choice" |
- "code_fitb" |
- "select_a_statement";
 
 // type Response =
 //   MCResponse |
@@ -65,84 +49,10 @@ type QuestionResponse<QT extends QuestionKind> =
   QT extends "select_a_statement" ? SASResponse :
   never;
 
-type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
-type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
-type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
-
-type SubmissionType<QT extends QuestionKind> =
-  QT extends "multiple_choice" ? MCSubmission :
-  QT extends "code_fitb" ? FITBSubmission :
-  QT extends "select_a_statement" ? SASSubmission :
-  never;
-
-export const MALFORMED_SUBMISSION = Symbol("malformed_submission");
-export const BLANK_SUBMISSION = Symbol("blank_submission");
 
 export enum RenderMode {
   ORIGINAL = "ORIGINAL",
   GRADED = "GRADED",
-}
-
-function isNumericArray(x: any) : x is readonly number[] {
-  return Array.isArray(x) && x.every(elem => typeof elem === "number");
-}
-
-function isStringArray(x: any) : x is readonly string[] {
-  return Array.isArray(x) && x.every(elem => typeof elem === "string");
-}
-
-function DEFAULT_MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
-  if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
-  }
-
-  let parsed = JSON.parse(rawSubmission);
-  if (isNumericArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
-  }
-  else {
-    return MALFORMED_SUBMISSION;
-  }
-}
-
-function DEFAULT_CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
-  if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
-  }
-
-  let parsed = JSON.parse(rawSubmission);
-  if (isStringArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
-  }
-  else {
-    return MALFORMED_SUBMISSION;
-  }
-}
-
-function DEFAULT_SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | typeof MALFORMED_SUBMISSION {
-  if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
-  }
-
-  let parsed = JSON.parse(rawSubmission);
-  if (isNumericArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
-  }
-  else {
-    return MALFORMED_SUBMISSION;
-  }
-}
-
-export const SUBMISSION_PARSERS : {
-  [QT in QuestionKind]: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION
-} = {
-  "multiple_choice": DEFAULT_MC_PARSER,
-  "code_fitb": DEFAULT_CODE_FITB_PARSER,
-  "select_a_statement": DEFAULT_SAS_PARSER,
-}
-
-function parse_submission<QT extends QuestionKind>(questionKind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {
-  return <SubmissionType<QT>>SUBMISSION_PARSERS[questionKind](rawSubmission);
 }
 
 
@@ -365,7 +275,7 @@ function mk2html(mk: string) {
 
 function renderQuestion(id: string, description: string, header: string, exception: string, gradingReport: string) {
   return `
-  <div id="question-${id}" class="examma-ray-question card-group">
+  <div id="question-${id}" data-question-id="${id}" class="examma-ray-question card-group">
     <div class="card">
       <div class="card-header">
         ${header}
@@ -1010,31 +920,31 @@ export class AssignedSection {
       </div>`;
   }
 
-  public renderSaver() {
+  // public renderSaver() {
 
-    return `
-      <div id="section-${this.section.id}-saver" class="examma-ray-section-saver modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Your Answers: Section ${this.sectionIndex}: ${this.section.title}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div style="text-align: center;">
-              <div class="alert alert-danger">${this.section.html_saverMessage}</div>
-            </div>
-            <div>
-              ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  }
+  //   return `
+  //     <div id="section-${this.section.id}-saver" class="examma-ray-section-saver modal" tabindex="-1" role="dialog">
+  //     <div class="modal-dialog" role="document">
+  //       <div class="modal-content">
+  //         <div class="modal-header">
+  //           <h5 class="modal-title">Your Answers: Section ${this.sectionIndex}: ${this.section.title}</h5>
+  //           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+  //             <span aria-hidden="true">&times;</span>
+  //           </button>
+  //         </div>
+  //         <div class="modal-body">
+  //           <div style="text-align: center;">
+  //             <div class="alert alert-danger">${this.section.html_saverMessage}</div>
+  //           </div>
+  //           <div>
+  //             ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // `;
+  // }
 
   private renderSaverButton() {
     return `
@@ -1129,7 +1039,6 @@ export class AssignedExam {
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
-          ${mode === RenderMode.ORIGINAL ? this.assignedSections.map(section => section.renderSaver()) : ""}
 
         </div>
       </div>
@@ -1822,6 +1731,8 @@ export function writeAGFile(filename: string, body: string) {
             <div class="modal-body" style="text-align: center;">
               <div id="exam-saver-download-status"></div>
               <a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a>
+              <input id="exam-saver-file-input" type="file"></a>
+              <button id="test-upload">test</button>
             </div>
           </div>
         </div>
