@@ -1027,7 +1027,7 @@ export class AssignedExam {
   }
 
   public render(mode: RenderMode) {
-    return `<div class="container-fluid">
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <h3 class="text-center pb-1 border-bottom">

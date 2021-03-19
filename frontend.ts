@@ -60,9 +60,10 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswer {
 }
 
 function extractExamAnswers() : ExamAnswers {
+  let examElem = $("#examma-ray-exam");
   return {
-    uniqname: "TODO",
-    name: "TODO",
+    uniqname: examElem.data("uniqname"),
+    name: examElem.data("name"),
     timestamp: Date.now(),
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
