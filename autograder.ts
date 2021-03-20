@@ -38,7 +38,6 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   id: string,
   points: number,
   mk_description: string,
-  kind: QT,
   response: QuestionResponse<QT>,
   codeLanguage: string,
   tags?: readonly string[]
@@ -62,7 +61,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.tags = spec.tags ?? [];
     this.pointsPossible = spec.points;
     this.codeLanguage = spec.codeLanguage;
-    this.kind = spec.kind;
+    this.kind = <QT>spec.response.kind;
     this.response = spec.response;
     this.html_description = mk2html(spec.mk_description);
   }
@@ -901,7 +900,7 @@ export class AssignedExam {
           let scoreBadge = sectionAssignedQuestions.every(aq => aq.isGraded()) ?
             renderScoreBadge(sectionAssignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0), s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
-          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section${s.section.id}">${scoreBadge} ${s.sectionIndex + ": " + s.section.title}</a></li>`
+          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section.id}">${scoreBadge} ${s.sectionIndex + ": " + s.section.title}</a></li>`
         }).join("")}
       </ul>`
   }
@@ -993,6 +992,14 @@ export function RANDOM_BY_TAG(tag: string, n: number) {
   }
 }
 
+export function BY_ID(id: string) {
+  return (exam: Exam, student: Student, rand: Randomizer) => {
+    let q = exam.getQuestionById(id);
+    assert(q, `No question with ID: ${id}.`);
+    return [q];
+  }
+}
+
 
 
 export type ExamSpecification = {
@@ -1036,12 +1043,19 @@ export class Exam {
     Object.assign(this.graderMap, graderMap);
   }
 
-  public registerQuestion(q: Question<ResponseKind>) {
+  public registerQuestion(q: Question | QuestionSpecification) {
+    if (!(q instanceof Question)) {
+      q = new Question(q);
+    }
     this.questionBank.push(q);
     this.questionsById[q.id] = q;
     q.tags.forEach(tag => 
-      (this.questionsByTag[tag] ??= []).push(q)
+      (this.questionsByTag[tag] ??= []).push(<Question>q)
     );
+  }
+
+  public registerQuestions(qs: QuestionSpecification[]) {
+    qs.forEach(q => this.registerQuestion(new Question(q)));
   }
 
   public getQuestionById(id: string) {

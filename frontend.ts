@@ -181,8 +181,14 @@ $(function() {
   // triggers unsaved changes
   // https://api.jquery.com/input-selector/
   $(".examma-ray-question-response :input").on("change", function() {
-    onUnsavedChanges();
+    setTimeout(onUnsavedChanges, 1000); // Timeout is to prevent this from interfering with clicking the save button
   });
+
+  // Keyup on text inputs and textareas also triggers unsaved changes
+  $("input:text, textarea").on("keyup", function() {
+    setTimeout(onUnsavedChanges, 100); // Timeout is to prevent this from interfering with clicking the save button
+  });
+  
 
   // A click on the download link indicates all work has been saved
   $("#exam-saver-download-link").on("click", function(this: HTMLElement) {
