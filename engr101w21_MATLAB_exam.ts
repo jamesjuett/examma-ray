@@ -8,6 +8,7 @@ import { SAS_QUESTIONS } from './questions/sas';
 
 // Create exam
 let exam = new Exam({
+  id: "engr101w21matlab",
   title: "ENGR 101 W21 MATLAB Exam",
   pointsPossible: 100,
   mk_intructions: readFileSync("instructions.md", "utf8")

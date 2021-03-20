@@ -9,7 +9,7 @@ import chroma from 'chroma-js'
 import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics'
 import minimist from 'minimist';
 import { RandomSeed, create as createRNG } from 'random-seed';
-import { CLIPBOARD, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
+import { CLIPBOARD, FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { asMutable, assert, assertFalse, Mutable } from './util';
 import { parse_submission, QuestionResponse, render_response, SubmissionType } from './response/responses';
 import { FITBSubmission } from './response/code_fitb';
@@ -913,7 +913,7 @@ export class AssignedExam {
   }
 
   public render(mode: RenderMode) {
-    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}">
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.id}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <h3 class="text-center pb-1 border-bottom">
@@ -1002,6 +1002,7 @@ export function BY_ID(id: string) {
 
 
 export type ExamSpecification = {
+  id: string,
   title: string,
   pointsPossible: number,
   mk_intructions: string,
@@ -1012,6 +1013,7 @@ export type ExamSpecification = {
 
 export class Exam {
 
+  public readonly id: string;
   public readonly title: string;
   public readonly graderMap: GraderMap;
   public readonly exceptionMap: ExceptionMap;
@@ -1030,6 +1032,7 @@ export class Exam {
   public readonly html_announcements: readonly string[];
 
   public constructor(spec: ExamSpecification) {
+    this.id = spec.id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.pointsPossible = spec.pointsPossible;
@@ -1655,6 +1658,8 @@ export function writeAGFile(filename: string, body: string) {
     </style>
     <body>
       ${body}
+
+
       <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
@@ -1678,6 +1683,48 @@ export function writeAGFile(filename: string, body: string) {
           </div>
         </div>
       </div>
+
+
+      <div id="exam-restore-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Answers Restored</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-info">This page was reloaded, and we've restored your answers from an autosave. (Note that regardless of this autosave, you MUST still download and submit your answers file separately before the exam is done.)</div>
+              <div>
+                <button class="btn btn-success" data-dismiss="modal">${FILE_CHECK} OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="exam-no-autosave-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Autosave Not Available</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-danger">It appears your browser will not support autosaving your answers to local storage (e.g. in case of a computer crash or accidentally closing your browser).<br /><br />This might be because you're in private/incognito browsing mode, or could be caused by some privacy extensions or add-ons. We suggest switching out of private mode, disabling privacy add-ons, or trying a different web browser.<br /><br />However, you may opt to continue to the exam anyway.</div>
+              <div>
+                <button class="btn btn-warning" data-dismiss="modal">I Understand</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </body>
     </html>`, { encoding: "utf-8" });
     // pdf.create(`<html><body>${s.renderAllReports(graderMap)}</body></html>`, { format: 'Letter' }).toFile('test.pdf', function(err, res) {

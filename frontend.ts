@@ -8,6 +8,7 @@ import hljs from 'highlight.js';
 import "highlight.js/styles/github.css";
 // import "highlight.js/styles/monokai.css";
 import cpp from 'highlight.js/lib/languages/cpp';
+import storageAvailable from "storage-available";
 hljs.registerLanguage('cpp', cpp);
 hljs.highlightAll();
 
@@ -23,6 +24,7 @@ export type SectionAnswersJSON = {
 };
 
 export type ExamAnswersJSON = {
+  exam_id: string;
   uniqname: string;
   name: string;
   timestamp: number;
@@ -65,6 +67,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswersJSON {
 function extractExamAnswers() : ExamAnswersJSON {
   let examElem = $("#examma-ray-exam");
   return {
+    exam_id: examElem.data("exam-id"),
     uniqname: examElem.data("uniqname"),
     name: examElem.data("name"),
     timestamp: Date.now(),
@@ -107,6 +110,15 @@ function updateExamSaverModal() {
   });
 }
 
+function autosaveToLocalStorage() {
+  if (storageAvailable("localStorage")) {
+    console.log("autosaving...");
+    let answers = extractExamAnswers();
+    localStorage.setItem(answers.exam_id, JSON.stringify(answers));
+    console.log("autosave complete!");
+  }
+}
+
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
@@ -139,6 +151,9 @@ function onSaved() {
 }
 
 $(function() {
+  
+  let examElem = $("#examma-ray-exam");
+  let examId = examElem.data("exam-id");
 
   let fileInput = $("#exam-saver-file-input");
   let loadButton = $("#exam-saver-load-button");
@@ -165,8 +180,13 @@ $(function() {
     if (files) {
       try {
         let answers = <ExamAnswersJSON>JSON.parse(await files[0].text());
-        loadExamAnswers(answers);
-        $("#exam-saver").modal("hide");
+        if (answers.exam_id === $("#examma-ray-exam").data("exam-id")) {
+          loadExamAnswers(answers);
+          $("#exam-saver").modal("hide");
+        }
+        else {
+          alert("Error - That answers file appears to be for a different exam.");
+        }
       }
       catch(err) {
         alert("Sorry, an error occurred while processing that file. Is it a properly formatted save file?");
@@ -187,12 +207,12 @@ $(function() {
   // triggers unsaved changes
   // https://api.jquery.com/input-selector/
   $(".examma-ray-question-response :input").on("change", function() {
-    setTimeout(onUnsavedChanges, 1000); // Timeout is to prevent this from interfering with clicking the save button
+    setTimeout(onUnsavedChanges, 500); // Timeout is to prevent this from interfering with clicking the save button
   });
 
   // Keyup on text inputs and textareas also triggers unsaved changes
   $("input:text, textarea").on("keyup", function() {
-    setTimeout(onUnsavedChanges, 100); // Timeout is to prevent this from interfering with clicking the save button
+    setTimeout(onUnsavedChanges, 500); // Timeout is to prevent this from interfering with clicking the save button
   });
   
 
@@ -209,9 +229,39 @@ $(function() {
   // Interval to update time saved ago message every 10 seconds
   setInterval(updateTimeSaved, 10000);
 
-
   // Consider work to be saved when page is loaded
   onSaved();
+
+  // Check whether an autosave exists in local storage
+  if (storageAvailable("localStorage")) {
+    let autosavedAnswers = localStorage.getItem(examId);
+    if (autosavedAnswers) {
+      loadExamAnswers(<ExamAnswersJSON>JSON.parse(autosavedAnswers));
+      $("#exam-restore-modal").modal("show");
+    }
+      
+    // Interval to autosave to local storage every 5 seconds
+    setInterval(autosaveToLocalStorage, 20000);
+  }
+  else {
+    $("#exam-no-autosave-modal").modal("show");
+  }
+
+  // A click on the "got it" button restores answers from local storage
+  // $("#exam-restore-button").on("click", function(this: HTMLElement) {
+  //   if (storageAvailable("localStorage")) {
+  //     let autosavedAnswers = localStorage.getItem(examId);
+  //     if (autosavedAnswers) {
+  //       $("#exam-restore-modal").modal("hide");
+  //     }
+  //     else {
+  //       alert("Sorry...something went wrong trying to access your autosaved answers.");
+  //     }
+  //   }
+  // });
+
+  // A click on the discard button discards an autosave in local storage
+  
 });
 
 

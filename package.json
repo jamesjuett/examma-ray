@@ -39,6 +39,7 @@
     "showdown": "^1.9.1",
     "showdown-highlight": "^2.1.5",
     "simple-statistics": "^7.4.0",
+    "storage-available": "^1.1.0",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.5"
   },
