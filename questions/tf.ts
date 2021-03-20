@@ -14,7 +14,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -31,7 +31,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -48,7 +48,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -65,7 +65,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -82,7 +82,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -99,7 +99,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -116,7 +116,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -133,7 +133,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -150,7 +150,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -167,7 +167,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -184,7 +184,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -201,7 +201,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -218,7 +218,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -235,7 +235,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -252,7 +252,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -269,7 +269,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -286,7 +286,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -303,7 +303,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -320,7 +320,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -337,7 +337,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -354,7 +354,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -371,7 +371,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -388,7 +388,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -405,7 +405,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -422,7 +422,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -439,7 +439,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -456,7 +456,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -473,7 +473,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -490,7 +490,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -507,7 +507,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -524,7 +524,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -541,7 +541,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -558,7 +558,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   },
@@ -575,7 +575,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
         "False"
       ],
       "maxSelections": 1,
-      "radio": true
+      "multiple": false
     },
     "codeLanguage": "cpp"
   }

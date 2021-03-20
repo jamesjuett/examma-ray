@@ -1,25 +1,26 @@
 import { CLIPBOARD, CLIPBOARD_CHECK, FILE_CHECK, FILE_DOWNLOAD } from "./icons";
-import { BLANK_SUBMISSION, FITBSubmission, MCSubmission, parse_submission, QuestionKind, SASSubmission, SubmissionType } from "./parsers";
 import { assertFalse } from "./util";
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
+import { ResponseKind } from "./response/common";
 
-export type QuestionAnswer = {
+export type QuestionAnswerJSON = {
   id: string;
-  kind: QuestionKind;
+  kind: ResponseKind;
   response: string;
 };
 
-export type SectionAnswer = {
+export type SectionAnswersJSON = {
   id: string;
-  questions: QuestionAnswer[];
+  questions: QuestionAnswerJSON[];
 };
 
-export type ExamAnswers = {
+export type ExamAnswersJSON = {
   uniqname: string;
   name: string;
   timestamp: number;
-  sections: SectionAnswer[];
+  sections: SectionAnswersJSON[];
 }
 
 function setButtonStatus(button: JQuery, isSaved: boolean, html: string) {
@@ -37,7 +38,7 @@ function setButtonStatus(button: JQuery, isSaved: boolean, html: string) {
   }
 }
 
-function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
+function extractQuestionAnswers(this: HTMLElement) : QuestionAnswerJSON {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
@@ -47,7 +48,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : SectionAnswer {
+function extractSectionAnswers(this: HTMLElement) : SectionAnswersJSON {
   let section = $(this);
   return {
     id: section.data("section-id"),
@@ -55,7 +56,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswer {
   }
 }
 
-function extractExamAnswers() : ExamAnswers {
+function extractExamAnswers() : ExamAnswersJSON {
   let examElem = $("#examma-ray-exam");
   return {
     uniqname: examElem.data("uniqname"),
@@ -65,14 +66,14 @@ function extractExamAnswers() : ExamAnswers {
   }
 }
 
-function loadQuestionAnswer(qa: QuestionAnswer) {
+function loadQuestionAnswer(qa: QuestionAnswerJSON) {
   let questionElem = $(`#question-${qa.id}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
   let sub = parse_submission(qa.kind, qa.response);
   fill_response(responseElem, qa.kind, sub);
 }
 
-function loadExamAnswers(answers: ExamAnswers) {
+function loadExamAnswers(answers: ExamAnswersJSON) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
 
   // Consider work to be saved after loading
@@ -157,7 +158,7 @@ $(function() {
     // if there is no file selected, so this is just here for completeness
     if (files) {
       try {
-        let answers = <ExamAnswers>JSON.parse(await files[0].text());
+        let answers = <ExamAnswersJSON>JSON.parse(await files[0].text());
         loadExamAnswers(answers);
         $("#exam-saver").modal("hide");
       }
@@ -202,61 +203,16 @@ $(function() {
 });
 
 
-function DEFAULT_MC_EXTRACTOR(responseElem: JQuery) {
-  return responseElem.find("input:checked").map(i => i).get();
-}
 
-function DEFAULT_CODE_FITB_EXTRACTOR(responseElem: JQuery) {
-  return assertFalse();
-}
 
-function DEFAULT_SAS_EXTRACTOR(responseElem: JQuery) {
-  return assertFalse();
-}
 
-export const RESPONSE_EXTRACTORS : {
-  [QT in QuestionKind]: (responseElem: JQuery) => SubmissionType<QT>
-} = {
-  "multiple_choice": DEFAULT_MC_EXTRACTOR,
-  "code_fitb": DEFAULT_CODE_FITB_EXTRACTOR,
-  "select_a_statement": DEFAULT_SAS_EXTRACTOR,
-}
 
-function extract_response<QT extends QuestionKind>(questionKind: QT, responseElem: JQuery) : SubmissionType<QT> {
-  return (<(responseElem: JQuery) => SubmissionType<QT>>RESPONSE_EXTRACTORS[questionKind])(responseElem);
-}
 
-function stringify_response<QT extends QuestionKind>(submission: SubmissionType<QT>) {
-  return submission === BLANK_SUBMISSION ? "" : JSON.stringify(submission);
-}
 
-function DEFAULT_MC_FILLER(elem: JQuery, submission: MCSubmission) {
-  // blank out all radio buttons
-  let inputs = elem.find("input");
-  inputs.prop("checked", false);
 
-  if (submission !== BLANK_SUBMISSION) {
-    let inputElems = inputs.get();
-    submission.forEach(n => $(inputElems[n]).prop("checked", true));
-  }
-}
 
-function DEFAULT_CODE_FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
-  // TODO
-}
 
-function DEFAULT_SAS_FILLER(elem: JQuery, submission: SASSubmission) {
-  // TODO
-}
 
-export const RESPONSE_FILLERS : {
-  [QT in QuestionKind]: (elem: JQuery, submission: SubmissionType<QT>) => void
-} = {
-  "multiple_choice": <any>DEFAULT_MC_FILLER,
-  "code_fitb": <any>DEFAULT_CODE_FITB_FILLER,
-  "select_a_statement": <any>DEFAULT_SAS_FILLER,
-}
 
-function fill_response<QT extends QuestionKind>(elem: JQuery, kind: QT, response: SubmissionType<QT>) : void {
-  return (<(elem: JQuery, submission: SubmissionType<QT>) => void>RESPONSE_FILLERS[kind])(elem, response);
-}
+
+

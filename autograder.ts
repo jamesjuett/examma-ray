@@ -2,10 +2,8 @@
 import csv from 'csv-parser';
 import stringify from 'csv-stringify';
 import { createReadStream, writeFileSync, readFileSync, mkdir, mkdirSync, writeFile } from 'fs';
-import showdown from 'showdown';
 import { encode, decode } from "he";
 import hljs from 'highlight.js';
-import showdownHighlight from 'showdown-highlight'
 import $ from 'jquery';
 import 'colors';
 import chroma from 'chroma-js'
@@ -13,41 +11,13 @@ import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics
 import minimist from 'minimist';
 import { RandomSeed, create as createRNG } from 'random-seed';
 import { CLIPBOARD, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
-import { BLANK_SUBMISSION, FITBSubmission, MCSubmission, parse_submission, QuestionKind, SASSubmission, SubmissionType } from './parsers';
 import { asMutable, assert, Mutable } from './util';
-
-
-// type Response =
-//   MCResponse |
-//   FITBResponse |
-//   SASResponse;
-
-type MCResponse = {
-  kind: "multiple_choice",
-  radio: boolean,
-  choices: string[],
-  maxSelections: number
-};
-
-type FITBResponse = {
-  kind: "code_fitb",
-  text: string
-};
-
-type SASResponse = {
-  kind: "select_a_statement",
-  language: string,
-  lines: {
-    required: boolean,
-    text: string
-  }[]
-};
-
-type QuestionResponse<QT extends QuestionKind> =
-  QT extends "multiple_choice" ? MCResponse :
-  QT extends "code_fitb" ? FITBResponse :
-  QT extends "select_a_statement" ? SASResponse :
-  never;
+import { parse_submission, QuestionResponse, render_response, SubmissionType } from './response/responses';
+import { FITBSubmission } from './response/code_fitb';
+import { ResponseKind, BLANK_SUBMISSION } from './response/common';
+import { MCSubmission } from './response/multiple_choice';
+import { SASSubmission } from './response/select_a_statement';
+import { mk2html } from './render';
 
 
 export enum RenderMode {
@@ -57,42 +27,14 @@ export enum RenderMode {
 
 
 
-function DEFAULT_MC_RENDERER(question: Question<"multiple_choice">) {
-  return `
-    <form>
-    ${question.response.choices.map((item,i) => `
-      <div>
-        <input type="radio" name="${question.id}_choice" value="${question.id}_choice_${i}"/>
-        <label class="examma-ray-mc-option">${mk2html(item)}</label>
-      </div>`
-    ).join("")}
-    </form>
-  `;
-}
 
-function DEFAULT_CODE_FITB_RENDERER(question: Question<"code_fitb">) {
-  return `TODO
-  `;
-}
 
-function DEFAULT_SAS_RENDERER(question: Question<"select_a_statement">) {
-  return `TODO
-  `;
-}
 
-export const RESPONSE_RENDERERS : {
-  [QT in QuestionKind]: (question: Question<QT>) => string
-} = {
-  "multiple_choice": DEFAULT_MC_RENDERER,
-  "code_fitb": DEFAULT_CODE_FITB_RENDERER,
-  "select_a_statement": DEFAULT_SAS_RENDERER,
-}
 
-function render_response<QT extends QuestionKind>(question: Question<QT>) : string {
-  return (<(question: Question<QT>) => string>RESPONSE_RENDERERS[question.kind])(question);
-}
 
-export type QuestionSpecification<QT extends QuestionKind = QuestionKind> = {
+
+
+export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   id: string,
   points: number,
   mk_description: string,
@@ -102,7 +44,7 @@ export type QuestionSpecification<QT extends QuestionKind = QuestionKind> = {
   tags?: readonly string[]
 };
 
-export class Question<QT extends QuestionKind = QuestionKind> {
+export class Question<QT extends ResponseKind = ResponseKind> {
 
   // public readonly raw_description: string;
   // public readonly description: string;
@@ -126,7 +68,7 @@ export class Question<QT extends QuestionKind = QuestionKind> {
   }
 
   public renderResponse() {
-    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this)}</div>`;
+    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, this.id)}</div>`;
   }
 
 };
@@ -136,7 +78,7 @@ export interface Student {
   readonly name: string;
 }
 
-export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
+export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly pointsEarned?: number;
   public readonly nonExceptionPoints?: number;
@@ -235,12 +177,12 @@ export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
   // }
 }
 
-interface GradedQuestion<QT extends QuestionKind> extends AssignedQuestion<QT> {
+interface GradedQuestion<QT extends ResponseKind> extends AssignedQuestion<QT> {
   readonly pointsEarned: number;
   readonly gradedBy: Grader<QT>
 }
 
-interface Grader<QT extends QuestionKind = QuestionKind> {
+interface Grader<QT extends ResponseKind = ResponseKind> {
   readonly questionType: QT;
   grade(question: Question<QT>, submission: SubmissionType<QT>): number;
   renderReport(question: Question<QT>, submission: SubmissionType<QT>): string;
@@ -249,20 +191,11 @@ interface Grader<QT extends QuestionKind = QuestionKind> {
 
 };
 
-function isGrader<QT extends QuestionKind>(grader: Grader, questionType: QT) : grader is Grader<QT> {
+function isGrader<QT extends ResponseKind>(grader: Grader, questionType: QT) : grader is Grader<QT> {
   return grader.questionType === questionType;
 }
 
 
-const converter = new showdown.Converter({extensions: [showdownHighlight]});
-function mk2html(mk: string) {
-  // if (mk.startsWith("`")) {
-    return converter.makeHtml(mk);
-  // }
-  // else {
-  //   return mk;
-  // }
-}
 
 function renderQuestion(id: string, description: string, header: string, exception: string, gradingReport: string) {
   return `
@@ -286,7 +219,7 @@ function renderQuestion(id: string, description: string, header: string, excepti
   </div>`;
 }
 
-export class FreebieGrader<QT extends QuestionKind> implements Grader<QT>{
+export class FreebieGrader<QT extends ResponseKind> implements Grader<QT>{
 
   /**
    * 
@@ -1103,7 +1036,7 @@ export class Exam {
     Object.assign(this.graderMap, graderMap);
   }
 
-  public registerQuestion(q: Question<QuestionKind>) {
+  public registerQuestion(q: Question<ResponseKind>) {
     this.questionBank.push(q);
     this.questionsById[q.id] = q;
     q.tags.forEach(tag => 
