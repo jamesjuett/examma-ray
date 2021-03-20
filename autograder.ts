@@ -1456,8 +1456,9 @@ export function writeAGFile(filename: string, body: string) {
       }
 
       .examma-ray-section-contents {
-        margin-left: 7px;
         width: 100%;
+        table-layout: fixed;
+        margin-left: 7px;
       }
 
       .examma-ray-section-contents td {
@@ -1628,6 +1629,7 @@ export function writeAGFile(filename: string, body: string) {
       .examma-ray-exam-saver-status {
         position: absolute;
         bottom: 5px;
+        width: 190px;
         text-align: center;
       }
 
@@ -1642,7 +1644,6 @@ export function writeAGFile(filename: string, body: string) {
 
       .sas-select-label {
         vertical-align: middle;
-        opacity: 0.8;
         padding-right: 1em;
         border: solid 1px transparent;
       }
@@ -1651,7 +1652,6 @@ export function writeAGFile(filename: string, body: string) {
         border: solid 1px rgba(0,0,255,0.3);
         background-color: rgba(0,0,255,0.1);
         border-radius: 2px;
-        opacity: 1;
       }
 
 
@@ -1664,7 +1664,7 @@ export function writeAGFile(filename: string, body: string) {
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Download Answers</h5>
+              <h5 class="modal-title">Answers File</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -1685,11 +1685,11 @@ export function writeAGFile(filename: string, body: string) {
       </div>
 
 
-      <div id="exam-restore-modal" class="modal" tabindex="-1" role="dialog">
+      <div id="exam-welcome-restored-modal" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Answers Restored</h5>
+              <h5 class="modal-title">Welcome Back!</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -1705,7 +1705,30 @@ export function writeAGFile(filename: string, body: string) {
       </div>
 
 
-      <div id="exam-no-autosave-modal" class="modal" tabindex="-1" role="dialog">
+      <div id="exam-welcome-normal-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome!</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+            <div class="alert alert-info">Make sure to read the exam instructions carefully.</div>
+            <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However</b>, we will b>not</b> grade anything here. Instead, you must click the button at the bottom-left to download an "answers file", which you should then submit to Canvas <b>before</b> the exam ends.</div>
+            <div class="alert alert-info">This page attempts to autosave your work to your browser's local storage as you work, and will try to restore those answers if something goes wrong (e.g. your computer crashes, you accidentally close the page, etc.). You MUST still download your answers file and submit to Canvas to receive credit.</div>
+            <div class="alert alert-warning"><b>Warning!</b> - autosave will not work properly if you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled.</div>
+            <div>
+              <button class="btn btn-warning" data-dismiss="modal">I Understand</button>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="exam-welcome-no-autosave-modal" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">

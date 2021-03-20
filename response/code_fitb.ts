@@ -39,9 +39,10 @@ export const CODE_FITB_HANDLER = {
 
 
 export function CODE_FITB_EXTRACTOR(responseElem: JQuery) {
-  return responseElem.find("input").map(function() {
+  let blankResponses = responseElem.find("input").map(function() {
     return <string>$(this).val();
   }).get();
+  return blankResponses.every(br => br === "") ? BLANK_SUBMISSION : blankResponses;
 }
 
 export function CODE_FITB_FILLER(elem: JQuery, submission: FITBSubmission) {

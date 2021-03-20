@@ -129,8 +129,8 @@ function updateTimeSaved() {
     .html(`Last saved ${timeAgo.format(lastSavedTime, 'round')}.`);
 }
 
-const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Download Answers</span>`;
-const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Download Answers</span>`;
+const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
+const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
 
 function onUnsavedChanges() {
   $("#exam-saver-button")
@@ -237,30 +237,18 @@ $(function() {
     let autosavedAnswers = localStorage.getItem(examId);
     if (autosavedAnswers) {
       loadExamAnswers(<ExamAnswersJSON>JSON.parse(autosavedAnswers));
-      $("#exam-restore-modal").modal("show");
+      $("#exam-welcome-restored-modal").modal("show");
+    }
+    else {
+      $("#exam-welcome-normal-modal").modal("show");
     }
       
     // Interval to autosave to local storage every 5 seconds
     setInterval(autosaveToLocalStorage, 20000);
   }
   else {
-    $("#exam-no-autosave-modal").modal("show");
+    $("#exam-welcome-no-autosave-modal").modal("show");
   }
-
-  // A click on the "got it" button restores answers from local storage
-  // $("#exam-restore-button").on("click", function(this: HTMLElement) {
-  //   if (storageAvailable("localStorage")) {
-  //     let autosavedAnswers = localStorage.getItem(examId);
-  //     if (autosavedAnswers) {
-  //       $("#exam-restore-modal").modal("hide");
-  //     }
-  //     else {
-  //       alert("Sorry...something went wrong trying to access your autosaved answers.");
-  //     }
-  //   }
-  // });
-
-  // A click on the discard button discards an autosave in local storage
   
 });
 

@@ -53,9 +53,10 @@ function renderSASItem(item: SASItem, question_id: string, item_index: number) {
 }
 
 export function SAS_EXTRACTOR(responseElem: JQuery) {
-  return responseElem.find("input:checked").map(function() {
+  let chosen = responseElem.find("input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
+  return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
 }
 
 export function SAS_FILLER(elem: JQuery, submission: SASSubmission) {

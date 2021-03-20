@@ -38,10 +38,11 @@ export function MC_RENDERER(response: MCResponse, question_id: string) {
   `;
 }
 
-export function MC_EXTRACTOR(responseElem: JQuery) {
-  return responseElem.find("input:checked").map(function() {
+export function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
+  let responses = responseElem.find("input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
+  return responses.length > 0 ? responses : BLANK_SUBMISSION;
 }
 
 export function MC_FILLER(elem: JQuery, submission: MCSubmission) {
