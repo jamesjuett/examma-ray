@@ -214,15 +214,6 @@ export class AssignedQuestion<QT extends QuestionKind = QuestionKind> {
     }
   }
 
-  public renderSaver() {
-    return `
-      <div class="form-row">
-        <div class="form-control col-auto" id="question-${this.question.id}-saver-text"></div>
-        <button class="btn btn-sm examma-ray-question-saver-button" id="question-${this.question.id}-saver-button">Mark as Saved</button>
-      </div>
-    `;
-  }
-
   private renderExceptionIfPresent() {
     if (!this.exception) {
       return "";
@@ -837,7 +828,6 @@ export class Section {
   public readonly title: string;
   public readonly html_description: string;
   public readonly html_reference?: string;
-  public readonly html_saverMessage: string;
   public readonly builder: SectionBuilder | SectionBuilder[];
 
   public constructor (spec: SectionSpecification) {
@@ -845,7 +835,6 @@ export class Section {
     this.id = spec.id;
     this.title = spec.title;
     this.html_description = mk2html(spec.mk_description);
-    this.html_saverMessage = mk2html(spec.mk_saver_message)
     this.html_reference = spec.mk_reference && mk2html(spec.mk_reference);
     this.builder = spec.builder;
 
@@ -916,47 +905,13 @@ export class AssignedSection {
 
     return `
       <div class="examma-ray-section-heading">
-        <div class="badge badge-primary">${heading}</div> ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
+        <div class="badge badge-primary">${heading}</div>
       </div>`;
-  }
-
-  // public renderSaver() {
-
-  //   return `
-  //     <div id="section-${this.section.id}-saver" class="examma-ray-section-saver modal" tabindex="-1" role="dialog">
-  //     <div class="modal-dialog" role="document">
-  //       <div class="modal-content">
-  //         <div class="modal-header">
-  //           <h5 class="modal-title">Your Answers: Section ${this.sectionIndex}: ${this.section.title}</h5>
-  //           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-  //             <span aria-hidden="true">&times;</span>
-  //           </button>
-  //         </div>
-  //         <div class="modal-body">
-  //           <div style="text-align: center;">
-  //             <div class="alert alert-danger">${this.section.html_saverMessage}</div>
-  //           </div>
-  //           <div>
-  //             ${this.assignedQuestions.map(aq => aq.renderSaver()).join("")}
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // `;
-  // }
-
-  private renderSaverButton() {
-    return `
-      <button id="section-${this.section.id}-saver-button" class="btn btn-warning btn-sm examma-ray-section-saver-button" data-toggle="modal" data-target="#section-${this.section.id}-saver" aria-expanded="false" aria-controls="section-${this.section.id}-saver">
-       ${CLIPBOARD} <span style="vertical-align: middle;">Save your answers!</span>
-      </button>
-    `;
   }
 
   public render(mode: RenderMode) {
     return `
-      <div id="section-${this.section.id}" class="examma-ray-section">
+      <div id="section-${this.section.id}" class="examma-ray-section" data-section-id="${this.section.id}">
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
@@ -965,7 +920,7 @@ export class AssignedSection {
               <div class="examma-ray-section-description">${this.section.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
-            <td>
+            <td style="width: 300px;">
               <div class="examma-ray-section-reference">
                 <h6>Reference Material</h6>
                 ${this.section.html_reference}
@@ -1013,7 +968,7 @@ export class AssignedExam {
           let scoreBadge = sectionAssignedQuestions.every(aq => aq.isGraded()) ?
             renderScoreBadge(sectionAssignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0), s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
-          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section${s.sectionIndex}">${scoreBadge} ${s.sectionIndex + ": " + s.section.title}</a></li>`
+          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section${s.section.id}">${scoreBadge} ${s.sectionIndex + ": " + s.section.title}</a></li>`
         }).join("")}
       </ul>`
   }
@@ -1080,7 +1035,14 @@ export class Randomizer {
 
 }
 
-export const DEFAULT_SAVER_MESSAGE_GRADESCOPE = `**Important!** This page DOES NOT save your work. The buttons DO NOT actually save anything. You must copy answers from here to Gradescope. Mark your work as saved here to help keep track of what you have copied.`;
+export const DEFAULT_SAVER_MESSAGE_CANVAS = `
+  Click the button below to save a copy of your answers as a \`.json\`
+  file. You may save as many times as you like. If something bad happens,
+  you can also restore answers from a previously saved file.
+  
+  **Important!** You MUST submit your answers \`.json\` file to Canvas
+  BEFORE exam time is up. This webpage does not save anything to anywhere.
+  It is up to you to download your answer file and turn it in on Canvas.`;
 
 export type SectionBuilder = (exam: Exam, student: Student, rand: Randomizer) => readonly Question[];
 
@@ -1089,7 +1051,6 @@ export type SectionSpecification = {
   readonly title: string;
   readonly mk_description: string;
   readonly mk_reference?: string;
-  readonly mk_saver_message: string;
   readonly builder: SectionBuilder | SectionBuilder[];
 }
 
@@ -1549,13 +1510,17 @@ export function writeAGFile(filename: string, body: string) {
 
       .examma-ray-section-contents {
         margin-left: 7px;
+        width: 100%;
       }
 
       .examma-ray-section-contents td {
         vertical-align: top;
       }
 
-      .examma-ray-section-description,
+      .examma-ray-section-description {
+        font-size: 85%;
+      }
+
       .examma-ray-section-reference {
         font-size: 75%;
       }
@@ -1715,6 +1680,10 @@ export function writeAGFile(filename: string, body: string) {
         text-align: center;
       }
 
+      .btn:disabled {
+        cursor: not-allowed;
+      }
+
 
     </style>
     <body>
@@ -1729,12 +1698,13 @@ export function writeAGFile(filename: string, body: string) {
               </button>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div id="exam-saver-download-status"></div>
+              <div class="alert alert-info">${mk2html(DEFAULT_SAVER_MESSAGE_CANVAS)}</div>
+              <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
               <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
               <br />
-              <div>Or, you may restore answers you previously saved to a file. <b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file. <b>WARNING!</b> This will overwrite ALL answers on this page.</div>
               <div>
-                <button id="exam-saver-load-button" class="btn btn-primary disabled" disabled>${FILE_UPLOAD} Load Answers</button>
+                <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
                 <input id="exam-saver-file-input" type="file"></a>
               </div>
             </div>

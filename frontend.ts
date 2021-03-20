@@ -4,11 +4,6 @@ import { assertFalse } from "./util";
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 
-const UNSAVED_CHANGES = `${CLIPBOARD} <span style="vertical-align: middle;">Mark as saved</span>`;
-const SECTION_UNSAVED_CHANGES = `${CLIPBOARD} <span style="vertical-align: middle;">Unsaved Changes (Click Here)</span>`;
-const SAVED_CHANGES = `${CLIPBOARD_CHECK} <span style="vertical-align: middle;">Saved</span>`;
-const SECTION_SAVED_CHANGES = `${CLIPBOARD_CHECK} <span style="vertical-align: middle;">Saved</span>`;
-
 export type QuestionAnswer = {
   id: string;
   kind: QuestionKind;
@@ -55,7 +50,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
 function extractSectionAnswers(this: HTMLElement) : SectionAnswer {
   let section = $(this);
   return {
-    id: section.attr("id")!,
+    id: section.data("section-id"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
   }
 }
@@ -115,16 +110,19 @@ function updateTimeSaved() {
     .html(`Last saved ${timeAgo.format(lastSavedTime, 'round')}.`);
 }
 
+const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Download Answers</span>`;
+const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Download Answers</span>`;
+
 function onUnsavedChanges() {
   $("#exam-saver-button")
-    .html(`${FILE_DOWNLOAD} Download Answers`)
+    .html(UNSAVED_CHANGES_HTML)
     .removeClass("btn-success")
     .addClass("btn-warning");
 }
 
 function onSaved() {
   $("#exam-saver-button")
-    .html(`${FILE_CHECK} Download Answers`)
+    .html(SAVED_HTML)
     .removeClass("btn-warning")
     .addClass("btn-success");
 
@@ -161,6 +159,7 @@ $(function() {
       try {
         let answers = <ExamAnswers>JSON.parse(await files[0].text());
         loadExamAnswers(answers);
+        $("#exam-saver").modal("hide");
       }
       catch(err) {
         alert("Sorry, an error occurred while processing that file. Is it a properly formatted save file?");
@@ -190,6 +189,7 @@ $(function() {
     // sanity check that they actually downloaded something
     if ($(this).attr("href")) {
       onSaved();
+      $("#exam-saver").modal("hide");
     }
   });
 
