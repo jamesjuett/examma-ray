@@ -4,6 +4,12 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
 import { ResponseKind } from "./response/common";
+import hljs from 'highlight.js';
+import "highlight.js/styles/github.css";
+// import "highlight.js/styles/monokai.css";
+import cpp from 'highlight.js/lib/languages/cpp';
+hljs.registerLanguage('cpp', cpp);
+hljs.highlightAll();
 
 export type QuestionAnswerJSON = {
   id: string;

@@ -1,7 +1,7 @@
+import { encode } from "he";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
-import hljs from 'highlight.js';
 
 export type FITBResponse = {
   kind: "code_fitb";
@@ -10,6 +10,7 @@ export type FITBResponse = {
 };
 
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
+
 
 export function CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -25,11 +26,16 @@ export function CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FIT
   }
 }
 
-export function CODE_FITB_RENDERER(response: FITBResponse, question_id: string) {
-  return `<pre><code>${createFilledFITB(response.text, response.code_language)}</code></pre>`;
+export function CODE_FITB_RENDERER(response: FITBResponse) {
+  return `<pre><code class="language-${response.code_language}">${createFilledFITB(encode(response.text))}</code></pre>`;
 }
 
-
+export const CODE_FITB_HANDLER = {
+  parse: CODE_FITB_PARSER,
+  render: CODE_FITB_RENDERER,
+  extract: CODE_FITB_EXTRACTOR,
+  fill: CODE_FITB_FILLER
+};
 
 
 export function CODE_FITB_EXTRACTOR(responseElem: JQuery) {
@@ -59,7 +65,7 @@ export function CODE_FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
 
 const BLANK_PATTERN = /_+(BLANK|Blank|blank)_+/g;
 
-function createFilledFITB(text: string, code_language: string) {
+function createFilledFITB(text: string) {
 
   // count the number of underscores in each blank
   let blankLengths = text.match(BLANK_PATTERN)?.map(m => {
@@ -76,17 +82,17 @@ function createFilledFITB(text: string, code_language: string) {
   let blank_id = "laefiahslkefhalskdfjlksn";
   text = text.replace(BLANK_PATTERN, blank_id);
 
-  let highlightedText = hljs.highlight(code_language, text).value;
+  // let highlightedText = hljs.highlight(code_language, text).value;
 
   // Replace each of the "blank ids" in the highlighted text with
   // a corresponding input element of the right size based on the
   // number of underscores that were originally in the "__BLANK__"
   blankLengths.forEach((length) => {
-    highlightedText = highlightedText.replace(blank_id, `<input type="text" size="${length}" maxlength="${length}" class="examma-ray-fitb-blank-input"></input>`)
+    text = text.replace(blank_id, `<input type="text" size="${length}" maxlength="${length}" class="examma-ray-fitb-blank-input"></input>`)
   });
 
   // Replace "blank lines" with a custom spacer (I took this out for now since I like the literal spacing better)
   // highlightedText = highlightedText.replace(/\n\n/g, '\n<div class="examma-ray-fitb-spacer"></div>');
   
-  return highlightedText;
+  return text;
 }

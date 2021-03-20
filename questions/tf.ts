@@ -15,7 +15,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_time_complexity_2",
@@ -31,7 +31,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_time_complexity_3",
@@ -47,7 +47,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_time_complexity_4",
@@ -63,7 +63,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_time_complexity_5",
@@ -79,7 +79,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_containers_and_templates_1",
@@ -95,7 +95,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_containers_and_templates_2",
@@ -111,7 +111,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_containers_and_templates_3",
@@ -127,7 +127,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_containers_and_templates_4",
@@ -143,7 +143,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_representation_invariants_1",
@@ -159,7 +159,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_representation_invariants_2",
@@ -175,7 +175,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_representation_invariants_3",
@@ -191,7 +191,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_representation_invariants_4",
@@ -207,7 +207,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_representation_invariants_5",
@@ -223,7 +223,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_1",
@@ -239,7 +239,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2",
@@ -255,7 +255,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_3",
@@ -271,7 +271,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_4",
@@ -287,7 +287,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_5",
@@ -303,7 +303,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2_1",
@@ -319,7 +319,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2_2",
@@ -335,7 +335,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2_3",
@@ -351,7 +351,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2_4",
@@ -367,7 +367,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_dynamic_memory_2_5",
@@ -383,7 +383,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_managing_dynamic_memory_1",
@@ -399,7 +399,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_managing_dynamic_memory_2",
@@ -415,7 +415,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_managing_dynamic_memory_3",
@@ -431,7 +431,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_managing_dynamic_memory_4",
@@ -447,7 +447,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_managing_dynamic_memory_5",
@@ -463,7 +463,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_big_three_1",
@@ -479,7 +479,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_big_three_2",
@@ -495,7 +495,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_big_three_3",
@@ -511,7 +511,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_big_three_4",
@@ -527,7 +527,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   },
   {
     "id": "sp20_mc_big_three_5",
@@ -543,7 +543,7 @@ export const TF_QUESTIONS : QuestionSpecification[] = [
       "maxSelections": 1,
       "multiple": false
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   }
 ];
 

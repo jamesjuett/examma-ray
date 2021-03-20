@@ -45,7 +45,7 @@ export function MC_EXTRACTOR(responseElem: JQuery) {
 }
 
 export function MC_FILLER(elem: JQuery, submission: MCSubmission) {
-  // blank out all radio buttons
+  // blank out all selections
   let inputs = elem.find("input");
   inputs.prop("checked", false);
 
@@ -54,3 +54,10 @@ export function MC_FILLER(elem: JQuery, submission: MCSubmission) {
     submission.forEach(n => $(inputElems[n]).prop("checked", true));
   }
 }
+
+export const MC_HANDLER = {
+  parse: MC_PARSER,
+  render: MC_RENDERER,
+  extract: MC_EXTRACTOR,
+  fill: MC_FILLER
+};

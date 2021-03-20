@@ -1,14 +1,24 @@
+import { encode } from "he";
 import { assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 
+export type SASItem = {
+  kind: "item",
+  text: string,
+  forced?: boolean
+};
+
+export type SASGroup = {
+  kind: "group",
+  title?: string,
+  items: SASItem[]
+};
+
 export type SASResponse = {
   kind: "select_a_statement";
-  language: string;
-  lines: {
-    required: boolean;
-    text: string;
-  }[];
+  code_language: string;
+  content: (SASGroup | SASItem)[]
 };
 
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
@@ -28,14 +38,42 @@ export function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmis
 }
 
 export function SAS_RENDERER(response: SASResponse, question_id: string) {
-  return `TODO
-  `;
+  let item_index = 0;
+  return `<pre><code class="language-${response.code_language}">${response.content.map(
+    group => group.kind === "item"
+      ? renderSASItem(group, question_id, item_index++)
+      : group.items.map(item => renderSASItem(item, question_id, item_index++)).join("\n")
+  ).join("\n")}</code></pre>`;
+}
+
+function renderSASItem(item: SASItem, question_id: string, item_index: number) {
+  return `<input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">${encode(item.text)}</label>`;
+  // let highlightedText = hljs.highlight(code_language, item.text).value;
+  // return highlightedText;
 }
 
 export function SAS_EXTRACTOR(responseElem: JQuery) {
-  return assertFalse();
+  return responseElem.find("input:checked").map(function() {
+    return parseInt(<string>$(this).val());
+  }).get();
 }
 
 export function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
-  // TODO
+  
+  // blank out all selections (note this will blank required selections
+  // but it's presumed the input file will fill them in subsequently)
+  let inputs = elem.find("input");
+  inputs.prop("checked", false);
+
+  if (submission !== BLANK_SUBMISSION) {
+    let inputElems = inputs.get();
+    submission.forEach(n => $(inputElems[n]).prop("checked", true));
+  }
 }
+
+export const SAS_HANDLER = {
+  parse: SAS_PARSER,
+  render: SAS_RENDERER,
+  extract: SAS_EXTRACTOR,
+  fill: SAS_FILLER
+};

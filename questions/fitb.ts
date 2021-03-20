@@ -11,6 +11,7 @@ export const FITB_QUESTIONS : QuestionSpecification[] = [
       "code_language": "cpp",
       "text":
 `
+<input></input>
 int main() {
   ____BLANK____ x = _blank_;
   int y = 3;
@@ -22,7 +23,7 @@ int main() {
 }
 `
     },
-    "codeLanguage": "cpp"
+    "code_language": "cpp"
   }
 ];
 

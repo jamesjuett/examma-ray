@@ -3,7 +3,6 @@ import csv from 'csv-parser';
 import stringify from 'csv-stringify';
 import { createReadStream, writeFileSync, readFileSync, mkdir, mkdirSync, writeFile } from 'fs';
 import { encode, decode } from "he";
-import hljs from 'highlight.js';
 import $ from 'jquery';
 import 'colors';
 import chroma from 'chroma-js'
@@ -11,7 +10,7 @@ import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics
 import minimist from 'minimist';
 import { RandomSeed, create as createRNG } from 'random-seed';
 import { CLIPBOARD, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
-import { asMutable, assert, Mutable } from './util';
+import { asMutable, assert, assertFalse, Mutable } from './util';
 import { parse_submission, QuestionResponse, render_response, SubmissionType } from './response/responses';
 import { FITBSubmission } from './response/code_fitb';
 import { ResponseKind, BLANK_SUBMISSION } from './response/common';
@@ -39,7 +38,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   points: number,
   mk_description: string,
   response: QuestionResponse<QT>,
-  codeLanguage: string,
+  code_language: string,
   tags?: readonly string[]
 };
 
@@ -60,7 +59,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.id = spec.id;
     this.tags = spec.tags ?? [];
     this.pointsPossible = spec.points;
-    this.codeLanguage = spec.codeLanguage;
+    this.codeLanguage = spec.code_language;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
     this.html_description = mk2html(spec.mk_description);
@@ -443,53 +442,53 @@ export class StandardSASGrader implements Grader<"select_a_statement">{
     }
     
     let score = this.grade(question, submission);
+    return assertFalse();
+    // return `
+    // <table class="examma-ray-sas-diff table table-sm">
+    //   <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
+    //   ${this.rubric.map((rubricItem, i) => {
+    //     let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
+    //     let missing = rubricItem.required.filter(line => submission.indexOf(line) === -1);
+    //     let extra = rubricItem.prohibited.filter(line => submission.indexOf(line) !== -1);
+    //     let riScore = gradeSASRubricItem(rubricItem, submission);
 
-    return `
-    <table class="examma-ray-sas-diff table table-sm">
-      <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
-      ${this.rubric.map((rubricItem, i) => {
-        let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
-        let missing = rubricItem.required.filter(line => submission.indexOf(line) === -1);
-        let extra = rubricItem.prohibited.filter(line => submission.indexOf(line) !== -1);
-        let riScore = gradeSASRubricItem(rubricItem, submission);
-
-        // let details: string;
-        // if (missing.length === 0 && extra.length === 0) {
-        //   details = `Your code contains the correct conceptual components for this task, including these lines:<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-        // }
-        // else if (missing.length > 0) {
-          //   details = `Your code is missing these lines (or they are misplaced):<ul>${missing.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-          // }
-          // else {
-            //   details = `Your code contains these incorrect lines (or they are misplaced):<ul>${extra.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-            //   details += `<br />The correct solution needed this line:<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-            // }
+    //     // let details: string;
+    //     // if (missing.length === 0 && extra.length === 0) {
+    //     //   details = `Your code contains the correct conceptual components for this task, including these lines:<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //     // }
+    //     // else if (missing.length > 0) {
+    //       //   details = `Your code is missing these lines (or they are misplaced):<ul>${missing.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //       // }
+    //       // else {
+    //         //   details = `Your code contains these incorrect lines (or they are misplaced):<ul>${extra.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //         //   details += `<br />The correct solution needed this line:<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //         // }
             
-        // if (missing.length === 0 && extra.length === 0) {
-        // details = `Your code contains these lines:<ul>${rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1).map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-        // details += `<br />The solution should contain these lines (and these lines only):<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //     // if (missing.length === 0 && extra.length === 0) {
+    //     // details = `Your code contains these lines:<ul>${rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1).map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
+    //     // details += `<br />The solution should contain these lines (and these lines only):<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
 
-        let elem_id = `question-${question.id}-item-${i}`;
+    //     let elem_id = `question-${question.id}-item-${i}`;
 
-        return `
-        <tr>
-          <td class="examma-ray-sas-rubric-item">
-            <div id="${elem_id}" class="card rubric-item-card">
-              <div class="card-header">
-                <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} ${mk2html(rubricItem.title)}</a>
-              </div>
-              <div class="collapse" id="${elem_id}-details">
-                <div class="card-body">
-                  ${mk2html(rubricItem.description)}
-                </div>
-              </div>
-            </div>
-          </td>
-          <td>${included.length === 0 ? `<pre style="font-style: italic">${rubricItem.required.length === 0 ? CHECK_ICON : RED_X_ICON} (no selection)</pre>` : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${hljs.highlight(question.codeLanguage, question.response.lines[line].text.replace(/^\n+|\n+$/g, "")).value}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}</td>
-          <td>${rubricItem.required.map(line => `<pre><code>${hljs.highlight(question.codeLanguage, question.response.lines[line].text.replace(/^\n+|\n+$/g, "")).value}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
-        </tr>`
-      }).join("")}
-    </table>`;
+    //     return `
+    //     <tr>
+    //       <td class="examma-ray-sas-rubric-item">
+    //         <div id="${elem_id}" class="card rubric-item-card">
+    //           <div class="card-header">
+    //             <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} ${mk2html(rubricItem.title)}</a>
+    //           </div>
+    //           <div class="collapse" id="${elem_id}-details">
+    //             <div class="card-body">
+    //               ${mk2html(rubricItem.description)}
+    //             </div>
+    //           </div>
+    //         </div>
+    //       </td>
+    //       <td>${included.length === 0 ? `<pre style="font-style: italic">${rubricItem.required.length === 0 ? CHECK_ICON : RED_X_ICON} (no selection)</pre>` : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${hljs.highlight(question.codeLanguage, question.response.lines[line].text.replace(/^\n+|\n+$/g, "")).value}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}</td>
+    //       <td>${rubricItem.required.map(line => `<pre><code>${hljs.highlight(question.codeLanguage, question.response.lines[line].text.replace(/^\n+|\n+$/g, "")).value}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
+    //     </tr>`
+    //   }).join("")}
+    // </table>`;
   }
 
   public renderStats() {
@@ -609,7 +608,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">
               ${mk2html(rubricItem.description)}
-              <p>Your response for this blank was: <code style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
+              <p>Your response for this blank was: <code class="language-${question.response.code_language}" style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
               ${mk2html(explanation)}
             </div>
           </div>
@@ -621,8 +620,8 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
       <tr><th>Rubric</th><th>Your Code</th><th>Sample Solution</th></tr>
       <tr>
         <td>${rubricItemsHtml}</td>
-        <td><pre><code>${studentFilled}</code></pre></td>
-        <td><pre><code>${solutionFilled}</code></pre></td>
+        <td><pre><code class="language-${question.response.code_language}">${studentFilled}</code></pre></td>
+        <td><pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre></td>
       </tr>
     </table>`;
   }
@@ -644,7 +643,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => 
           `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${hljs.highlight(question.codeLanguage, s.sub).value}</code>"</li>`).join("")}
+            ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code class="language-${question.response.code_language}"style="white-space: pre">${s.sub}</code>"</li>`).join("")}
           </td>`
         ).join("")}
       </tr>
@@ -693,7 +692,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
 
     let solutionFilled = this.createFilledFITB(question.codeLanguage, blankBars, question.response.text, undefined);
-    return `<pre><code>${solutionFilled}</code></pre>`;
+    return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
   }
 
   private createFilledFITB(codeLanguage: string, submission: string[], data: string, scores: number[] | undefined) {
@@ -723,7 +722,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     // Trime whitespace that might otherwise mess up spacing around the rendered rubric
     data = data.trim();
 
-    let formattedData = hljs.highlight(codeLanguage, data).value;
+    let formattedData = data;//hljs.highlight(codeLanguage, data).value;
     ids.forEach((id, i) => {
       let icon = scores ? (scores[i] === this.rubric[i].points ? CHECK_ICON : scores[i] === 0 ? RED_X_ICON : YELLOW_X_ICON) + " " : "";
       formattedData = formattedData.replace(id, `<span class="examma-ray-fitb-blank">${icon}${submission[i]}</span>`)
@@ -1320,8 +1319,6 @@ export function writeAGFile(filename: string, body: string) {
     <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha512-PEsccDx9jqX6Dh4wZDCnWMaIO3gAaU0j46W//sSqQhUQxky6/eHZyeB3NrXD2xsyugAKd4KPiDANkcuoEa2JuA==" crossorigin="anonymous"></script>
     <script src="js/frontend.js"></script>
     <script>
@@ -1462,6 +1459,10 @@ export function writeAGFile(filename: string, body: string) {
 
       .examma-ray-section-contents td {
         vertical-align: top;
+      }
+
+      .examma-ray-instructions {
+        font-size: 85%;
       }
 
       .examma-ray-section-description {
@@ -1629,6 +1630,25 @@ export function writeAGFile(filename: string, body: string) {
 
       .btn:disabled {
         cursor: not-allowed;
+      }
+
+      .sas-select-input {
+        vertical-align: middle;
+        margin-bottom: 0.5em;
+      }
+
+      .sas-select-label {
+        vertical-align: middle;
+        opacity: 0.8;
+        padding-right: 1em;
+        border: solid 1px transparent;
+      }
+
+      .sas-select-input:checked + .sas-select-label {
+        border: solid 1px rgba(0,0,255,0.3);
+        background-color: rgba(0,0,255,0.1);
+        border-radius: 2px;
+        opacity: 1;
       }
 
 
