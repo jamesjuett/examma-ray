@@ -10,11 +10,11 @@ export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
-export type SubmissionType<QT extends QuestionKind> =
-  QT extends "multiple_choice" ? MCSubmission :
-  QT extends "code_fitb" ? FITBSubmission :
-  QT extends "select_a_statement" ? SASSubmission :
-  never;
+export type SubmissionType<QT extends QuestionKind> = {
+  "multiple_choice" : MCSubmission,
+  "code_fitb" : FITBSubmission,
+  "select_a_statement" : SASSubmission
+}[QT];
 
 function isNumericArray(x: any) : x is readonly number[] {
     return Array.isArray(x) && x.every(elem => typeof elem === "number");

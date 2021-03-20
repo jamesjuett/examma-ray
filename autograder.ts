@@ -12,7 +12,7 @@ import chroma from 'chroma-js'
 import {average, max, mean, min, standardDeviation, sum} from 'simple-statistics'
 import minimist from 'minimist';
 import { RandomSeed, create as createRNG } from 'random-seed';
-import { CLIPBOARD, FILE_DOWNLOAD } from './icons';
+import { CLIPBOARD, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { BLANK_SUBMISSION, FITBSubmission, MCSubmission, parse_submission, QuestionKind, SASSubmission, SubmissionType } from './parsers';
 import { asMutable, assert, Mutable } from './util';
 
@@ -1021,8 +1021,8 @@ export class AssignedExam {
   public renderSaverButton() {
     return `
       <div class="examma-ray-exam-saver-status">
-        <div><button class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Download Answers</button></div>
-        <div class="examma-ray-exam-saver-last-download" style="margin: 5px;">Last downloaded 2 minutes ago</div>
+        <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver"></button></div>
+        <div id="examma-ray-exam-saver-last-save" style="margin: 5px; visibility: hidden;"></div>
       </div>`
   }
 
@@ -1730,9 +1730,13 @@ export function writeAGFile(filename: string, body: string) {
             </div>
             <div class="modal-body" style="text-align: center;">
               <div id="exam-saver-download-status"></div>
-              <a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a>
-              <input id="exam-saver-file-input" type="file"></a>
-              <button id="test-upload">test</button>
+              <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
+              <br />
+              <div>Or, you may restore answers you previously saved to a file. <b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+              <div>
+                <button id="exam-saver-load-button" class="btn btn-primary disabled" disabled>${FILE_UPLOAD} Load Answers</button>
+                <input id="exam-saver-file-input" type="file"></a>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
-import { Question } from "./autograder";
-import { CLIPBOARD, CLIPBOARD_CHECK } from "./icons";
+import { CLIPBOARD, CLIPBOARD_CHECK, FILE_CHECK, FILE_DOWNLOAD } from "./icons";
 import { BLANK_SUBMISSION, FITBSubmission, MCSubmission, parse_submission, QuestionKind, SASSubmission, SubmissionType } from "./parsers";
 import { assertFalse } from "./util";
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
 
 const UNSAVED_CHANGES = `${CLIPBOARD} <span style="vertical-align: middle;">Mark as saved</span>`;
 const SECTION_UNSAVED_CHANGES = `${CLIPBOARD} <span style="vertical-align: middle;">Unsaved Changes (Click Here)</span>`;
@@ -78,18 +79,9 @@ function loadQuestionAnswer(qa: QuestionAnswer) {
 
 function loadExamAnswers(answers: ExamAnswers) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
-}
 
-function prepareAnswersDownloadFile() {
-  let blob = new Blob([JSON.stringify(extractExamAnswers())], {type: "application/json"});
-  let url  = URL.createObjectURL(blob);
-
-  $("#exam-saver-download-link")
-    .attr("download", "exam-answers.json")
-    .attr("href", url)
-    .removeClass("disabled");
-
-  $("#exam-saver-download-status").html("Click here to download your answers.");
+  // Consider work to be saved after loading
+  onSaved();
 }
 
 function updateExamSaverModal() {
@@ -99,77 +91,114 @@ function updateExamSaverModal() {
     .removeAttr("download")
     .addClass("disabled");
 
-  setTimeout(prepareAnswersDownloadFile);
+  // Timeout so that the "Preparing..." message actually gets shown before we do the work
+  setTimeout(() => {
+    let blob = new Blob([JSON.stringify(extractExamAnswers())], {type: "application/json"});
+    let url  = URL.createObjectURL(blob);
+
+    $("#exam-saver-download-link")
+      .attr("download", "exam-answers.json")
+      .attr("href", url)
+      .removeClass("disabled");
+
+    $("#exam-saver-download-status").html("Click here to download your answers.");
+  });
+}
+
+
+TimeAgo.addDefaultLocale(en);
+const timeAgo = new TimeAgo('en-US');
+let lastSavedTime = Date.now();
+
+function updateTimeSaved() {
+  $("#examma-ray-exam-saver-last-save")
+    .html(`Last saved ${timeAgo.format(lastSavedTime, 'round')}.`);
+}
+
+function onUnsavedChanges() {
+  $("#exam-saver-button")
+    .html(`${FILE_DOWNLOAD} Download Answers`)
+    .removeClass("btn-success")
+    .addClass("btn-warning");
+}
+
+function onSaved() {
+  $("#exam-saver-button")
+    .html(`${FILE_CHECK} Download Answers`)
+    .removeClass("btn-warning")
+    .addClass("btn-success");
+
+  lastSavedTime = Date.now();
+  $("#examma-ray-exam-saver-last-save").css("visibility", "visible");
+  updateTimeSaved();
 }
 
 $(function() {
 
-  $("#test-upload").on("click", async () => {
-    let files = (<HTMLInputElement>$("#exam-saver-file-input")[0]).files;
+  let fileInput = $("#exam-saver-file-input");
+  let loadButton = $("#exam-saver-load-button");
+
+  // Enable/disable the "load answers" button based on whether a file is selected
+  fileInput.on("change", function() {
+    let files = (<HTMLInputElement>this).files;
     if (files) {
-      let answers = <ExamAnswers>JSON.parse(await files[0].text());
-      // TODO add check if not properly formatted
-      loadExamAnswers(answers);
+      loadButton.prop("disabled", false).removeClass("disabled");
+    }
+    else {
+      loadButton.prop("disabled", true).addClass("disabled");
+    }
+  });
+
+
+  // Handle clicks on the "load answers" button
+  loadButton.on("click", async () => {
+    let files = (<HTMLInputElement>fileInput[0]).files;
+
+    // only do something if there was a file selected
+    // note - there is logic elsewhere to disable the button
+    // if there is no file selected, so this is just here for completeness
+    if (files) {
+      try {
+        let answers = <ExamAnswers>JSON.parse(await files[0].text());
+        loadExamAnswers(answers);
+      }
+      catch(err) {
+        alert("Sorry, an error occurred while processing that file. Is it a properly formatted save file?");
+        // TODO add a more rigorous check if the file is not properly formatted than just checking for exceptions
+      }
     }
   })
 
-  // Set up exam saver modal
+
+  // When the exam saver modal is shown, generate the data a potential
+  // download of all current answers
   $('#exam-saver').on('shown.bs.modal', function () {
     updateExamSaverModal();
-  })
-
-
-  setButtonStatus($(".examma-ray-question-saver-button"), true, SAVED_CHANGES);
-    
-  $(".examma-ray-section").each(function() {
-    let section = $(this);
-    let section_id = section.attr("id");
-
-    let section_saver = $(`#${section_id}-saver`);
-    let section_saver_button = $(`#${section_id}-saver-button`);
-
-    let statuses : boolean[] = [];
-
-    // Initially set button to saved
-    setButtonStatus($(`#${section_id}-saver-button`), true, SECTION_SAVED_CHANGES);
-    
-    // section.find(".examma-ray-question").each(function(i){
-    //   statuses.push(true);
-    //   let question = $(this);
-    //   let question_id = $(this).attr("id");
-    //   let response = question.find(".examma-ray-question-response");
-
-    //   question.find(":input").on("change", function() {
-
-    //     // Update corresponding save text
-    //     $(`#${question_id}-saver-text`).html(extract_response(response.data("response-kind"), response));
-
-
-    //     // Update corresponding question save button to have unsaved changes
-    //     setButtonStatus($(`#${question_id}-saver-button`), false, UNSAVED_CHANGES);
-    //     statuses[i] = false;
-
-    //     // Update save button for whole section to have unsaved changes
-    //     setButtonStatus($(`#${section_id}-saver-button`), false, SECTION_UNSAVED_CHANGES);
-    //   });
-
-    // });
-
-    // section_saver.find(".examma-ray-question-saver-button").each(function(i) {
-    //   $(this).on("click", function() {
-    //     setButtonStatus($(this), true, SAVED_CHANGES);
-    //     statuses[i] = true;
-        
-    //     // Check section to see if all are saved
-    //     if (statuses.every(status => status)) {
-    //       setButtonStatus(section_saver_button, true, SECTION_SAVED_CHANGES);
-    //     }
-    //   });
-    // });
-    
-
-
   });
+  
+
+  // Any change to an input element within a question response
+  // triggers unsaved changes
+  // https://api.jquery.com/input-selector/
+  $(".examma-ray-question-response :input").on("change", function() {
+    onUnsavedChanges();
+  });
+
+  // A click on the download link indicates all work has been saved
+  $("#exam-saver-download-link").on("click", function(this: HTMLElement) {
+
+    // sanity check that they actually downloaded something
+    if ($(this).attr("href")) {
+      onSaved();
+    }
+  });
+
+  // Interval to update time saved ago message every 10 seconds
+  setInterval(updateTimeSaved, 10000);
+
+
+  // Consider work to be saved when page is loaded
+  onSaved();
 });
 
 
