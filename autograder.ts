@@ -1000,6 +1000,8 @@ export type SectionSpecification = {
 
 export function RANDOM_BY_TAG(tag: string, n: number) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    let qs = exam.getQuestionsByTag(tag);
+    assert(n <= qs.length, `Error - cannot choose ${n} questions for tag "${tag}" that only has ${qs.length} associated questions.`);
     return rand.chooseN(exam.getQuestionsByTag(tag), n);
   }
 }

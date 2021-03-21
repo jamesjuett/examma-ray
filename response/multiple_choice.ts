@@ -6,7 +6,6 @@ export type MCResponse = {
   kind: "multiple_choice";
   multiple: boolean;
   choices: string[];
-  maxSelections: number;
 };
 
 export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
