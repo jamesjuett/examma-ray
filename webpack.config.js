@@ -1,34 +1,21 @@
 const path = require('path');
 
 module.exports = {
-  // mode: "development",
+  mode: "production",
   entry: {
     'frontend': './frontend',
   },
   output: {
-    path: path.join(__dirname, '/out/students/js/'),
+    path: path.join(__dirname, '/out/assigned/exams/js/'),
     filename: '[name].js',
     libraryTarget: 'umd',
     library: 'ExammaRay',
     umdNamedDefine: true
   },
   optimization: {
-    minimize: false
+    minimize: false,
   },
   devtool: "source-map",
-  // optimization: {
-  //   minimizer: [
-  //     new TerserPlugin({
-  //       cache: true,
-  //       parallel: true,
-  //       sourceMap: true, // Must be set to true if using source-maps in production
-  //       terserOptions: {
-  //         // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
-  //       },
-  //       include: /\.min\.js$/,
-  //     }),
-  //   ]
-  // },
   module: {
     rules: [
       {

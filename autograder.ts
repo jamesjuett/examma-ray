@@ -1,6 +1,3 @@
-
-import csv from 'csv-parser';
-import stringify from 'csv-stringify';
 import { createReadStream, writeFileSync, readFileSync, mkdir, mkdirSync, writeFile } from 'fs';
 import { encode, decode } from "he";
 import $ from 'jquery';
@@ -17,13 +14,13 @@ import { ResponseKind, BLANK_SUBMISSION } from './response/common';
 import { MCSubmission } from './response/multiple_choice';
 import { SASSubmission } from './response/select_a_statement';
 import { mk2html } from './render';
+import { ExamAnswersJSON } from './common';
 
 
 export enum RenderMode {
   ORIGINAL = "ORIGINAL",
   GRADED = "GRADED",
 }
-
 
 
 
@@ -71,7 +68,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 };
 
-export interface Student {
+export interface StudentInfo {
   readonly uniqname: string;
   readonly name: string;
 }
@@ -786,7 +783,7 @@ export class Section {
     // }
   }
 
-  public buildRandomizedQuestions(exam: Exam, student: Student, rand: Randomizer) {
+  public buildRandomizedQuestions(exam: Exam, student: StudentInfo, rand: Randomizer) {
     if (Array.isArray(this.builder)) {
       return this.builder.flatMap(builder => builder(exam, student, rand))
     }
@@ -872,7 +869,7 @@ export class AssignedExam {
 
   public constructor(
     public readonly exam: Exam,
-    public readonly student: Student,
+    public readonly student: StudentInfo,
     public readonly assignedSections: readonly AssignedSection[]
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
@@ -933,6 +930,22 @@ export class AssignedExam {
 
 }
 
+function createBlankAnswers(ex: AssignedExam) : ExamAnswersJSON {
+  return {
+    exam_id: ex.exam.id,
+    student: ex.student,
+    timestamp: Date.now(),
+    sections: ex.assignedSections.map(s => ({
+      id: s.section.id,
+      questions: s.assignedQuestions.map(q => ({
+        id: q.question.id,
+        kind: q.question.kind,
+        response: ""
+      }))
+    }))
+  };
+}
+
 export class Randomizer {
 
   private rng: RandomSeed;
@@ -968,14 +981,14 @@ export class Randomizer {
 
 export const DEFAULT_SAVER_MESSAGE_CANVAS = `
   Click the button below to save a copy of your answers as a \`.json\`
-  file. You may save as many times as you like. If something bad happens,
-  you can also restore answers from a previously saved file.
+  file. You may save as many times as you like. You can also restore answers
+  from a previously saved file.
   
-  **Important!** You MUST submit your answers \`.json\` file to Canvas
+  **Important!** You MUST submit your answers \`.json\` file to **Canvas**
   BEFORE exam time is up. This webpage does not save anything to anywhere.
-  It is up to you to download your answer file and turn it in on Canvas.`;
+  It is up to you to download your answer file and turn it in on **Canvas**.`;
 
-export type SectionBuilder = (exam: Exam, student: Student, rand: Randomizer) => readonly Question[];
+export type SectionBuilder = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
 
 export type SectionSpecification = {
   readonly id: string;
@@ -986,13 +999,13 @@ export type SectionSpecification = {
 }
 
 export function RANDOM_BY_TAG(tag: string, n: number) {
-  return (exam: Exam, student: Student, rand: Randomizer) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     return rand.chooseN(exam.getQuestionsByTag(tag), n);
   }
 }
 
 export function BY_ID(id: string) {
-  return (exam: Exam, student: Student, rand: Randomizer) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     let q = exam.getQuestionById(id);
     assert(q, `No question with ID: ${id}.`);
     return [q];
@@ -1025,8 +1038,6 @@ export class Exam {
   public readonly sections: Section[] = [];
 
   public readonly pointsPossible: number;
-  public readonly submissions: AssignedExam[] = [];
-  public readonly submissionsByUniqname: {[index:string]: AssignedExam | undefined} = {};
 
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
@@ -1083,26 +1094,11 @@ export class Exam {
     this.sections.push(section);
   }
 
-  public assignRandomizedExam(student: Student) {
-    assert(!this.submissionsByUniqname[student.uniqname], "Student is already assigned an exam.");
-    let ae = new AssignedExam(this, student,
-      this.sections.map((section, s_i) => new AssignedSection(
-        section, s_i,
-        section.buildRandomizedQuestions(this, student, new Randomizer(student.uniqname + "_" + section.id)).map(
-          (question, q_i) => new AssignedQuestion(this, question, s_i, q_i, "")
-        )
-      ))
-    );
-    this.submissions.push(ae);
-    this.submissionsByUniqname[student.uniqname] = ae;
-    return ae;
-  }
-
   public addAnnouncement(announcement_mk: string) {
     asMutable(this.html_announcements).push(mk2html(announcement_mk));
   }
 
-  public renderHeader(student: Student) {
+  public renderHeader(student: StudentInfo) {
     return `
       <div class="examma-ray-header">
         <div class="text-center mb-3 border-bottom">
@@ -1270,22 +1266,20 @@ export class Exam {
 
   // }
 
-  public gradeAllStudents() {
-    this.submissions.forEach(s => s.gradeAll(this.graderMap));
+  public createRandomizedExam(student: StudentInfo) {
+    return new AssignedExam(this, student,
+      this.sections.map((section, s_i) => new AssignedSection(
+        section, s_i,
+        section.buildRandomizedQuestions(this, student, new Randomizer(student.uniqname + "_" + section.id)).map(
+          (question, q_i) => new AssignedQuestion(this, question, s_i, q_i, "")
+        )
+      ))
+    );
   }
 
-  public render(mode: RenderMode) {
-    mkdirSync("out/students/", {recursive: true});
-    [...this.submissions].sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
-      // .filter(s => s.pointsEarned)
-      .forEach((ex, i, arr) => {
-        console.log(`${i}/${arr.length} Rendering full exam report for: ${ex.student.uniqname}...`);
-
-        
-        writeAGFile(`out/students/${ex.student.uniqname}.html`, ex.render(mode));
-      });
-
-  }
+  // public gradeAllStudents() {
+  //   this.submissions.forEach(s => s.gradeAll(this.graderMap));
+  // }
 
   // public writeScoresCsv() {
   //   mkdirSync("out/", {recursive: true});
@@ -1313,7 +1307,39 @@ export class Exam {
 
 }
 
-export function writeAGFile(filename: string, body: string) {
+export class ExamGenerator {
+
+  public readonly exam: Exam;
+  public readonly assignedExams: AssignedExam[] = [];
+  public readonly assignedExamsByUniqname: {[index:string]: AssignedExam | undefined} = {};
+
+  public constructor(exam: Exam) {
+    this.exam = exam;
+  }
+
+  public assignRandomizedExam(student: StudentInfo) {
+    let ae = this.exam.createRandomizedExam(student);
+    this.assignedExams.push(ae);
+    this.assignedExamsByUniqname[student.uniqname] = ae;
+    return ae;
+  }
+
+  public writeAll(mode: RenderMode) {
+    mkdirSync("out/assigned/exams/", {recursive: true});
+    mkdirSync("out/assigned/manifests/", {recursive: true});
+    [...this.assignedExams]
+      .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
+      .forEach((ex, i, arr) => {
+        console.log(`${i}/${arr.length} Saving assigned exam manifest for: ${ex.student.uniqname}...`);
+        writeFileSync(`out/assigned/manifests/${ex.student.uniqname}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
+        console.log(`${i}/${arr.length} Rendering assigned exam html for: ${ex.student.uniqname}...`);
+        writeAGFile(ex, `out/assigned/exams/${ex.student.uniqname}.html`, ex.render(mode));
+      });
+
+  }
+}
+
+export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
   writeFileSync(filename, `
       <!DOCTYPE html>
     <html>
@@ -1661,7 +1687,7 @@ export function writeAGFile(filename: string, body: string) {
 
 
       <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">Answers File</h5>
@@ -1686,16 +1712,13 @@ export function writeAGFile(filename: string, body: string) {
 
 
       <div id="exam-welcome-restored-modal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Welcome Back!</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
+              <h5 class="modal-title">${ex.exam.title}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">This page was reloaded, and we've restored your answers from an autosave. (Note that regardless of this autosave, you MUST still download and submit your answers file separately before the exam is done.)</div>
+              <div class="alert alert-info">This page was reloaded, and we've restored your answers from a local backup.</div>
               <div>
                 <button class="btn btn-success" data-dismiss="modal">${FILE_CHECK} OK</button>
               </div>
@@ -1705,22 +1728,18 @@ export function writeAGFile(filename: string, body: string) {
       </div>
 
 
-      <div id="exam-welcome-normal-modal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+      <div id="exam-welcome-normal-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Welcome!</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
+              <h5 class="modal-title">${ex.exam.title}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-            <div class="alert alert-info">Make sure to read the exam instructions carefully.</div>
-            <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However</b>, we will b>not</b> grade anything here. Instead, you must click the button at the bottom-left to download an "answers file", which you should then submit to Canvas <b>before</b> the exam ends.</div>
-            <div class="alert alert-info">This page attempts to autosave your work to your browser's local storage as you work, and will try to restore those answers if something goes wrong (e.g. your computer crashes, you accidentally close the page, etc.). You MUST still download your answers file and submit to Canvas to receive credit.</div>
-            <div class="alert alert-warning"><b>Warning!</b> - autosave will not work properly if you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled.</div>
+            <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
+            <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this likely won't work.</div>
             <div>
-              <button class="btn btn-warning" data-dismiss="modal">I Understand</button>
+              <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
             </div>
             </div>
           </div>
@@ -1728,19 +1747,18 @@ export function writeAGFile(filename: string, body: string) {
       </div>
 
 
-      <div id="exam-welcome-no-autosave-modal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+      <div id="exam-welcome-no-autosave-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Autosave Not Available</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
+              <h5 class="modal-title">${ex.exam.title}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-danger">It appears your browser will not support autosaving your answers to local storage (e.g. in case of a computer crash or accidentally closing your browser).<br /><br />This might be because you're in private/incognito browsing mode, or could be caused by some privacy extensions or add-ons. We suggest switching out of private mode, disabling privacy add-ons, or trying a different web browser.<br /><br />However, you may opt to continue to the exam anyway.</div>
+              <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
+              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
               <div>
-                <button class="btn btn-warning" data-dismiss="modal">I Understand</button>
+                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import Papa from "papaparse";
-import { BY_ID, Exam, Question, RANDOM_BY_TAG, RenderMode, Section } from "./autograder";
+import { BY_ID, Exam, ExamGenerator, Question, RANDOM_BY_TAG, RenderMode, Section } from "./autograder";
 import { TF_QUESTIONS } from "./questions/tf";
 import { FITB_QUESTIONS } from "./questions/fitb";
 import { SAS_QUESTIONS } from './questions/sas';
@@ -62,7 +62,7 @@ exam.addSection(new Section({
 
 let students = Papa.parse<{uniqname: string, name: string}>(readFileSync("roster/roster.csv", "utf8"), {header: true}).data;
 
-// Run autograder (what is run is configured by command line args)
-students.forEach(student => exam.assignRandomizedExam(student));
+let gen = new ExamGenerator(exam);
+students.forEach(student => gen.assignRandomizedExam(student));
 
-exam.render(RenderMode.ORIGINAL);
+gen.writeAll(RenderMode.ORIGINAL);

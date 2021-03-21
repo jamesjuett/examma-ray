@@ -3,48 +3,16 @@ import { assertFalse } from "./util";
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
-import { ResponseKind } from "./response/common";
-import hljs from 'highlight.js';
+import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
+import hljs from 'highlight.js/lib/core'
 import "highlight.js/styles/github.css";
-// import "highlight.js/styles/monokai.css";
 import cpp from 'highlight.js/lib/languages/cpp';
 import storageAvailable from "storage-available";
+import { ExamAnswersJSON, QuestionAnswerJSON, SectionAnswersJSON } from "./common";
 hljs.registerLanguage('cpp', cpp);
 hljs.highlightAll();
 
-export type QuestionAnswerJSON = {
-  id: string;
-  kind: ResponseKind;
-  response: string;
-};
 
-export type SectionAnswersJSON = {
-  id: string;
-  questions: QuestionAnswerJSON[];
-};
-
-export type ExamAnswersJSON = {
-  exam_id: string;
-  uniqname: string;
-  name: string;
-  timestamp: number;
-  sections: SectionAnswersJSON[];
-}
-
-function setButtonStatus(button: JQuery, isSaved: boolean, html: string) {
-  if (isSaved) {
-    button
-      .html(html)
-      .removeClass("btn-warning")
-      .addClass("btn-success");
-  }
-  else {
-    button
-      .html(html)
-      .removeClass("btn-success")
-      .addClass("btn-warning");
-  }
-}
 
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswerJSON {
   let question = $(this);
@@ -68,11 +36,17 @@ function extractExamAnswers() : ExamAnswersJSON {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
-    uniqname: examElem.data("uniqname"),
-    name: examElem.data("name"),
+    student: {
+      uniqname: examElem.data("uniqname"),
+      name: examElem.data("name")
+    },
     timestamp: Date.now(),
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
+}
+
+function isBlankAnswers(answers: ExamAnswersJSON) {
+  return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
 function loadQuestionAnswer(qa: QuestionAnswerJSON) {
@@ -98,7 +72,7 @@ function updateExamSaverModal() {
 
   // Timeout so that the "Preparing..." message actually gets shown before we do the work
   setTimeout(() => {
-    let blob = new Blob([JSON.stringify(extractExamAnswers())], {type: "application/json"});
+    let blob = new Blob([JSON.stringify(extractExamAnswers(), null, 2)], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
@@ -110,11 +84,21 @@ function updateExamSaverModal() {
   });
 }
 
+function localStorageExamKey(examId: string, uniqname: string) {
+  return examId + "-" + uniqname;
+}
+
 function autosaveToLocalStorage() {
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
+
     let answers = extractExamAnswers();
-    localStorage.setItem(answers.exam_id, JSON.stringify(answers));
+
+    // Only save if there is something to save
+    if (!isBlankAnswers(answers)) {
+      localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname), JSON.stringify(answers, null, 2));
+    }
+
     console.log("autosave complete!");
   }
 }
@@ -150,10 +134,19 @@ function onSaved() {
   updateTimeSaved();
 }
 
-$(function() {
+function main() {
+
+  setupSaverModal();
+
+  setupChangeListeners();
   
-  let examElem = $("#examma-ray-exam");
-  let examId = examElem.data("exam-id");
+  startExam();
+
+}
+
+$(main);
+
+function setupSaverModal() {
 
   let fileInput = $("#exam-saver-file-input");
   let loadButton = $("#exam-saver-load-button");
@@ -169,7 +162,6 @@ $(function() {
     }
   });
 
-
   // Handle clicks on the "load answers" button
   loadButton.on("click", async () => {
     let files = (<HTMLInputElement>fileInput[0]).files;
@@ -181,8 +173,13 @@ $(function() {
       try {
         let answers = <ExamAnswersJSON>JSON.parse(await files[0].text());
         if (answers.exam_id === $("#examma-ray-exam").data("exam-id")) {
-          loadExamAnswers(answers);
-          $("#exam-saver").modal("hide");
+          if (!isBlankAnswers(answers)) {
+            loadExamAnswers(answers);
+            $("#exam-saver").modal("hide");
+          }
+          else {
+            alert("Error - That answers file appears to be blank.")
+          }
         }
         else {
           alert("Error - That answers file appears to be for a different exam.");
@@ -195,14 +192,24 @@ $(function() {
     }
   })
 
-
   // When the exam saver modal is shown, generate the data a potential
   // download of all current answers
   $('#exam-saver').on('shown.bs.modal', function () {
     updateExamSaverModal();
   });
-  
 
+  // A click on the download link indicates all work has been saved
+  $("#exam-saver-download-link").on("click", function(this: HTMLElement) {
+
+    // sanity check that they actually downloaded something
+    if ($(this).attr("href")) {
+      onSaved();
+      $("#exam-saver").modal("hide");
+    }
+  });
+}
+
+function setupChangeListeners() {
   // Any change to an input element within a question response
   // triggers unsaved changes
   // https://api.jquery.com/input-selector/
@@ -214,27 +221,17 @@ $(function() {
   $("input:text, textarea").on("keyup", function() {
     setTimeout(onUnsavedChanges, 500); // Timeout is to prevent this from interfering with clicking the save button
   });
+}
+
+function startExam() {
   
-
-  // A click on the download link indicates all work has been saved
-  $("#exam-saver-download-link").on("click", function(this: HTMLElement) {
-
-    // sanity check that they actually downloaded something
-    if ($(this).attr("href")) {
-      onSaved();
-      $("#exam-saver").modal("hide");
-    }
-  });
-
-  // Interval to update time saved ago message every 10 seconds
-  setInterval(updateTimeSaved, 10000);
-
-  // Consider work to be saved when page is loaded
-  onSaved();
-
+  let examElem = $("#examma-ray-exam");
+  let examId = examElem.data("exam-id");
+  let uniqname = examElem.data("uniqname");
+  
   // Check whether an autosave exists in local storage
   if (storageAvailable("localStorage")) {
-    let autosavedAnswers = localStorage.getItem(examId);
+    let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname));
     if (autosavedAnswers) {
       loadExamAnswers(<ExamAnswersJSON>JSON.parse(autosavedAnswers));
       $("#exam-welcome-restored-modal").modal("show");
@@ -242,15 +239,20 @@ $(function() {
     else {
       $("#exam-welcome-normal-modal").modal("show");
     }
-      
+
     // Interval to autosave to local storage every 5 seconds
-    setInterval(autosaveToLocalStorage, 20000);
+    setInterval(autosaveToLocalStorage, 5000);
   }
   else {
     $("#exam-welcome-no-autosave-modal").modal("show");
   }
-  
-});
+
+  // Consider work to be saved when exam is started
+  onSaved();
+
+  // Interval to update time saved ago message every 10 seconds
+  setInterval(updateTimeSaved, 10000);
+}
 
 
 
