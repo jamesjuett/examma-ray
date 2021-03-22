@@ -38,7 +38,7 @@ export function CODE_EDITOR_RENDERER(response: CodeEditorResponse) {
           </label>
         </div>
       </div>
-      <div class="examma-ray-codemirror"></div>
+      <div class="examma-ray-codemirror">${response.starter}</div>
     </div>
   `;
 }

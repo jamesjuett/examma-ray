@@ -19,11 +19,11 @@ export const S2_2_min_queue = <SectionSpecification>{
     {
       "id": "sp20_2_2_part2",
       "tags": [],
-      "points": 3,
-      "mk_description": "Test",
+      "points": 6,
+      "mk_description": "Write an implementation of the `push()` function. Your implementation must put the new element in the proper location to ensure that the sorting invariant is maintained.",
       "response": {
         "kind": "code_editor",
-        "starter": "int main() {\n  cout << test << endl;\n}"
+        "starter": "// REQUIRES: the MinQueue is not full\n// EFFECTS: Adds 'item' to the MinQueue\nvoid push(const T &item) {\n\n\n}"
       }
     }
   ]

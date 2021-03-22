@@ -19,11 +19,11 @@ export const S2_1_min_queue = <SectionSpecification>{
     {
       "id": "sp20_2_1_part2",
       "tags": [],
-      "points": 3,
-      "mk_description": "Test",
+      "points": 6,
+      "mk_description": "Write an implementation of the `popMin()` function. (You may call `min()` as a helper function if you find it useful, although it is not required to complete the problem.)",
       "response": {
         "kind": "code_editor",
-        "starter": "int main() {\n  cout << test << endl;\n}"
+        "starter": "// REQUIRES: the MinQueue is not empty\n// EFFECTS: Removes the minimum item from the MinQueue\nvoid popMin() {\n\n\n}"
       }
     }
   ]

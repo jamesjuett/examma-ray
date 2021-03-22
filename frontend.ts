@@ -241,6 +241,8 @@ function setupCodeEditors() {
   $(".examma-ray-code-editor").each(function() {
 
     let cmElem = $(this).find(".examma-ray-codemirror");
+    let starterCode = cmElem.html();
+    cmElem.html("");
     let cm = CodeMirror(cmElem[0], {
       mode: "text/x-c++src",
       theme: "default",
@@ -249,7 +251,8 @@ function setupCodeEditors() {
       keyMap: "sublime",
       extraKeys: {
           "Ctrl-/" : (editor) => editor.execCommand('toggleComment')
-      }
+      },
+      value: starterCode
     });
 
     cmElem.data("examma-ray-codemirror", cm);
