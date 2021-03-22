@@ -1,25 +1,29 @@
 import { Question } from "../autograder";
-import { CODE_FITB_EXTRACTOR, CODE_FITB_FILLER, CODE_FITB_HANDLER, CODE_FITB_PARSER, CODE_FITB_RENDERER, FITBResponse, FITBSubmission } from "./fitb";
+import { FITB_EXTRACTOR, FITB_FILLER, CODE_FITB_HANDLER, FITB_PARSER, FITB_RENDERER, FITBResponse, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MC_EXTRACTOR, MC_FILLER, MC_PARSER, MC_RENDERER, MCResponse, MCSubmission, MC_HANDLER } from "./multiple_choice";
 import { SAS_EXTRACTOR, SAS_FILLER, SAS_PARSER, SAS_RENDERER, SASResponse, SASSubmission, SAS_HANDLER } from "./select_a_statement";
+import { CodeEditorResponse, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 
 export type QuestionResponse<QT extends ResponseKind> = {
   "multiple_choice" : MCResponse,
   "fitb" : FITBResponse,
-  "select_a_statement" : SASResponse
+  "select_a_statement" : SASResponse,
+  "code_editor": CodeEditorResponse
 }[QT];
 
 export type SubmissionType<QT extends ResponseKind> = {
   "multiple_choice" : MCSubmission,
   "fitb" : FITBSubmission,
-  "select_a_statement" : SASSubmission
+  "select_a_statement" : SASSubmission,
+  "code_editor": CodeEditorSubmission
 }[QT];
 
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
   render: (response: QuestionResponse<QT>, question_id: string) => string,
+  activate?: () => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
 };
@@ -30,6 +34,7 @@ export const RESPONSE_HANDLERS : {
   "multiple_choice": MC_HANDLER,
   "fitb": CODE_FITB_HANDLER,
   "select_a_statement": SAS_HANDLER,
+  "code_editor": CODE_EDITOR_HANDLER
 };
 
 export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {

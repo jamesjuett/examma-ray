@@ -9,6 +9,15 @@ import "highlight.js/styles/github.css";
 import cpp from 'highlight.js/lib/languages/cpp';
 import storageAvailable from "storage-available";
 import { ExamAnswersJSON, QuestionAnswerJSON, SectionAnswersJSON } from "./common";
+
+import CodeMirror from 'codemirror';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/monokai.css';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/addon/comment/comment.js'
+import 'codemirror/keymap/sublime.js'
+
+
 hljs.registerLanguage('cpp', cpp);
 hljs.highlightAll();
 
@@ -254,6 +263,26 @@ function startExam() {
 
   // Interval to update time saved ago message every 10 seconds
   setInterval(updateTimeSaved, 10000);
+
+  // Set up code editor and CodeMirror instances
+  $(".examma-ray-code-editor").each(function() {
+
+    let cmElem = $(this).find(".examma-ray-codemirror");
+    let cm = CodeMirror(cmElem[0], {
+      mode: "text/x-c++src",
+      theme: "monokai",
+      lineNumbers: true,
+      tabSize: 2,
+      keyMap: "sublime",
+      extraKeys: {
+          "Ctrl-/" : (editor) => editor.execCommand('toggleComment')
+      }
+    });
+
+    $(this).find(".examma-ray-theme-button").on("click", function() {
+      cm.setOption("theme", $(this).data("codemirror-theme"));
+    })
+  });
 }
 
 

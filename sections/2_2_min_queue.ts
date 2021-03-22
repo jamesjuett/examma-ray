@@ -15,6 +15,16 @@ export const S2_2_min_queue = <SectionSpecification>{
         "kind": "fitb",
         "text": "________BLANK________ `min()`\n\n________BLANK________ `popMin()`\n\n________BLANK________ `push()`"
       }
+    },
+    {
+      "id": "sp20_2_2_part2",
+      "tags": [],
+      "points": 3,
+      "mk_description": "Test",
+      "response": {
+        "kind": "code_editor",
+        "starter": "int main() {\n  cout << test << endl;\n}"
+      }
     }
   ]
 }

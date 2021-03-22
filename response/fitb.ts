@@ -12,7 +12,7 @@ export type FITBResponse = {
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
 
 
-export function CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
+export function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
@@ -26,26 +26,18 @@ export function CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FIT
   }
 }
 
-export function CODE_FITB_RENDERER(response: FITBResponse) {
+export function FITB_RENDERER(response: FITBResponse) {
   return createFilledFITB(response.text);
 }
 
-export const CODE_FITB_HANDLER = {
-  parse: CODE_FITB_PARSER,
-  render: CODE_FITB_RENDERER,
-  extract: CODE_FITB_EXTRACTOR,
-  fill: CODE_FITB_FILLER
-};
-
-
-export function CODE_FITB_EXTRACTOR(responseElem: JQuery) {
+export function FITB_EXTRACTOR(responseElem: JQuery) {
   let blankResponses = responseElem.find("input").map(function() {
     return <string>$(this).val();
   }).get();
   return blankResponses.every(br => br === "") ? BLANK_SUBMISSION : blankResponses;
 }
 
-export function CODE_FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
+export function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   // blank out all radio buttons
   let inputs = elem.find("input");
 
@@ -60,6 +52,12 @@ export function CODE_FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   }
 }
 
+export const CODE_FITB_HANDLER = {
+  parse: FITB_PARSER,
+  render: FITB_RENDERER,
+  extract: FITB_EXTRACTOR,
+  fill: FITB_FILLER
+};
 
 
 
