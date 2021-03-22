@@ -1,6 +1,6 @@
-import { BY_ID, Question, Section } from "../autograder";
+import { BY_ID, Question, Section, SectionSpecification } from "../autograder";
 
-export const S7_3_galleria = new Section({
+export const S7_3_galleria = <SectionSpecification>{
   "id": "sp20_7_3",
   "title": "Dynamic Memory and The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `Galleria`, which is a covered or enclosed area with commercial establishments for shopping, dining, etc.",
@@ -134,4 +134,4 @@ export const S7_3_galleria = new Section({
       }
     }
   ]
-});
+}

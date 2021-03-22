@@ -425,7 +425,7 @@ export const TF_QUESTIONS = new QuestionBank([
     "id": "sp20_mc_big_three_2",
     "tags": ["tf_big_three"],
     "points": 1,
-    "mk_description": "**The Big Three**\n\nA custom assignment operator should always use a member_initializer_list if possible.",
+    "mk_description": "**The Big Three**\n\nA custom assignment operator should always use a member-initializer-list if possible.",
     "response": {
       "kind": "multiple_choice",
       "choices": [

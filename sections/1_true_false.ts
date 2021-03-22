@@ -1,4 +1,5 @@
 import { RANDOM_BY_TAG, Section } from "../autograder";
+import { FITB_QUESTIONS } from "../questions/fitb";
 import { TF_QUESTIONS } from "../questions/tf";
 
 export const S1_true_false = new Section({
@@ -14,5 +15,6 @@ export const S1_true_false = new Section({
     RANDOM_BY_TAG("tf_dynamic_memory_errors", 1, TF_QUESTIONS),
     RANDOM_BY_TAG("tf_managing_dynamic_memory", 1, TF_QUESTIONS),
     RANDOM_BY_TAG("tf_big_three", 1, TF_QUESTIONS),
+    FITB_QUESTIONS[0]
   ]
 })

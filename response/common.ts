@@ -1,6 +1,6 @@
 export type ResponseKind =
   "multiple_choice" |
-  "code_fitb" |
+  "fitb" |
   "select_a_statement";
 
 export const MALFORMED_SUBMISSION = Symbol("malformed_submission");

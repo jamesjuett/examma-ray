@@ -7,10 +7,12 @@ export const FITB_QUESTIONS : QuestionSpecification[] = [
     "points": 1,
     "mk_description": "**HEY YOU**\n\nFill in the code below to make it work.",
     "response": {
-      "kind": "code_fitb",
-      "code_language": "cpp",
+      "kind": "fitb",
       "text":
 `
+this is a **test** _only_ a \`test\`
+
+\`\`\`cpp
 <input></input>
 int main() {
   ____BLANK____ x = _blank_;
@@ -21,6 +23,7 @@ int main() {
 
   return ___BLANK__;
 }
+\`\`\`
 `
     }
   }

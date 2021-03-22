@@ -6,7 +6,7 @@ module.exports = {
     'frontend': './frontend',
   },
   output: {
-    path: path.join(__dirname, '/out/assigned/exams/js/'),
+    path: path.join(__dirname, '/out/js/'),
     filename: '[name].js',
     libraryTarget: 'umd',
     library: 'ExammaRay',

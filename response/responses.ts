@@ -1,18 +1,18 @@
 import { Question } from "../autograder";
-import { CODE_FITB_EXTRACTOR, CODE_FITB_FILLER, CODE_FITB_HANDLER, CODE_FITB_PARSER, CODE_FITB_RENDERER, FITBResponse, FITBSubmission } from "./code_fitb";
+import { CODE_FITB_EXTRACTOR, CODE_FITB_FILLER, CODE_FITB_HANDLER, CODE_FITB_PARSER, CODE_FITB_RENDERER, FITBResponse, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MC_EXTRACTOR, MC_FILLER, MC_PARSER, MC_RENDERER, MCResponse, MCSubmission, MC_HANDLER } from "./multiple_choice";
 import { SAS_EXTRACTOR, SAS_FILLER, SAS_PARSER, SAS_RENDERER, SASResponse, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 
 export type QuestionResponse<QT extends ResponseKind> = {
   "multiple_choice" : MCResponse,
-  "code_fitb" : FITBResponse,
+  "fitb" : FITBResponse,
   "select_a_statement" : SASResponse
 }[QT];
 
 export type SubmissionType<QT extends ResponseKind> = {
   "multiple_choice" : MCSubmission,
-  "code_fitb" : FITBSubmission,
+  "fitb" : FITBSubmission,
   "select_a_statement" : SASSubmission
 }[QT];
 
@@ -28,7 +28,7 @@ export const RESPONSE_HANDLERS : {
   [QT in ResponseKind]: ResponseHandler<QT>
 } = {
   "multiple_choice": MC_HANDLER,
-  "code_fitb": CODE_FITB_HANDLER,
+  "fitb": CODE_FITB_HANDLER,
   "select_a_statement": SAS_HANDLER,
 };
 

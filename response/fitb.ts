@@ -1,12 +1,12 @@
 import { encode } from "he";
+import { mk2html } from "../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
 
 export type FITBResponse = {
-  kind: "code_fitb";
+  kind: "fitb";
   text: string;
-  code_language: string;
 };
 
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
@@ -27,7 +27,7 @@ export function CODE_FITB_PARSER(rawSubmission: string | null | undefined) : FIT
 }
 
 export function CODE_FITB_RENDERER(response: FITBResponse) {
-  return `<pre><code class="language-${response.code_language}">${createFilledFITB(encode(response.text))}</code></pre>`;
+  return createFilledFITB(response.text);
 }
 
 export const CODE_FITB_HANDLER = {
@@ -68,7 +68,7 @@ const BLANK_PATTERN = /_+(BLANK|Blank|blank)_+/g;
 
 function createFilledFITB(text: string) {
 
-  // count the number of underscores in each blank
+  // count the number of underscores in each blank pattern
   let blankLengths = text.match(BLANK_PATTERN)?.map(m => {
     let num_ = 5; // start with 5 for the word "blank"
     for(let i = 0; i < m.length; ++i) {
@@ -79,11 +79,12 @@ function createFilledFITB(text: string) {
   
   // Replace blanks with an arbitrary string that the highlighter will parse
   // as a variable - the intent is for the __BLANK__ syntax to not
-  // mess with the way that things are highlighted.
+  // mess with the way that markdown is rendered or code is highlighted.
   let blank_id = "laefiahslkefhalskdfjlksn";
   text = text.replace(BLANK_PATTERN, blank_id);
 
-  // let highlightedText = hljs.highlight(code_language, text).value;
+  // Render markdown
+  text = mk2html(text);
 
   // Replace each of the "blank ids" in the highlighted text with
   // a corresponding input element of the right size based on the
@@ -91,9 +92,6 @@ function createFilledFITB(text: string) {
   blankLengths.forEach((length) => {
     text = text.replace(blank_id, `<input type="text" size="${length}" maxlength="${length}" class="examma-ray-fitb-blank-input"></input>`)
   });
-
-  // Replace "blank lines" with a custom spacer (I took this out for now since I like the literal spacing better)
-  // highlightedText = highlightedText.replace(/\n\n/g, '\n<div class="examma-ray-fitb-spacer"></div>');
   
   return text;
 }

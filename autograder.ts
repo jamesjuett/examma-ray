@@ -9,7 +9,7 @@ import { RandomSeed, create as createRNG } from 'random-seed';
 import { CLIPBOARD, FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { asMutable, assert, assertFalse, Mutable } from './util';
 import { parse_submission, QuestionResponse, render_response, SubmissionType } from './response/responses';
-import { FITBSubmission } from './response/code_fitb';
+import { FITBSubmission } from './response/fitb';
 import { ResponseKind, BLANK_SUBMISSION } from './response/common';
 import { MCSubmission } from './response/multiple_choice';
 import { SASSubmission } from './response/select_a_statement';
@@ -535,9 +535,9 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
   return submission.map(blankStr => blankStr.replace(word, replacement));
 }
 
-export class FITBRegexGrader implements Grader<"code_fitb">{
+export class FITBRegexGrader implements Grader<"fitb">{
 
-  public readonly questionType = "code_fitb";
+  public readonly questionType = "fitb";
   private solutionWords: ReadonlySet<string>;
   private minRubricItemPoints: number;
 
@@ -549,7 +549,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
   }
 
-  public grade(question: Question<"code_fitb">, orig_submission: FITBSubmission) {
+  public grade(question: Question<"fitb">, orig_submission: FITBSubmission) {
     if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
       return 0;
     }
@@ -586,80 +586,82 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     }, 0);
   }
 
-  public renderReport(question: Question<"code_fitb">, submission: FITBSubmission) {
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
-      return "Your answer for this question was blank.";
-    }
+  public renderReport(question: Question<"fitb">, submission: FITBSubmission) {
+    return assertFalse();
+    // if (submission === BLANK_SUBMISSION || submission.length === 0) {
+    //   return "Your answer for this question was blank.";
+    // }
 
-    let overallScore = this.grade(question, submission);
-    let scores = this.rubric.map((rubricItem, i) => {
-      let riMatch = FITBRubricItemMatch(rubricItem, submission[i])
-      return riMatch?.points ?? 0;
-    });
+    // let overallScore = this.grade(question, submission);
+    // let scores = this.rubric.map((rubricItem, i) => {
+    //   let riMatch = FITBRubricItemMatch(rubricItem, submission[i])
+    //   return riMatch?.points ?? 0;
+    // });
     
-    let data = question.response.text;
+    // let data = question.response.text;
     
-    let studentFilled = this.createFilledFITB(question.response.code_language, submission.map(s => encode(s)), data, scores);
-    let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), data, undefined);
+    // let studentFilled = this.createFilledFITB(question.response.code_language, submission.map(s => encode(s)), data, scores);
+    // let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), data, undefined);
 
-    let rubricItemsHtml = `<table style="position: sticky; top: 0;">${this.rubric.map((rubricItem, i) => {
+    // let rubricItemsHtml = `<table style="position: sticky; top: 0;">${this.rubric.map((rubricItem, i) => {
         
-      let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
-      let riScore = riMatch?.points ?? 0;
+    //   let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
+    //   let riScore = riMatch?.points ?? 0;
 
-      let explanation: string = riMatch?.explanation ?? "Your response for this blank was incomplete or incorrect.";
+    //   let explanation: string = riMatch?.explanation ?? "Your response for this blank was incomplete or incorrect.";
 
-      let elem_id = `question-${question.id}-item-${i}`;
+    //   let elem_id = `question-${question.id}-item-${i}`;
 
-      return `
-        <tr><td><div id="${elem_id}" class="card rubric-item-card">
-          <div class="card-header">
-            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} Blank ${i+1}<br />${rubricItem.title}</a>
-          </div>
-          <div class="collapse" id="${elem_id}-details">
-            <div class="card-body">
-              ${mk2html(rubricItem.description)}
-              <p>Your response for this blank was: <code class="language-${question.response.code_language}" style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
-              ${mk2html(explanation)}
-            </div>
-          </div>
-        </div></td></tr>`;
-    }).join("")}</table>`;
+    //   return `
+    //     <tr><td><div id="${elem_id}" class="card rubric-item-card">
+    //       <div class="card-header">
+    //         <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} Blank ${i+1}<br />${rubricItem.title}</a>
+    //       </div>
+    //       <div class="collapse" id="${elem_id}-details">
+    //         <div class="card-body">
+    //           ${mk2html(rubricItem.description)}
+    //           <p>Your response for this blank was: <code class="language-${question.response.code_language}" style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
+    //           ${mk2html(explanation)}
+    //         </div>
+    //       </div>
+    //     </div></td></tr>`;
+    // }).join("")}</table>`;
 
-    return `
-    <table class="table table-sm examma-ray-fitb-diff">
-      <tr><th>Rubric</th><th>Your Code</th><th>Sample Solution</th></tr>
-      <tr>
-        <td>${rubricItemsHtml}</td>
-        <td><pre><code class="language-${question.response.code_language}">${studentFilled}</code></pre></td>
-        <td><pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre></td>
-      </tr>
-    </table>`;
+    // return `
+    // <table class="table table-sm examma-ray-fitb-diff">
+    //   <tr><th>Rubric</th><th>Your Code</th><th>Sample Solution</th></tr>
+    //   <tr>
+    //     <td>${rubricItemsHtml}</td>
+    //     <td><pre><code class="language-${question.response.code_language}">${studentFilled}</code></pre></td>
+    //     <td><pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre></td>
+    //   </tr>
+    // </table>`;
   }
 
-  public renderStats(question: Question<"code_fitb">, submissions: readonly FITBSubmission[]) {
-    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+  public renderStats(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
+    return assertFalse();
+    // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
-    let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), question.response.text, undefined);
+    // let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), question.response.text, undefined);
 
 
-    return `<table class="table" style="border-collapse: separate; border-spacing: 0;">
-      <tr>
-        <th style="position: sticky; left: 0; top: 0; z-index: 11; background-color: white; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">Sample Solution</th>
-        ${this.rubric.map(ri => `<th style="position: sticky; top: 0; z-index: 10; background: white; z-index: 10; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6;">Blank ${ri.blankIndex} <button class="examma-ray-blank-saver btn btn-primary" data-blank-num="${ri.blankIndex-1}">Copy</button></th>`).join("")}
-      </tr>
-      <tr>
-      <td style="position: sticky; left: 0; background-color: white; border-top: none; border-right: 1px solid #dee2e6;">
-        <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
-      </td>
-        ${gradedBlankSubmissions.map((blankSubs, i) => 
-          `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code class="language-${question.response.code_language}"style="white-space: pre">${s.sub}</code>"</li>`).join("")}
-          </td>`
-        ).join("")}
-      </tr>
+    // return `<table class="table" style="border-collapse: separate; border-spacing: 0;">
+    //   <tr>
+    //     <th style="position: sticky; left: 0; top: 0; z-index: 11; background-color: white; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">Sample Solution</th>
+    //     ${this.rubric.map(ri => `<th style="position: sticky; top: 0; z-index: 10; background: white; z-index: 10; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6;">Blank ${ri.blankIndex} <button class="examma-ray-blank-saver btn btn-primary" data-blank-num="${ri.blankIndex-1}">Copy</button></th>`).join("")}
+    //   </tr>
+    //   <tr>
+    //   <td style="position: sticky; left: 0; background-color: white; border-top: none; border-right: 1px solid #dee2e6;">
+    //     <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
+    //   </td>
+    //     ${gradedBlankSubmissions.map((blankSubs, i) => 
+    //       `<td style="vertical-align: top; border-top: none;">
+    //         ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code class="language-${question.response.code_language}"style="white-space: pre">${s.sub}</code>"</li>`).join("")}
+    //       </td>`
+    //     ).join("")}
+    //   </tr>
 
-    </table>`;
+    // </table>`;
   }
 
   private getGradedBlanksSubmissions(submissions: readonly FITBSubmission[]) {
@@ -691,22 +693,23 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(question: Question<"code_fitb">, submissions: readonly FITBSubmission[]) {
-    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+  public renderOverview(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
+    return assertFalse();
+    // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
-    let blankAverages = gradedBlankSubmissions.map(
-      gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
-    let blankPoints = this.rubric.map(ri => ri.points);
-    let blankSolutions = this.rubric.map(ri => encode(ri.solution));
-    let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
+    // let blankAverages = gradedBlankSubmissions.map(
+    //   gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
+    // let blankPoints = this.rubric.map(ri => ri.points);
+    // let blankSolutions = this.rubric.map(ri => encode(ri.solution));
+    // let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
 
-    let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
+    // let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
 
-    let solutionFilled = this.createFilledFITB(question.response.code_language, blankBars, question.response.text, undefined);
-    return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
+    // let solutionFilled = this.createFilledFITB(blankBars, question.response.text, undefined);
+    // return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
   }
 
-  private createFilledFITB(codeLanguage: string, submission: string[], data: string, scores: number[] | undefined) {
+  private createFilledFITB(submission: string[], data: string, scores: number[] | undefined) {
     let ids = submission.map(response => "aslkjfalskdfjhahflkdsj");
     ids.forEach(id => data = data.replace(/\< *blank.*?\>.*?\< *\/blank *\>/, id));
 
@@ -1482,7 +1485,7 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha512-PEsccDx9jqX6Dh4wZDCnWMaIO3gAaU0j46W//sSqQhUQxky6/eHZyeB3NrXD2xsyugAKd4KPiDANkcuoEa2JuA==" crossorigin="anonymous"></script>
-    <script src="js/frontend.js"></script>
+    <script src="../../../js/frontend.js"></script>
     <script>
       $(function() {
         $('button.examma-ray-blank-saver').on("click", function() {
@@ -1646,6 +1649,7 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
         max-height: 100vh;
         overflow-y: auto;
         padding: 5px;
+        padding-bottom: 2em;
       }
 
 
@@ -1924,7 +1928,7 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
 //   let statsReport = grader.renderStats(
 //       question!,
 //       exam.submissions.map(
-//           s => (<AssignedQuestion<"code_fitb">>s.assignedQuestions.find(aq => aq.unifiedIndex === problemIndex))?.submission
+//           s => (<AssignedQuestion<"fitb">>s.assignedQuestions.find(aq => aq.unifiedIndex === problemIndex))?.submission
 //       ).filter(sub => sub)
 //   );
 
