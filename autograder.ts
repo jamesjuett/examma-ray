@@ -15,6 +15,7 @@ import { MCSubmission } from './response/multiple_choice';
 import { SASSubmission } from './response/select_a_statement';
 import { mk2html } from './render';
 import { ExamAnswersJSON } from './common';
+import json_stable_stringify from "json-stable-stringify";
 
 
 export enum RenderMode {
@@ -43,6 +44,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   // public readonly raw_description: string;
   // public readonly description: string;
   // public readonly section: Section;
+  public readonly spec: QuestionSpecification<QT>;
   public readonly id: string;
   public readonly tags: readonly string[];
   public readonly pointsPossible : number;
@@ -51,6 +53,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly response : QuestionResponse<QT>;
 
   public constructor (spec: QuestionSpecification<QT>) {
+    this.spec = spec;
     this.id = spec.id;
     this.tags = spec.tags ?? [];
     this.pointsPossible = spec.points;
@@ -763,6 +766,7 @@ export class Section {
   // public readonly raw_description: string;
   // public readonly description: string;
   // public readonly section: Section;
+  public readonly spec: SectionSpecification;
   public readonly id: string;
   public readonly title: string;
   public readonly html_description: string;
@@ -770,7 +774,7 @@ export class Section {
   public readonly questions: (QuestionSpecification | Question | QuestionChooser)[];
 
   public constructor (spec: SectionSpecification) {
-
+    this.spec = spec;
     this.id = spec.id;
     this.title = spec.title;
     this.html_description = mk2html(spec.mk_description);
@@ -1370,33 +1374,99 @@ export class QuestionBank {
   }
 }
 
+type SectionStats = {
+  section: Section,
+  n: number
+};
+
+type QuestionStats = {
+  question: Question,
+  n: number
+};
+
 export class ExamGenerator {
 
   public readonly exam: Exam;
   public readonly assignedExams: AssignedExam[] = [];
   public readonly assignedExamsByUniqname: {[index:string]: AssignedExam | undefined} = {};
+  
+  private sectionStatsMap : { [index: string]: SectionStats } = {};
+  private questionStatsMap : { [index: string]: QuestionStats } = {};
 
   public constructor(exam: Exam) {
     this.exam = exam;
   }
 
   public assignRandomizedExam(student: StudentInfo) {
+
     let ae = this.exam.createRandomizedExam(student);
+
+    this.checkExam(ae);
+
     this.assignedExams.push(ae);
     this.assignedExamsByUniqname[student.uniqname] = ae;
+
     return ae;
   }
 
-  public writeAll(mode: RenderMode) {
-    mkdirSync("out/assigned/exams/", {recursive: true});
-    mkdirSync("out/assigned/manifests/", {recursive: true});
+  private checkExam(ae: AssignedExam) {
+    // Find all sections assigned to any exam
+    let sections = ae.assignedSections.map(s => s.section);
+
+    // Verify that every section with the same ID originated from the same specification
+    // If there wasn't a previous stats entry for that section ID, add one
+    sections.forEach(
+      section => this.sectionStatsMap[section.id]
+        ? ++this.sectionStatsMap[section.id].n && assert(section.spec === this.sectionStatsMap[section.id].section.spec, `Multiple sections from different specifications with the ID "${section.id}" were detected.`)
+        : this.sectionStatsMap[section.id] = {
+            section: section,
+            n: 1
+          }
+    );
+
+    // Find all questions assigned to any exam
+    let questions = ae.assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question));
+    
+    // Verify that every question with the same ID originated from the same specification
+    questions.forEach(
+      question => this.questionStatsMap[question.id]
+        ? ++this.questionStatsMap[question.id].n && assert(question.spec === this.questionStatsMap[question.id].question.spec, `Multiple questions from different specifications with the ID "${question.id}" were detected.`)
+        : this.questionStatsMap[question.id] = {
+            question: question,
+            n: 1
+          }
+    );
+
+  }
+
+  private writeStats() {
+    // Create output directory
+    mkdirSync(`out/${this.exam.id}/assigned/`, {recursive: true});
+
+    // Write to file. JSON.stringify removes the section/question objects
+    writeFileSync(`out/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
+      sections: this.sectionStatsMap,
+      questions: this.questionStatsMap
+    }, {replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2}));
+
+  }
+
+  public writeAll() {
+
+    // Create output directories
+    mkdirSync(`out/${this.exam.id}/assigned/exams/`, {recursive: true});
+    mkdirSync(`out/${this.exam.id}/assigned/manifests/`, {recursive: true});
+
+    this.writeStats();
+
+    // Write out manifests and exams for all, sorted by uniqname
     [...this.assignedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         console.log(`${i}/${arr.length} Saving assigned exam manifest for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/assigned/manifests/${ex.student.uniqname}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
+        writeFileSync(`out/${this.exam.id}/assigned/manifests/${ex.student.uniqname}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
         console.log(`${i}/${arr.length} Rendering assigned exam html for: ${ex.student.uniqname}...`);
-        writeAGFile(ex, `out/assigned/exams/${ex.student.uniqname}.html`, ex.render(mode));
+        writeAGFile(ex, `out/${this.exam.id}/assigned/exams/${ex.student.uniqname}.html`, ex.render(RenderMode.ORIGINAL));
       });
 
   }

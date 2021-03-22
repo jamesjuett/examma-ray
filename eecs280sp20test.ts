@@ -1,11 +1,11 @@
 import { readFileSync } from 'fs';
 import Papa from "papaparse";
-import { BY_ID, Exam, ExamGenerator, Question, QuestionBank, RANDOM_BY_TAG, RANDOM_SECTION, RenderMode, Section } from "./autograder";
-import { FITB_QUESTIONS } from "./questions/fitb";
-import { SAS_QUESTIONS } from './questions/sas';
+import { Exam, ExamGenerator, RANDOM_SECTION, RenderMode } from "./autograder";
 import { S1_true_false } from './sections/1_true_false';
-import { Section_7_1 as S7_galley } from './sections/7_big_three_1';
 import { S6_primes } from './sections/6_primes';
+import { S7_1_galley } from './sections/7_big_three_1';
+import { S7_2_gallery } from './sections/7_big_three_2';
+import { S7_3_galleria } from './sections/7_big_three_3';
 
 
 // Create exam
@@ -18,7 +18,9 @@ let exam = new Exam({
     S1_true_false,
     S6_primes,
     RANDOM_SECTION(1, [
-      S7_galley
+      S7_1_galley,
+      S7_2_gallery,
+      S7_3_galleria
     ])
   ]
 });
@@ -28,4 +30,4 @@ let students = Papa.parse<{uniqname: string, name: string}>(readFileSync("roster
 let gen = new ExamGenerator(exam);
 students.forEach(student => gen.assignRandomizedExam(student));
 
-gen.writeAll(RenderMode.ORIGINAL);
+gen.writeAll();

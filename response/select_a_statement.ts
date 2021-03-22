@@ -18,7 +18,7 @@ export type SASGroup = {
 export type SASResponse = {
   kind: "select_a_statement";
   code_language: string;
-  content: (SASGroup | SASItem)[]
+  choices: (SASGroup | SASItem)[]
 };
 
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
@@ -39,7 +39,7 @@ export function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmis
 
 export function SAS_RENDERER(response: SASResponse, question_id: string) {
   let item_index = 0;
-  return `<pre><code class="language-${response.code_language}">${response.content.map(
+  return `<pre><code class="language-${response.code_language}">${response.choices.map(
     group => group.kind === "item"
       ? renderSASItem(group, question_id, item_index++)
       : group.items.map(item => renderSASItem(item, question_id, item_index++)).join("\n")

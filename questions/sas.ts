@@ -9,7 +9,7 @@ export const SAS_QUESTIONS: QuestionSpecification[] = [
     "response": {
       "kind": "select_a_statement",
       "code_language": "cpp",
-      "content": [
+      "choices": [
         {
           "kind": "item",
           "text": "<input></input>Galley *operator=(const Galley &rhs) {",

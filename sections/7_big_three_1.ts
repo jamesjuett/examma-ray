@@ -1,6 +1,6 @@
 import { BY_ID, Question, Section } from "../autograder";
 
-export const Section_7_1 = new Section({
+export const S7_1_galley = new Section({
   "id": "sp20_7_1",
   "title": "Dynamic Memory and The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `Galley`, which is a kitchen on a ship or aircraft.",
@@ -14,7 +14,7 @@ export const Section_7_1 = new Section({
       "response": {
         "kind": "select_a_statement",
         "code_language": "cpp",
-        "content": [
+        "choices": [
           {
             "kind": "item",
             "text": "Galley *operator=(const Galley &rhs) {",
