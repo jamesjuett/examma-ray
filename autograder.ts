@@ -1818,6 +1818,11 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
         border-radius: 2px;
       }
 
+      .examma-ray-codemirror {
+        border: solid 1px #333;
+        margin-bottom: 1em;
+      }
+
 
     </style>
     <body>

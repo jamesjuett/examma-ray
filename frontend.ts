@@ -150,6 +150,8 @@ function main() {
   setupSaverModal();
 
   setupChangeListeners();
+
+  setupCodeEditors();
   
   startExam();
 
@@ -234,6 +236,30 @@ function setupChangeListeners() {
   });
 }
 
+function setupCodeEditors() {
+  // Set up code editor and CodeMirror instances
+  $(".examma-ray-code-editor").each(function() {
+
+    let cmElem = $(this).find(".examma-ray-codemirror");
+    let cm = CodeMirror(cmElem[0], {
+      mode: "text/x-c++src",
+      theme: "default",
+      lineNumbers: true,
+      tabSize: 2,
+      keyMap: "sublime",
+      extraKeys: {
+          "Ctrl-/" : (editor) => editor.execCommand('toggleComment')
+      }
+    });
+
+    cmElem.data("examma-ray-codemirror", cm);
+
+    $(this).find(".examma-ray-theme-button").on("click", function() {
+      cm.setOption("theme", $(this).data("codemirror-theme"));
+    })
+  });
+}
+
 function startExam() {
   
   let examElem = $("#examma-ray-exam");
@@ -264,25 +290,6 @@ function startExam() {
   // Interval to update time saved ago message every 10 seconds
   setInterval(updateTimeSaved, 10000);
 
-  // Set up code editor and CodeMirror instances
-  $(".examma-ray-code-editor").each(function() {
-
-    let cmElem = $(this).find(".examma-ray-codemirror");
-    let cm = CodeMirror(cmElem[0], {
-      mode: "text/x-c++src",
-      theme: "monokai",
-      lineNumbers: true,
-      tabSize: 2,
-      keyMap: "sublime",
-      extraKeys: {
-          "Ctrl-/" : (editor) => editor.execCommand('toggleComment')
-      }
-    });
-
-    $(this).find(".examma-ray-theme-button").on("click", function() {
-      cm.setOption("theme", $(this).data("codemirror-theme"));
-    })
-  });
 }
 
 

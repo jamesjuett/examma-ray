@@ -52,27 +52,17 @@ export const CODE_EDITOR_HANDLER = {
 
 
 export function CODE_EDITOR_EXTRACTOR(responseElem: JQuery) {
-  return assertFalse();
-  // let blankResponses = responseElem.find("input").map(function() {
-  //   return <string>$(this).val();
-  // }).get();
-  // return blankResponses.every(br => br === "") ? BLANK_SUBMISSION : blankResponses;
+  
+  // .getValue() is for the CodeMirror object
+  let code : string = $(responseElem).find(".examma-ray-codemirror").data("examma-ray-codemirror").getValue() ?? "";
+  return code !== "" ? code : BLANK_SUBMISSION;
+
 }
 
 export function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
-  return assertFalse();
-  // // blank out all radio buttons
-  // let inputs = elem.find("input");
 
-  // if (submission !== BLANK_SUBMISSION) {
-  //   assert(inputs.length === submission.length)
-  //   let inputElems = inputs.get();
-  //   submission.forEach((blankText, i) => $(inputElems[i]).val(submission[i]));
-  // }
-  // else {
-  //   // if it's a blank submission, blank out all the input boxes
-  //   inputs.val("");
-  // }
+  // .setValue() is for the CodeMirror object
+  $(elem).find(".examma-ray-codemirror").data("examma-ray-codemirror").setValue(submission === BLANK_SUBMISSION ? "" : submission);
 }
 
 
