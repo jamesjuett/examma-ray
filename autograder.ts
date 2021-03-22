@@ -35,7 +35,6 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   points: number,
   mk_description: string,
   response: QuestionResponse<QT>,
-  code_language: string,
   tags?: readonly string[]
 };
 
@@ -50,13 +49,11 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly html_description: string;
   public readonly kind: QT;
   public readonly response : QuestionResponse<QT>;
-  public readonly codeLanguage: string;
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.id = spec.id;
     this.tags = spec.tags ?? [];
     this.pointsPossible = spec.points;
-    this.codeLanguage = spec.code_language;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
     this.html_description = mk2html(spec.mk_description);
@@ -82,7 +79,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly submission: SubmissionType<QT>;
 
-  public readonly unifiedIndex;
+  public readonly displayIndex;
 
   public constructor(
     public readonly exam: Exam,
@@ -91,7 +88,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     public readonly partIndex : number,
     public readonly rawSubmission: string,
   ) {
-    this.unifiedIndex = sectionIndex + "." + partIndex;
+    this.displayIndex = (sectionIndex+1) + "." + (partIndex+1);
     this.submission = parse_submission(question.kind, rawSubmission);
   }
 
@@ -111,7 +108,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   private checkForException(ex: AssignedExam) {
     let studentExMap = this.exam.exceptionMap[ex.student.uniqname];
-    let questionEx = studentExMap && studentExMap[this.unifiedIndex];
+    let questionEx = studentExMap && studentExMap[this.displayIndex];
     if (questionEx) {
       this.addException(questionEx);
     }
@@ -125,10 +122,24 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public render(mode: RenderMode) {
 
-    let question_header_html = `<b>${this.unifiedIndex}</b>`;
+    let question_header_html = `<b>${this.displayIndex}</b>`;
     if (mode === RenderMode.ORIGINAL) {
       question_header_html += ` ${renderPointsWorthBadge(this.question.pointsPossible)}`;
-      return renderQuestion(this.question.id, this.question.html_description, question_header_html, "", this.question.renderResponse());
+      return `
+        <div id="question-${this.question.id}" data-question-id="${this.question.id}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              ${question_header_html}
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                ${this.question.html_description}
+              </div>
+              ${this.question.renderResponse()}
+            </div>
+          </div>
+        </div>
+      `;
     }
     else {
       question_header_html += ` ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
@@ -147,7 +158,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         </div>`; 
       }
 
-      return renderQuestion(this.question.id, this.question.html_description, question_header_html, exception_html, graded_html);
+      return renderQuestion(this.question.id, this.displayIndex, this.question.html_description, question_header_html, exception_html, graded_html);
     }
   }
 
@@ -192,9 +203,9 @@ function isGrader<QT extends ResponseKind>(grader: Grader, questionType: QT) : g
 
 
 
-function renderQuestion(id: string, description: string, header: string, exception: string, gradingReport: string) {
+function renderQuestion(id: string, displayIndex: string, description: string, header: string, exception: string, gradingReport: string) {
   return `
-  <div id="question-${id}" data-question-id="${id}" class="examma-ray-question card-group">
+  <div id="question-${id}" data-question-id="${id}" data-question-display-index="${displayIndex}" class="examma-ray-question card-group">
     <div class="card">
       <div class="card-header">
         ${header}
@@ -585,8 +596,8 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
     
     let data = question.response.text;
     
-    let studentFilled = this.createFilledFITB(question.codeLanguage, submission.map(s => encode(s)), data, scores);
-    let solutionFilled = this.createFilledFITB(question.codeLanguage, this.rubric.map(ri => encode(ri.solution)), data, undefined);
+    let studentFilled = this.createFilledFITB(question.response.code_language, submission.map(s => encode(s)), data, scores);
+    let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), data, undefined);
 
     let rubricItemsHtml = `<table style="position: sticky; top: 0;">${this.rubric.map((rubricItem, i) => {
         
@@ -626,7 +637,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
   public renderStats(question: Question<"code_fitb">, submissions: readonly FITBSubmission[]) {
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
-    let solutionFilled = this.createFilledFITB(question.codeLanguage, this.rubric.map(ri => encode(ri.solution)), question.response.text, undefined);
+    let solutionFilled = this.createFilledFITB(question.response.code_language, this.rubric.map(ri => encode(ri.solution)), question.response.text, undefined);
 
 
     return `<table class="table" style="border-collapse: separate; border-spacing: 0;">
@@ -688,7 +699,7 @@ export class FITBRegexGrader implements Grader<"code_fitb">{
 
     let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
 
-    let solutionFilled = this.createFilledFITB(question.codeLanguage, blankBars, question.response.text, undefined);
+    let solutionFilled = this.createFilledFITB(question.response.code_language, blankBars, question.response.text, undefined);
     return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
   }
 
@@ -756,7 +767,7 @@ export class Section {
   public readonly title: string;
   public readonly html_description: string;
   public readonly html_reference?: string;
-  public readonly builder: SectionBuilder | SectionBuilder[];
+  public readonly questions: (QuestionSpecification | Question | QuestionChooser)[];
 
   public constructor (spec: SectionSpecification) {
 
@@ -764,7 +775,7 @@ export class Section {
     this.title = spec.title;
     this.html_description = mk2html(spec.mk_description);
     this.html_reference = spec.mk_reference && mk2html(spec.mk_reference);
-    this.builder = spec.builder;
+    this.questions = Array.isArray(spec.content) ? spec.content : [spec.content];
 
     // let json = JSON.parse(readFileSync(`sections/${sectionIndex}.json`, 'utf8'));
     // let question = (<any[]>json["questions"]).find(q => parseInt(q.index) === partIndex) ?? json["questions"][partIndex-1];
@@ -783,20 +794,29 @@ export class Section {
     // }
   }
 
-  public buildRandomizedQuestions(exam: Exam, student: StudentInfo, rand: Randomizer) {
-    if (Array.isArray(this.builder)) {
-      return this.builder.flatMap(builder => builder(exam, student, rand))
-    }
-    else {
-      return this.builder(exam, student, rand);
-    }
+  public buildRandomizedSection(
+    exam: Exam, student: StudentInfo, sectionIndex: number,
+    rand: Randomizer = new Randomizer(student.uniqname + "_" + exam.id + "_" + this.id))
+  {
+    return new AssignedSection(
+      this,
+      sectionIndex,
+      this.questions.flatMap(chooser => 
+        typeof chooser === "function" ? chooser(exam, student, rand) :
+        chooser instanceof Question ? [chooser] :
+        new Question(chooser)
+      ).map((q, partIndex) => new AssignedQuestion(exam, q, sectionIndex, partIndex, ""))
+    );
   }
+    
 
 }
 
 
 
 export class AssignedSection {
+
+  public readonly displayIndex: string;
 
   public readonly pointsPossible: number;
   public readonly pointsEarned?: number;
@@ -805,15 +825,17 @@ export class AssignedSection {
   public constructor(
     public readonly section: Section, 
     public readonly sectionIndex : number,
-    public readonly assignedQuestions: readonly AssignedQuestion[]) {
+    public readonly assignedQuestions: readonly AssignedQuestion[])
+  {
+    this.displayIndex = "" + (sectionIndex+1);
     this.pointsPossible = assignedQuestions.reduce((p, q) => p + q.question.pointsPossible, 0);
   }
 
   public gradeAllQuestions(ex: AssignedExam, graders: GraderMap) {
     this.assignedQuestions.forEach(aq => {
-      let grader = graders[aq.unifiedIndex];
+      let grader = graders[aq.displayIndex];
       if (grader) {
-        assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.unifiedIndex}, which has type "${aq.question.kind}".`);
+        assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(ex, grader);
       }
     });
@@ -828,8 +850,8 @@ export class AssignedSection {
         ? renderScoreBadge(this.pointsEarned!, this.pointsPossible)
         : renderUngradedBadge(this.pointsPossible);
     let heading = mode === RenderMode.ORIGINAL
-      ? `${this.sectionIndex}: ${this.section.title} ${badge}`
-      : `${badge} ${this.sectionIndex}: ${this.section.title}`;
+      ? `${this.displayIndex}: ${this.section.title} ${badge}`
+      : `${badge} ${this.displayIndex}: ${this.section.title}`;
 
     return `
       <div class="examma-ray-section-heading">
@@ -839,7 +861,7 @@ export class AssignedSection {
 
   public render(mode: RenderMode) {
     return `
-      <div id="section-${this.section.id}" class="examma-ray-section" data-section-id="${this.section.id}">
+      <div id="section-${this.section.id}" class="examma-ray-section" data-section-id="${this.section.id}" data-section-display-index="${this.displayIndex}">
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
@@ -848,7 +870,7 @@ export class AssignedSection {
               <div class="examma-ray-section-description">${this.section.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
-            <td style="width: 300px;">
+            <td style="width: 35%;">
               <div class="examma-ray-section-reference">
                 <h6>Reference Material</h6>
                 ${this.section.html_reference}
@@ -873,6 +895,11 @@ export class AssignedExam {
     public readonly assignedSections: readonly AssignedSection[]
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
+
+    let sectionIds = assignedSections.map(s => s.section.id);
+    assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
+    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.id));
+    assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
   }
 
   public gradeAll(graders: GraderMap) {
@@ -896,7 +923,7 @@ export class AssignedExam {
           let scoreBadge = sectionAssignedQuestions.every(aq => aq.isGraded()) ?
             renderScoreBadge(sectionAssignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0), s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
-          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section.id}">${scoreBadge} ${s.sectionIndex + ": " + s.section.title}</a></li>`
+          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section.id}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
         }).join("")}
       </ul>`
   }
@@ -937,8 +964,10 @@ function createBlankAnswers(ex: AssignedExam) : ExamAnswersJSON {
     timestamp: Date.now(),
     sections: ex.assignedSections.map(s => ({
       id: s.section.id,
+      display_index: s.displayIndex,
       questions: s.assignedQuestions.map(q => ({
         id: q.question.id,
+        display_index: q.displayIndex,
         kind: q.question.kind,
         response: ""
       }))
@@ -988,33 +1017,52 @@ export const DEFAULT_SAVER_MESSAGE_CANVAS = `
   BEFORE exam time is up. This webpage does not save anything to anywhere.
   It is up to you to download your answer file and turn it in on **Canvas**.`;
 
-export type SectionBuilder = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
+export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
 
 export type SectionSpecification = {
   readonly id: string;
   readonly title: string;
   readonly mk_description: string;
   readonly mk_reference?: string;
-  readonly builder: SectionBuilder | SectionBuilder[];
+  readonly content: QuestionSpecification | Question | QuestionChooser | (QuestionSpecification | Question | QuestionChooser)[];
 }
 
-export function RANDOM_BY_TAG(tag: string, n: number) {
+export function BY_ID(id: string, questionBank: QuestionBank) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    let qs = exam.getQuestionsByTag(tag);
-    assert(n <= qs.length, `Error - cannot choose ${n} questions for tag "${tag}" that only has ${qs.length} associated questions.`);
-    return rand.chooseN(exam.getQuestionsByTag(tag), n);
-  }
-}
-
-export function BY_ID(id: string) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    let q = exam.getQuestionById(id);
+    let q = questionBank.getQuestionById(id);
     assert(q, `No question with ID: ${id}.`);
     return [q];
   }
 }
 
+export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank) {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    let qs = questionBank.getQuestionsByTag(tag);
+    assert(n <= qs.length, `Error - cannot choose ${n} questions for tag "${tag}" that only has ${qs.length} associated questions.`);
+    return rand.chooseN(qs, n);
+  }
+}
 
+export function RANDOM_ANY(n: number, questionBank: QuestionBank | (QuestionSpecification | Question)[]) {
+  if (!(questionBank instanceof QuestionBank)) {
+    questionBank = new QuestionBank(questionBank);
+  }
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    let qs = (<QuestionBank>questionBank).questions;
+    assert(n <= qs.length, `Error - cannot choose ${n} questions from a question bank that only has ${qs.length} questions.`);
+    return rand.chooseN(qs, n);
+  }
+}
+
+
+export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
+
+export function RANDOM_SECTION(n: number, sections: (SectionSpecification | Section)[]) {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    assert(n <= sections.length, `Error - cannot choose ${n} sections from a set of ${sections.length} sections.`);
+    return rand.chooseN(sections, n).map(s => s instanceof Section ? s : new Section(s));
+  }
+}
 
 export type ExamSpecification = {
   id: string,
@@ -1023,7 +1071,8 @@ export type ExamSpecification = {
   mk_intructions: string,
   mk_announcements?: string[],
   graders?: GraderMap,
-  exceptions?: ExceptionMap
+  exceptions?: ExceptionMap,
+  sections?: (SectionSpecification | Section | SectionChooser)[]
 };
 
 export class Exam {
@@ -1033,11 +1082,7 @@ export class Exam {
   public readonly graderMap: GraderMap;
   public readonly exceptionMap: ExceptionMap;
 
-  private readonly questionBank: Question[] = [];
-  private readonly questionsById: {[index: string] : Question | undefined } = {};
-  private readonly questionsByTag: {[index: string] : Question[] | undefined } = {};
-
-  public readonly sections: Section[] = [];
+  public readonly sections: (SectionSpecification | Section | SectionChooser)[];
 
   public readonly pointsPossible: number;
 
@@ -1052,33 +1097,11 @@ export class Exam {
     this.graderMap = spec.graders ?? {};
     this.exceptionMap = spec.exceptions ?? {};
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
+    this.sections = spec.sections ?? [];
   }
 
   public addGraders(graderMap: GraderMap) {
     Object.assign(this.graderMap, graderMap);
-  }
-
-  public registerQuestion(q: Question | QuestionSpecification) {
-    if (!(q instanceof Question)) {
-      q = new Question(q);
-    }
-    this.questionBank.push(q);
-    this.questionsById[q.id] = q;
-    q.tags.forEach(tag => 
-      (this.questionsByTag[tag] ??= []).push(<Question>q)
-    );
-  }
-
-  public registerQuestions(qs: QuestionSpecification[]) {
-    qs.forEach(q => this.registerQuestion(new Question(q)));
-  }
-
-  public getQuestionById(id: string) {
-    return this.questionsById[id];
-  }
-
-  public getQuestionsByTag(tag: string) {
-    return this.questionsByTag[tag] ?? [];
   }
 
   public addExceptions(exceptionMap: ExceptionMap) {
@@ -1092,7 +1115,7 @@ export class Exam {
     this.exceptionMap[uniqname][question_id] = exception;
   }
 
-  public addSection(section: Section) {
+  public addSection(section: SectionSpecification | Section | SectionChooser) {
     this.sections.push(section);
   }
 
@@ -1268,14 +1291,18 @@ export class Exam {
 
   // }
 
-  public createRandomizedExam(student: StudentInfo) {
+  public createRandomizedExam(
+    student: StudentInfo,
+    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.id))
+  {
     return new AssignedExam(this, student,
-      this.sections.map((section, s_i) => new AssignedSection(
-        section, s_i,
-        section.buildRandomizedQuestions(this, student, new Randomizer(student.uniqname + "_" + section.id)).map(
-          (question, q_i) => new AssignedQuestion(this, question, s_i, q_i, "")
-        )
-      ))
+      this.sections.flatMap(chooser => 
+        typeof chooser === "function" ? chooser(this, student, rand) :
+        chooser instanceof Section ? [chooser] :
+        new Section(chooser)
+      ).map(
+        (s, sectionIndex) => s.buildRandomizedSection(this, student, sectionIndex)
+      )
     );
   }
 
@@ -1307,6 +1334,40 @@ export class Exam {
   //   );
   // }
 
+}
+
+export class QuestionBank {
+
+  public readonly questions: readonly Question[] = [];
+  private readonly questionsById: {[index: string] : Question | undefined } = {};
+  private readonly questionsByTag: {[index: string] : Question[] | undefined } = {};
+
+  public constructor(questions: readonly (Question | QuestionSpecification)[]) {
+    questions.forEach(q => this.registerQuestion(q));
+  }
+
+  public registerQuestion(q: Question | QuestionSpecification) {
+    if (!(q instanceof Question)) {
+      q = new Question(q);
+    }
+    asMutable(this.questions).push(q);
+    this.questionsById[q.id] = q;
+    q.tags.forEach(tag => 
+      (this.questionsByTag[tag] ??= []).push(<Question>q)
+    );
+  }
+
+  public registerQuestions(qs: QuestionSpecification[]) {
+    qs.forEach(q => this.registerQuestion(new Question(q)));
+  }
+
+  public getQuestionById(id: string) {
+    return this.questionsById[id];
+  }
+
+  public getQuestionsByTag(tag: string) {
+    return this.questionsByTag[tag] ?? [];
+  }
 }
 
 export class ExamGenerator {
@@ -1423,7 +1484,7 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
       }
       
       .examma-ray-mc-option {
-        vertical-align: top;
+        vertical-align: middle;
       }
       
       .examma-ray-mc-option pre {
@@ -1494,15 +1555,19 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
       }
 
       .examma-ray-instructions {
-        font-size: 85%;
+
       }
 
       .examma-ray-section-description {
-        font-size: 85%;
+        font-size: 90%;
       }
 
       .examma-ray-section-reference {
-        font-size: 75%;
+        font-size: 90%;
+      }
+
+      .examma-ray-question-description {
+        font-size: 90%;
       }
       
       .examma-ray-section-reference {
@@ -1529,9 +1594,6 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
         font-size: 1rem;
     }
 
-      .examma-ray-question-description {
-        font-size: 75%;
-      }
 
       .examma-ray-question-description h1,
       .examma-ray-question-description h2,

@@ -19,6 +19,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswerJSON {
   let response = question.find(".examma-ray-question-response");
   return {
     id: question.data("question-id"),
+    display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
     response: stringify_response(extract_response(response.data("response-kind"), response))
   }
@@ -28,6 +29,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswersJSON {
   let section = $(this);
   return {
     id: section.data("section-id"),
+    display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
   }
 }

@@ -22,8 +22,7 @@ int main() {
   return ___BLANK__;
 }
 `
-    },
-    "code_language": "cpp"
+    }
   }
 ];
 

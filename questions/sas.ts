@@ -131,8 +131,7 @@ export const SAS_QUESTIONS: QuestionSpecification[] = [
           "forced": true
         }
       ]
-    },
-    "code_language": "cpp"
+    }
   }
 ];
 

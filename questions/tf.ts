@@ -1,12 +1,11 @@
-import { QuestionSpecification } from "../autograder";
+import { QuestionBank } from "../autograder";
 
-export const TF_QUESTIONS: QuestionSpecification[] = [
+export const TF_QUESTIONS = new QuestionBank([
   {
     "id": "sp20_mc_time_complexity_1",
     "tags": ["tf_time_complexity"],
     "points": 1,
     "mk_description": "**Time Complexity**\n\nPrinting all the elements in an array has linear O(n) time complexity.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -21,7 +20,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_time_complexity"],
     "points": 1,
     "mk_description": "**Time Complexity**\n\nFinding the element at index `i` in an array has constant O(1) time complexity.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -36,7 +34,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_time_complexity"],
     "points": 1,
     "mk_description": "**Time Complexity**\n\nAssuming a data structure uses an array to store an ordered sequence of elements and keeps track of the number of elements, removing the last element from the sequence has constant O(1) time complexity.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -51,7 +48,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_time_complexity"],
     "points": 1,
     "mk_description": "**Time Complexity**\n\nAssuming a data structure uses an array to store an ordered sequence of elements and keeps track of the number of elements, removing an element from the middle of the sequence has constant O(1) time complexity.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -66,7 +62,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_time_complexity"],
     "points": 1,
     "mk_description": "**Time Complexity**\n\nGiven a pointer to an element in the middle of an array, removing that element from the array has constant O(1) time complexity.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -81,7 +76,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_containers_and_templates"],
     "points": 1,
     "mk_description": "**Containers and Templates**\n\nA set based on a sorted array has better time complexity for a `contains()` operation, but worse time complexity for `insert()` and `remove()` when compared to a set based on an unsorted array.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -96,7 +90,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_containers_and_templates"],
     "points": 1,
     "mk_description": "**Containers and Templates**\n\nA set based on a sorted array has better time complexity for a `contains()` operation, but the same time complexity for `insert()` and `remove()` when compared to a set based on an unsorted array.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -111,7 +104,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_containers_and_templates"],
     "points": 1,
     "mk_description": "**Containers and Templates**\n\nAn instance of a container class with a template parameter for its element type may contain several different kinds of objects at runtime.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -126,7 +118,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_containers_and_templates"],
     "points": 1,
     "mk_description": "**Containers and Templates**\n\nAn instance of a container class with a template parameter for its element type must choose the type of element it contains at compile_time, and this cannot be changed at runtime.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -141,7 +132,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_representation_invariants"],
     "points": 1,
     "mk_description": "**Representation Invariants**\n\nRepresentation invariants are used to specify the C++ type of an ADT's member variables. ",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -156,7 +146,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_representation_invariants"],
     "points": 1,
     "mk_description": "**Representation Invariants**\n\nIf an ADT's representation invariants are broken, a compile error results.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -171,7 +160,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_representation_invariants"],
     "points": 1,
     "mk_description": "**Representation Invariants**\n\nIf an ADT's representation invariants are broken, even a correct implementation of a member function may crash.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -186,7 +174,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_representation_invariants"],
     "points": 1,
     "mk_description": "**Representation Invariants**\n\nA correct implementation of an ADT's member function must contain code to handle situations in which the ADT's representation invariants are broken, in order to prevent undefined behavior.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -201,7 +188,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_representation_invariants"],
     "points": 1,
     "mk_description": "**Representation Invariants**\n\nAn ADT's member function may temporarily break its representation invariants, as long as they are restored by the time it returns.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -216,7 +202,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory"],
     "points": 1,
     "mk_description": "**Dynamic Memory**\n\nAll objects allocated with `new` have their own, independent lifetime.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -231,7 +216,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory"],
     "points": 1,
     "mk_description": "**Dynamic Memory**\n\nThe `delete[]` syntax is used to delete an element at a specific index from a dynamically allocated array.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -246,7 +230,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory"],
     "points": 1,
     "mk_description": "**Dynamic Memory**\n\nA `new` expression evaluates to a reference to the newly allocated object on the heap.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -261,7 +244,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory"],
     "points": 1,
     "mk_description": "**Dynamic Memory**\n\nAfter `delete` is used on a pointer, that pointer becomes null.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -276,7 +258,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory"],
     "points": 1,
     "mk_description": "**Dynamic Memory**\n\nA dynamically allocated array on the heap may change size.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -291,7 +272,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory_errors"],
     "points": 1,
     "mk_description": "**Dynamic Memory Errors**\n\nTo avoid memory leaks, all pointers to objects on the heap must be set to `nullptr` before they go out of scope.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -306,7 +286,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory_errors"],
     "points": 1,
     "mk_description": "**Dynamic Memory Errors**\n\nOnce `delete` is used through a pointer, that pointer is dangling and cannot safely be used to point to a new dynamically allocated object.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -321,7 +300,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory_errors"],
     "points": 1,
     "mk_description": "**Dynamic Memory Errors**\n\nAll dangling pointers must be set to `nullptr` before they go out of scope to avoid a double delete on the previously freed object they still point to.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -336,7 +314,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory_errors"],
     "points": 1,
     "mk_description": "**Dynamic Memory Errors**\n\nAssuming `ptr` is a pointer, `delete ptr;` may result in a double free even if it is the first time the expression `delete ptr;` was used.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -351,7 +328,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_dynamic_memory_errors"],
     "points": 1,
     "mk_description": "**Dynamic Memory Errors**\n\nIf a dynamic integer object was allocated with `int * ptr = new int(3);` then that dynamic integer is always leaked unless `delete ptr;` is used before `ptr` goes out of scope.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -366,7 +342,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_managing_dynamic_memory"],
     "points": 1,
     "mk_description": "**Managing Dynamic Memory**\n\nThe only time a destructor is called is when a local object goes out of scope.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -381,7 +356,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_managing_dynamic_memory"],
     "points": 1,
     "mk_description": "**Managing Dynamic Memory**\n\nAn instance of a class type cannot be allocated on the heap unless it has a custom destructor implementation.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -396,7 +370,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_managing_dynamic_memory"],
     "points": 1,
     "mk_description": "**Managing Dynamic Memory**\n\nIn order to prevent memory leaks, a program's source code must contain exactly the same number of `new` and `delete` expressions.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -411,7 +384,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_managing_dynamic_memory"],
     "points": 1,
     "mk_description": "**Managing Dynamic Memory**\n\nIf a class contains member variables that also have class type, the destructors for those members are implicity called when the overall object's lifetime ends.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -426,7 +398,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_managing_dynamic_memory"],
     "points": 1,
     "mk_description": "**Managing Dynamic Memory**\n\nIf a class contains any member variables with pointer type, its destructor must always `delete` through each of those pointers to prevent memory leaks.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -441,7 +412,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_big_three"],
     "points": 1,
     "mk_description": "**The Big Three**\n\nA custom copy constructor generally never needs to use the `delete` keyword.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -456,7 +426,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_big_three"],
     "points": 1,
     "mk_description": "**The Big Three**\n\nA custom assignment operator should always use a member_initializer_list if possible.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -471,7 +440,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_big_three"],
     "points": 1,
     "mk_description": "**The Big Three**\n\nThe `other` parameter for the copy constructor does not need to be pass_by_const reference, but it is more efficient to do so.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -486,7 +454,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_big_three"],
     "points": 1,
     "mk_description": "**The Big Three**\n\nA memory leak is the most common problem caused by a shallow copy of a dynamically allocated resource.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -501,7 +468,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_big_three"],
     "points": 1,
     "mk_description": "**The Big Three**\n\nA shallow copy of dynamically allocated resources may cause a double free when the copied objects are cleaned up.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -516,7 +482,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_linked-lists"],
     "points": 1,
     "mk_description": "**Linked Lists**\n\nAn invariant of linked lists is that the final next pointer is set to null.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -531,7 +496,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_linked-lists"],
     "points": 1,
     "mk_description": "**Linked Lists**\n\nStoring a set of unique objects in a linked list takes up more memory than storing them in a binary tree.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -546,7 +510,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_iterators"],
     "points": 1,
     "mk_description": "**Iterators**\n\nAll iterators must have custom implementations of the Big Three.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -561,7 +524,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_iterators"],
     "points": 1,
     "mk_description": "**Iterators**\n\nIterators provide a common interface to traverse through containers.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -576,7 +538,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_iterators"],
     "points": 1,
     "mk_description": "**Iterators**\n\nIterators hide implementation details of a container ADT.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -591,7 +552,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_iterators"],
     "points": 1,
     "mk_description": "**Iterators**\n\nRange based for loops are translated into traversals by iterator.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -606,7 +566,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functional-recursion"],
     "points": 1,
     "mk_description": "**Recursion & Tail Recursion**\n\nTail-recursive functions can also be tree recursive.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -621,7 +580,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functional-recursion"],
     "points": 1,
     "mk_description": "**Recursion & Tail Recursion**\n\nIf a recursive call is on the last line of a function, then the function is always tail recursive.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -636,7 +594,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functional-recursion"],
     "points": 1,
     "mk_description": "**Recursion & Tail Recursion**\n\nAny recursive function can be made tail recursive.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -651,7 +608,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functional-recursion"],
     "points": 1,
     "mk_description": "**Recursion & Tail Recursion**\n\nA tail recursive function must have exactly 1 base case.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -666,7 +622,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_structural-recursion"],
     "points": 1,
     "mk_description": "**Structural Recursion**\n\nA tree recursive function must have at least 2 base cases.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -681,7 +636,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functors"],
     "points": 1,
     "mk_description": "**Function Objects & Functors**\n\nA function pointer’s type depends on the number of parameters of the function.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -696,7 +650,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functors"],
     "points": 1,
     "mk_description": "**Function Objects & Functors**\n\nA function pointer is an object that contains the address of a function.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -711,7 +664,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_functors"],
     "points": 1,
     "mk_description": "**Function Objects & Functors**\n\nA functor is a class-type object that acts like a function.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -726,7 +678,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_exceptions"],
     "points": 1,
     "mk_description": "**Exceptions**\n\nAn uncaught exception will cause a runtime error.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -741,7 +692,6 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
     "tags": ["tf_exceptions"],
     "points": 1,
     "mk_description": "**Exceptions**\n\nIf an exception is caught in a catch block, the program will exit with status 0 at the end of the catch block.",
-    "code_language": "cpp",
     "response": {
       "kind": "multiple_choice",
       "choices": [
@@ -751,7 +701,7 @@ export const TF_QUESTIONS: QuestionSpecification[] = [
       "multiple": false
     }
   }
-];
+]);
 
 
 
