@@ -2,7 +2,7 @@ import { SectionSpecification } from "../autograder";
 
 export const S7_1_galley : SectionSpecification = {
   "id": "sp20_7_1",
-  "title": "Dynamic Memory and The Big Three",
+  "title": "The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `Galley`, which is a kitchen on a ship or aircraft.",
   "mk_reference": "```cpp\nclass Galley {\npublic:\n  Galley() // Default ctor. Capacity 10, no ingredients.\n    : capacity(10), size(0), ingredients(new string[capacity]) { }\n\nprivate:\n  // Capacity of ingredients array\n  int capacity;\n\n  // Number of ingredients currently in the galley\n  int size;        \n  \n  // A pointer to a dynamically allocated array of ingredient names\n  string *ingredients;\n\n  // A pointer to the ingredient currently being prepared\n  string *currentIngredient;\n\n  // Reallocates a new ingredients array with more capacity\n  void grow() { ... }\n};\n```",
   "content": [

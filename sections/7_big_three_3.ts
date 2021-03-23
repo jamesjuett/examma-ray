@@ -2,7 +2,7 @@ import { BY_ID, Question, Section, SectionSpecification } from "../autograder";
 
 export const S7_3_galleria : SectionSpecification = {
   "id": "sp20_7_3",
-  "title": "Dynamic Memory and The Big Three",
+  "title": "The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `Galleria`, which is a covered or enclosed area with commercial establishments for shopping, dining, etc.",
   "mk_reference": "```cpp\nclass Restaurant {\n\npublic:\n  Restaurant(int pricey); // 1, 2, or 3 depending on $, $$, or $$$\n\n  // Assume the Big Three for Restaurant are properly implemented\n};\n\nclass Store {\npublic:\n\n  // Default constructor for empty storefront\n  Store();\n\n  // Construct a specific store\n  Store(const string &name); \n\n  // Assume the Big Three for Store are properly implemented\n\n  const string & getName() { ... }\n};\n\nclass Galleria {\npublic:\n  Galleria() // Default ctor.\n    : storesCapacity(10), storesSize(0),\n      stores(new Store[storesCapacity]) { }\n\nprivate:\n\n  // Capacity of stores array  \n  int storesCapacity; \n\n  // Number of stores currently in the galleria\n  int storesSize;    \n\n  // Dynamically allocated array of stores\n  Store *stores;\n\n  // A vector of Restaurants in the galleria\n  vector<Restaurant> restaurants;\n};\n```",
   "content": [

@@ -8,7 +8,7 @@ export const FITB_QUESTIONS : QuestionSpecification[] = [
     "mk_description": "**HEY YOU**\n\nFill in the code below to make it work.",
     "response": {
       "kind": "fitb",
-      "text":
+      "content":
 `
 this is a **test** _only_ a \`test\`
 

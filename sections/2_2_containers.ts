@@ -13,7 +13,7 @@ export const S2_2_containers : SectionSpecification = {
       "mk_description": "Assume that we define the representation invariants for `MinQueue`'s data representation such that the first `size` elements of the `data` array contain the valid items in the `MinQueue`, and these elements are **sorted in descending order** (i.e. lower elements to the back). What is the time complexity for the most efficient algorithm to implement each of the following functions?",
       "response": {
         "kind": "fitb",
-        "text": "________BLANK________ `min()`\n\n________BLANK________ `popMin()`\n\n________BLANK________ `push()`"
+        "content": "________BLANK________ `min()`\n\n________BLANK________ `popMin()`\n\n________BLANK________ `push()`"
       }
     },
     {

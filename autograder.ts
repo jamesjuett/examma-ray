@@ -820,6 +820,7 @@ export class Section {
 }
 
 
+const NO_REFERNECE_MATERIAL = "This section has no reference material."
 
 export class AssignedSection {
 
@@ -880,7 +881,7 @@ export class AssignedSection {
             <td style="width: 35%;">
               <div class="examma-ray-section-reference">
                 <h6>Reference Material</h6>
-                ${this.section.html_reference}
+                ${this.section.html_reference ?? NO_REFERNECE_MATERIAL}
               </div>
             </td>
           </tr>
