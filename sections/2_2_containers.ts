@@ -20,7 +20,7 @@ export const S2_2_containers : SectionSpecification = {
       "id": "sp20_2_2_part2",
       "tags": [],
       "points": 6,
-      "mk_description": "Write an implementation of the `push()` function. Your implementation must put the new element in the proper location to ensure that the sorting invariant is maintained.",
+      "mk_description": "Write an implementation of the `push()` function. Your implementation must put the new element in the proper location to ensure that the sorting invariant is maintained. Use the code editor below to write your solution, but **do not** modify the function signature.",
       "response": {
         "kind": "code_editor",
         "language": "cpp",

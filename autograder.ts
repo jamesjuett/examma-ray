@@ -880,7 +880,7 @@ export class AssignedSection {
             </td>
             <td style="width: 35%;">
               <div class="examma-ray-section-reference">
-                <h6>Reference Material</h6>
+                <h6>Reference Material (Section ${this.displayIndex})</h6>
                 ${this.section.html_reference ?? NO_REFERNECE_MATERIAL}
               </div>
             </td>
@@ -1471,9 +1471,9 @@ export class ExamGenerator {
     [...this.assignedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
-        console.log(`${i}/${arr.length} Saving assigned exam manifest for: ${ex.student.uniqname}...`);
+        console.log(`${i+1}/${arr.length} Saving assigned exam manifest for: ${ex.student.uniqname}...`);
         writeFileSync(`out/${this.exam.id}/assigned/manifests/${ex.student.uniqname}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
-        console.log(`${i}/${arr.length} Rendering assigned exam html for: ${ex.student.uniqname}...`);
+        console.log(`${i+1}/${arr.length} Rendering assigned exam html for: ${ex.student.uniqname}...`);
         writeAGFile(ex, `out/${this.exam.id}/assigned/exams/${ex.student.uniqname}.html`, ex.render(RenderMode.ORIGINAL));
       });
 
