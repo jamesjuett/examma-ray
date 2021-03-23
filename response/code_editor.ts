@@ -6,7 +6,7 @@ import { isStringArray } from "./util";
 
 export type CodeEditorResponse = {
   kind: "code_editor",
-  language: "string",
+  language: string,
   starter: string
 };
 
@@ -38,7 +38,7 @@ export function CODE_EDITOR_RENDERER(response: CodeEditorResponse) {
           </label>
         </div>
       </div>
-      <div class="examma-ray-codemirror">${response.starter}</div>
+      <div class="examma-ray-codemirror">${encode(response.starter)}</div>
     </div>
   `;
 }

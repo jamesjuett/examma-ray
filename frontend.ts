@@ -16,6 +16,7 @@ import 'codemirror/theme/monokai.css';
 import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
+import { decode } from "he";
 
 
 hljs.registerLanguage('cpp', cpp);
@@ -241,7 +242,7 @@ function setupCodeEditors() {
   $(".examma-ray-code-editor").each(function() {
 
     let cmElem = $(this).find(".examma-ray-codemirror");
-    let starterCode = cmElem.html();
+    let starterCode = decode(cmElem.html());
     cmElem.html("");
     let cm = CodeMirror(cmElem[0], {
       mode: "text/x-c++src",

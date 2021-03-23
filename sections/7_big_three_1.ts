@@ -1,6 +1,6 @@
 import { SectionSpecification } from "../autograder";
 
-export const S7_1_galley = <SectionSpecification>{
+export const S7_1_galley : SectionSpecification = {
   "id": "sp20_7_1",
   "title": "Dynamic Memory and The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `Galley`, which is a kitchen on a ship or aircraft.",

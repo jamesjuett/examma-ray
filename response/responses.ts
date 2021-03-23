@@ -5,19 +5,19 @@ import { MC_EXTRACTOR, MC_FILLER, MC_PARSER, MC_RENDERER, MCResponse, MCSubmissi
 import { SAS_EXTRACTOR, SAS_FILLER, SAS_PARSER, SAS_RENDERER, SASResponse, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 import { CodeEditorResponse, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 
-export type QuestionResponse<QT extends ResponseKind> = {
-  "multiple_choice" : MCResponse,
-  "fitb" : FITBResponse,
-  "select_a_statement" : SASResponse,
-  "code_editor": CodeEditorResponse
-}[QT];
+export type QuestionResponse<QT extends ResponseKind> =
+  QT extends "multiple_choice" ? MCResponse :
+  QT extends "fitb" ? FITBResponse :
+  QT extends "select_a_statement" ? SASResponse :
+  QT extends "code_editor" ? CodeEditorResponse :
+  never;
 
-export type SubmissionType<QT extends ResponseKind> = {
-  "multiple_choice" : MCSubmission,
-  "fitb" : FITBSubmission,
-  "select_a_statement" : SASSubmission,
-  "code_editor": CodeEditorSubmission
-}[QT];
+export type SubmissionType<QT extends ResponseKind> =
+  QT extends "multiple_choice" ? MCSubmission :
+  QT extends "fitb" ? FITBSubmission :
+  QT extends "select_a_statement" ? SASSubmission :
+  QT extends "code_editor" ? CodeEditorSubmission :
+  never;
 
 
 export type ResponseHandler<QT extends ResponseKind> = {

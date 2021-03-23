@@ -3,8 +3,9 @@ import Papa from "papaparse";
 import { Exam, ExamGenerator, RANDOM_SECTION, RenderMode } from "./autograder";
 import { FITB_QUESTIONS } from './questions/fitb';
 import { S1_true_false } from './sections/1_true_false';
-import { S2_1_min_queue } from './sections/2_1_min_queue';
-import { S2_2_min_queue } from './sections/2_2_min_queue';
+import { S2_1_containers } from './sections/2_1_containers';
+import { S2_2_containers } from './sections/2_2_containers';
+import { S3_operator_overloading } from './sections/3_operator_overloading';
 import { S6_primes } from './sections/6_primes';
 import { S7_1_galley } from './sections/7_big_three_1';
 import { S7_2_gallery } from './sections/7_big_three_2';
@@ -20,9 +21,10 @@ let exam = new Exam({
   sections: [
     S1_true_false,
     RANDOM_SECTION(1, [
-      S2_1_min_queue,
-      S2_2_min_queue
+      S2_1_containers,
+      S2_2_containers
     ]),
+    S3_operator_overloading,
     S6_primes,
     RANDOM_SECTION(1, [
       S7_1_galley,
