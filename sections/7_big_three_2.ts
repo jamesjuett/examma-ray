@@ -9,7 +9,7 @@ export const S7_2_gallery : SectionSpecification = {
     {
       "id": "sp20_7_2_assn_op",
       "tags": [],
-      "points": 1,
+      "points": 9,
       "mk_description": "Implement the **assignment operator** as it would be defined inside the `Gallery` class by selecting from the lines of code given below. Click all lines that should be included. As you work, a preview of your selected implementation is shown. You are not able to change the relative ordering of the lines. When finished, the **selected lines should form a working function** that performs a **deep copy** where appropriate and **avoids undefined behavior or memory leaks**. Some lines contain **mistakes** or are **unnecessary** for the function - these lines should not be selected.",
       "response": {
         "kind": "select_a_statement",

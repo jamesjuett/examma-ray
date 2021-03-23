@@ -923,13 +923,13 @@ export class AssignedExam {
       "?/" + this.pointsPossible;
   }
 
-  public renderNav() {
+  public renderNav(mode: RenderMode) {
     return `
       <ul class = "nav" style="display: unset; font-weight: 500">
         ${this.assignedSections.map(s => {
-          let sectionAssignedQuestions = s.assignedQuestions;
-          let scoreBadge = sectionAssignedQuestions.every(aq => aq.isGraded()) ?
-            renderScoreBadge(sectionAssignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0), s.pointsPossible) :
+          let scoreBadge = 
+            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary") :
+            s.isFullyGraded ? renderScoreBadge(s.pointsEarned!, s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
           return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section.id}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
         }).join("")}
@@ -949,9 +949,9 @@ export class AssignedExam {
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <h3 class="text-center pb-1 border-bottom">
-            ${this.renderGrade()}
+            ${mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(this.pointsPossible, "btn-secondary") : this.renderGrade()}
           </h3>
-          ${this.renderNav()}
+          ${this.renderNav(mode)}
           ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">

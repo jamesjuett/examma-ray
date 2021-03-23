@@ -5,7 +5,7 @@ import { FITB_QUESTIONS } from './questions/fitb';
 import { S1_true_false } from './sections/1_true_false';
 import { S2_1_containers } from './sections/2_1_containers';
 import { S2_2_containers } from './sections/2_2_containers';
-import { S3_operator_overloading } from './sections/3_operator_overloading';
+import { S3_operator_overloading } from './sections/3_operator_overloading copy';
 import { S5_dynamic_memory } from './sections/5_dynamic_memory';
 import { S6_primes } from './sections/6_primes';
 import { S7_1_galley } from './sections/7_big_three_1';
