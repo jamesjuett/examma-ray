@@ -33,7 +33,8 @@ let exam = new Exam({
       S7_2_gallery,
       S7_3_galleria
     ]),
-  ]
+  ],
+  frontend_js_path: "../../../js/frontend.js"
 });
 
 let students = Papa.parse<{uniqname: string, name: string}>(readFileSync("roster/roster.csv", "utf8"), {header: true}).data;

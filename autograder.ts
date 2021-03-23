@@ -1080,7 +1080,8 @@ export type ExamSpecification = {
   mk_announcements?: string[],
   graders?: GraderMap,
   exceptions?: ExceptionMap,
-  sections?: (SectionSpecification | Section | SectionChooser)[]
+  sections?: (SectionSpecification | Section | SectionChooser)[],
+  frontend_js_path: string
 };
 
 export class Exam {
@@ -1097,6 +1098,8 @@ export class Exam {
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
 
+  public readonly frontendJsPath: string;
+
   public constructor(spec: ExamSpecification) {
     this.id = spec.id;
     this.title = spec.title;
@@ -1106,6 +1109,7 @@ export class Exam {
     this.exceptionMap = spec.exceptions ?? {};
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
     this.sections = spec.sections ?? [];
+    this.frontendJsPath = spec.frontend_js_path;
   }
 
   public addGraders(graderMap: GraderMap) {
@@ -1486,7 +1490,7 @@ export function writeAGFile(ex: AssignedExam, filename: string, body: string) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha512-PEsccDx9jqX6Dh4wZDCnWMaIO3gAaU0j46W//sSqQhUQxky6/eHZyeB3NrXD2xsyugAKd4KPiDANkcuoEa2JuA==" crossorigin="anonymous"></script>
-    <script src="../../../js/frontend.js"></script>
+    <script src="${ex.exam.frontendJsPath}"></script>
     <script>
       $(function() {
         $('button.examma-ray-blank-saver').on("click", function() {
