@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { mk2html } from "../../render";
+import { mk2html } from "../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
@@ -107,7 +107,7 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
   // number of underscores that were originally in the "__BLANK__"
   blankLengths.forEach((length) => {
     let autoAttrs = `autocomplete="off" autocorrect="off"`
-    content = content.replace(blank_id, `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input"></input>`)
+    content = content.replace(blank_id, `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>`)
   });
 
   // Replace each of the "box ids" in the rendered html with
@@ -118,7 +118,7 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
     let rcAttrs = `rows="${lines}" ${boxWidth !== 0 ? `cols="${boxWidth}"` : ""}`;
     let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off"`
     let style = `style="resize: none; overflow: hidden; ${boxWidth === 0 ? "width: 100%;" : ""}"`
-    content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input" ${style}>${submission_placeholder}</textarea>`)
+    content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`)
   });
 
   if (submission && submission !== BLANK_SUBMISSION) {

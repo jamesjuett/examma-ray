@@ -1,4 +1,5 @@
 import { RANDOM_ANY, Section, SectionSpecification } from "../src/exams";
+import { FITBRegexGrader } from "../src/graders/common";
 
 export const S5_dynamic_memory: SectionSpecification = {
   "id": "sp20_5_dynamic_memory",
@@ -60,4 +61,185 @@ export const S5_dynamic_memory: SectionSpecification = {
       }
     }
   ])
+}
+
+export const S5_Dynamic_Memory_Graders = {
+  "sp20_5_v1" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "use of dead object",
+      patterns: [
+        {
+          pattern: /.*dead.*object.*/i,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "The reference b refers to the object that was previously deleted through the pointer a.",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
+  "sp20_5_v2" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "incorrect delete",
+      patterns: [
+        { pattern: /.*incorrect.*delete.*/i, explanation: "Correct!", points: 2 },
+        { pattern: /.*double.*delete.*/i, explanation: "Correct!", points: 2 },
+        { pattern: /.*double.*free.*/i, explanation: "Correct!", points: 2 }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "Both a and b end up pointing to the same object, so deleting through both results in a double delete.",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
+  "sp20_5_v3" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "incorrect delete",
+      patterns: [
+        {
+          pattern: /.*incorrect.*delete.*/i,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "The pointer a ends up pointing to a dynamically allocated array, which is incorrectly deleted with delete (rather than delete[])",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
+  "sp20_5_v4" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "memory leak",
+      patterns: [
+        {
+          pattern: /.*memory.*leak.*/i,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "The second line allocates an int with value 10 on the heap, but the address to this int is not kept.",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
+  "sp20_5_v5" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "use of dead object",
+      patterns: [
+        {
+          pattern: /.*dead.*object.*/i,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "After the object a points to is deleted, it is not safe to assign to that dead object with *a = *b;",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
+  "sp20_5_v6" : new FITBRegexGrader([
+    {
+      title: "Identify Error",
+      blankIndex: 1,
+      description: "",
+      points: 2,
+      solution: "memory leak",
+      patterns: [
+        {
+          pattern: /.*memory.*leak.*/i,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    },
+    {
+      title: "Explanation",
+      blankIndex: 2,
+      description: "",
+      points: 2,
+      solution: "The object pointed to by ptr_ptr is not cleaned up with delete.",
+      patterns: [
+        {
+          pattern: /.*/,
+          explanation: "Correct!",
+          points: 2
+        }
+      ]
+    }
+  ]),
 }

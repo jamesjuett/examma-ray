@@ -6,11 +6,11 @@ This assessmment is randomized. Every student will receive a different set of qu
 
 * **DO NOT** open this assessmment in more than one browser window. If you do, your work may not be saved properly.
 * You may work on the questions in **any order**.
-* Your work will be saved automatically.
+* **You must download and turn in your answers file to Canvas before exam time is up.**
 * Read questions carefully, noting any **requirements or restrictions** for your solution. There is **no penalty for wrong answers**. It is to your benefit to record an answer to each question, even if you're not sure what the correct answer is.
 * Assume all code is in **standard C++11**, and use only standard C++11 in your solutions.
-* Throughout the assessmment, assume all necessary` #include` headers and the `using namespace std;` directive are present unless otherwise directed.
-* You do not need to verify `REQUIRES` clauses with` assert` unless specifically instructed to do so.
+* Throughout the assessmment, assume all necessary `#include` headers and the `using namespace std;` directive are present unless otherwise directed.
+* You do not need to verify `REQUIRES` clauses with `assert` unless specifically instructed to do so.
 * In code examples, `...` is used to indicate code has been omitted for brevity. You may assume all omitted code works correctly and generally behaves as expected.
 
 **Allowed Resources**

@@ -12,7 +12,7 @@ import { FITBSubmission } from './response/fitb';
 import { ResponseKind, BLANK_SUBMISSION } from './response/common';
 import { MCSubmission } from './response/multiple_choice';
 import { SASSubmission } from './response/select_a_statement';
-import { mk2html } from '../render';
+import { mk2html } from './render';
 import { ExamAnswers, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from './common';
 import { Exception, GraderMap, ExceptionMap } from './grader';
 import { Grader, isGrader } from './graders/common';
@@ -287,8 +287,12 @@ export class AssignedSection {
     this.assignedQuestions.forEach(aq => {
       let grader = graders[aq.question.id];
       if (grader) {
+        console.log(`Grading ${aq.question.id}`);
         assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
+      }
+      else {
+        console.log(`No grader found for ${aq.question.id}`);
       }
     });
     asMutable(this).pointsEarned = <number>this.assignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0);

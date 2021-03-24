@@ -1,4 +1,5 @@
 import { Section, SectionSpecification } from "../src/exams";
+import { FITBRegexGrader, FITBRegexMatcher } from "../src/graders/common";
 
 export const S2_1_containers : SectionSpecification = {
   "id": "sp20_2_1_containers",
@@ -13,7 +14,7 @@ export const S2_1_containers : SectionSpecification = {
       "mk_description": "Assume that we define the representation invariants for `MinQueue`'s data representation such that the first `size` elements of the `data` array contain the valid items in the `MinQueue`, and these elements are **not sorted**. What is the time complexity for the most efficient algorithm to implement each of the following functions?",
       "response": {
         "kind": "fitb",
-        "content": "________BLANK________ `min()`\n\n_____BLANK________ `popMin()`\n\n_____BLANK________ `push()`"
+        "content": "________BLANK________ `min()`\n\n________BLANK________ `popMin()`\n\n________BLANK________ `push()`"
       }
     },
     {
@@ -29,3 +30,68 @@ export const S2_1_containers : SectionSpecification = {
     }
   ]
 }
+
+const linear_complexity_patterns : FITBRegexMatcher[] = [
+  {
+    pattern: /.*linear.*/i,
+    explanation: "Correct!",
+    points: 2
+  },
+  {
+    pattern: /.*O.*\(.*n.*\).*/i,
+    explanation: "Correct!",
+    points: 2
+  },
+  {
+    pattern: /.*0.*\(.*n.*\).*/i,
+    explanation: "Correct!",
+    points: 2
+  }
+];
+
+const constant_complexity_patterns : FITBRegexMatcher[] = [
+  {
+    pattern: /.*constant.*/i,
+    explanation: "Correct!",
+    points: 2
+  },
+  {
+    pattern: /.*O.*\(.*1.*\).*/i,
+    explanation: "Correct!",
+    points: 2
+  },
+  {
+    pattern: /.*0.*\(.*1.*\).*/i,
+    explanation: "Correct!",
+    points: 2
+  }
+];
+
+export const S2_1_graders = {
+  "sp20_2_1_part1" : new FITBRegexGrader([
+    {
+      title: "`min() Complexity`",
+      blankIndex: 1,
+      description: "Because the items in the `MinQueue` are not sorted, each must be checked to find the minimum. Thus, best we can do is linear $$O(n)$$ time.",
+      points: 2,
+      solution: "linear or O(n)",
+      patterns: linear_complexity_patterns
+    },
+    {
+      title: "`popMin() Complexity`",
+      blankIndex: 2,
+      description: "Fundamentally, we have to find the minimum before we can remove it, so the complexity for `popMin()` the same as for `min()`, which is linear $$O(n)$$.",
+      points: 2,
+      solution: "linear or O(n)",
+      patterns: linear_complexity_patterns
+    },
+    {
+      title: "`push() Complexity`",
+      blankIndex: 3,
+      description: "Because there is no requirement that elements in the array must be sorted, we can simply add a new item to the end, which has constant $$O(1)$$ complexity.",
+      points: 2,
+      solution: "constant O(1)",
+      patterns: constant_complexity_patterns
+    }
+  ])
+};

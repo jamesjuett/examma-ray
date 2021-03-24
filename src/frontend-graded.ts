@@ -1,7 +1,9 @@
-import hljs from 'highlight.js/lib/core'
+// import hljs from 'highlight.js/lib/core'
 import "highlight.js/styles/github.css";
-import cpp from 'highlight.js/lib/languages/cpp';
+
+import 'katex/dist/katex.min.css';
+
 import "./main.css";
 
-hljs.registerLanguage('cpp', cpp);
-hljs.highlightAll();
+// hljs.registerLanguage('cpp', cpp);
+// hljs.highlightAll();

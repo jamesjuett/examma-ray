@@ -1,4 +1,5 @@
 import { RANDOM_ANY, Section } from "../src/exams";
+import { SimpleMCGrader } from "../src/graders/common";
 
 const PART_1 = RANDOM_ANY(1, [
   {
@@ -130,3 +131,16 @@ export const S6_primes = new Section({
     PART_2
   ]
 });
+
+
+
+export const S6_primes_graders = {
+  "sp20_primes_assignment_op_1": new SimpleMCGrader(1),
+  "sp20_primes_assignment_op_2": new SimpleMCGrader(1),
+  "sp20_primes_assignment_op_3": new SimpleMCGrader(1),
+  "sp20_primes_assignment_op_4": new SimpleMCGrader(1),
+  "sp20_primes_assignment_op_5": new SimpleMCGrader(0),
+  "sp20_primes_assignment_op_6": new SimpleMCGrader(0),
+  "sp20_primes_assignment_op_7": new SimpleMCGrader(0),
+  "sp20_primes_assignment_op_8": new SimpleMCGrader(0),
+}

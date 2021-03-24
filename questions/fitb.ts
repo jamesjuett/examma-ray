@@ -1,4 +1,5 @@
 import { QuestionSpecification } from "../src/exams";
+import { FITBRegexGrader } from "../src/graders/common";
 
 export const FITB_QUESTIONS : QuestionSpecification[] = [
   {
@@ -29,3 +30,77 @@ int main() {
   }
 ];
 
+export const TEST_FITB_graders = {
+  "fitb_test" : new FITBRegexGrader([
+    {
+      title: "Guess \"apple\" successfully",
+      blankIndex: 1,
+      description: "",
+      points: 0.2,
+      solution: "apple",
+      patterns: [
+        {
+          pattern: /.*apple.*/i,
+          explanation: "Correct!",
+          points: 0.2
+        }
+      ]
+    },
+    {
+      title: "Guess \"banana\" successfully",
+      blankIndex: 2,
+      description: "",
+      points: 0.2,
+      solution: "banana",
+      patterns: [
+        {
+          pattern: /.*banana.*/i,
+          explanation: "Correct!",
+          points: 0.2
+        }
+      ]
+    },
+    {
+      title: "Guess \"cranberry\" successfully",
+      blankIndex: 3,
+      description: "",
+      points: 0.2,
+      solution: "cranberry",
+      patterns: [
+        {
+          pattern: /.*cranberry.*/i,
+          explanation: "Correct!",
+          points: 0.2
+        }
+      ]
+    },
+    {
+      title: "Guess \"durian\" successfully",
+      blankIndex: 4,
+      description: "",
+      points: 0.2,
+      solution: "durian",
+      patterns: [
+        {
+          pattern: /.*durian.*/i,
+          explanation: "Correct!",
+          points: 0.2
+        }
+      ]
+    },
+    {
+      title: "Guess \"eggfruit\" successfully",
+      blankIndex: 5,
+      description: "",
+      points: 0.2,
+      solution: "eggfruit",
+      patterns: [
+        {
+          pattern: /.*eggfruit.*/i,
+          explanation: "Correct!",
+          points: 0.2
+        }
+      ]
+    },
+  ]),
+}

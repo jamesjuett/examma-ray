@@ -2,9 +2,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
 import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
-import hljs from 'highlight.js/lib/core'
 import "highlight.js/styles/github.css";
-import cpp from 'highlight.js/lib/languages/cpp';
 import storageAvailable from "storage-available";
 import { ExamAnswers, QuestionAnswer, SectionAnswers } from "./common";
 
@@ -17,11 +15,9 @@ import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
 import { FILE_CHECK, FILE_DOWNLOAD } from './icons';
 
+import 'katex/dist/katex.min.css';
+
 import "./main.css";
-
-
-hljs.registerLanguage('cpp', cpp);
-hljs.highlightAll();
 
 
 

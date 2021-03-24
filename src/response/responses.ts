@@ -52,7 +52,7 @@ export function extract_response<QT extends ResponseKind>(kind: QT, responseElem
 export function stringify_response<QT extends ResponseKind>(submission: SubmissionType<QT>) {
   return submission === BLANK_SUBMISSION ? "" : 
         typeof submission === "string" ? submission :
-        JSON.stringify(submission, null, 2);
+        JSON.stringify(submission);
 }
 
 export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, response: SubmissionType<QT>) : void {

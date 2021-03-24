@@ -5,13 +5,21 @@ import { exam } from "./eecs280sp20test"
 import { ExamGrader } from './src/grader';
 import { ExamAnswers, fillManifest } from './src/common';
 import { TF_Graders } from './rubric/mc';
-import { S5_Dynamic_Memory_Graders } from './rubric/5_dynamic_memory';
+import { S7_3_grader } from './rubric/7_big_three';
+import { S2_1_graders } from './sections/2_1_containers';
+import { S5_Dynamic_Memory_Graders } from './sections/5_dynamic_memory';
+import { S6_primes_graders } from './sections/6_primes';
+import { TEST_FITB_graders } from './questions/fitb';
 
 let students = Papa.parse<{uniqname: string, name: string}>(readFileSync("roster/roster.csv", "utf8"), {header: true}).data;
 
 let grader = new ExamGrader(exam);
 grader.registerGraders(TF_Graders);
+grader.registerGraders(TEST_FITB_graders);
+grader.registerGraders(S2_1_graders);
 grader.registerGraders(S5_Dynamic_Memory_Graders)
+grader.registerGraders(S6_primes_graders);
+grader.registerGraders(S7_3_grader);
 
 
 // Load and verify answers

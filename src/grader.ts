@@ -153,7 +153,7 @@ export class ExamGrader {
     // Create output directories
     mkdirSync(`out/${this.exam.id}/graded/questions/`, { recursive: true });
     let out_filename = `out/${this.exam.id}/graded/questions/${question.id}.html`;
-    console.log(`Writing details for question ${question.id} to ${out_filename}.`);
+    // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader) {
       return;
