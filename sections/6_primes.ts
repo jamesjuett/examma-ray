@@ -1,5 +1,5 @@
 import { RANDOM_ANY, Section } from "../src/exams";
-import { SimpleMCGrader } from "../src/graders/common";
+import { SimpleMCGrader } from "../src/graders/SimpleMCGrader";
 
 const PART_1 = RANDOM_ANY(1, [
   {

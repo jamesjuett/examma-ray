@@ -1,5 +1,5 @@
 import { GraderMap } from "../src/grader";
-import { SimpleMCGrader } from "../src/graders/common";
+import { SimpleMCGrader } from "../src/graders/SimpleMCGrader";
 
 export const TF_Graders : GraderMap = {
   "sp20_mc_time_complexity_1" : new SimpleMCGrader(0),

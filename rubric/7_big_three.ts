@@ -1,4 +1,4 @@
-import { StandardSASGrader } from "../src/graders/common";
+import { StandardSASGrader } from "../src/graders/StandardSASGrader";
 
 export const S7_3_grader = {
   "sp20_7_3_assn_op": new StandardSASGrader([
@@ -34,8 +34,8 @@ export const S7_3_grader = {
       title: "Copy Regular Members",
       description: "Since `storesCapacity` and `storesSize` are primitive types, they can be copied in a straightforward way.",
       points: 1,
-      required: [],
-      prohibited: [9, 10]
+      required: [9, 10],
+      prohibited: []
     },
     {
       title: "Allocate Space for New Stores Array",

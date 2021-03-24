@@ -1,5 +1,5 @@
 import { Section, SectionSpecification } from "../src/exams";
-import { FITBRegexGrader, FITBRegexMatcher } from "../src/graders/common";
+import { FITBRegexMatcher, FITBRegexGrader } from "../src/graders/FITBRegexGrader";
 
 export const S2_1_containers : SectionSpecification = {
   "id": "sp20_2_1_containers",

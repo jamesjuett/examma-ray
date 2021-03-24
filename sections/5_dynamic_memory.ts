@@ -1,5 +1,5 @@
 import { RANDOM_ANY, Section, SectionSpecification } from "../src/exams";
-import { FITBRegexGrader } from "../src/graders/common";
+import { FITBRegexGrader } from "../src/graders/FITBRegexGrader";
 
 export const S5_dynamic_memory: SectionSpecification = {
   "id": "sp20_5_dynamic_memory",

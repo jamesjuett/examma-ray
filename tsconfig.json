@@ -2,6 +2,11 @@
   "include": [
     "./src/*.ts"
   ],
+  "exclude": [
+    "./tests/",
+    "./node_modules/",
+    "./dist/"
+  ],
   "compilerOptions": {
     /* Basic Options */
     // "incremental": true,                   /* Enable incremental compilation */
