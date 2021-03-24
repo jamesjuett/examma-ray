@@ -419,6 +419,7 @@ export function createBlankAnswers(ex: AssignedExam) : ExamAnswers {
     student: ex.student,
     timestamp: Date.now(),
     validated: false,
+    saverId: 0,
     sections: ex.assignedSections.map(s => ({
       id: s.section.id,
       display_index: s.displayIndex,
@@ -774,6 +775,23 @@ export function writeAGFile(mode: RenderMode, ex: AssignedExam, filename: string
               <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
               <div>
                 <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="multiple-tabs-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">WARNING</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-danger">It appears you have your exam open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
+              <div>
+                <button class="btn btn-primary" data-dismiss="modal">OK</button>
               </div>
             </div>
           </div>

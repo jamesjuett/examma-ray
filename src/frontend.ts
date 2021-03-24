@@ -19,8 +19,6 @@ import 'katex/dist/katex.min.css';
 
 import "./main.css";
 
-
-
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
@@ -41,6 +39,9 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   }
 }
 
+const saverID = Date.now();
+let saveCount = 0;
+
 function extractExamAnswers() : ExamAnswers {
   let examElem = $("#examma-ray-exam");
   return {
@@ -50,6 +51,7 @@ function extractExamAnswers() : ExamAnswers {
       name: examElem.data("name")
     },
     timestamp: Date.now(),
+    saverId: saverID,
     validated: false,
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
@@ -104,9 +106,26 @@ function autosaveToLocalStorage() {
 
     let answers = extractExamAnswers();
 
+    let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname));
+    if (prevAnswersLS) {
+
+      let prevAnswers = <ExamAnswers>JSON.parse(prevAnswersLS);
+
+      // We want to know if we're competing with another tab/window.
+      // We can detect that by checking if the previous save was made with a different saver ID,
+      // and we have already saved once (otherwise we would detect starting up a tab after a previous
+      // one was closed rather than a true interleaving of saves)
+      if (saveCount > 0 && prevAnswers.saverId !== answers.saverId) {
+        $("#multiple-tabs-modal").modal("show");
+      }
+      
+    }
+
+
     // Only save if there is something to save
     if (!isBlankAnswers(answers)) {
       localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname), JSON.stringify(answers, null, 2));
+      ++saveCount;
     }
 
     console.log("autosave complete!");

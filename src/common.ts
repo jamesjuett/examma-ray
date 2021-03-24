@@ -21,6 +21,7 @@ export type ExamAnswers<V extends boolean = boolean> = {
     name: string
   },
   timestamp: number;
+  saverId: number;
   validated: V;
   sections: SectionAnswers[];
 };
