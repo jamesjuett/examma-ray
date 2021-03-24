@@ -252,6 +252,8 @@ function setupChangeListeners() {
   $("input:text, textarea").on("keyup", function() {
     setTimeout(onUnsavedChanges, 500); // Timeout is to prevent this from interfering with clicking the save button
   });
+
+  // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
 function setupCodeEditors() {
@@ -274,6 +276,7 @@ function setupCodeEditors() {
       value: starterCode
     });
     codeMirrors.push(cm);
+    cm.on("change", onUnsavedChanges);
 
     cmElem.data("examma-ray-codemirror", cm);
   });
