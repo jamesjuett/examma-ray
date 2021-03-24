@@ -117,8 +117,8 @@ function autosaveToLocalStorage() {
       // one was closed rather than a true interleaving of saves)
       if (saveCount > 0 && prevAnswers.saverId !== answers.saverId) {
         $("#multiple-tabs-modal").modal("show");
+        return; // don't save in this case
       }
-      
     }
 
 
@@ -145,11 +145,15 @@ function updateTimeSaved() {
 const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
 const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
 
+let HAS_UNSAVED_CHANGES = false;
+
 function onUnsavedChanges() {
   $("#exam-saver-button")
     .html(UNSAVED_CHANGES_HTML)
     .removeClass("btn-success")
     .addClass("btn-warning");
+
+  HAS_UNSAVED_CHANGES = true;
 }
 
 function onSaved() {
@@ -161,6 +165,8 @@ function onSaved() {
   lastSavedTime = Date.now();
   $("#examma-ray-exam-saver-last-save").css("visibility", "visible");
   updateTimeSaved();
+
+  HAS_UNSAVED_CHANGES = false;
 }
 
 function main() {
@@ -241,6 +247,20 @@ function setupSaverModal() {
 }
 
 function setupChangeListeners() {
+  // https://stackoverflow.com/questions/7317273/warn-user-before-leaving-web-page-with-unsaved-changes
+  window.addEventListener("beforeunload", function (e) {
+    if (!HAS_UNSAVED_CHANGES) {
+        return undefined;
+    }
+
+    // Note many browsers will ignore this message and just show a
+    // default one for security purposes. That's ok.
+    let msg = "You've made changes to you answers since the last time you downloaded an answers file. Are you sure you want to leave the page?";
+
+    (e || window.event).returnValue = msg; //Gecko + IE
+    return msg; //Gecko + Webkit, Safari, Chrome etc.
+  });
+
   // Any change to an input element within a question response
   // triggers unsaved changes
   // https://api.jquery.com/input-selector/
