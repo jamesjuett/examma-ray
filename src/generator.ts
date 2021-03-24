@@ -163,10 +163,10 @@ export class ExamGenerator {
       return student.uniqname;
     }
     else if (this.options.filenames === "uuidv4") {
-      return student.uniqname + uuidv4();
+      return student.uniqname + "-" + uuidv4();
     }
     else if (this.options.filenames === "uuidv5") {
-      return student.uniqname + uuidv5(student.uniqname, this.options.uuidv5_namespace!);
+      return student.uniqname + "-" + uuidv5(student.uniqname, this.options.uuidv5_namespace!);
     }
     else {
       assertNever(this.options.filenames);
