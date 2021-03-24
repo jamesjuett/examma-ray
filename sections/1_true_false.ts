@@ -1,4 +1,4 @@
-import { RANDOM_BY_TAG, Section } from "../autograder";
+import { RANDOM_BY_TAG, Section } from "../src/exams";
 import { FITB_QUESTIONS } from "../questions/fitb";
 import { TF_QUESTIONS } from "../questions/tf";
 

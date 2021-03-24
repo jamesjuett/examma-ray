@@ -1,4 +1,4 @@
-import { SectionSpecification } from "../autograder";
+import { SectionSpecification } from "../src/exams";
 
 export const S2_2_containers : SectionSpecification = {
   "id": "sp20_2_2_containers",

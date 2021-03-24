@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { mk2html } from "../render";
+import { mk2html } from "../../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";

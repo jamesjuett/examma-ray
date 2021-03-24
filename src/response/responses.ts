@@ -1,4 +1,4 @@
-import { Question } from "../autograder";
+import { Question } from "../exams";
 import { FITB_EXTRACTOR, FITB_FILLER, CODE_FITB_HANDLER, FITB_PARSER, FITB_RENDERER, FITBResponse, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MC_EXTRACTOR, MC_FILLER, MC_PARSER, MC_RENDERER, MCResponse, MCSubmission, MC_HANDLER } from "./multiple_choice";

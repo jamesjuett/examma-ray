@@ -1,5 +1,3 @@
-import { CLIPBOARD, CLIPBOARD_CHECK, FILE_CHECK, FILE_DOWNLOAD } from "./icons";
-import { assertFalse } from "./util";
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
@@ -8,7 +6,7 @@ import hljs from 'highlight.js/lib/core'
 import "highlight.js/styles/github.css";
 import cpp from 'highlight.js/lib/languages/cpp';
 import storageAvailable from "storage-available";
-import { ExamAnswersJSON, QuestionAnswerJSON, SectionAnswersJSON } from "./common";
+import { ExamAnswers, QuestionAnswer, SectionAnswers } from "./common";
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
@@ -17,6 +15,9 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
+import { FILE_CHECK, FILE_DOWNLOAD } from './icons';
+
+import "./main.css";
 
 
 hljs.registerLanguage('cpp', cpp);
@@ -24,7 +25,7 @@ hljs.highlightAll();
 
 
 
-function extractQuestionAnswers(this: HTMLElement) : QuestionAnswerJSON {
+function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
@@ -35,7 +36,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswerJSON {
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : SectionAnswersJSON {
+function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   let section = $(this);
   return {
     id: section.data("section-id"),
@@ -44,7 +45,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswersJSON {
   }
 }
 
-function extractExamAnswers() : ExamAnswersJSON {
+function extractExamAnswers() : ExamAnswers {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
@@ -53,22 +54,23 @@ function extractExamAnswers() : ExamAnswersJSON {
       name: examElem.data("name")
     },
     timestamp: Date.now(),
+    validated: false,
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
 }
 
-function isBlankAnswers(answers: ExamAnswersJSON) {
+function isBlankAnswers(answers: ExamAnswers) {
   return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
-function loadQuestionAnswer(qa: QuestionAnswerJSON) {
+function loadQuestionAnswer(qa: QuestionAnswer) {
   let questionElem = $(`#question-${qa.id}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
   let sub = parse_submission(qa.kind, qa.response);
   fill_response(responseElem, qa.kind, sub);
 }
 
-function loadExamAnswers(answers: ExamAnswersJSON) {
+function loadExamAnswers(answers: ExamAnswers) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
 
   // Consider work to be saved after loading
@@ -185,7 +187,7 @@ function setupSaverModal() {
     // if there is no file selected, so this is just here for completeness
     if (files) {
       try {
-        let answers = <ExamAnswersJSON>JSON.parse(await files[0].text());
+        let answers = <ExamAnswers>JSON.parse(await files[0].text());
         if (answers.exam_id === $("#examma-ray-exam").data("exam-id")) {
           if (!isBlankAnswers(answers)) {
             loadExamAnswers(answers);
@@ -274,7 +276,7 @@ function startExam() {
   if (storageAvailable("localStorage")) {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname));
     if (autosavedAnswers) {
-      loadExamAnswers(<ExamAnswersJSON>JSON.parse(autosavedAnswers));
+      loadExamAnswers(<ExamAnswers>JSON.parse(autosavedAnswers));
       $("#exam-welcome-restored-modal").modal("show");
     }
     else {

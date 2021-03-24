@@ -1,0 +1,326 @@
+html {
+  scroll-behavior: smooth;
+}
+
+.examma-ray-sas-diff pre {
+  margin-right: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 1em;
+}
+
+.examma-ray-sas-diff pre>code {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.examma-ray-sas-diff pre>svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.examma-ray-sas-diff .card-header p {
+  display: inline;
+  margin-bottom: 0;
+}
+
+.examma-ray-sas-diff {
+  font-size: 0.8rem;
+}
+
+.examma-ray-fitb-diff tr>*:first-child,
+.examma-ray-sas-diff tr>*:first-child {
+  position: sticky;
+  left: 0;
+  background-color: white;
+}
+
+.examma-ray-sas-rubric-item {
+  width: 250px;
+}
+
+.examma-ray-sas-rubric-item .badge {
+  vertical-align: middle;
+}
+
+.examma-ray-mc-option>p {
+  display: inline-block;
+  margin: 0;
+}
+
+.examma-ray-incorrect>* {
+  /* color: red;
+  text-decoration: line-through !important; */
+}
+
+.examma-ray-correct>* {
+  /* color: green;
+  font-weight: bold; */
+}
+
+.examma-ray-mc-option {
+  vertical-align: middle;
+}
+
+.examma-ray-mc-option pre {
+  display: inline-block;
+  vertical-align: text-top;
+  margin-bottom: 0;
+}
+
+.examma-ray-mc-option pre code {
+  font-size: 0.8rem;
+}
+
+.card-header {
+  padding: 0.2rem 0.75rem;
+}
+
+.card-body {
+  padding: 0 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.examma-ray-grading-annotation {
+  font-size: 0.8rem;
+  color: blue;
+  font-style: italic;
+}
+
+code {
+  color: unset;
+}
+
+.examma-ray-fitb-diff {
+  font-size: 0.8rem;
+}
+
+.examma-ray-fitb-blank {
+  border: solid 1px #333;
+  padding: 0.2em;
+}
+
+.examma-ray-fitb-spacer {
+  height: 0.5em;
+  width: 1px;
+}
+
+.examma-ray-section-heading {
+  margin-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #dedede;
+  padding: 5px;
+  margin-bottom: 5px;
+  border-bottom: solid 1px #aaa;
+}
+
+.examma-ray-section-heading>.badge {
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.examma-ray-section-contents {
+  width: 100%;
+  table-layout: fixed;
+  margin-left: 7px;
+}
+
+.examma-ray-section-contents td {
+  vertical-align: top;
+}
+
+.examma-ray-instructions {}
+
+.examma-ray-section-description {
+  font-size: 90%;
+}
+
+.examma-ray-section-reference {
+  font-size: 90%;
+}
+
+.examma-ray-question-description {
+  font-size: 90%;
+}
+
+.examma-ray-section-reference {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 5px;
+  padding-bottom: 2em;
+}
+
+
+.examma-ray-section-contents .h1,
+.examma-ray-section-contents .h2,
+.examma-ray-section-contents .h3,
+.examma-ray-section-contents .h4,
+.examma-ray-section-contents .h5,
+.examma-ray-section-contents .h6,
+.examma-ray-section-contents h1,
+.examma-ray-section-contents h2,
+.examma-ray-section-contents h3,
+.examma-ray-section-contents h4,
+.examma-ray-section-contents h5,
+.examma-ray-section-contents h6 {
+  font-size: 1rem;
+}
+
+
+.examma-ray-question-description h1,
+.examma-ray-question-description h2,
+.examma-ray-question-description h3,
+.examma-ray-question-description h4,
+.examma-ray-question-description h5,
+.examma-ray-question-description h6,
+.examma-ray-question-description h7 {
+  font-size: initial;
+}
+
+.examma-ray-question-description p {
+  margin-bottom: 1em;
+}
+
+.examma-ray-grading-report {
+  overflow-x: auto;
+  max-height: 70vh;
+}
+
+.examma-ray-grading-report form {
+  margin-bottom: 0;
+}
+
+.examma-ray-grading-report .btn-link {
+  font-size: 0.8rem;
+}
+
+.nav .examma-ray-score-badge {
+  width: 5em;
+}
+
+.rubric-item-card {
+  width: 17em;
+}
+
+.rubric-item-card .card-header {
+  padding: 0.25rem;
+}
+
+.rubric-item-card .card-body {
+  overflow-x: auto;
+}
+
+.rubric-item-card a.nav-link {
+  font-weight: 500;
+  padding: 0;
+}
+
+
+
+.examma-ray-mc-option .hljs {
+  background: unset;
+  padding: unset;
+}
+
+.examma-ray-summation-grader .examma-ray-point-adjustment-badge {
+  width: 3em;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  vertical-align: text-top;
+}
+
+.examma-ray-summation-grader label {
+  margin-bottom: 0;
+}
+
+.examma-ray-summation-grader .examma-ray-mc-option {
+  vertical-align: text-top;
+}
+
+.examma-ray-summation-grader .examma-ray-mc-option pre {
+  vertical-align: text-top;
+}
+
+.examma-ray-question-overview {
+  margin: 0.3em;
+}
+
+.examma-ray-question-overview .card-header {
+  padding: 0.25rem;
+}
+
+.examma-ray-question-overview a.nav-link {
+  display: inline-block;
+  font-weight: 500;
+  padding: 0;
+}
+
+.examma-ray-question-overview .progress {
+  width: 7em;
+  background-color: #c8c8c8;
+}
+
+.examma-ray-question-overview pre code .progress {
+  width: 35em;
+  background-color: #c8c8c8;
+}
+
+.examma-ray-question-overview .progress-bar {
+  padding-left: 0.4em;
+  padding-right: 0.4em;
+  font-weight: 600;
+  text-align: left;
+}
+
+
+.examma-ray-students-overview .progress {
+  width: 7em;
+  background-color: #c8c8c8;
+}
+
+.examma-ray-section-saver .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+
+.examma-ray-section-saver-button {
+  float: right;
+}
+
+.examma-ray-exam-saver-status {
+  position: absolute;
+  bottom: 5px;
+  width: 190px;
+  text-align: center;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+.sas-select-input {
+  vertical-align: middle;
+  margin-bottom: 0.5em;
+}
+
+.sas-select-label {
+  vertical-align: middle;
+  padding-right: 1em;
+  border: solid 1px transparent;
+}
+
+.sas-select-input:checked+.sas-select-label {
+  border: solid 1px rgba(0, 0, 255, 0.3);
+  background-color: rgba(0, 0, 255, 0.1);
+  border-radius: 2px;
+}
+
+.examma-ray-codemirror {
+  border: solid 1px #333;
+  margin-bottom: 1em;
+}

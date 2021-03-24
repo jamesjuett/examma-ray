@@ -1,4 +1,4 @@
-import { QuestionSpecification } from "../autograder";
+import { QuestionSpecification } from "../src/exams";
 
 export const FITB_QUESTIONS : QuestionSpecification[] = [
   {

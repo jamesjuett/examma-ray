@@ -3,7 +3,8 @@ const path = require('path');
 module.exports = {
   mode: "production",
   entry: {
-    'frontend': './frontend',
+    'frontend': './src/frontend',
+    'frontend-graded': './src/frontend-graded',
   },
   output: {
     path: path.join(__dirname, '/out/js/'),

@@ -1,4 +1,4 @@
-import { BY_ID, Question, Section, SectionSpecification } from "../autograder";
+import { BY_ID, Question, Section, SectionSpecification } from "../src/exams";
 
 export const S7_2_gallery : SectionSpecification = {
   "id": "sp20_7_2",

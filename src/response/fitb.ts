@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { mk2html } from "../render";
+import { mk2html } from "../../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
@@ -38,7 +38,6 @@ export function FITB_EXTRACTOR(responseElem: JQuery) {
 }
 
 export function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
-  // blank out all radio buttons
   let inputs = elem.find("input, textarea");
 
   if (submission !== BLANK_SUBMISSION) {
@@ -80,31 +79,35 @@ function count_char(str: string, c: string) {
   return count;
 }
 
-function createFilledFITB(text: string) {
+export function createFilledFITB(content: string, submission?: FITBSubmission) {
 
   // count the number of underscores in each blank pattern + 5 for the word "blank"
-  let blankLengths = text.match(BLANK_PATTERN)?.map(m => 5 + count_char(m, "_")) ?? [];
+  let blankLengths = content.match(BLANK_PATTERN)?.map(m => 5 + count_char(m, "_")) ?? [];
 
   // count the number of newlines in each box pattern (will be number of lines in textarea)
-  let boxLines = text.match(BOX_PATTERN)?.map(m => count_char(m, "\n")) ?? [];
-  let boxWidths = text.match(BOX_PATTERN)?.map(m => count_char(m, "_")) ?? [];
+  let boxLines = content.match(BOX_PATTERN)?.map(m => count_char(m, "\n")) ?? [];
+  let boxWidths = content.match(BOX_PATTERN)?.map(m => count_char(m, "_")) ?? [];
   
   // Replace blanks/boxes with an arbitrary string that won't mess with
   // the way the markdown is rendered
   let blank_id = "laefiahslkefhalskdfjlksn";
   let box_id = "ewonfeoawihlawenfawhflaw";
-  text = text.replace(BLANK_PATTERN, blank_id);
-  text = text.replace(BOX_PATTERN, box_id);
+  content = content.replace(BLANK_PATTERN, blank_id);
+  content = content.replace(BOX_PATTERN, box_id);
 
   // Render markdown
-  text = mk2html(text);
+  content = mk2html(content);
+
+  // Include this in the html below so we can replace it in a moment
+  // with the appropriate submission values
+  let submission_placeholder = "awvblrefafhawonawflawlek";
 
   // Replace each of the "blank ids" in the rendered html with
   // a corresponding input element of the right size based on the
   // number of underscores that were originally in the "__BLANK__"
   blankLengths.forEach((length) => {
     let autoAttrs = `autocomplete="off" autocorrect="off"`
-    text = text.replace(blank_id, `<input type="text" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input"></input>`)
+    content = content.replace(blank_id, `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input"></input>`)
   });
 
   // Replace each of the "box ids" in the rendered html with
@@ -115,8 +118,14 @@ function createFilledFITB(text: string) {
     let rcAttrs = `rows="${lines}" ${boxWidth !== 0 ? `cols="${boxWidth}"` : ""}`;
     let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off"`
     let style = `style="resize: none; overflow: hidden; ${boxWidth === 0 ? "width: 100%;" : ""}"`
-    text = text.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input" ${style}></textarea>`)
+    content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input" ${style}>${submission_placeholder}</textarea>`)
   });
-  
-  return text;
+
+  if (submission && submission !== BLANK_SUBMISSION) {
+    submission.forEach(
+      sub => content = content.replace(submission_placeholder, encode(sub))
+    );
+  }
+
+  return content;
 }

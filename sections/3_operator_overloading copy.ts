@@ -1,4 +1,4 @@
-import { RANDOM_ANY, RANDOM_BY_TAG, SectionSpecification } from "../autograder";
+import { RANDOM_ANY, RANDOM_BY_TAG, SectionSpecification } from "../src/exams";
 
 export const S3_operator_overloading : SectionSpecification = {
   "id": "sp20_3_operator_overloading",

@@ -1,0 +1,148 @@
+{
+  "exam_id": "eecs280sp20test",
+  "student": {
+    "uniqname": "jonjuett",
+    "name": "Jonathan Juett"
+  },
+  "timestamp": 1616517472526,
+  "sections": [
+    {
+      "id": "1_true_false",
+      "display_index": 1,
+      "questions": [
+        {
+          "id": "sp20_mc_time_complexity_3",
+          "display_index": 1.1,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        },
+        {
+          "id": "sp20_mc_containers_and_templates_4",
+          "display_index": 1.2,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        },
+        {
+          "id": "sp20_mc_representation_invariants_5",
+          "display_index": 1.3,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        },
+        {
+          "id": "sp20_mc_dynamic_memory_3",
+          "display_index": 1.4,
+          "kind": "multiple_choice",
+          "response": "[\n  1\n]"
+        },
+        {
+          "id": "sp20_mc_dynamic_memory_errors_1",
+          "display_index": 1.5,
+          "kind": "multiple_choice",
+          "response": "[\n  1\n]"
+        },
+        {
+          "id": "sp20_mc_managing_dynamic_memory_3",
+          "display_index": 1.6,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        },
+        {
+          "id": "sp20_mc_big_three_3",
+          "display_index": 1.7,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        },
+        {
+          "id": "fitb_test",
+          "display_index": 1.8,
+          "kind": "fitb",
+          "response": "[\n  \"int\",\n  \"5\",\n  \"y\",\n  \"x = z - x; y = z - y;\",\n  \"0\"\n]"
+        }
+      ]
+    },
+    {
+      "id": "sp20_2_1_containers",
+      "display_index": 2,
+      "questions": [
+        {
+          "id": "sp20_2_1_part1",
+          "display_index": 2.1,
+          "kind": "fitb",
+          "response": "[\n  \"O(n)\",\n  \"O(n)\",\n  \"O(1)\"\n]"
+        },
+        {
+          "id": "sp20_2_1_part2",
+          "display_index": 2.2,
+          "kind": "code_editor",
+          "response": "// REQUIRES: the MinQueue is not empty\n// EFFECTS: Removes the minimum item from the MinQueue\nvoid popMin() {\n    int minIndex = 0;\n    for (int i = 1; i < size; ++i) {\n        if (data[i] < data[minIndex]) {\n            minIndex = i;\n        }\n    }\n    for (int i = minIndex; i < size - 1; ++i) {\n        data[i] = data[i + 1];\n    }\n    --size;\n}"
+        }
+      ]
+    },
+    {
+      "id": "sp20_3_operator_overloading",
+      "display_index": 3,
+      "questions": [
+        {
+          "id": "sp20_3_v1",
+          "display_index": 3.1,
+          "kind": "code_editor",
+          "response": "template <typename T>\nMinQueue& operator--(MinQueue& q) {\n  q.popMin();\n  return q;\n}"
+        }
+      ]
+    },
+    {
+      "id": "sp20_5_dynamic_memory",
+      "display_index": 4,
+      "questions": [
+        {
+          "id": "sp20_5_v4",
+          "display_index": 4.1,
+          "kind": "fitb",
+          "response": "[\n  \"memory leak\",\n  \"The second new int(10) is orphaned memory\"\n]"
+        },
+        {
+          "id": "sp20_5_v2",
+          "display_index": 4.2,
+          "kind": "fitb",
+          "response": "[\n  \"incorrect delete\",\n  \"a and b point to the same memory address, so deleting both is a double delete.\"\n]"
+        },
+        {
+          "id": "sp20_5_v6",
+          "display_index": 4.3,
+          "kind": "fitb",
+          "response": "[\n  \"memory leak\",\n  \"need to also delete ptr_ptr\"\n]"
+        }
+      ]
+    },
+    {
+      "id": "6_primes",
+      "display_index": 5,
+      "questions": [
+        {
+          "id": "sp20_primes_assignment_op_3",
+          "display_index": 5.1,
+          "kind": "multiple_choice",
+          "response": "[\n  1\n]"
+        },
+        {
+          "id": "sp20_primes_assignment_op_7",
+          "display_index": 5.2,
+          "kind": "multiple_choice",
+          "response": "[\n  0\n]"
+        }
+      ]
+    },
+    {
+      "id": "sp20_7_3",
+      "display_index": 6,
+      "questions": [
+        {
+          "id": "sp20_7_3_assn_op",
+          "display_index": 6.1,
+          "kind": "select_a_statement",
+          "response": "[\n  1,\n  3,\n  5,\n  9,\n  10,\n  13,\n  14,\n  16,\n  17,\n  20\n]"
+        }
+      ]
+    }
+  ]
+}

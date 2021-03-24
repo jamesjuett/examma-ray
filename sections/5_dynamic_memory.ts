@@ -1,4 +1,4 @@
-import { RANDOM_ANY, Section, SectionSpecification } from "../autograder";
+import { RANDOM_ANY, Section, SectionSpecification } from "../src/exams";
 
 export const S5_dynamic_memory: SectionSpecification = {
   "id": "sp20_5_dynamic_memory",

@@ -1,4 +1,4 @@
-import { RANDOM_ANY, Section } from "../autograder";
+import { RANDOM_ANY, Section } from "../src/exams";
 
 const PART_1 = RANDOM_ANY(1, [
   {

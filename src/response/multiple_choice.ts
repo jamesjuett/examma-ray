@@ -1,4 +1,4 @@
-import { mk2html } from "../render";
+import { mk2html } from "../../render";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 
