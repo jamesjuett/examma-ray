@@ -237,6 +237,7 @@ function setupChangeListeners() {
 
 function setupCodeEditors() {
   // Set up code editor and CodeMirror instances
+  let codeMirrors : CodeMirror.Editor[] = [];
   $(".examma-ray-code-editor").each(function() {
 
     let cmElem = $(this).find(".examma-ray-codemirror");
@@ -253,13 +254,14 @@ function setupCodeEditors() {
       },
       value: starterCode
     });
+    codeMirrors.push(cm);
 
     cmElem.data("examma-ray-codemirror", cm);
-
-    $(this).find(".examma-ray-theme-button").on("click", function() {
-      cm.setOption("theme", $(this).data("codemirror-theme"));
-    })
   });
+
+  $(".examma-ray-theme-button").on("click", function() {
+    codeMirrors.forEach(cm => cm.setOption("theme", $(this).data("codemirror-theme")));
+  })
 }
 
 function startExam() {

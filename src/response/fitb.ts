@@ -121,11 +121,15 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
     content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`)
   });
 
+  // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
     submission.forEach(
       sub => content = content.replace(submission_placeholder, encode(sub))
     );
   }
+
+  // Replace any remaining placeholders that weren't filled (or all of them if there was no submission)
+  content = content.replace(new RegExp(submission_placeholder, "g"), "");
 
   return content;
 }
