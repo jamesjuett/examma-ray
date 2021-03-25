@@ -6,7 +6,7 @@
   "types": "dist/autograder.d.ts",
   "scripts": {
     "build-frontend": "webpack --config webpack.config.js",
-    "test": "env mocha -r ts-node/register 'tests/**/*.ts'"
+    "test": "TS_NODE_FILES=true mocha -r ts-node/register 'src/test/**/*.ts'"
   },
   "repository": {
     "type": "git",

@@ -52,7 +52,7 @@ function extractExamAnswers() : ExamAnswers {
     },
     timestamp: Date.now(),
     saverId: saverID,
-    validated: false,
+    trusted: false,
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
 }
@@ -209,7 +209,13 @@ function setupSaverModal() {
     if (files) {
       try {
         let answers = <ExamAnswers>JSON.parse(await files[0].text());
-        if (answers.exam_id === $("#examma-ray-exam").data("exam-id")) {
+        if (answers.exam_id !== $("#examma-ray-exam").data("exam-id")) {
+          alert("Error - That answers file appears to be for a different exam.");
+        }
+        else if (answers.student.uniqname !== $("#examma-ray-exam").data("uniqname")) {
+          alert("Error - That answers file appears to be for a different student.");
+        }
+        else {
           if (!isBlankAnswers(answers)) {
             loadExamAnswers(answers);
             $("#exam-saver").modal("hide");
@@ -217,9 +223,6 @@ function setupSaverModal() {
           else {
             alert("Error - That answers file appears to be blank.")
           }
-        }
-        else {
-          alert("Error - That answers file appears to be for a different exam.");
         }
       }
       catch(err) {

@@ -7,7 +7,7 @@ let students = Papa.parse<{ uniqname: string, name: string }>(readFileSync("rost
 
 let gen = new ExamGenerator(exam, {
   filenames: "uuidv5",
-  uuidv5_namespace: readFileSync("test", "utf-8")
+  uuidv5_namespace: readFileSync("secret", "utf-8")
 });
 students.forEach(student => gen.assignRandomizedExam(student));
 

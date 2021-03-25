@@ -1,5 +1,5 @@
 import { mk2html } from "../render";
-import { renderScoreBadge } from "../common";
+import { renderScoreBadge } from "../ui_components";
 import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";

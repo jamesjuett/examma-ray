@@ -1,12 +1,12 @@
 import { encode } from "he";
 import { min } from "simple-statistics";
 import { mk2html } from "../render";
-import { renderNumBadge, renderScoreBadge } from "../common";
 import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
 import { Grader } from "./common";
+import { renderNumBadge, renderScoreBadge } from "../ui_components";
 
 
 

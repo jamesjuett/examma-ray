@@ -1,5 +1,5 @@
 import { mk2html } from "../render";
-import { renderNumBadge } from "../common";
+import { renderNumBadge } from "../ui_components";
 import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";

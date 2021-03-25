@@ -13,7 +13,8 @@ import { ResponseKind, BLANK_SUBMISSION } from './response/common';
 import { MCSubmission } from './response/multiple_choice';
 import { SASSubmission } from './response/select_a_statement';
 import { mk2html } from './render';
-import { ExamAnswers, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from './common';
+import { ExamAnswers } from './common';
+import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap, ExceptionMap } from './grader';
 import { Grader, isGrader } from './graders/common';
 
@@ -418,7 +419,7 @@ export function createBlankAnswers(ex: AssignedExam) : ExamAnswers {
     exam_id: ex.exam.id,
     student: ex.student,
     timestamp: Date.now(),
-    validated: false,
+    trusted: false,
     saverId: 0,
     sections: ex.assignedSections.map(s => ({
       id: s.section.id,
