@@ -1,4 +1,6 @@
 import { encode } from "he";
+import { QuestionSkin } from "../exams";
+import { applySkin, highlightCode } from "../render";
 import { assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
@@ -11,7 +13,7 @@ export type SASItem = {
 
 export type SASGroup = {
   kind: "group",
-  title?: string,
+  title?: string, // TODO make sure this can be skinned as well once it's implemented
   items: SASItem[]
 };
 
@@ -37,17 +39,17 @@ export function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmis
   }
 }
 
-export function SAS_RENDERER(response: SASResponse, question_id: string) {
+export function SAS_RENDERER(response: SASResponse, question_id: string, skin?: QuestionSkin) {
   let item_index = 0;
-  return `<pre><code class="language-${response.code_language}">${response.choices.map(
+  return `<pre>${response.choices.map(
     group => group.kind === "item"
-      ? renderSASItem(group, question_id, item_index++)
-      : group.items.map(item => renderSASItem(item, question_id, item_index++)).join("\n")
-  ).join("\n")}</code></pre>`;
+      ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
+      : group.items.map(item => renderSASItem(item, question_id, item_index++, response.code_language, skin)).join("\n")
+  ).join("\n")}</pre>`;
 }
 
-function renderSASItem(item: SASItem, question_id: string, item_index: number) {
-  return `<input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">${encode(item.text)}</label>`;
+function renderSASItem(item: SASItem, question_id: string, item_index: number, code_language: string, skin?: QuestionSkin) {
+  return `<input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">${highlightCode(applySkin(item.text, skin), code_language)}</label>`;
   // let highlightedText = hljs.highlight(code_language, item.text).value;
   // return highlightedText;
 }

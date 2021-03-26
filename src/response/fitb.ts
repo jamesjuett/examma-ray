@@ -1,5 +1,6 @@
 import { encode } from "he";
-import { mk2html } from "../render";
+import { QuestionSkin } from "../exams";
+import { applySkin, mk2html } from "../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
@@ -26,8 +27,8 @@ export function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubm
   }
 }
 
-export function FITB_RENDERER(response: FITBResponse) {
-  return createFilledFITB(response.content);
+export function FITB_RENDERER(response: FITBResponse, question_id: string, skin?: QuestionSkin) {
+  return createFilledFITB(applySkin(response.content, skin));
 }
 
 export function FITB_EXTRACTOR(responseElem: JQuery) {

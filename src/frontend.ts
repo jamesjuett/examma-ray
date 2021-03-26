@@ -5,6 +5,7 @@ import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
 import { ExamAnswers, QuestionAnswer, SectionAnswers } from "./common";
+import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';

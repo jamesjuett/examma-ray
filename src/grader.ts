@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { TrustedExamAnswers } from './common';
-import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, CHOOSE_ALL, renderQuestion } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, CHOOSE_ALL, renderQuestion, Randomizer } from './exams';
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
 import { assert, assertFalse } from './util';
@@ -63,20 +63,33 @@ export class ExamGrader {
 
 
   private createExamFromSubmission(submission: TrustedExamAnswers) {
+    let student = submission.student;
     return new AssignedExam(
       this.exam,
-      submission.student,
-      submission.sections.map((s, s_i) => new AssignedSection(
-        this.sectionsMap[s.id] ?? assertFalse(),
-        s_i,
-        s.questions.map((q, q_i) => new AssignedQuestion(
-          this.exam,
-          this.questionsMap[q.id] ?? assertFalse(),
+      student,
+      submission.sections.map((s, s_i) => {
+        let section = this.sectionsMap[s.id] ?? assertFalse();
+        let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.id + "_" + section.id));
+        return new AssignedSection(
+          section,
           s_i,
-          q_i,
-          q.response
-        ))
-      ))
+          sSkin,
+          s.questions.map((q, q_i) => {
+            let question = this.questionsMap[q.id] ?? assertFalse();
+            let qSkin = question.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.id + "_" + question.id));
+            qSkin ??= sSkin;
+            return new AssignedQuestion(
+              this.exam,
+              submission.student,
+              question,
+              qSkin,
+              s_i,
+              q_i,
+              q.response
+            ); 
+          })
+        );
+      })
     );
   }
 

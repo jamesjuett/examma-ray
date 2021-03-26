@@ -17,6 +17,7 @@ import { ExamAnswers } from './common';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap, ExceptionMap } from './grader';
 import { Grader, isGrader } from './graders/common';
+import Mustache from 'mustache';
 
 
 export enum RenderMode {
@@ -29,15 +30,24 @@ export enum RenderMode {
 
 
 
+export type QuestionSkin = {
+  readonly id: string,
+  replacements: {
+    [index: string]: string
+  }
+};
 
-
+export type SkinGenerator = {
+  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => QuestionSkin
+};
 
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   id: string,
   points: number,
   mk_description: string,
   response: QuestionResponse<QT>,
-  tags?: readonly string[]
+  tags?: readonly string[],
+  skins?: SkinGenerator
 };
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -48,23 +58,29 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly spec: QuestionSpecification<QT>;
   public readonly id: string;
   public readonly tags: readonly string[];
+  public readonly mk_description: string;
   public readonly pointsPossible : number;
-  public readonly html_description: string;
   public readonly kind: QT;
   public readonly response : QuestionResponse<QT>;
+  public readonly skins?: SkinGenerator;
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
     this.id = spec.id;
     this.tags = spec.tags ?? [];
+    this.mk_description = spec.mk_description;
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
-    this.html_description = mk2html(spec.mk_description);
+    this.skins = spec.skins;
   }
 
-  public renderResponse() {
-    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, this.id)}</div>`;
+  public renderResponse(skin?: QuestionSkin) {
+    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, this.id, skin)}</div>`;
+  }
+
+  public renderDescription(skin?: QuestionSkin) {
+    return mk2html(this.mk_description, skin);
   }
 
 };
@@ -85,15 +101,21 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly displayIndex;
 
+  private readonly html_description: string;
+
   public constructor(
     public readonly exam: Exam,
+    public readonly student: StudentInfo,
     public readonly question: Question<QT>,
+    public readonly skin: QuestionSkin | undefined,
     public readonly sectionIndex : number,
     public readonly partIndex : number,
     public readonly rawSubmission: string,
   ) {
     this.displayIndex = (sectionIndex+1) + "." + (partIndex+1);
     this.submission = parse_submission(question.kind, rawSubmission);
+
+    this.html_description = question.renderDescription(this.skin);
   }
 
   public grade(grader: Grader<QT>) {
@@ -128,9 +150,9 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
             </div>
             <div class="card-body">
               <div class="examma-ray-question-description">
-                ${this.question.html_description}
+                ${this.html_description}
               </div>
-              ${this.question.renderResponse()}
+              ${this.question.renderResponse(this.skin)}
             </div>
           </div>
         </div>
@@ -153,7 +175,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         </div>`; 
       }
 
-      return renderQuestion(this.question.id, this.displayIndex, this.question.html_description, question_header_html, exception_html, graded_html);
+      return renderQuestion(this.question.id, this.displayIndex, this.html_description, question_header_html, exception_html, graded_html);
     }
   }
 
@@ -217,17 +239,19 @@ export class Section {
   public readonly spec: SectionSpecification;
   public readonly id: string;
   public readonly title: string;
-  public readonly html_description: string;
-  public readonly html_reference?: string;
+  public readonly mk_description: string;
+  public readonly mk_reference?: string;
   public readonly questions: (QuestionSpecification | Question | QuestionChooser)[];
+  public readonly skins?: SkinGenerator;
 
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
     this.id = spec.id;
     this.title = spec.title;
-    this.html_description = mk2html(spec.mk_description);
-    this.html_reference = spec.mk_reference && mk2html(spec.mk_reference);
+    this.mk_description = spec.mk_description;
+    this.mk_reference = spec.mk_reference;
     this.questions = Array.isArray(spec.content) ? spec.content : [spec.content];
+    this.skins = spec.skins;
 
     // let json = JSON.parse(readFileSync(`sections/${sectionIndex}.json`, 'utf8'));
     // let question = (<any[]>json["questions"]).find(q => parseInt(q.index) === partIndex) ?? json["questions"][partIndex-1];
@@ -246,18 +270,33 @@ export class Section {
     // }
   }
 
+  public renderDescription(skin?: QuestionSkin) {
+    return mk2html(this.mk_description, skin);
+  }
+
+  public renderReference(skin?: QuestionSkin) {
+    return this.mk_reference && mk2html(this.mk_reference, skin);
+  }
+
   public buildRandomizedSection(
     exam: Exam, student: StudentInfo, sectionIndex: number,
     rand: Randomizer = new Randomizer(student.uniqname + "_" + exam.id + "_" + this.id))
   {
+    let sSkin = this.skins?.generate(exam, student, new Randomizer(student.uniqname + "_" + exam.id + "_" + this.id));
     return new AssignedSection(
       this,
       sectionIndex,
+      sSkin,
       this.questions.flatMap(chooser => 
         typeof chooser === "function" ? chooser(exam, student, rand) :
         chooser instanceof Question ? [chooser] :
         new Question(chooser)
-      ).map((q, partIndex) => new AssignedQuestion(exam, q, sectionIndex, partIndex, ""))
+      ).map((q, partIndex) => {
+        
+        let qSkin = q.skins?.generate(exam, student, new Randomizer(student.uniqname + "_" + exam.id + "_" + q.id));
+        qSkin ??= sSkin;
+        return new AssignedQuestion(exam, student, q, qSkin, sectionIndex, partIndex, "")
+      })
     );
   }
     
@@ -274,14 +313,21 @@ export class AssignedSection {
   public readonly pointsPossible: number;
   public readonly pointsEarned?: number;
   public readonly isFullyGraded: boolean = false;
+  
+  private readonly html_description: string;
+  private readonly html_reference?: string;
 
   public constructor(
     public readonly section: Section, 
     public readonly sectionIndex : number,
+    public readonly skin: QuestionSkin | undefined,
     public readonly assignedQuestions: readonly AssignedQuestion[])
   {
     this.displayIndex = "" + (sectionIndex+1);
     this.pointsPossible = assignedQuestions.reduce((p, q) => p + q.question.pointsPossible, 0);
+
+    this.html_description = section.renderDescription(this.skin);
+    this.html_reference = section.renderReference(this.skin);
   }
 
   public gradeAllQuestions(ex: AssignedExam, graders: GraderMap) {
@@ -324,13 +370,13 @@ export class AssignedSection {
           <tr>
             <td>
               ${this.renderHeader(mode)}
-              <div class="examma-ray-section-description">${this.section.html_description}</div>
+              <div class="examma-ray-section-description">${this.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
             <td style="width: 35%;">
               <div class="examma-ray-section-reference">
                 <h6>Reference Material (Section ${this.displayIndex})</h6>
-                ${this.section.html_reference ?? NO_REFERNECE_MATERIAL}
+                ${this.html_reference ?? NO_REFERNECE_MATERIAL}
               </div>
             </td>
           </tr>
@@ -486,6 +532,7 @@ export type SectionSpecification = {
   readonly mk_description: string;
   readonly mk_reference?: string;
   readonly content: QuestionSpecification | Question | QuestionChooser | (QuestionSpecification | Question | QuestionChooser)[];
+  readonly skins?: SkinGenerator;
 }
 
 export function BY_ID(id: string, questionBank: QuestionBank) {

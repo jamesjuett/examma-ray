@@ -312,6 +312,7 @@ code {
   vertical-align: middle;
   padding-right: 1em;
   border: solid 1px transparent;
+  padding-left: 3px;
 }
 
 .sas-select-input:checked+.sas-select-label {

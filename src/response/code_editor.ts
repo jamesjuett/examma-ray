@@ -1,5 +1,6 @@
 import { encode } from "he";
-import { mk2html } from "../render";
+import { QuestionSkin } from "../exams";
+import { applySkin, mk2html } from "../render";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
@@ -21,7 +22,7 @@ export function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : C
   return rawSubmission;
 }
 
-export function CODE_EDITOR_RENDERER(response: CodeEditorResponse) {
+export function CODE_EDITOR_RENDERER(response: CodeEditorResponse, question_id: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-code-editor">
       <div style="text-align: right; margin-bottom: 5px;">
@@ -38,7 +39,7 @@ export function CODE_EDITOR_RENDERER(response: CodeEditorResponse) {
           </label>
         </div>
       </div>
-      <div class="examma-ray-codemirror">${encode(response.starter)}</div>
+      <div class="examma-ray-codemirror">${encode(applySkin(response.starter, skin))}</div>
     </div>
   `;
 }

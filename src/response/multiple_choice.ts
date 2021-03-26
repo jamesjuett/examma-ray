@@ -1,3 +1,5 @@
+import Mustache from "mustache";
+import { QuestionSkin } from "../exams";
 import { mk2html } from "../render";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
@@ -24,13 +26,13 @@ export function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmissi
   }
 }
 
-export function MC_RENDERER(response: MCResponse, question_id: string) {
+export function MC_RENDERER(response: MCResponse, question_id: string, skin?: QuestionSkin) {
   return `
     <form>
     ${response.choices.map((item,i) => `
       <div>
         <input id="${question_id}_choice_${i}" type="${response.multiple ? "checkbox" : "radio"}" name="${question_id}_choice" value="${i}"/>
-        <label for="${question_id}_choice_${i}" class="examma-ray-mc-option">${mk2html(item)}</label>
+        <label for="${question_id}_choice_${i}" class="examma-ray-mc-option">${mk2html(item, skin)}</label>
       </div>`
     ).join("")}
     </form>
