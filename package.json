@@ -2,11 +2,11 @@
   "name": "questions-packet",
   "version": "1.0.0",
   "description": "## Setup",
-  "main": "dist/autograder.js",
-  "types": "dist/autograder.d.ts",
+  "main": "dist/exams.js",
+  "types": "dist/exams.d.ts",
   "scripts": {
     "build-frontend": "webpack --config webpack.config.js",
-    "test": "TS_NODE_FILES=true mocha -r ts-node/register 'src/test/**/*.ts'"
+    "test": "TS_NODE_FILES=true mocha -r ts-node/register 'src/test/**/*.spec.ts'"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   "homepage": "https://github.com/jamesjuett/questions-packet#readme",
   "dependencies": {
     "@types/katex": "^0.11.0",
+    "blob-polyfill": "^5.0.20210201",
     "bootstrap": "^4.6.0",
     "chart.js": "^2.9.4",
     "chroma-js": "^2.1.0",

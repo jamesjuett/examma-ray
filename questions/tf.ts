@@ -439,7 +439,7 @@ export const TF_QUESTIONS = new QuestionBank([
     "id": "sp20_mc_big_three_3",
     "tags": ["tf_big_three"],
     "points": 1,
-    "mk_description": "**The Big Three**\n\nThe `other` parameter for the copy constructor does not need to be pass-by-const reference, but it is more efficient to do so.",
+    "mk_description": "**The Big Three**\n\nThe `other` parameter for the copy constructor does not need to be pass-by-reference (or pass-by-reference-to-const), but it is more efficient to do so.",
     "response": {
       "kind": "multiple_choice",
       "choices": [
