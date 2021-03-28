@@ -1,5 +1,5 @@
 import { mk2html } from "../render";
-import { Question } from "../exams";
+import { Question, QuestionSkin } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
@@ -27,7 +27,7 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
     return Math.max(0, Math.min(question.pointsPossible, submission.reduce((prev, selection) => prev + this.pointValues[selection], 0)));
   }
 
-  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission) {
+  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission, skin: QuestionSkin | undefined) {
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return "You did not select an answer for this question.";
     }
@@ -40,7 +40,7 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
       let chosen = submission.indexOf(i) !== -1;
       return `
           <div><span ${!chosen ? 'style="visibility: hidden"' : ""}>${renderPointAdjustmentBadge(this.pointValues[i])}</span><input type="checkbox" ${chosen ? "checked" : ""} style="pointer-events: none;" />
-          <label class="examma-ray-mc-option">${mk2html(item)}</label></div>`;
+          <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>`;
     }
     ).join("")}
       </form>

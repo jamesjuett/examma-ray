@@ -165,7 +165,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
       let exception_html = "";
       
       if (this.isGraded()) {
-        graded_html = this.gradedBy.renderReport(this.question, this.submission);
+        graded_html = this.gradedBy.renderReport(this.question, this.submission, this.skin);
         exception_html = this.renderExceptionIfPresent();
       }
       else {

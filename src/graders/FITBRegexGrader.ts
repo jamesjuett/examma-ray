@@ -1,7 +1,7 @@
 import { encode } from "he";
 import { min } from "simple-statistics";
-import { mk2html } from "../render";
-import { Question } from "../exams";
+import { applySkin, mk2html } from "../render";
+import { Question, QuestionSkin } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
@@ -80,7 +80,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     }, 0);
   }
 
-  public renderReport(question: Question<"fitb">, submission: FITBSubmission) {
+  public renderReport(question: Question<"fitb">, submission: FITBSubmission, skin: QuestionSkin | undefined) {
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return "Your answer for this question was blank.";
     }
@@ -93,8 +93,8 @@ export class FITBRegexGrader implements Grader<"fitb"> {
 
     let content = question.response.content;
 
-    let studentFilled = createFilledFITB(content, submission.map(s => s)); //, content, scores);
-    let solutionFilled = createFilledFITB(content, this.rubric.map(ri => ri.solution)); //, content, undefined);
+    let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
+    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => ri.solution)); //, content, undefined);
 
     let rubricItemsHtml = `<table style="position: sticky; top: 0;">${this.rubric.map((rubricItem, i) => {
 
@@ -112,9 +112,9 @@ export class FITBRegexGrader implements Grader<"fitb"> {
           </div>
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">
-              ${mk2html(rubricItem.description)}
+              ${mk2html(rubricItem.description, skin)}
               <p>Your response for this blank was: <code style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
-              ${mk2html(explanation)}
+              ${mk2html(explanation, skin)}
             </div>
           </div>
         </div></td></tr>`;

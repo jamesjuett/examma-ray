@@ -1,6 +1,6 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { Question } from "../exams";
+import { Question, QuestionSkin } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
@@ -32,7 +32,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
     return submission[0] === this.correctIndex ? question.pointsPossible : 0;
   }
 
-  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission) {
+  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission, skin: QuestionSkin | undefined) {
     // if (submission === BLANK_SUBMISSION || submission.length === 0) {
     //   return "You did not select an answer for this question.";
     // }
@@ -45,7 +45,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
       <form>
       ${question.response.choices.map((item, i) => `
         <div><input type="radio" ${i === chosen ? "checked" : "disabled"}/>
-        <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item)}</label></div>`).join("")}
+        <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, skin)}</label></div>`).join("")}
       </form>
       
       `;

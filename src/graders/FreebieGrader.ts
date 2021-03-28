@@ -1,4 +1,4 @@
-import { Question } from "../exams";
+import { Question, QuestionSkin } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { Grader } from "./common";
@@ -21,7 +21,7 @@ export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
     return this.blankAllowed || submission !== BLANK_SUBMISSION ? this.pointValue : 0;
   }
 
-  public renderReport(question: Question<QT>, submission: SubmissionType<QT>) {
+  public renderReport(question: Question<QT>, submission: SubmissionType<QT>, skin: QuestionSkin | undefined) {
     if (!this.blankAllowed && submission === BLANK_SUBMISSION) {
       return "You did not select an answer for this question.";
     }
