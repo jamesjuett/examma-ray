@@ -1,5 +1,5 @@
 {
-  "name": "questions-packet",
+  "name": "examma-ray",
   "version": "1.0.0",
   "description": "## Setup",
   "main": "dist/exams.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamesjuett/questions-packet.git"
+    "url": "git+https://github.com/jamesjuett/examma-ray.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jamesjuett/questions-packet/issues"
+    "url": "https://github.com/jamesjuett/examma-ray/issues"
   },
-  "homepage": "https://github.com/jamesjuett/questions-packet#readme",
+  "homepage": "https://github.com/jamesjuett/examma-ray#readme",
   "dependencies": {
     "@types/katex": "^0.11.0",
     "blob-polyfill": "^5.0.20210201",
