@@ -4,7 +4,7 @@ import { stringify_response, extract_response, fill_response, parse_submission }
 import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
-import { ExamAnswers, QuestionAnswer, SectionAnswers } from "./common";
+import { ExamSubmission, QuestionAnswer, SectionAnswers } from "./common";
 import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
@@ -43,7 +43,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
 const saverID = Date.now();
 let saveCount = 0;
 
-function extractExamAnswers() : ExamAnswers {
+function extractExamAnswers() : ExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
@@ -58,7 +58,7 @@ function extractExamAnswers() : ExamAnswers {
   }
 }
 
-function isBlankAnswers(answers: ExamAnswers) {
+function isBlankAnswers(answers: ExamSubmission) {
   return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
@@ -69,7 +69,7 @@ function loadQuestionAnswer(qa: QuestionAnswer) {
   fill_response(responseElem, qa.kind, sub);
 }
 
-function loadExamAnswers(answers: ExamAnswers) {
+function loadExamAnswers(answers: ExamSubmission) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
 
   // Consider work to be saved after loading
@@ -110,7 +110,7 @@ function autosaveToLocalStorage() {
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname));
     if (prevAnswersLS) {
 
-      let prevAnswers = <ExamAnswers>JSON.parse(prevAnswersLS);
+      let prevAnswers = <ExamSubmission>JSON.parse(prevAnswersLS);
 
       // We want to know if we're competing with another tab/window.
       // We can detect that by checking if the previous save was made with a different saver ID,
@@ -209,7 +209,7 @@ function setupSaverModal() {
     // if there is no file selected, so this is just here for completeness
     if (files) {
       try {
-        let answers = <ExamAnswers>JSON.parse(await files[0].text());
+        let answers = <ExamSubmission>JSON.parse(await files[0].text());
         if (answers.exam_id !== $("#examma-ray-exam").data("exam-id")) {
           alert("Error - That answers file appears to be for a different exam.");
         }
@@ -320,7 +320,7 @@ function startExam() {
   if (storageAvailable("localStorage")) {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname));
     if (autosavedAnswers) {
-      loadExamAnswers(<ExamAnswers>JSON.parse(autosavedAnswers));
+      loadExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
       $("#exam-welcome-restored-modal").modal("show");
     }
     else {

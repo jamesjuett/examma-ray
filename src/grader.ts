@@ -1,10 +1,10 @@
 import { writeFileSync, mkdirSync } from 'fs';
-import json_stable_stringify from "json-stable-stringify";
-import { TrustedExamAnswers } from './common';
-import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, CHOOSE_ALL, renderQuestion, Randomizer } from './exams';
+import { TrustedExamSubmission } from './common';
+import { Section, Question, Exam, AssignedExam, StudentInfo, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, renderQuestion, Randomizer } from './exams';
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
-import { assert, assertFalse } from './util';
+import { CHOOSE_ALL } from './specification';
+import { assertFalse } from './util';
 
 export interface GraderMap {
   [index: string]: Grader | undefined;
@@ -33,13 +33,13 @@ export class ExamGrader {
   public readonly sectionsMap: { [index: string]: Section | undefined } = {};
   public readonly questionsMap: { [index: string]: Question | undefined } = {};
 
-  public readonly graderMap: GraderMap;
-  public readonly exceptionMap: ExceptionMap;
+  public readonly graderMap: GraderMap = {};
+  public readonly exceptionMap: ExceptionMap = {};
 
-  public constructor(exam: Exam, graders: GraderMap = {}, exceptions: ExceptionMap = {}) {
+  public constructor(exam: Exam, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
-    this.graderMap = graders;
-    this.exceptionMap = exceptions;
+    graders && this.registerGraders(graders);
+    exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
 
     this.allSections = exam.sections.flatMap(chooser =>
@@ -57,12 +57,15 @@ export class ExamGrader {
     this.allQuestions.forEach(question => this.questionsMap[question.id] = question);
   }
 
-  public addSubmission(answers: TrustedExamAnswers) {
+  public addSubmission(answers: TrustedExamSubmission) {
     this.submittedExams.push(this.createExamFromSubmission(answers));
   }
 
+  public addSubmissions(answers: readonly TrustedExamSubmission[]) {
+    answers.forEach(a => this.addSubmission(a));
+  }
 
-  private createExamFromSubmission(submission: TrustedExamAnswers) {
+  private createExamFromSubmission(submission: TrustedExamSubmission) {
     let student = submission.student;
     return new AssignedExam(
       this.exam,
@@ -93,15 +96,25 @@ export class ExamGrader {
     );
   }
 
-  public registerGraders(graderMap: GraderMap) {
-    Object.assign(this.graderMap, graderMap);
+  public registerGraders(graderMap: GraderMap | readonly GraderMap[]) {
+    if (Array.isArray(graderMap)) {
+      (<readonly GraderMap[]>graderMap).forEach(gm => this.registerGraders(gm));
+    }
+    else {
+      Object.assign(this.graderMap, <GraderMap>graderMap);
+    }
   }
 
-  public addExceptions(exceptionMap: ExceptionMap) {
-    Object.assign(this.exceptionMap, exceptionMap);
+  public registerExceptions(exceptionMap: ExceptionMap | readonly ExceptionMap[]) {
+    if (Array.isArray(exceptionMap)) {
+      (<readonly ExceptionMap[]>exceptionMap).forEach(gm => this.registerExceptions(gm));
+    }
+    else {
+      Object.assign(this.exceptionMap, <ExceptionMap>exceptionMap);
+    }
   }
 
-  public addException(uniqname: string, question_id: string, exception: Exception) {
+  public registerException(uniqname: string, question_id: string, exception: Exception) {
     if (!this.exceptionMap[uniqname]) {
       this.exceptionMap[uniqname] = {};
     }

@@ -1,9 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
-import { createBlankAnswers } from '../exams';
-import { ExamAnswers, fillManifest } from '../common';
+import { ExamSubmission, fillManifest } from '../common';
 
-const manifest : ExamAnswers = {
+const manifest : ExamSubmission = {
   "exam_id": "eecs280sp20test",
   "student": {
     "uniqname": "student",
@@ -57,7 +56,7 @@ const manifest : ExamAnswers = {
 //  - question types changed
 //  - metadata changed
 //  - student info changed
-const submitted : ExamAnswers = {
+const submitted : ExamSubmission = {
   "exam_id": "eecs280sp20test1",
   "student": {
     "uniqname": "student1",

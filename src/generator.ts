@@ -1,11 +1,9 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { createHash } from 'crypto';
-import { TrustedExamAnswers as TrustedExamAnswers } from './common';
-import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, SectionChooser, SectionSpecification, Randomizer } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, writeAGFile, RenderMode, Randomizer } from './exams';
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
-import { asMutable, assert, assertNever } from './util';
+import { assert, assertNever } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
 
@@ -19,7 +17,7 @@ type QuestionStats = {
   n: number;
 };
 
-type ExamGeneratorOptions = {
+export type ExamGeneratorOptions = {
   filenames: "uniqname" | "uuidv4" | "uuidv5"
   uuidv5_namespace?: string;
 };
@@ -58,6 +56,10 @@ export class ExamGenerator {
     this.assignedExamsByUniqname[student.uniqname] = ae;
 
     return ae;
+  }
+
+  public assignRandomizedExams(students: readonly StudentInfo[]) {
+    students.forEach(s => this.assignRandomizedExam(s));
   }
 
   public createRandomizedExam(
@@ -146,7 +148,7 @@ export class ExamGenerator {
         filenames.push([ex.student.uniqname, filenameBase])
 
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
-        writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
+        writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2));
         console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
         writeAGFile(RenderMode.ORIGINAL, ex, `${examDir}/${filenameBase}.html`, ex.render(RenderMode.ORIGINAL));
       });
