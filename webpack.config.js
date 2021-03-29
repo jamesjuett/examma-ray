@@ -3,18 +3,18 @@ const path = require('path');
 module.exports = {
   mode: "production",
   entry: {
-    'frontend': './src/frontend',
-    'frontend-graded': './src/frontend-graded',
+    'frontend': './frontend/frontend',
+    'frontend-graded': './frontend/frontend-graded',
   },
   output: {
-    path: path.join(__dirname, '/out/js/'),
+    path: path.join(__dirname, '/dist/frontend/'),
     filename: '[name].js',
     libraryTarget: 'umd',
     library: 'ExammaRay',
     umdNamedDefine: true
   },
   optimization: {
-    minimize: false,
+    minimize: true,
   },
   devtool: "source-map",
   module: {

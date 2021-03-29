@@ -3,7 +3,7 @@ import "highlight.js/styles/github.css";
 
 import 'katex/dist/katex.min.css';
 
-import "./main.css";
+import "./frontend.css";
 
 // hljs.registerLanguage('cpp', cpp);
 // hljs.highlightAll();

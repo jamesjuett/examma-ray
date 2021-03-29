@@ -406,7 +406,7 @@ export class AssignedExam {
     return `
       <div class="examma-ray-exam-saver-status">
         <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver"></button></div>
-        <div id="examma-ray-exam-saver-last-save" style="margin: 5px; visibility: hidden;"></div>
+        <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
       </div>`
   }
 

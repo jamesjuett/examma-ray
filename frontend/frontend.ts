@@ -1,10 +1,9 @@
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
-import { stringify_response, extract_response, fill_response, parse_submission } from "../response/responses";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
-import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../submissions";
+import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/submissions";
 import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
@@ -14,11 +13,11 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD } from '../icons';
+import { FILE_CHECK, FILE_DOWNLOAD } from '../src/icons';
 
 import 'katex/dist/katex.min.css';
 
-import "./main.css";
+import "./frontend.css";
 
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
@@ -134,14 +133,14 @@ function autosaveToLocalStorage() {
 }
 
 
-TimeAgo.addDefaultLocale(en);
-const timeAgo = new TimeAgo('en-US');
-let lastSavedTime = Date.now();
+// TimeAgo.addDefaultLocale(en);
+// const timeAgo = new TimeAgo('en-US');
+// let lastSavedTime = Date.now();
 
-function updateTimeSaved() {
-  $("#examma-ray-exam-saver-last-save")
-    .html(`Last saved ${timeAgo.format(lastSavedTime, 'round')}.`);
-}
+// function updateTimeSaved() {
+//   $("#examma-ray-exam-saver-last-save")
+//     .html(`Last downloaded ${timeAgo.format(lastSavedTime, 'round')}.`);
+// }
 
 const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
 const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
@@ -154,6 +153,10 @@ function onUnsavedChanges() {
     .removeClass("btn-success")
     .addClass("btn-warning");
 
+  $("#examma-ray-exam-saver-last-save-status-note")
+    .css("visibility", "visible")
+    .html("Download an answers file to submit at the end of the exam.")
+
   HAS_UNSAVED_CHANGES = true;
 }
 
@@ -163,9 +166,11 @@ function onSaved() {
     .removeClass("btn-warning")
     .addClass("btn-success");
 
-  lastSavedTime = Date.now();
-  $("#examma-ray-exam-saver-last-save").css("visibility", "visible");
-  updateTimeSaved();
+  // lastSavedTime = Date.now();
+  $("#examma-ray-exam-saver-last-save-status-note")
+    .css("visibility", "visible")
+    .html("You have downloaded an answers file with all your work.")
+  // updateTimeSaved();
 
   HAS_UNSAVED_CHANGES = false;
 }
