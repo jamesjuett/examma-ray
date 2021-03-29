@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync } from 'fs';
-import { TrustedExamSubmission } from './common';
+import { TrustedExamSubmission } from './submissions';
 import { Section, Question, Exam, AssignedExam, StudentInfo, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, renderQuestion, Randomizer } from './exams';
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';

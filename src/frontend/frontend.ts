@@ -1,10 +1,10 @@
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
-import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
-import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
+import { stringify_response, extract_response, fill_response, parse_submission } from "../response/responses";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
-import { ExamSubmission, QuestionAnswer, SectionAnswers } from "./common";
+import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../submissions";
 import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
@@ -14,7 +14,7 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD } from '../icons';
 
 import 'katex/dist/katex.min.css';
 

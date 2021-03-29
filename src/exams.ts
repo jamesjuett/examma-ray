@@ -3,11 +3,11 @@ import 'colors';
 import { RandomSeed, create as createRNG } from 'random-seed';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { asMutable, assert, Mutable } from './util';
-import { parse_submission, QuestionResponse, render_response, SubmissionType } from './response/responses';
+import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
 import { ResponseKind } from './response/common';
 import { mk2html } from './render';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
-import { Exception, GraderMap } from './grader';
+import { Exception, GraderMap } from './ExamGrader';
 import { Grader, isGrader } from './graders/common';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification } from './specification';
 import { QuestionSkin } from './skins';
@@ -37,7 +37,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly mk_description: string;
   public readonly pointsPossible : number;
   public readonly kind: QT;
-  public readonly response : QuestionResponse<QT>;
+  public readonly response : ResponseSpecification<QT>;
   public readonly skins?: SkinGenerator;
 
   public constructor (spec: QuestionSpecification<QT>) {

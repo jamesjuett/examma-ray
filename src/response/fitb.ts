@@ -1,11 +1,11 @@
 import { encode } from "he";
-import { QuestionSkin } from "../exams";
 import { applySkin, mk2html } from "../render";
+import { QuestionSkin } from "../skins";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
 
-export type FITBResponse = {
+export type FITBSpecification = {
   kind: "fitb";
   content: string;
 };
@@ -13,7 +13,7 @@ export type FITBResponse = {
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
 
 
-export function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
+function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
@@ -27,18 +27,18 @@ export function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubm
   }
 }
 
-export function FITB_RENDERER(response: FITBResponse, question_id: string, skin?: QuestionSkin) {
+function FITB_RENDERER(response: FITBSpecification, question_id: string, skin?: QuestionSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 
-export function FITB_EXTRACTOR(responseElem: JQuery) {
+function FITB_EXTRACTOR(responseElem: JQuery) {
   let filledResponses = responseElem.find("input, textarea").map(function() {
     return <string>$(this).val();
   }).get();
   return filledResponses.every(br => br === "") ? BLANK_SUBMISSION : filledResponses;
 }
 
-export function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
+function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   let inputs = elem.find("input, textarea");
 
   if (submission !== BLANK_SUBMISSION) {

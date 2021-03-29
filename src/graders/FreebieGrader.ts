@@ -1,6 +1,7 @@
-import { Question, QuestionSkin } from "../exams";
+import { Question } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
+import { QuestionSkin } from "../skins";
 import { Grader } from "./common";
 
 

@@ -1,9 +1,9 @@
-import { assert } from "node:console";
 import { Exam, Randomizer, Question, Section, StudentInfo } from "./exams";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "./response/common";
-import { QuestionResponse } from "./response/responses";
+import { ResponseSpecification } from "./response/responses";
 import { QuestionSkin } from "./skins";
+import { assert } from "./util";
 
 export const CHOOSE_ALL = Symbol("choose_all");
 
@@ -86,7 +86,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   id: string,
   points: number,
   mk_description: string,
-  response: QuestionResponse<QT>,
+  response: ResponseSpecification<QT>,
   tags?: readonly string[],
   skins?: SkinGenerator
 };
@@ -98,8 +98,13 @@ export type SkinGenerator = {
 };
 
 export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    assert(skins.length > 0, `Error - array of skin choices is empty.`);
-    return rand.choose(skins)
+  let skinMap : {[index: string]: QuestionSkin | undefined} = {};
+  skins.forEach(s => skinMap[s.id] = s);
+  return {
+    generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+      assert(skins.length > 0, `Error - array of skin choices is empty.`);
+      return rand.choose(skins)
+    },
+    getById: (id: string) => skinMap[id]
   };
 }

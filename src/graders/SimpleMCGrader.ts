@@ -1,12 +1,13 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { Question, QuestionSkin } from "../exams";
+import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
 import { assert } from "../util";
 import { Grader } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
+import { QuestionSkin } from "../skins";
 
 
 

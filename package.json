@@ -2,8 +2,8 @@
   "name": "examma-ray",
   "version": "1.0.0",
   "description": "## Setup",
-  "main": "dist/exams.js",
-  "types": "dist/exams.d.ts",
+  "main": "dist/examma-ray.js",
+  "types": "dist/examma-ray.d.ts",
   "scripts": {
     "build-frontend": "webpack --config webpack.config.js",
     "test": "TS_NODE_FILES=true mocha -r ts-node/register 'src/test/**/*.spec.ts'"

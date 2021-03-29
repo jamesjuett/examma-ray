@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { ExamSubmission, fillManifest } from '../common';
+import { ExamSubmission, fillManifest } from '../submissions';
 
 const manifest : ExamSubmission = {
   "exam_id": "eecs280sp20test",

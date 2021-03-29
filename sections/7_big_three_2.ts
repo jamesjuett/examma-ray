@@ -1,4 +1,5 @@
-import { BY_ID, Exam, Question, QuestionSkin, Randomizer, Section, SectionSpecification, StudentInfo } from "../src/exams";
+import { Exam, Question, Randomizer, Section, StudentInfo } from "../src/exams";
+import { RANDOM_SKIN, SectionSpecification } from "../src/specification";
 
 export const S7_2_gallery : SectionSpecification = {
   "id": "sp20_7_2",
@@ -139,26 +140,24 @@ export const S7_2_gallery : SectionSpecification = {
       }
     }
   ],
-  "skins" : {
-    generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => rand.choose<QuestionSkin>([
-      {
-        "id": "Gallery",
-        replacements: {
-          "MuseumPart": "Gallery"
-        }
-      },
-      {
-        "id": "Exhibit",
-        replacements: {
-          "MuseumPart": "Exhibit"
-        }
-      },
-      {
-        "id": "Wing",
-        replacements: {
-          "MuseumPart": "Wing"
-        }
+  "skins" : RANDOM_SKIN([
+    {
+      "id": "Gallery",
+      replacements: {
+        "MuseumPart": "Gallery"
       }
-    ])
-  }
+    },
+    {
+      "id": "Exhibit",
+      replacements: {
+        "MuseumPart": "Exhibit"
+      }
+    },
+    {
+      "id": "Wing",
+      replacements: {
+        "MuseumPart": "Wing"
+      }
+    }
+  ])
 }

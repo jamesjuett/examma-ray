@@ -1,12 +1,13 @@
 import { encode } from "he";
 import { min } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
-import { Question, QuestionSkin } from "../exams";
+import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
 import { Grader } from "./common";
 import { renderNumBadge, renderScoreBadge } from "../ui_components";
+import { QuestionSkin } from "../skins";
 
 
 

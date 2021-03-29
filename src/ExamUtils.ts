@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "fs";
-import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./common";
+import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissions";
 import Papa from "papaparse";
 import { StudentInfo } from "./exams";
-import path from "node:path";
+import path from "path";
 
 export namespace ExamUtils {
 
