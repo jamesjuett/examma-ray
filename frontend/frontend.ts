@@ -133,15 +133,6 @@ function autosaveToLocalStorage() {
 }
 
 
-// TimeAgo.addDefaultLocale(en);
-// const timeAgo = new TimeAgo('en-US');
-// let lastSavedTime = Date.now();
-
-// function updateTimeSaved() {
-//   $("#examma-ray-exam-saver-last-save")
-//     .html(`Last downloaded ${timeAgo.format(lastSavedTime, 'round')}.`);
-// }
-
 const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
 const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
 
@@ -149,28 +140,22 @@ let HAS_UNSAVED_CHANGES = false;
 
 function onUnsavedChanges() {
   $("#exam-saver-button")
-    .html(UNSAVED_CHANGES_HTML)
-    .removeClass("btn-success")
-    .addClass("btn-warning");
+    .html(UNSAVED_CHANGES_HTML);
 
-  $("#examma-ray-exam-saver-last-save-status-note")
+  $("#examma-ray-exam-saver-status-note")
     .css("visibility", "visible")
-    .html("Download an answers file to submit at the end of the exam.")
+    .html("Download an answers file to submit to Canvas.")
 
   HAS_UNSAVED_CHANGES = true;
 }
 
 function onSaved() {
   $("#exam-saver-button")
-    .html(SAVED_HTML)
-    .removeClass("btn-warning")
-    .addClass("btn-success");
+    .html(SAVED_HTML);
 
-  // lastSavedTime = Date.now();
-  $("#examma-ray-exam-saver-last-save-status-note")
+  $("#examma-ray-exam-saver-status-note")
     .css("visibility", "visible")
-    .html("You have downloaded an answers file with all your work.")
-  // updateTimeSaved();
+    .html("Download an answers file to submit to Canvas.")
 
   HAS_UNSAVED_CHANGES = false;
 }
@@ -341,9 +326,6 @@ function startExam() {
 
   // Consider work to be saved when exam is started
   onSaved();
-
-  // Interval to update time saved ago message every 10 seconds
-  setInterval(updateTimeSaved, 10000);
 
 }
 

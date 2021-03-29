@@ -405,7 +405,7 @@ export class AssignedExam {
   public renderSaverButton() {
     return `
       <div class="examma-ray-exam-saver-status">
-        <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver"></button></div>
+        <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
         <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
       </div>`
   }
@@ -489,7 +489,7 @@ export const DEFAULT_SAVER_MESSAGE_CANVAS = `
   from a previously saved file.
   
   **Important!** You MUST submit your answers \`.json\` file to **Canvas**
-  BEFORE exam time is up. This webpage does not save anything to anywhere.
+  BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
   It is up to you to download your answer file and turn it in on **Canvas**.`;
 
 
@@ -632,7 +632,7 @@ export function writeAGFile(mode: RenderMode, ex: AssignedExam, filename: string
               <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
               <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
               <br />
-              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file. <b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file.<br /><b>WARNING!</b> This will overwrite ALL answers on this page.</div>
               <div>
                 <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
                 <input id="exam-saver-file-input" type="file"></a>
