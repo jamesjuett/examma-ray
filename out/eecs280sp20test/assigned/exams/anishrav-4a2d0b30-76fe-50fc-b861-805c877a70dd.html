@@ -1,0 +1,1001 @@
+
+      <!DOCTYPE html>
+    <html>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    <script src="../../../js/frontend.js"></script>
+    <script>
+      $(function() {
+        $('button.examma-ray-blank-saver').on("click", function() {
+          let blank_num = $(this).data("blank-num");
+          let checked = $("input[type=checkbox]:checked").filter(function() {
+            return $(this).data("blank-num") === blank_num;
+          }).map(function() {
+            return '"'+$(this).data("blank-submission").replace('"','\\"')+'"';
+          }).get().join(",\n");
+          $(".checked-submissions-content").html(he.encode(checked));
+          $(".checked-submissions-modal").modal("show")
+        })
+      });
+
+    </script>
+    <style>
+      
+
+
+    </style>
+    <body>
+      <div id="examma-ray-exam" class="container-fluid" data-uniqname="anishrav" data-name="Anish Ravipati" data-exam-id="eecs280sp20test">
+      <div class="row">
+        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <h3 class="text-center pb-1 border-bottom">
+            <span class="badge btn-secondary">43 points</span>
+          </h3>
+          
+      <ul class = "nav" style="display: unset; font-weight: 500">
+        <li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-1_true_false"><span class="badge btn-secondary">8 points</span> 1: True/False</a></li><li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-sp20_2_2_containers"><span class="badge btn-secondary">9 points</span> 2: Container ADTs</a></li><li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-sp20_3_operator_overloading"><span class="badge btn-secondary">5 points</span> 3: Operator Overloading</a></li><li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-sp20_5_dynamic_memory"><span class="badge btn-secondary">6 points</span> 4: Dynamic Memory</a></li><li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-6_primes"><span class="badge btn-secondary">6 points</span> 5: Primes</a></li><li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-sp20_7_2"><span class="badge btn-secondary">9 points</span> 6: The Big Three</a></li>
+      </ul>
+          
+      <div class="examma-ray-exam-saver-status">
+        <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver"></button></div>
+        <div id="examma-ray-exam-saver-last-save" style="margin: 5px; visibility: hidden;"></div>
+      </div>
+        </div>
+        <div style="margin-left: 210px; width: calc(100% - 220px);">
+          
+      <div class="examma-ray-header">
+        <div class="text-center mb-3 border-bottom">
+          <h2>EECS 280 Test Exam</h2>
+          <h6>Anish Ravipati (anishrav)</h6>
+        </div>
+        <div>
+          <div class="examma-ray-instructions">
+      <p>This is an online assessmment. You must begin the assessmment between between {{ start }} EDT and {{ end }} EDT. You are allowed {{ duration }} minutes to complete the assessmment once you have started.</p>
+<p>This assessmment is randomized. Every student will receive a different set of questions chosen from a larger question bank. Individual questions found to be significantly more difficult than others will be curved in your favor. This assessmment also includes other unspecified countermeasures to prevent cheating.</p>
+<p><strong>Instructions</strong></p>
+<ul>
+<li><strong>DO NOT</strong> open this assessmment in more than one browser window. If you do, your work may not be saved properly.</li>
+<li>You may work on the questions in <strong>any order</strong>.</li>
+<li><strong>You must download and turn in your answers file to Canvas before exam time is up.</strong></li>
+<li>Read questions carefully, noting any <strong>requirements or restrictions</strong> for your solution. There is <strong>no penalty for wrong answers</strong>. It is to your benefit to record an answer to each question, even if you're not sure what the correct answer is.</li>
+<li>Assume all code is in <strong>standard C++11</strong>, and use only standard C++11 in your solutions.</li>
+<li>Throughout the assessmment, assume all necessary <code>#include</code> headers and the <code>using namespace std;</code> directive are present unless otherwise directed.</li>
+<li>You do not need to verify <code>REQUIRES</code> clauses with <code>assert</code> unless specifically instructed to do so.</li>
+<li>In code examples, <code>...</code> is used to indicate code has been omitted for brevity. You may assume all omitted code works correctly and generally behaves as expected.</li>
+</ul>
+<p><strong>Allowed Resources</strong></p>
+<ul>
+<li>You may use any notes or other resources, including online resources.</li>
+<li>You may use a compiler, IDE, or other programming tools.</li>
+</ul>
+<p><strong>Collaboration/Assistance is Prohibited</strong></p>
+<ul>
+<li>You are NOT allowed to collaborate with anyone else to answer these questions.</li>
+<li>You are NOT allowed to solicit assistance from anyone to answer these questions.</li>
+<li>You are NOT allowed to screenshot, photograph, or otherwise reproduce these assessmment materials.</li>
+<li>For example, reading existing posts on stackoverflow.com is OK, but posting new questions based on these assessmment materials to solicit help from others is prohibited.</li>
+</ul>
+<p>You are to abide by the University of Michigan/Engineering honor code. To receive a grade, ensure you sign the Honor Code by using the button at the bottom of the assessmment.</p>
+    </div>
+          <div class="examma-ray-announcements">
+      
+    </div>
+        </div>
+      </div>
+    
+          
+      <div id="section-1_true_false" class="examma-ray-section" data-section-id="1_true_false" data-section-display-index="1">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">1: True/False <span class="badge badge-light">8 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Determine whether the following statements are true or false.</p></div>
+              
+        <div id="question-sp20_mc_time_complexity_5" data-question-id="sp20_mc_time_complexity_5" data-question-display-index="1.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.1</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Time Complexity</strong></p>
+<p>Given a pointer to an element in the middle of an array, removing that element from the array has constant O(1) time complexity.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_time_complexity_5_choice_0" type="radio" name="sp20_mc_time_complexity_5_choice" value="0"/>
+        <label for="sp20_mc_time_complexity_5_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_time_complexity_5_choice_1" type="radio" name="sp20_mc_time_complexity_5_choice" value="1"/>
+        <label for="sp20_mc_time_complexity_5_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_containers_and_templates_3" data-question-id="sp20_mc_containers_and_templates_3" data-question-display-index="1.2" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.2</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Containers and Templates</strong></p>
+<p>An instance of a container class with a template parameter for its element type may contain several different kinds of objects at runtime.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_containers_and_templates_3_choice_0" type="radio" name="sp20_mc_containers_and_templates_3_choice" value="0"/>
+        <label for="sp20_mc_containers_and_templates_3_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_containers_and_templates_3_choice_1" type="radio" name="sp20_mc_containers_and_templates_3_choice" value="1"/>
+        <label for="sp20_mc_containers_and_templates_3_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_representation_invariants_1" data-question-id="sp20_mc_representation_invariants_1" data-question-display-index="1.3" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.3</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Representation Invariants</strong></p>
+<p>Representation invariants are used to specify the C++ type of an ADT's member variables. </p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_representation_invariants_1_choice_0" type="radio" name="sp20_mc_representation_invariants_1_choice" value="0"/>
+        <label for="sp20_mc_representation_invariants_1_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_representation_invariants_1_choice_1" type="radio" name="sp20_mc_representation_invariants_1_choice" value="1"/>
+        <label for="sp20_mc_representation_invariants_1_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_dynamic_memory_1" data-question-id="sp20_mc_dynamic_memory_1" data-question-display-index="1.4" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.4</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Dynamic Memory</strong></p>
+<p>All objects allocated with <code>new</code> have their own, independent lifetime.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_dynamic_memory_1_choice_0" type="radio" name="sp20_mc_dynamic_memory_1_choice" value="0"/>
+        <label for="sp20_mc_dynamic_memory_1_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_dynamic_memory_1_choice_1" type="radio" name="sp20_mc_dynamic_memory_1_choice" value="1"/>
+        <label for="sp20_mc_dynamic_memory_1_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_dynamic_memory_errors_4" data-question-id="sp20_mc_dynamic_memory_errors_4" data-question-display-index="1.5" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.5</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Dynamic Memory Errors</strong></p>
+<p>Assuming <code>ptr</code> is a pointer, <code>delete ptr;</code> may result in a double free even if it is the first time the expression <code>delete ptr;</code> was used.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_dynamic_memory_errors_4_choice_0" type="radio" name="sp20_mc_dynamic_memory_errors_4_choice" value="0"/>
+        <label for="sp20_mc_dynamic_memory_errors_4_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_dynamic_memory_errors_4_choice_1" type="radio" name="sp20_mc_dynamic_memory_errors_4_choice" value="1"/>
+        <label for="sp20_mc_dynamic_memory_errors_4_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_managing_dynamic_memory_4" data-question-id="sp20_mc_managing_dynamic_memory_4" data-question-display-index="1.6" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.6</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>Managing Dynamic Memory</strong></p>
+<p>If a class contains member variables that also have class type, the destructors for those members are implicity called when the overall object's lifetime ends.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_managing_dynamic_memory_4_choice_0" type="radio" name="sp20_mc_managing_dynamic_memory_4_choice" value="0"/>
+        <label for="sp20_mc_managing_dynamic_memory_4_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_managing_dynamic_memory_4_choice_1" type="radio" name="sp20_mc_managing_dynamic_memory_4_choice" value="1"/>
+        <label for="sp20_mc_managing_dynamic_memory_4_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_mc_big_three_4" data-question-id="sp20_mc_big_three_4" data-question-display-index="1.7" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.7</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>The Big Three</strong></p>
+<p>A memory leak is the most common problem caused by a shallow copy of a dynamically allocated resource.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_mc_big_three_4_choice_0" type="radio" name="sp20_mc_big_three_4_choice" value="0"/>
+        <label for="sp20_mc_big_three_4_choice_0" class="examma-ray-mc-option"><p>True</p></label>
+      </div>
+      <div>
+        <input id="sp20_mc_big_three_4_choice_1" type="radio" name="sp20_mc_big_three_4_choice" value="1"/>
+        <label for="sp20_mc_big_three_4_choice_1" class="examma-ray-mc-option"><p>False</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-fitb_test" data-question-id="fitb_test" data-question-display-index="1.8" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>1.8</b> <span class="badge badge-secondary">1 point</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p><strong>HEY YOU</strong></p>
+<p>Fill in the code below to make it work.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="fitb"><p>this is a <strong>test</strong> <em>only</em> a <code>test</code></p>
+<pre><code class="hljs cpp language-cpp">&lt;input&gt;&lt;/input&gt;
+int main() {
+  <input type="text" value="" size="13" maxlength="13" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input> x = <input type="text" value="" size="7" maxlength="7" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>;
+  int y = 3;
+  int z = x + <input type="text" value="" size="7" maxlength="7" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>;
+
+  <input type="text" value="" size="32" maxlength="32" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>;
+
+  return <input type="text" value="" size="10" maxlength="10" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>;
+}
+</code></pre></div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 1)</h6>
+                <p>This section has no reference material.</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    <br />
+      <div id="section-sp20_2_2_containers" class="examma-ray-section" data-section-id="sp20_2_2_containers" data-section-display-index="2">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">2: Container ADTs <span class="badge badge-light">9 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Consider the class definition below (and in the reference material) for a container ADT called a <code>MinQueue</code>, which stores elements and allows you to find/remove the element with the lowest value. Such a data structure can be useful for a variety of applications where items should be processed in order according to priority, rather than the order that they are originally inserted.</p></div>
+              
+        <div id="question-sp20_2_2_part1" data-question-id="sp20_2_2_part1" data-question-display-index="2.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>2.1</b> <span class="badge badge-secondary">3 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p>Assume that we define the representation invariants for <code>MinQueue</code>'s data representation such that the first <code>size</code> elements of the <code>data</code> array contain the valid items in the <code>MinQueue</code>, and these elements are <strong>sorted in descending order</strong> (i.e. lower elements to the back). What is the time complexity for the most efficient algorithm to implement each of the following functions?</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="fitb"><p><input type="text" value="" size="21" maxlength="21" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input> <code>min()</code></p>
+<p><input type="text" value="" size="21" maxlength="21" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input> <code>popMin()</code></p>
+<p><input type="text" value="" size="21" maxlength="21" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input> <code>push()</code></p></div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_2_2_part2" data-question-id="sp20_2_2_part2" data-question-display-index="2.2" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>2.2</b> <span class="badge badge-secondary">6 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p>Write an implementation of the <code>push()</code> function. Your implementation must put the new element in the proper location to ensure that the sorting invariant is maintained. Use the code editor below to write your solution, but <strong>do not</strong> modify the function signature.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="code_editor">
+    <div class="examma-ray-code-editor">
+      <div style="text-align: right; margin-bottom: 5px;">
+        Theme: 
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm active" data-codemirror-theme="default">
+            <input type="radio" name="options" id="option1" autocomplete="off" checked> Light
+          </label>
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="monokai">
+            <input type="radio" name="options" id="option2" autocomplete="off"> Dark
+          </label>
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="">
+            <input type="radio" name="options" id="option3" autocomplete="off"> None
+          </label>
+        </div>
+      </div>
+      <div class="examma-ray-codemirror">// REQUIRES: the MinQueue is not full
+// EFFECTS: Adds &#x27;item&#x27; to the MinQueue
+void push(const T &#x26;item) {
+
+
+}</div>
+    </div>
+  </div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 2)</h6>
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-comment">// You may assume type T supports ==, !=, &lt;, &lt;=, &gt;, and &gt;=</span>
+<span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MinQueue</span> {</span> 
+<span class="hljs-keyword">public</span>:
+  MinQueue() : size(<span class="hljs-number">0</span>) { } <span class="hljs-comment">// default ctor</span>
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not empty</span>
+  <span class="hljs-comment">// EFFECTS: Returns the minimum item, but</span>
+  <span class="hljs-comment">// does not remove it from the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">const</span> T &amp; <span class="hljs-title">min</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not empty</span>
+  <span class="hljs-comment">// EFFECTS: Removes the minimum item from the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">popMin</span><span class="hljs-params">()</span></span>;
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not full</span>
+  <span class="hljs-comment">// EFFECTS: Adds &#x27;item&#x27; to the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">push</span><span class="hljs-params">(<span class="hljs-keyword">const</span> T &amp;item)</span></span>;
+
+<span class="hljs-keyword">private</span>:
+  <span class="hljs-comment">// For simplicity, we assume a fixed capacity</span>
+  <span class="hljs-comment">// and that the user of a MinQueue never exceeds</span>
+  <span class="hljs-comment">// this. This isn&#x27;t a dynamic memory question :).</span>
+  <span class="hljs-keyword">int</span> data[<span class="hljs-number">10</span>];
+
+  <span class="hljs-comment">// number of valid items in the data array</span>
+  <span class="hljs-keyword">int</span> size;
+};
+</code></pre>
+<p>Here's an example of using a <code>MinQueue</code>:</p>
+<pre><code class="hljs cpp language-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+  MinQueue&lt;<span class="hljs-keyword">int</span>&gt; q;
+  q.push(<span class="hljs-number">6</span>);
+  q.push(<span class="hljs-number">2</span>);
+  q.push(<span class="hljs-number">5</span>);
+
+  <span class="hljs-built_in">cout</span> &lt;&lt; q.min(); <span class="hljs-comment">// prints 2</span>
+
+  q.popMin(); <span class="hljs-comment">// removes 2</span>
+  <span class="hljs-built_in">cout</span> &lt;&lt; q.min(); <span class="hljs-comment">// prints 5</span>
+}
+</code></pre>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    <br />
+      <div id="section-sp20_3_operator_overloading" class="examma-ray-section" data-section-id="sp20_3_operator_overloading" data-section-display-index="3">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">3: Operator Overloading <span class="badge badge-light">5 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Consider again the class definition from section 2 for a container ADT called a <code>MinQueue</code> (also repeated in the reference material here).</p></div>
+              
+        <div id="question-sp20_3_v3" data-question-id="sp20_3_v3" data-question-display-index="3.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>3.1</b> <span class="badge badge-secondary">5 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p>Implement an overloaded <code>&lt;&lt;</code> operator for <code>MinQueue</code>. The operator should be implemented as a <strong>non-member</strong> function and should add the right-hand side operand as a new element to the <code>MinQueue</code> on the left-hand side (you may call <code>push()</code> in your implementation). The operator should evaluate back into the <code>MinQueue</code> object, so that multiple <code>&lt;&lt;</code> operations may be chained.</p>
+<p>For example:</p>
+<pre><code class="hljs cpp language-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+  MinQueue&lt;<span class="hljs-keyword">int</span>&gt; q;
+
+  q &lt;&lt; <span class="hljs-number">6</span>;
+  <span class="hljs-comment">// q contains 6</span>
+
+  q &lt;&lt; <span class="hljs-number">2</span> &lt;&lt; <span class="hljs-number">5</span>;
+  <span class="hljs-comment">// q contains 6, 2, and 5</span>
+}
+</code></pre>
+<p>Implement the <code>&lt;&lt;</code> operator overload as a <strong>non-member</strong> function in the box below. Note the template header already provided for you, and that you should use <code>MinQueue&lt;T&gt;</code> (rather than just <code>MinQueue</code>) in your code. Use the code editor below to write your solution, but <strong>do not</strong> modify the function signature.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="code_editor">
+    <div class="examma-ray-code-editor">
+      <div style="text-align: right; margin-bottom: 5px;">
+        Theme: 
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm active" data-codemirror-theme="default">
+            <input type="radio" name="options" id="option1" autocomplete="off" checked> Light
+          </label>
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="monokai">
+            <input type="radio" name="options" id="option2" autocomplete="off"> Dark
+          </label>
+          <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="">
+            <input type="radio" name="options" id="option3" autocomplete="off"> None
+          </label>
+        </div>
+      </div>
+      <div class="examma-ray-codemirror">template &#x3C;typename T&#x3E;
+</div>
+    </div>
+  </div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 3)</h6>
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-comment">// You may assume type T supports ==, !=, &lt;, &lt;=, &gt;, and &gt;=</span>
+<span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MinQueue</span> {</span> 
+<span class="hljs-keyword">public</span>:
+  MinQueue() : size(<span class="hljs-number">0</span>) { } <span class="hljs-comment">// default ctor</span>
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not empty</span>
+  <span class="hljs-comment">// EFFECTS: Returns the minimum item, but</span>
+  <span class="hljs-comment">// does not remove it from the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">const</span> T &amp; <span class="hljs-title">min</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not empty</span>
+  <span class="hljs-comment">// EFFECTS: Removes the minimum item from the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">popMin</span><span class="hljs-params">()</span></span>;
+
+  <span class="hljs-comment">// REQUIRES: the MinQueue is not full</span>
+  <span class="hljs-comment">// EFFECTS: Adds &#x27;item&#x27; to the MinQueue</span>
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">push</span><span class="hljs-params">(<span class="hljs-keyword">const</span> T &amp;item)</span></span>;
+
+<span class="hljs-keyword">private</span>:
+  <span class="hljs-comment">// For simplicity, we assume a fixed capacity</span>
+  <span class="hljs-comment">// and that the user of a MinQueue never exceeds</span>
+  <span class="hljs-comment">// this. This isn&#x27;t a dynamic memory question :).</span>
+  <span class="hljs-keyword">int</span> data[<span class="hljs-number">10</span>];
+
+  <span class="hljs-comment">// number of valid items in the data array</span>
+  <span class="hljs-keyword">int</span> size;
+};
+</code></pre>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    <br />
+      <div id="section-sp20_5_dynamic_memory" class="examma-ray-section" data-section-id="sp20_5_dynamic_memory" data-section-display-index="4">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">4: Dynamic Memory <span class="badge badge-light">6 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Several main functions are given below. <strong>All compile successfully</strong>. For each, determine if a runtime error might occur during their execution.</p>
+<p>In the first box, choose the best answer from one of the following (feel free to copy and paste so you don't have to retype):</p>
+<ul>
+<li>no error</li>
+<li>memory leak</li>
+<li>incorrect delete</li>
+<li>use of uninitialized value</li>
+<li>dereferencing a null pointer</li>
+<li>use of dead object</li>
+</ul>
+<p>If there is no error, write the output of the program in the second box.  Otherwise if there is an error, write a brief explanation of the error in the second box.</p></div>
+              
+        <div id="question-sp20_5_v2" data-question-id="sp20_5_v2" data-question-display-index="4.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>4.1</b> <span class="badge badge-secondary">2 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">int</span> *a;
+  <span class="hljs-keyword">int</span> *b = <span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>(<span class="hljs-number">1</span>);
+  a = b;
+  b = a;
+  <span class="hljs-built_in">cout</span> &lt;&lt; *a &lt;&lt; <span class="hljs-string">&quot; &quot;</span> &lt;&lt; *b &lt;&lt; <span class="hljs-built_in">endl</span>;
+  <span class="hljs-keyword">delete</span> a;
+  <span class="hljs-keyword">delete</span> b;
+}
+</code></pre>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="fitb"><p>Type of error (or no error):</p>
+<p><input type="text" value="" size="37" maxlength="37" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input></p>
+<p>Output or explanation:</p>
+<p><textarea rows="4"  autocapitalize="none" autocomplete="off" autocorrect="off" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: hidden; width: 100%;"></textarea></p></div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_5_v6" data-question-id="sp20_5_v6" data-question-display-index="4.2" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>4.2</b> <span class="badge badge-secondary">2 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">int</span> *ptr = <span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>(<span class="hljs-number">18</span>);
+  <span class="hljs-keyword">int</span> **ptr_ptr = <span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span> *(ptr);
+  <span class="hljs-built_in">cout</span> &lt;&lt; **ptr_ptr &lt;&lt; <span class="hljs-built_in">endl</span>;
+  <span class="hljs-keyword">delete</span> ptr;
+}
+</code></pre>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="fitb"><p>Type of error (or no error):</p>
+<p><input type="text" value="" size="37" maxlength="37" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input></p>
+<p>Output or explanation:</p>
+<p><textarea rows="4"  autocapitalize="none" autocomplete="off" autocorrect="off" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: hidden; width: 100%;"></textarea></p></div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_5_v1" data-question-id="sp20_5_v1" data-question-display-index="4.3" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>4.3</b> <span class="badge badge-secondary">2 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">int</span> *a = <span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>(<span class="hljs-number">7</span>);
+  <span class="hljs-keyword">int</span> &amp;b = *a;
+  <span class="hljs-keyword">delete</span> a;
+  <span class="hljs-built_in">cout</span> &lt;&lt; b &lt;&lt; <span class="hljs-built_in">endl</span>;
+}
+</code></pre>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="fitb"><p>Type of error (or no error):</p>
+<p><input type="text" value="" size="37" maxlength="37" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input></p>
+<p>Output or explanation:</p>
+<p><textarea rows="4"  autocapitalize="none" autocomplete="off" autocorrect="off" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: hidden; width: 100%;"></textarea></p></div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 4)</h6>
+                This section has no reference material.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    <br />
+      <div id="section-6_primes" class="examma-ray-section" data-section-id="6_primes" data-section-display-index="5">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">5: Primes <span class="badge badge-light">6 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Consider the class <code>Primes</code>, shown in the reference material, and each of the following potential implementations of the <strong>assignment operator</strong> for Primes. All compile successfully, but may or may not work correctly at runtime.</p>
+<p>In order to work correctly, the assignment operator must perform a <strong>deep copy</strong> and must <strong>avoid any memory errors, undefined behavior, or memory leaks.</strong></p>
+<p>If the implementation works correctly, select "<strong>correct</strong>". Otherwise, select "<strong>incorrect</strong>".</p>
+<p>Each of these implementations attempts to <strong>use the copy constructor as a "helper"</strong> to implement the assignment operator. Even if the implementation seems <strong>unusual</strong>, be careful to thoroughly consider whether it works. It may be helpful to draw out a picture on scratch paper to help you trace the code.</p>
+<p>The following facts may also be helpful (depending on the version of the question you get):</p>
+<ul>
+<li><p>If delete is used on a null pointer, nothing happens (and there is no error).</p></li>
+<li><p>When a local object goes out of scope, its destructor is called.</p></li>
+<li><p>You may assume the operator will never be used for self-assignment. Do not consider whether the implementation handles self-assignment when determining correctness.</p></li>
+</ul></div>
+              
+        <div id="question-sp20_primes_assignment_op_3" data-question-id="sp20_primes_assignment_op_3" data-question-display-index="5.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>5.1</b> <span class="badge badge-secondary">3 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <pre><code class="hljs cpp language-cpp">Primes &amp;<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Primes &amp;rhs) {
+  Primes temp(rhs); <span class="hljs-comment">// copy ctor</span>
+  num = rhs.num;
+  temp.data = data;
+  data = rhs.data;
+  <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}
+</code></pre>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_primes_assignment_op_3_choice_0" type="radio" name="sp20_primes_assignment_op_3_choice" value="0"/>
+        <label for="sp20_primes_assignment_op_3_choice_0" class="examma-ray-mc-option"><p>correct</p></label>
+      </div>
+      <div>
+        <input id="sp20_primes_assignment_op_3_choice_1" type="radio" name="sp20_primes_assignment_op_3_choice" value="1"/>
+        <label for="sp20_primes_assignment_op_3_choice_1" class="examma-ray-mc-option"><p>incorrect</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      <br />
+        <div id="question-sp20_primes_assignment_op_7" data-question-id="sp20_primes_assignment_op_7" data-question-display-index="5.2" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>5.2</b> <span class="badge badge-secondary">3 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <pre><code class="hljs cpp language-cpp">Primes &amp;<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Primes &amp;rhs) {
+  <span class="hljs-keyword">delete</span>[] data;
+  num = rhs.num;
+  <span class="hljs-function">Primes <span class="hljs-title">temp</span><span class="hljs-params">(rhs)</span></span>; <span class="hljs-comment">// copy ctor</span>
+  data = temp.data;
+  temp.data = <span class="hljs-literal">nullptr</span>;
+  <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}
+</code></pre>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="multiple_choice">
+    <form>
+    
+      <div>
+        <input id="sp20_primes_assignment_op_7_choice_0" type="radio" name="sp20_primes_assignment_op_7_choice" value="0"/>
+        <label for="sp20_primes_assignment_op_7_choice_0" class="examma-ray-mc-option"><p>correct</p></label>
+      </div>
+      <div>
+        <input id="sp20_primes_assignment_op_7_choice_1" type="radio" name="sp20_primes_assignment_op_7_choice" value="1"/>
+        <label for="sp20_primes_assignment_op_7_choice_1" class="examma-ray-mc-option"><p>incorrect</p></label>
+      </div>
+    </form>
+  </div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 5)</h6>
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Primes</span> {</span>
+<span class="hljs-keyword">public</span>:
+  <span class="hljs-comment">// Constructor</span>
+  Primes(<span class="hljs-keyword">int</span> num)
+   : num(num), data(<span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>[num]) {
+    <span class="hljs-comment">// fills data array with the</span>
+    <span class="hljs-comment">// first &#x27;num&#x27; prime numbers</span>
+  }
+
+  <span class="hljs-comment">// Copy Constructor</span>
+  Primes(<span class="hljs-keyword">const</span> Primes &amp;other)
+   : num(other.num), data(<span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>[other.num]) {
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; num; ++i) {
+      data[i] = other.data[i];
+    }
+  }
+
+  <span class="hljs-comment">// Destructor</span>
+  ~Primes() {
+    <span class="hljs-keyword">delete</span>[] data;
+  }
+
+  <span class="hljs-comment">// Assignment operator, to be implemented...</span>
+  Primes &amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Primes &amp;rhs);
+
+<span class="hljs-keyword">private</span>:
+  <span class="hljs-keyword">int</span> num;
+  <span class="hljs-keyword">int</span> *data;
+
+};
+</code></pre>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    <br />
+      <div id="section-sp20_7_2" class="examma-ray-section" data-section-id="sp20_7_2" data-section-display-index="6">
+        <hr />
+        <table class="examma-ray-section-contents">
+          <tr>
+            <td>
+              
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">6: The Big Three <span class="badge badge-light">9 points</span></div>
+      </div>
+              <div class="examma-ray-section-description"><p>Consider the class shown in the reference material used to represent a <code>Gallery</code> in a museum containing paintings and sculptures.</p></div>
+              
+        <div id="question-sp20_7_2_assn_op" data-question-id="sp20_7_2_assn_op" data-question-display-index="6.1" class="examma-ray-question card-group">
+          <div class="card">
+            <div class="card-header">
+              <b>6.1</b> <span class="badge badge-secondary">9 points</span>
+            </div>
+            <div class="card-body">
+              <div class="examma-ray-question-description">
+                <p>Implement the <strong>assignment operator</strong> as it would be defined inside the <code>Gallery</code> class by selecting from the lines of code given below. Click all lines that should be included. As you work, a preview of your selected implementation is shown. You are not able to change the relative ordering of the lines. When finished, the <strong>selected lines should form a working function</strong> that performs a <strong>deep copy</strong> where appropriate and <strong>avoids undefined behavior or memory leaks</strong>. Some lines contain <strong>mistakes</strong> or are <strong>unnecessary</strong> for the function - these lines should not be selected.</p>
+              </div>
+              <div class="examma-ray-question-response" data-response-kind="select_a_statement"><pre><input type="checkbox" id="sp20_7_2_assn_op-sas-choice-0" value="0" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-0" class="sas-select-label">Gallery *<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Gallery &amp;rhs) {</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-1" value="1" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-1" class="sas-select-label">Gallery &amp;<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Gallery &amp;rhs) {</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-2" value="2" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-2" class="sas-select-label">  <span class="hljs-keyword">if</span> (&amp;<span class="hljs-keyword">this</span> == rhs) { <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>; }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-3" value="3" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-3" class="sas-select-label">  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span> == &amp;rhs) { <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>; }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-4" value="4" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-4" class="sas-select-label">  <span class="hljs-keyword">delete</span> paintings;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-5" value="5" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-5" class="sas-select-label">  <span class="hljs-keyword">delete</span>[] paintings;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-6" value="6" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-6" class="sas-select-label">  <span class="hljs-keyword">delete</span> mainExhibit;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-7" value="7" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-7" class="sas-select-label">  <span class="hljs-keyword">delete</span> sculptures;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-8" value="8" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-8" class="sas-select-label">  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">size_t</span> i=<span class="hljs-number">0</span>; i &lt; sculptures.size(); ++i) {
+    <span class="hljs-keyword">delete</span> sculptures[i];
+  }  </label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-9" value="9" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-9" class="sas-select-label">  <span class="hljs-keyword">while</span>(!sculptures.empty()) {
+    sculptures.pop_back();
+  }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-10" value="10" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-10" class="sas-select-label">  paintings = rhs.paintings;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-11" value="11" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-11" class="sas-select-label">  paintings = <span class="hljs-keyword">new</span> Painting[<span class="hljs-number">10</span>];</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-12" value="12" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-12" class="sas-select-label">  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; ++i) {
+    paintings[i] = rhs.paintings[i];
+  }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-13" value="13" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-13" class="sas-select-label">  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; ++i) {
+    paintings[i] = <span class="hljs-keyword">new</span> Painting(rhs.paintings[i]);
+  }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-14" value="14" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-14" class="sas-select-label">  mainExhibit = rhs.mainExhibit;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-15" value="15" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-15" class="sas-select-label">  mainExhibit = <span class="hljs-keyword">new</span> Painting(*rhs.mainExhibit);</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-16" value="16" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-16" class="sas-select-label">  *mainExhibit = *(rhs.mainExhibit);</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-17" value="17" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-17" class="sas-select-label">  mainExhibit = paintings + (rhs.mainExhibit - rhs.paintings);</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-18" value="18" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-18" class="sas-select-label">  sculptures = rhs.sculptures;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-19" value="19" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-19" class="sas-select-label">  sculptures = <span class="hljs-keyword">new</span> <span class="hljs-built_in">vector</span>&lt;Sculpture&gt;(rhs.sculptures);</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-20" value="20" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-20" class="sas-select-label">  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">size_t</span> i=<span class="hljs-number">0</span>; i &lt; rhs.sculptures.size(); ++i) {
+    sculptures.push_back(<span class="hljs-keyword">new</span> Sculpture(*rhs.sculptures[i]));
+  }</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-21" value="21" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-21" class="sas-select-label">  <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-22" value="22" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-22" class="sas-select-label">  <span class="hljs-keyword">return</span> rhs;</label>
+<input type="checkbox" id="sp20_7_2_assn_op-sas-choice-23" value="23" class="sas-select-input"></input> <label for="sp20_7_2_assn_op-sas-choice-23" class="sas-select-label">}</label></pre></div>
+            </div>
+          </div>
+        </div>
+      
+            </td>
+            <td style="width: 35%;">
+              <div class="examma-ray-section-reference">
+                <h6>Reference Material (Section 6)</h6>
+                <pre><code class="hljs cpp language-cpp"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Painting</span> {</span>
+
+<span class="hljs-keyword">public</span>:
+  <span class="hljs-comment">// Default construct a blank canvas</span>
+  Painting();
+
+  <span class="hljs-comment">// Custom constructor for a specific painting</span>
+  Painting(<span class="hljs-keyword">const</span> <span class="hljs-built_in">string</span> &amp;name, <span class="hljs-keyword">double</span> value);
+
+  <span class="hljs-comment">// Assume the Big Three for Painting are properly implemented</span>
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Sculpture</span> {</span>
+<span class="hljs-keyword">public</span>:
+  <span class="hljs-comment">// Custom constructor for a specific sculpture</span>
+  Sculpture(<span class="hljs-keyword">const</span> <span class="hljs-built_in">string</span> &amp;name, <span class="hljs-keyword">double</span> value);
+
+  <span class="hljs-comment">// Assume the Big Three for Sculpture are properly implemented</span>
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Gallery</span> {</span>
+<span class="hljs-keyword">public</span>:
+  <span class="hljs-comment">// Default ctor. Note all the paintings will be default</span>
+  <span class="hljs-comment">// constructed as part of the paintings array.</span>
+  Gallery() 
+    : mainExhibit(&amp;paintings[<span class="hljs-number">0</span>]) { }
+
+<span class="hljs-keyword">private</span>:
+  <span class="hljs-comment">// An array of the paintings. A gallery always</span>
+  <span class="hljs-comment">// has 10 valid paintings (i.e. none of the elements</span>
+  <span class="hljs-comment">// are memory junk, though some might be default-</span>
+  <span class="hljs-comment">// constructed blank canvases).</span>
+  Painting paintings[<span class="hljs-number">10</span>];
+
+  <span class="hljs-comment">// A pointer to the gallery&#x27;s MVP - &quot;Most Valuable</span>
+  <span class="hljs-comment">// Painting&quot;. This will always point to one of the</span>
+  <span class="hljs-comment">// gallery&#x27;s 10 paintings, but may change if the</span>
+  <span class="hljs-comment">// paintings change value</span>
+  Painting *mainExhibit;
+
+  <span class="hljs-comment">// A vector of pointers to dynamically allocated sculptures</span>
+  <span class="hljs-built_in">vector</span>&lt;Sculpture*&gt; sculptures;
+
+};
+</code></pre>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    
+
+        </div>
+      </div>
+    </div>
+
+
+      <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Answers File</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-info"><p>Click the button below to save a copy of your answers as a <code>.json</code>
+  file. You may save as many times as you like. You can also restore answers
+  from a previously saved file.</p>
+<p><strong>Important!</strong> You MUST submit your answers <code>.json</code> file to <strong>Canvas</strong>
+  BEFORE exam time is up. This webpage does not save anything to anywhere.
+  It is up to you to download your answer file and turn it in on <strong>Canvas</strong>.</p></div>
+              <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
+              <div><a id="exam-saver-download-link" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 16 16">
+<path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+<path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+</svg> Download Answers</a></div>
+              <br />
+              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file. <b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+              <div>
+                <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-up" viewBox="0 0 16 16">
+<path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707V11.5z"/>
+<path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+</svg> Load Answers</button>
+                <input id="exam-saver-file-input" type="file"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="exam-welcome-restored-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">EECS 280 Test Exam</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-info">This page was reloaded, and we've restored your answers from a local backup.</div>
+              <div>
+                <button class="btn btn-success" data-dismiss="modal"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-check" viewBox="0 0 16 16">
+<path d="M10.854 7.854a.5.5 0 0 0-.708-.708L7.5 9.793 6.354 8.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+<path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+</svg> OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="exam-welcome-normal-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">EECS 280 Test Exam</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+            <div class="alert alert-info">This exam is for <b>anishrav</b>. If this is not you, please close this page.</div>
+            <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this likely won't work.</div>
+            <div>
+              <button class="btn btn-primary" data-dismiss="modal">I am <b>anishrav</b> and I understand</button>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="exam-welcome-no-autosave-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">EECS 280 Test Exam</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-info">This exam is for <b>anishrav</b>. If this is not you, please close this page.</div>
+              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
+              <div>
+                <button class="btn btn-primary" data-dismiss="modal">I am <b>anishrav</b> and I understand</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="multiple-tabs-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">WARNING</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-danger">It appears you have your exam open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
+              <div>
+                <button class="btn btn-primary" data-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </body>
+    </html>

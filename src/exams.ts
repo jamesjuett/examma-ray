@@ -410,7 +410,7 @@ export class AssignedExam {
       </div>`
   }
 
-  public render(mode: RenderMode) {
+  public renderBody(mode: RenderMode) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.id}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
@@ -427,6 +427,25 @@ export class AssignedExam {
         </div>
       </div>
     </div>`;
+  }
+
+  public renderAll(mode: RenderMode) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <meta charset="UTF-8">
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+      <script src="${mode === RenderMode.ORIGINAL ? this.exam.frontendJsPath : this.exam.frontendGradedJsPath}"></script>
+      
+      <body>
+        ${this.renderBody(mode)}
+        ${renderModals(this)}
+      </body>
+      </html>
+    `;
   }
 
   public createManifest() {
@@ -558,173 +577,125 @@ export class Exam {
     </div>`;
   }
 
-  // public writeScoresCsv() {
-  //   mkdirSync("out/", {recursive: true});
-  //   let data = [...this.submissions].sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
-  //     .filter(s => s.pointsEarned)
-  //     .map(s => {
-  //       let student_data : {[index:string]: any} = {};
-  //       student_data["uniqname"] = s.student.uniqname;
-  //       student_data["total"] = s.pointsEarned;
-  //       s.assignedQuestions.forEach(aq => student_data[aq.unifiedIndex] = aq.pointsEarned);
-  //       return student_data;
-  //     });
-      
-  //   stringify(
-  //     data,
-  //     {
-  //       header: true,
-  //       columns: ["uniqname", "total", ...this.questionBank.map(q => q.unifiedIndex)]
-  //     },
-  //     function (err, output) {
-  //       writeFileSync('out/scores.csv', output);
-  //     }
-  //   );
-  // }
+
 
 }
 
-export function writeAGFile(mode: RenderMode, ex: AssignedExam, filename: string, body: string) {
-  writeFileSync(filename, `
-      <!DOCTYPE html>
-    <html>
-    <meta charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-    <script src="${mode === RenderMode.ORIGINAL ? ex.exam.frontendJsPath : ex.exam.frontendGradedJsPath}"></script>
-    <script>
-      $(function() {
-        $('button.examma-ray-blank-saver').on("click", function() {
-          let blank_num = $(this).data("blank-num");
-          let checked = $("input[type=checkbox]:checked").filter(function() {
-            return $(this).data("blank-num") === blank_num;
-          }).map(function() {
-            return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
-          }).get().join(",\\n");
-          $(".checked-submissions-content").html(he.encode(checked));
-          $(".checked-submissions-modal").modal("show")
-        })
-      });
-
-    </script>
-    <style>
-      
-
-
-    </style>
-    <body>
-      ${body}
-
-
-      <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Answers File</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">${mk2html(DEFAULT_SAVER_MESSAGE_CANVAS)}</div>
-              <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
-              <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
-              <br />
-              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file.<br /><b>WARNING!</b> This will overwrite ALL answers on this page.</div>
-              <div>
-                <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
-                <input id="exam-saver-file-input" type="file"></a>
-              </div>
+function renderModals(ex: AssignedExam) {
+  return `
+    <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Answers File</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div class="alert alert-info">${mk2html(DEFAULT_SAVER_MESSAGE_CANVAS)}</div>
+            <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
+            <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
+            <br />
+            <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file.<br /><b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+            <div>
+              <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
+              <input id="exam-saver-file-input" type="file"></a>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
 
-      <div id="exam-welcome-restored-modal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">${ex.exam.title}</h5>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">This page was reloaded, and we've restored your answers from a local backup.</div>
-              <div>
-                <button class="btn btn-success" data-dismiss="modal">${FILE_CHECK} OK</button>
-              </div>
+    <div id="exam-welcome-restored-modal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">${ex.exam.title}</h5>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div class="alert alert-info">This page was reloaded, and we've restored your answers from a local backup.</div>
+            <div>
+              <button class="btn btn-success" data-dismiss="modal">${FILE_CHECK} OK</button>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
 
-      <div id="exam-welcome-normal-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">${ex.exam.title}</h5>
-            </div>
-            <div class="modal-body" style="text-align: center;">
+    <div id="exam-welcome-normal-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">${ex.exam.title}</h5>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+          <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
+          <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+          <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this likely won't work.</div>
+          <div>
+            <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="exam-welcome-no-autosave-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">${ex.exam.title}</h5>
+          </div>
+          <div class="modal-body" style="text-align: center;">
             <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
             <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
-            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this likely won't work.</div>
+            <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
             <div>
               <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div id="multiple-tabs-modal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">WARNING</h5>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div class="alert alert-danger">It appears you have your exam open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
+            <div>
+              <button class="btn btn-primary" data-dismiss="modal">OK</button>
             </div>
           </div>
         </div>
       </div>
-
-
-      <div id="exam-welcome-no-autosave-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">${ex.exam.title}</h5>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
-              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
-              <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
-              <div>
-                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      
-      <div id="multiple-tabs-modal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">WARNING</h5>
-            </div>
-            <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-danger">It appears you have your exam open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
-              <div>
-                <button class="btn btn-primary" data-dismiss="modal">OK</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    </body>
-    </html>`, { encoding: "utf-8" });
-    // pdf.create(`<html><body>${s.renderAllReports(graderMap)}</body></html>`, { format: 'Letter' }).toFile('test.pdf', function(err, res) {
-    //   if (err) return console.log(err);
-    //   console.log(res); // { filename: '/app/businesscard.pdf' }
-    // });
+    </div>
+  `;
 }
 
+// <script>
+//       $(function() {
+//         $('button.examma-ray-blank-saver').on("click", function() {
+//           let blank_num = $(this).data("blank-num");
+//           let checked = $("input[type=checkbox]:checked").filter(function() {
+//             return $(this).data("blank-num") === blank_num;
+//           }).map(function() {
+//             return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
+//           }).get().join(",\\n");
+//           $(".checked-submissions-content").html(he.encode(checked));
+//           $(".checked-submissions-modal").modal("show")
+//         })
+//       });
 
-
+//     </script>
 
 // export function run_autograder(exam: Exam) {
 //   let argv = minimist(process.argv.slice(2), {

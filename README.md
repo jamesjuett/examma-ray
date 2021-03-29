@@ -46,10 +46,10 @@ If you'd like to skip re-generating the reports (which takes a bit longer to run
 npx ts-node engr101f20final.ts --no-reports
 ```
 
-Output files go to the `out/` directory. Specifically:
+Output files go to the `data/` directory. Specifically:
 
-- `out/students/` - Individual student reports (unless you specified `--no-reports`).
-- `out/questions/` - Analyses pages for each question.
+- `data/students/` - Individual student reports (unless you specified `--no-reports`).
+- `data/questions/` - Analyses pages for each question.
 - `overview.html` - High-level overview of the exam, with links to student/question reports.
 - `scores.csv` - Total and per-question scores for each student by uniqname.
 

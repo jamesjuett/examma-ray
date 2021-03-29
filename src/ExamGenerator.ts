@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { Section, Question, Exam, AssignedExam, StudentInfo, writeAGFile, RenderMode, Randomizer } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, Randomizer } from './exams';
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
 import { assert, assertNever } from './util';
@@ -113,10 +113,10 @@ export class ExamGenerator {
 
   private writeStats() {
     // Create output directory
-    mkdirSync(`out/${this.exam.id}/assigned/`, { recursive: true });
+    mkdirSync(`data/${this.exam.id}/assigned/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`out/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
+    writeFileSync(`data/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
@@ -125,8 +125,8 @@ export class ExamGenerator {
 
   public writeAll() {
 
-    const examDir = `out/${this.exam.id}/assigned/exams`;
-    const manifestDir = `out/${this.exam.id}/assigned/manifests`;
+    const examDir = `data/${this.exam.id}/assigned/exams`;
+    const manifestDir = `data/${this.exam.id}/assigned/manifests`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
@@ -150,10 +150,10 @@ export class ExamGenerator {
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
         writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2));
         console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
-        writeAGFile(RenderMode.ORIGINAL, ex, `${examDir}/${filenameBase}.html`, ex.render(RenderMode.ORIGINAL));
+        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
       });
 
-    writeFileSync(`out/${this.exam.id}/assigned/files.csv`, unparse({
+    writeFileSync(`data/${this.exam.id}/assigned/files.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));

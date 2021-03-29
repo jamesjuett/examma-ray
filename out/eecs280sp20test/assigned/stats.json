@@ -1,0 +1,213 @@
+{
+  "questions": {
+    "fitb_test": {
+      "n": 158
+    },
+    "sp20_2_1_part1": {
+      "n": 79
+    },
+    "sp20_2_1_part2": {
+      "n": 79
+    },
+    "sp20_2_2_part1": {
+      "n": 79
+    },
+    "sp20_2_2_part2": {
+      "n": 79
+    },
+    "sp20_3_v1": {
+      "n": 37
+    },
+    "sp20_3_v2": {
+      "n": 41
+    },
+    "sp20_3_v3": {
+      "n": 39
+    },
+    "sp20_3_v4": {
+      "n": 41
+    },
+    "sp20_5_v1": {
+      "n": 68
+    },
+    "sp20_5_v2": {
+      "n": 74
+    },
+    "sp20_5_v3": {
+      "n": 90
+    },
+    "sp20_5_v4": {
+      "n": 85
+    },
+    "sp20_5_v5": {
+      "n": 81
+    },
+    "sp20_5_v6": {
+      "n": 76
+    },
+    "sp20_7_1_assn_op": {
+      "n": 44
+    },
+    "sp20_7_2_assn_op": {
+      "n": 55
+    },
+    "sp20_7_3_assn_op": {
+      "n": 59
+    },
+    "sp20_mc_big_three_1": {
+      "n": 33
+    },
+    "sp20_mc_big_three_2": {
+      "n": 25
+    },
+    "sp20_mc_big_three_3": {
+      "n": 35
+    },
+    "sp20_mc_big_three_4": {
+      "n": 40
+    },
+    "sp20_mc_big_three_5": {
+      "n": 25
+    },
+    "sp20_mc_containers_and_templates_1": {
+      "n": 40
+    },
+    "sp20_mc_containers_and_templates_2": {
+      "n": 35
+    },
+    "sp20_mc_containers_and_templates_3": {
+      "n": 50
+    },
+    "sp20_mc_containers_and_templates_4": {
+      "n": 33
+    },
+    "sp20_mc_dynamic_memory_1": {
+      "n": 33
+    },
+    "sp20_mc_dynamic_memory_2": {
+      "n": 30
+    },
+    "sp20_mc_dynamic_memory_3": {
+      "n": 29
+    },
+    "sp20_mc_dynamic_memory_4": {
+      "n": 33
+    },
+    "sp20_mc_dynamic_memory_5": {
+      "n": 33
+    },
+    "sp20_mc_dynamic_memory_errors_1": {
+      "n": 37
+    },
+    "sp20_mc_dynamic_memory_errors_2": {
+      "n": 31
+    },
+    "sp20_mc_dynamic_memory_errors_3": {
+      "n": 31
+    },
+    "sp20_mc_dynamic_memory_errors_4": {
+      "n": 30
+    },
+    "sp20_mc_dynamic_memory_errors_5": {
+      "n": 29
+    },
+    "sp20_mc_managing_dynamic_memory_1": {
+      "n": 28
+    },
+    "sp20_mc_managing_dynamic_memory_2": {
+      "n": 31
+    },
+    "sp20_mc_managing_dynamic_memory_3": {
+      "n": 30
+    },
+    "sp20_mc_managing_dynamic_memory_4": {
+      "n": 33
+    },
+    "sp20_mc_managing_dynamic_memory_5": {
+      "n": 36
+    },
+    "sp20_mc_representation_invariants_1": {
+      "n": 32
+    },
+    "sp20_mc_representation_invariants_2": {
+      "n": 26
+    },
+    "sp20_mc_representation_invariants_3": {
+      "n": 35
+    },
+    "sp20_mc_representation_invariants_4": {
+      "n": 29
+    },
+    "sp20_mc_representation_invariants_5": {
+      "n": 36
+    },
+    "sp20_mc_time_complexity_1": {
+      "n": 32
+    },
+    "sp20_mc_time_complexity_2": {
+      "n": 36
+    },
+    "sp20_mc_time_complexity_3": {
+      "n": 29
+    },
+    "sp20_mc_time_complexity_4": {
+      "n": 34
+    },
+    "sp20_mc_time_complexity_5": {
+      "n": 27
+    },
+    "sp20_primes_assignment_op_1": {
+      "n": 37
+    },
+    "sp20_primes_assignment_op_2": {
+      "n": 27
+    },
+    "sp20_primes_assignment_op_3": {
+      "n": 46
+    },
+    "sp20_primes_assignment_op_4": {
+      "n": 48
+    },
+    "sp20_primes_assignment_op_5": {
+      "n": 43
+    },
+    "sp20_primes_assignment_op_6": {
+      "n": 47
+    },
+    "sp20_primes_assignment_op_7": {
+      "n": 38
+    },
+    "sp20_primes_assignment_op_8": {
+      "n": 30
+    }
+  },
+  "sections": {
+    "1_true_false": {
+      "n": 158
+    },
+    "6_primes": {
+      "n": 158
+    },
+    "sp20_2_1_containers": {
+      "n": 79
+    },
+    "sp20_2_2_containers": {
+      "n": 79
+    },
+    "sp20_3_operator_overloading": {
+      "n": 158
+    },
+    "sp20_5_dynamic_memory": {
+      "n": 158
+    },
+    "sp20_7_1": {
+      "n": 44
+    },
+    "sp20_7_2": {
+      "n": 55
+    },
+    "sp20_7_3": {
+      "n": 59
+    }
+  }
+}

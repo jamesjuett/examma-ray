@@ -1,0 +1,150 @@
+{
+  "exam_id": "eecs280sp20test",
+  "student": {
+    "uniqname": "abifox",
+    "name": "Abigail Fox"
+  },
+  "timestamp": 1616774530906,
+  "trusted": false,
+  "saverId": 0,
+  "sections": [
+    {
+      "id": "1_true_false",
+      "display_index": "1",
+      "questions": [
+        {
+          "id": "sp20_mc_time_complexity_5",
+          "display_index": "1.1",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_containers_and_templates_1",
+          "display_index": "1.2",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_representation_invariants_5",
+          "display_index": "1.3",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_dynamic_memory_4",
+          "display_index": "1.4",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_dynamic_memory_errors_2",
+          "display_index": "1.5",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_managing_dynamic_memory_3",
+          "display_index": "1.6",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_mc_big_three_4",
+          "display_index": "1.7",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "fitb_test",
+          "display_index": "1.8",
+          "kind": "fitb",
+          "response": ""
+        }
+      ]
+    },
+    {
+      "id": "sp20_2_1_containers",
+      "display_index": "2",
+      "questions": [
+        {
+          "id": "sp20_2_1_part1",
+          "display_index": "2.1",
+          "kind": "fitb",
+          "response": ""
+        },
+        {
+          "id": "sp20_2_1_part2",
+          "display_index": "2.2",
+          "kind": "code_editor",
+          "response": ""
+        }
+      ]
+    },
+    {
+      "id": "sp20_3_operator_overloading",
+      "display_index": "3",
+      "questions": [
+        {
+          "id": "sp20_3_v3",
+          "display_index": "3.1",
+          "kind": "code_editor",
+          "response": ""
+        }
+      ]
+    },
+    {
+      "id": "sp20_5_dynamic_memory",
+      "display_index": "4",
+      "questions": [
+        {
+          "id": "sp20_5_v1",
+          "display_index": "4.1",
+          "kind": "fitb",
+          "response": ""
+        },
+        {
+          "id": "sp20_5_v6",
+          "display_index": "4.2",
+          "kind": "fitb",
+          "response": ""
+        },
+        {
+          "id": "sp20_5_v4",
+          "display_index": "4.3",
+          "kind": "fitb",
+          "response": ""
+        }
+      ]
+    },
+    {
+      "id": "6_primes",
+      "display_index": "5",
+      "questions": [
+        {
+          "id": "sp20_primes_assignment_op_1",
+          "display_index": "5.1",
+          "kind": "multiple_choice",
+          "response": ""
+        },
+        {
+          "id": "sp20_primes_assignment_op_6",
+          "display_index": "5.2",
+          "kind": "multiple_choice",
+          "response": ""
+        }
+      ]
+    },
+    {
+      "id": "sp20_7_2",
+      "display_index": "6",
+      "questions": [
+        {
+          "id": "sp20_7_2_assn_op",
+          "display_index": "6.1",
+          "kind": "select_a_statement",
+          "response": ""
+        }
+      ]
+    }
+  ]
+}
