@@ -303,6 +303,14 @@ code {
   cursor: not-allowed;
 }
 
+.examma-ray-sas-choices {
+  overflow-x: auto;
+}
+
+.examma-ray-sas-line {
+  white-space: nowrap;
+}
+
 .sas-select-input {
   vertical-align: middle;
   margin-bottom: 0.5em;
