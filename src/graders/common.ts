@@ -1,7 +1,8 @@
 import { decode } from "he";
-import { Question, QuestionSkin } from "../exams";
+import { Question } from "../exams";
 import { ResponseKind } from "../response/common";
 import { SubmissionType } from "../response/responses";
+import { QuestionSkin } from "../skins";
 
 export interface Grader<QT extends ResponseKind = ResponseKind> {
   readonly questionType: QT;

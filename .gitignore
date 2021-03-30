@@ -103,7 +103,7 @@ dist
 # TernJS port file
 .tern-port
 
-# questions-packet custom
-out/
+# examma-ray custom
+data/
 dist/
 secrets/

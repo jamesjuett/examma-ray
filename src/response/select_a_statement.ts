@@ -1,6 +1,6 @@
 import { encode } from "he";
-import { QuestionSkin } from "../exams";
 import { applySkin, highlightCode } from "../render";
+import { QuestionSkin } from "../skins";
 import { assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
@@ -17,7 +17,7 @@ export type SASGroup = {
   items: SASItem[]
 };
 
-export type SASResponse = {
+export type SASSpecification = {
   kind: "select_a_statement";
   code_language: string;
   choices: (SASGroup | SASItem)[]
@@ -25,21 +25,31 @@ export type SASResponse = {
 
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
-export function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | typeof MALFORMED_SUBMISSION {
+function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
 
-  let parsed = JSON.parse(rawSubmission);
-  if (isNumericArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+  try {
+    let parsed = JSON.parse(rawSubmission);
+    if (isNumericArray(parsed)) {
+      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+    }
+    else {
+      return MALFORMED_SUBMISSION;
+    }
   }
-  else {
-    return MALFORMED_SUBMISSION;
+  catch(e) {
+    if (e instanceof SyntaxError) {
+      return MALFORMED_SUBMISSION;
+    }
+    else {
+      throw e;
+    }
   }
 }
 
-export function SAS_RENDERER(response: SASResponse, question_id: string, skin?: QuestionSkin) {
+function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: QuestionSkin) {
   let item_index = 0;
   return `<pre>${response.choices.map(
     group => group.kind === "item"
@@ -54,14 +64,14 @@ function renderSASItem(item: SASItem, question_id: string, item_index: number, c
   // return highlightedText;
 }
 
-export function SAS_EXTRACTOR(responseElem: JQuery) {
+function SAS_EXTRACTOR(responseElem: JQuery) {
   let chosen = responseElem.find("input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
   return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
 }
 
-export function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
+function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
   
   // blank out all selections (note this will blank required selections
   // but it's presumed the input file will fill them in subsequently)

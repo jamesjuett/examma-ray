@@ -1,9 +1,9 @@
 import showdown from 'showdown';
 import showdownKatex from 'showdown-katex';
 import showdownHighlight from 'showdown-highlight';
-import { QuestionSkin } from './exams';
 import Mustache from 'mustache';
 import hljs from 'highlight.js'
+import { QuestionSkin } from './skins';
 
 const converter = new showdown.Converter({
   extensions: [

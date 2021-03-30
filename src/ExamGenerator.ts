@@ -1,11 +1,9 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { createHash } from 'crypto';
-import { TrustedExamAnswers as TrustedExamAnswers } from './common';
-import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, SectionChooser, SectionSpecification, Randomizer } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, Randomizer } from './exams';
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
-import { asMutable, assert, assertNever } from './util';
+import { assert, assertNever } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
 
@@ -19,17 +17,19 @@ type QuestionStats = {
   n: number;
 };
 
-type ExamGeneratorOptions = {
-  filenames: "uniqname" | "uuidv4" | "uuidv5"
+export type ExamGeneratorOptions = {
+  student_ids: "uniqname" | "uuidv4" | "uuidv5"
   uuidv5_namespace?: string;
+  students: readonly StudentInfo[]
 };
 
 const DEFAULT_OPTIONS = {
-  filenames: "uniqname"
+  student_ids: "uniqname",
+  students: []
 };
 
 function verifyOptions(options: Partial<ExamGeneratorOptions>) {
-  assert(options.filenames !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
+  assert(options.student_ids !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
   assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
 }
 
@@ -48,6 +48,7 @@ export class ExamGenerator {
     this.exam = exam;
     verifyOptions(options);
     this.options = Object.assign(DEFAULT_OPTIONS, options);
+    this.options.students.forEach(s => this.assignRandomizedExam(s));
   }
 
   public assignRandomizedExam(student: StudentInfo) {
@@ -58,6 +59,10 @@ export class ExamGenerator {
     this.assignedExamsByUniqname[student.uniqname] = ae;
 
     return ae;
+  }
+
+  public assignRandomizedExams(students: readonly StudentInfo[]) {
+    students.forEach(s => this.assignRandomizedExam(s));
   }
 
   public createRandomizedExam(
@@ -111,10 +116,10 @@ export class ExamGenerator {
 
   private writeStats() {
     // Create output directory
-    mkdirSync(`out/${this.exam.id}/assigned/`, { recursive: true });
+    mkdirSync(`data/${this.exam.id}/assigned/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`out/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
+    writeFileSync(`data/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
@@ -123,8 +128,8 @@ export class ExamGenerator {
 
   public writeAll() {
 
-    const examDir = `out/${this.exam.id}/assigned/exams`;
-    const manifestDir = `out/${this.exam.id}/assigned/manifests`;
+    const examDir = `data/${this.exam.id}/assigned/exams`;
+    const manifestDir = `data/${this.exam.id}/assigned/manifests`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
@@ -146,12 +151,12 @@ export class ExamGenerator {
         filenames.push([ex.student.uniqname, filenameBase])
 
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
-        writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(createBlankAnswers(ex), null, 2));
+        writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2));
         console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
-        writeAGFile(RenderMode.ORIGINAL, ex, `${examDir}/${filenameBase}.html`, ex.render(RenderMode.ORIGINAL));
+        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
       });
 
-    writeFileSync(`out/${this.exam.id}/assigned/files.csv`, unparse({
+    writeFileSync(`data/${this.exam.id}/assigned/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));
@@ -159,17 +164,17 @@ export class ExamGenerator {
   }
 
   private createFilenameBase(student: StudentInfo) {
-    if(this.options.filenames === "uniqname") {
+    if(this.options.student_ids === "uniqname") {
       return student.uniqname;
     }
-    else if (this.options.filenames === "uuidv4") {
+    else if (this.options.student_ids === "uuidv4") {
       return student.uniqname + "-" + uuidv4();
     }
-    else if (this.options.filenames === "uuidv5") {
+    else if (this.options.student_ids === "uuidv5") {
       return student.uniqname + "-" + uuidv5(student.uniqname, this.options.uuidv5_namespace!);
     }
     else {
-      assertNever(this.options.filenames);
+      assertNever(this.options.student_ids);
     }
   }
 }

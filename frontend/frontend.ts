@@ -1,10 +1,9 @@
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
-import { stringify_response, extract_response, fill_response, parse_submission } from "./response/responses";
-import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
+import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
-import { ExamAnswers, QuestionAnswer, SectionAnswers } from "./common";
+import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/submissions";
 import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
@@ -14,11 +13,11 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD } from '../src/icons';
 
 import 'katex/dist/katex.min.css';
 
-import "./main.css";
+import "./frontend.css";
 
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
@@ -43,7 +42,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
 const saverID = Date.now();
 let saveCount = 0;
 
-function extractExamAnswers() : ExamAnswers {
+function extractExamAnswers() : ExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
@@ -58,7 +57,7 @@ function extractExamAnswers() : ExamAnswers {
   }
 }
 
-function isBlankAnswers(answers: ExamAnswers) {
+function isBlankAnswers(answers: ExamSubmission) {
   return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
@@ -69,7 +68,7 @@ function loadQuestionAnswer(qa: QuestionAnswer) {
   fill_response(responseElem, qa.kind, sub);
 }
 
-function loadExamAnswers(answers: ExamAnswers) {
+function loadExamAnswers(answers: ExamSubmission) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
 
   // Consider work to be saved after loading
@@ -110,7 +109,7 @@ function autosaveToLocalStorage() {
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname));
     if (prevAnswersLS) {
 
-      let prevAnswers = <ExamAnswers>JSON.parse(prevAnswersLS);
+      let prevAnswers = <ExamSubmission>JSON.parse(prevAnswersLS);
 
       // We want to know if we're competing with another tab/window.
       // We can detect that by checking if the previous save was made with a different saver ID,
@@ -134,15 +133,6 @@ function autosaveToLocalStorage() {
 }
 
 
-TimeAgo.addDefaultLocale(en);
-const timeAgo = new TimeAgo('en-US');
-let lastSavedTime = Date.now();
-
-function updateTimeSaved() {
-  $("#examma-ray-exam-saver-last-save")
-    .html(`Last saved ${timeAgo.format(lastSavedTime, 'round')}.`);
-}
-
 const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
 const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
 
@@ -150,22 +140,22 @@ let HAS_UNSAVED_CHANGES = false;
 
 function onUnsavedChanges() {
   $("#exam-saver-button")
-    .html(UNSAVED_CHANGES_HTML)
-    .removeClass("btn-success")
-    .addClass("btn-warning");
+    .html(UNSAVED_CHANGES_HTML);
+
+  $("#examma-ray-exam-saver-status-note")
+    .css("visibility", "visible")
+    .html("Download an answers file to submit to Canvas.")
 
   HAS_UNSAVED_CHANGES = true;
 }
 
 function onSaved() {
   $("#exam-saver-button")
-    .html(SAVED_HTML)
-    .removeClass("btn-warning")
-    .addClass("btn-success");
+    .html(SAVED_HTML);
 
-  lastSavedTime = Date.now();
-  $("#examma-ray-exam-saver-last-save").css("visibility", "visible");
-  updateTimeSaved();
+  $("#examma-ray-exam-saver-status-note")
+    .css("visibility", "visible")
+    .html("Download an answers file to submit to Canvas.")
 
   HAS_UNSAVED_CHANGES = false;
 }
@@ -209,7 +199,7 @@ function setupSaverModal() {
     // if there is no file selected, so this is just here for completeness
     if (files) {
       try {
-        let answers = <ExamAnswers>JSON.parse(await files[0].text());
+        let answers = <ExamSubmission>JSON.parse(await files[0].text());
         if (answers.exam_id !== $("#examma-ray-exam").data("exam-id")) {
           alert("Error - That answers file appears to be for a different exam.");
         }
@@ -320,7 +310,7 @@ function startExam() {
   if (storageAvailable("localStorage")) {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname));
     if (autosavedAnswers) {
-      loadExamAnswers(<ExamAnswers>JSON.parse(autosavedAnswers));
+      loadExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
       $("#exam-welcome-restored-modal").modal("show");
     }
     else {
@@ -336,9 +326,6 @@ function startExam() {
 
   // Consider work to be saved when exam is started
   onSaved();
-
-  // Interval to update time saved ago message every 10 seconds
-  setInterval(updateTimeSaved, 10000);
 
 }
 

@@ -1,4 +1,4 @@
-import { QuestionBank } from "../src/exams";
+import { QuestionBank } from "../src/QuestionBank";
 
 export const TF_QUESTIONS = new QuestionBank([
   {

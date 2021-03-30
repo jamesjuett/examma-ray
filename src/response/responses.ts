@@ -1,15 +1,15 @@
-import { Question, QuestionSkin } from "../exams";
-import { FITB_EXTRACTOR, FITB_FILLER, CODE_FITB_HANDLER, FITB_PARSER, FITB_RENDERER, FITBResponse, FITBSubmission } from "./fitb";
+import { CODE_FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
-import { MC_EXTRACTOR, MC_FILLER, MC_PARSER, MC_RENDERER, MCResponse, MCSubmission, MC_HANDLER } from "./multiple_choice";
-import { SAS_EXTRACTOR, SAS_FILLER, SAS_PARSER, SAS_RENDERER, SASResponse, SASSubmission, SAS_HANDLER } from "./select_a_statement";
-import { CodeEditorResponse, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
+import { MCSpecification, MCSubmission, MC_HANDLER } from "./multiple_choice";
+import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
+import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
+import { QuestionSkin } from "../skins";
 
-export type QuestionResponse<QT extends ResponseKind> =
-  QT extends "multiple_choice" ? MCResponse :
-  QT extends "fitb" ? FITBResponse :
-  QT extends "select_a_statement" ? SASResponse :
-  QT extends "code_editor" ? CodeEditorResponse :
+export type ResponseSpecification<QT extends ResponseKind> =
+  QT extends "multiple_choice" ? MCSpecification :
+  QT extends "fitb" ? FITBSpecification :
+  QT extends "select_a_statement" ? SASSpecification :
+  QT extends "code_editor" ? CodeEditorSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
@@ -22,7 +22,7 @@ export type SubmissionType<QT extends ResponseKind> =
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
-  render: (response: QuestionResponse<QT>, question_id: string, skin?: QuestionSkin) => string,
+  render: (response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) => string,
   activate?: () => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
@@ -41,7 +41,7 @@ export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmissio
   return <SubmissionType<QT>>RESPONSE_HANDLERS[kind].parse(rawSubmission);
 }
 
-export function render_response<QT extends ResponseKind>(response: QuestionResponse<QT>, question_id: string, skin?: QuestionSkin) : string {
+export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, skin);
 }
 

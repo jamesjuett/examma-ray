@@ -1,5 +1,5 @@
-import { QuestionSpecification } from "../src/exams";
 import { FITBRegexGrader } from "../src/graders/FITBRegexGrader";
+import { QuestionSpecification } from "../src/specification";
 
 export const FITB_QUESTIONS : QuestionSpecification[] = [
   {

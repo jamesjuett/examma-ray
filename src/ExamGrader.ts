@@ -1,10 +1,12 @@
 import { writeFileSync, mkdirSync } from 'fs';
-import json_stable_stringify from "json-stable-stringify";
-import { TrustedExamAnswers } from './common';
-import { Section, Question, Exam, AssignedExam, StudentInfo, createBlankAnswers, writeAGFile, RenderMode, AssignedQuestion, AssignedSection, CHOOSE_ALL, renderQuestion, Randomizer } from './exams';
+import { TrustedExamSubmission } from './submissions';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, renderQuestion, Randomizer } from './exams';
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
-import { assert, assertFalse } from './util';
+import { CHOOSE_ALL } from './specification';
+import { assertFalse } from './util';
+import { unparse } from 'papaparse';
+import { ExamUtils } from './ExamUtils';
 
 export interface GraderMap {
   [index: string]: Grader | undefined;
@@ -33,13 +35,13 @@ export class ExamGrader {
   public readonly sectionsMap: { [index: string]: Section | undefined } = {};
   public readonly questionsMap: { [index: string]: Question | undefined } = {};
 
-  public readonly graderMap: GraderMap;
-  public readonly exceptionMap: ExceptionMap;
+  public readonly graderMap: GraderMap = {};
+  public readonly exceptionMap: ExceptionMap = {};
 
-  public constructor(exam: Exam, graders: GraderMap = {}, exceptions: ExceptionMap = {}) {
+  public constructor(exam: Exam, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
-    this.graderMap = graders;
-    this.exceptionMap = exceptions;
+    graders && this.registerGraders(graders);
+    exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
 
     this.allSections = exam.sections.flatMap(chooser =>
@@ -57,12 +59,19 @@ export class ExamGrader {
     this.allQuestions.forEach(question => this.questionsMap[question.id] = question);
   }
 
-  public addSubmission(answers: TrustedExamAnswers) {
+  public addSubmission(answers: TrustedExamSubmission) {
     this.submittedExams.push(this.createExamFromSubmission(answers));
   }
 
+  public addSubmissions(answers: readonly TrustedExamSubmission[]) {
+    answers.forEach(a => this.addSubmission(a));
+  }
 
-  private createExamFromSubmission(submission: TrustedExamAnswers) {
+  public loadAllSubmissions() {
+    this.addSubmissions(ExamUtils.loadTrustedSubmissions(`data/${this.exam.id}/assigned/manifests/`, `data/${this.exam.id}/submissions/`))
+  }
+
+  private createExamFromSubmission(submission: TrustedExamSubmission) {
     let student = submission.student;
     return new AssignedExam(
       this.exam,
@@ -93,15 +102,25 @@ export class ExamGrader {
     );
   }
 
-  public registerGraders(graderMap: GraderMap) {
-    Object.assign(this.graderMap, graderMap);
+  public registerGraders(graderMap: GraderMap | readonly GraderMap[]) {
+    if (Array.isArray(graderMap)) {
+      (<readonly GraderMap[]>graderMap).forEach(gm => this.registerGraders(gm));
+    }
+    else {
+      Object.assign(this.graderMap, <GraderMap>graderMap);
+    }
   }
 
-  public addExceptions(exceptionMap: ExceptionMap) {
-    Object.assign(this.exceptionMap, exceptionMap);
+  public registerExceptions(exceptionMap: ExceptionMap | readonly ExceptionMap[]) {
+    if (Array.isArray(exceptionMap)) {
+      (<readonly ExceptionMap[]>exceptionMap).forEach(gm => this.registerExceptions(gm));
+    }
+    else {
+      Object.assign(this.exceptionMap, <ExceptionMap>exceptionMap);
+    }
   }
 
-  public addException(uniqname: string, question_id: string, exception: Exception) {
+  public registerException(uniqname: string, question_id: string, exception: Exception) {
     if (!this.exceptionMap[uniqname]) {
       this.exceptionMap[uniqname] = {};
     }
@@ -134,18 +153,38 @@ export class ExamGrader {
   public writeAll() {
 
     // Create output directories
-    mkdirSync(`out/${this.exam.id}/graded/students/`, { recursive: true });
+    mkdirSync(`data/${this.exam.id}/graded/exams/`, { recursive: true });
 
-    // Write out manifests and exams for all, sorted by uniqname
+    // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeAGFile(RenderMode.GRADED, ex, `out/${this.exam.id}/graded/students/${ex.student.uniqname}.html`, ex.render(RenderMode.GRADED));
+        writeFileSync(`data/${this.exam.id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
       });
 
     console.log("Rendering question stats files...");
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
+
+
+  }
+
+  private writeScoresCsv() {
+    mkdirSync("data/${this.exam.id}/graded/", {recursive: true});
+    let data = this.submittedExams.slice().sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
+      .map(ex => {
+        let student_data : {[index:string]: any} = {};
+        student_data["uniqname"] = ex.student.uniqname;
+        student_data["total"] = ex.pointsEarned;
+        ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.id] = q.pointsEarned));
+        return student_data;
+      });
+
+    
+    writeFileSync(`data/${this.exam.id}/graded/scores.csv`, unparse({
+      fields: this.allQuestions.map(q => q.id),
+      data: data
+    }));
   }
 
   private getSubmissionsForQuestion<QT extends ResponseKind>(question: Question<QT>) {
@@ -164,8 +203,8 @@ export class ExamGrader {
     }
 
     // Create output directories
-    mkdirSync(`out/${this.exam.id}/graded/questions/`, { recursive: true });
-    let out_filename = `out/${this.exam.id}/graded/questions/${question.id}.html`;
+    mkdirSync(`data/${this.exam.id}/graded/questions/`, { recursive: true });
+    let out_filename = `data/${this.exam.id}/graded/questions/${question.id}.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader) {
@@ -230,8 +269,8 @@ export function writeStatsFile(exam: Exam, filename: string, body: string) {
 
 
 // export function renderOverview(exam: Exam) {
-//   mkdirSync("out/", {recursive: true});
-//   let out_filename = `out/overview.html`;
+//   mkdirSync("data/", {recursive: true});
+//   let out_filename = `data/overview.html`;
 
 //   let main_overview = `<div>
 //     <div>Mean: ${mean(exam.submissions.map(s => s.pointsEarned!))}</div>

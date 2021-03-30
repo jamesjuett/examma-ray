@@ -1,6 +1,29 @@
 import 'mocha';
 import { expect } from 'chai';
-import { mk2html } from '../render';
+import { applySkin, mk2html } from '../src/render';
+
+describe('applySkin() function', () => {
+
+  it('should make replacements between {{ and }}', () => {
+    let rendered = applySkin(
+      "this {is} a {{test}} of the {{test }}{{function}}",
+      {
+        id: "test",
+        replacements: {
+          "test": "apple",
+          "function": "banana",
+          "is": "should be ignored",
+          "the": "should be ignored"
+        }
+      }
+    );
+    expect(rendered)
+      .to.equal("this {is} a apple of the applebanana");
+  });
+
+});
+
+
 
 describe('mk2html() function', () => {
 
@@ -32,6 +55,20 @@ describe('mk2html() function', () => {
   it('should not render math within a code block', () => {
     expect(mk2html("```cpp\n// $$x + y_2$$\n```"))
       .to.not.contain("katex");
+  });
+
+  it('should apply a skin (before markdown/math rendering) if called with one', () => {
+    let rendered = mk2html("this is a {{test}} _only_ a {{math}} `test`", {
+      id: "test",
+      replacements: {
+        "test": "**lizard**",
+        "math": "$$x + y$$"
+      }
+    });
+    expect(rendered)
+      .to.contain("<p>this is a <strong>lizard</strong> <em>only</em>")
+      .and.to.contain("<code>test</code></p>")
+      .and.to.contain("katex");
   });
 
 });

@@ -1,10 +1,10 @@
 import Mustache from "mustache";
-import { QuestionSkin } from "../exams";
 import { mk2html } from "../render";
+import { QuestionSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 
-export type MCResponse = {
+export type MCSpecification = {
   kind: "multiple_choice";
   multiple: boolean;
   choices: string[];
@@ -12,21 +12,31 @@ export type MCResponse = {
 
 export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
-export function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
+function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
 
-  let parsed = JSON.parse(rawSubmission);
-  if (isNumericArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+  try {
+    let parsed = JSON.parse(rawSubmission);
+    if (isNumericArray(parsed)) {
+      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+    }
+    else {
+      return MALFORMED_SUBMISSION;
+    }
   }
-  else {
-    return MALFORMED_SUBMISSION;
+  catch(e) {
+    if (e instanceof SyntaxError) {
+      return MALFORMED_SUBMISSION;
+    }
+    else {
+      throw e;
+    }
   }
 }
 
-export function MC_RENDERER(response: MCResponse, question_id: string, skin?: QuestionSkin) {
+function MC_RENDERER(response: MCSpecification, question_id: string, skin?: QuestionSkin) {
   return `
     <form>
     ${response.choices.map((item,i) => `
@@ -39,14 +49,14 @@ export function MC_RENDERER(response: MCResponse, question_id: string, skin?: Qu
   `;
 }
 
-export function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
+function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
   let responses = responseElem.find("input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
   return responses.length > 0 ? responses : BLANK_SUBMISSION;
 }
 
-export function MC_FILLER(elem: JQuery, submission: MCSubmission) {
+function MC_FILLER(elem: JQuery, submission: MCSubmission) {
   // blank out all selections
   let inputs = elem.find("input");
   inputs.prop("checked", false);

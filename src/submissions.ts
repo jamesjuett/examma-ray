@@ -13,7 +13,7 @@ export type SectionAnswers = {
   questions: QuestionAnswer[];
 };
 
-export type ExamAnswers<V extends boolean = boolean> = {
+export type ExamSubmission<V extends boolean = boolean> = {
   exam_id: string;
   student: {
     uniqname: string,
@@ -25,7 +25,7 @@ export type ExamAnswers<V extends boolean = boolean> = {
   sections: SectionAnswers[];
 };
 
-export type TrustedExamAnswers = ExamAnswers<true>;
+export type TrustedExamSubmission = ExamSubmission<true>;
 
 /**
  * Fills in the (presumed blank) question responses in the provided manifest
@@ -35,12 +35,12 @@ export type TrustedExamAnswers = ExamAnswers<true>;
  * the question IDs, point values, etc. in their submitted answers file.
  * This changes the provided manifest object and returns it (casted to a `TrustedExamAnswers`)
  */
-export function fillManifest(manifest: ExamAnswers, submitted: ExamAnswers) : TrustedExamAnswers {
+export function fillManifest(manifest: ExamSubmission, submitted: ExamSubmission) : TrustedExamSubmission {
   let submittedMap : {[index: string]: string} = {};
   submitted.sections.forEach(s => s.questions.forEach(q => submittedMap[q.id] = q.response));
   manifest.sections.forEach(s => s.questions.forEach(q => q.response = submittedMap[q.id]));
   manifest.trusted = true;
-  return <TrustedExamAnswers>manifest;
+  return <TrustedExamSubmission>manifest;
 }
 
 

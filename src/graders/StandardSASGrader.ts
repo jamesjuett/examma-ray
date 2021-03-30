@@ -1,10 +1,11 @@
 import { applySkin, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
-import { Question, QuestionSkin } from "../exams";
+import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
 import { Grader } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
+import { QuestionSkin } from "../skins";
 
 type SASRubricItem = {
   points: number;
