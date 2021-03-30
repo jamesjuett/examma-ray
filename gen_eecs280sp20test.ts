@@ -5,7 +5,7 @@ import { ExamUtils } from "./src/ExamUtils";
 
 
 let gen = new ExamGenerator(exam, {
-  filenames: "uuidv5",
+  student_ids: "uuidv5",
   uuidv5_namespace: readFileSync("secret", "utf-8")
 });
 

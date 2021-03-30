@@ -321,6 +321,10 @@ code {
   border-radius: 2px;
 }
 
+.sas-select-label > pre {
+  margin-bottom: 0;
+}
+
 .examma-ray-codemirror {
   border: solid 1px #333;
   margin-bottom: 1em;
