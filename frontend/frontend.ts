@@ -126,7 +126,12 @@ function autosaveToLocalStorage() {
       // one was closed rather than a true interleaving of saves)
       if (saveCount > 0 && prevAnswers.saverId !== answers.saverId) {
         $("#multiple-tabs-modal").modal("show");
-        return; // don't save in this case
+        // Note that we don't return here and still continue on to save below.
+        // This is ok, because we presume all multiple tabs/windows open have
+        // the same data intially since the new ones load from local storage,
+        // and we presume that the user will get the warning before they do much
+        // damage. It's also necessary that we keep saving, because that is how
+        // the other tabs detect our saves interleaved with theirs and show the modal.
       }
     }
 
