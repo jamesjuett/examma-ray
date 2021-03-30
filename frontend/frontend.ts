@@ -198,7 +198,7 @@ function setupSaverModal() {
   // Enable/disable the "load answers" button based on whether a file is selected
   fileInput.on("change", function() {
     let files = (<HTMLInputElement>this).files;
-    if (files) {
+    if (files && files.length > 0) {
       loadButton.prop("disabled", false).removeClass("disabled");
     }
     else {
@@ -211,9 +211,9 @@ function setupSaverModal() {
     let files = (<HTMLInputElement>fileInput[0]).files;
 
     // only do something if there was a file selected
-    // note - there is logic elsewhere to disable the button
-    // if there is no file selected, so this is just here for completeness
-    if (files) {
+    // note - there is logic elsewhere to disable the button if there
+    // is no file selected, so this is just here for completeness
+    if (files && files.length > 0) {
       try {
         let answers = <ExamSubmission>JSON.parse(await files[0].text());
         if (answers.exam_id !== $("#examma-ray-exam").data("exam-id")) {
@@ -233,10 +233,12 @@ function setupSaverModal() {
         }
       }
       catch(err) {
-        alert("Sorry, an error occurred while processing that file. Is it a properly formatted save file?");
+        alert("Sorry, an error occurred while processing that file. Is it a properly formatted answers file?");
         // TODO add a more rigorous check if the file is not properly formatted than just checking for exceptions
       }
     }
+    fileInput.val("");
+    loadButton.prop("disabled", true).addClass("disabled");
   })
 
   // When the exam saver modal is shown, generate the data a potential
