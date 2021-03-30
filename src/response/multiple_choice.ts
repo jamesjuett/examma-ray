@@ -17,12 +17,22 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
     return BLANK_SUBMISSION;
   }
 
-  let parsed = JSON.parse(rawSubmission);
-  if (isNumericArray(parsed)) {
-    return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+  try {
+    let parsed = JSON.parse(rawSubmission);
+    if (isNumericArray(parsed)) {
+      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+    }
+    else {
+      return MALFORMED_SUBMISSION;
+    }
   }
-  else {
-    return MALFORMED_SUBMISSION;
+  catch(e) {
+    if (e instanceof SyntaxError) {
+      return MALFORMED_SUBMISSION;
+    }
+    else {
+      throw e;
+    }
   }
 }
 

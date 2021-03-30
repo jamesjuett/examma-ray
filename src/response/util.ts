@@ -1,3 +1,4 @@
+import { MALFORMED_SUBMISSION } from "./common";
 
 export function isNumericArray(x: any) : x is readonly number[] {
     return Array.isArray(x) && x.every(elem => typeof elem === "number");

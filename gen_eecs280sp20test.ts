@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { ExamGenerator } from "./src/generator";
+import { ExamGenerator } from "./src/ExamGenerator";
 import { exam } from "./eecs280sp20test"
 import { ExamUtils } from "./src/ExamUtils";
 

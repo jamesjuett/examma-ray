@@ -8,7 +8,8 @@ import { S6_primes } from "./sections/6_primes";
 import { S7_1_galley } from "./sections/7_big_three_1";
 import { S7_2_gallery } from "./sections/7_big_three_2";
 import { S7_3_galleria } from "./sections/7_big_three_3";
-import { Exam, RANDOM_SECTION } from "./src/exams";
+import { Exam } from "./src/exams";
+import { RANDOM_SECTION } from "./src/specification";
 
 // Create exam
 export const exam = new Exam({

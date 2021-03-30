@@ -153,7 +153,7 @@ export class ExamGrader {
   public writeAll() {
 
     // Create output directories
-    mkdirSync(`data/${this.exam.id}/graded/students/`, { recursive: true });
+    mkdirSync(`data/${this.exam.id}/graded/exams/`, { recursive: true });
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
