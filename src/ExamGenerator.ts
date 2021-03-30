@@ -18,16 +18,18 @@ type QuestionStats = {
 };
 
 export type ExamGeneratorOptions = {
-  filenames: "uniqname" | "uuidv4" | "uuidv5"
+  student_ids: "uniqname" | "uuidv4" | "uuidv5"
   uuidv5_namespace?: string;
+  students: readonly StudentInfo[]
 };
 
 const DEFAULT_OPTIONS = {
-  filenames: "uniqname"
+  student_ids: "uniqname",
+  students: []
 };
 
 function verifyOptions(options: Partial<ExamGeneratorOptions>) {
-  assert(options.filenames !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
+  assert(options.student_ids !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
   assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
 }
 
@@ -46,6 +48,7 @@ export class ExamGenerator {
     this.exam = exam;
     verifyOptions(options);
     this.options = Object.assign(DEFAULT_OPTIONS, options);
+    this.options.students.forEach(s => this.assignRandomizedExam(s));
   }
 
   public assignRandomizedExam(student: StudentInfo) {
@@ -153,7 +156,7 @@ export class ExamGenerator {
         writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
       });
 
-    writeFileSync(`data/${this.exam.id}/assigned/files.csv`, unparse({
+    writeFileSync(`data/${this.exam.id}/assigned/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));
@@ -161,17 +164,17 @@ export class ExamGenerator {
   }
 
   private createFilenameBase(student: StudentInfo) {
-    if(this.options.filenames === "uniqname") {
+    if(this.options.student_ids === "uniqname") {
       return student.uniqname;
     }
-    else if (this.options.filenames === "uuidv4") {
+    else if (this.options.student_ids === "uuidv4") {
       return student.uniqname + "-" + uuidv4();
     }
-    else if (this.options.filenames === "uuidv5") {
+    else if (this.options.student_ids === "uuidv5") {
       return student.uniqname + "-" + uuidv5(student.uniqname, this.options.uuidv5_namespace!);
     }
     else {
-      assertNever(this.options.filenames);
+      assertNever(this.options.student_ids);
     }
   }
 }

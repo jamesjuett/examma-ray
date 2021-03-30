@@ -1,6 +1,12 @@
-# exam-template
+# examma-ray
 
-## Setup
+Examma Ray is a system for generating randomized or individualized exams
+
+You distribute the `.html` files however you want. A simple web server that serves static content works just fine, and there are several options for hosting if you don't want to set something up on your own. You could even distribute the files directly to students, e.g. in a zip file containing the `frontend.js` bundle as well.
+
+Students open the `.html` file and take the exam in their web browser. The application is entirely client-side, and does not depend on a server (other than perhaps to originally serve the `.html` and `.js` bundle, if you choose to go that route.). As student's work, their answers are automatically backed up to their browser's local storage (as long as they're not using private/incognito mode). When students are finished, they click a button to download a `.json` "answers file", which they should submit separately (e.g. via Canvas).
+
+## Getting Started
 
 Ensure you have `node` and `npm` installed:
 
@@ -9,49 +15,148 @@ sudo apt update
 sudo apt install nodejs
 ```
 
-Install dependencies using `npm`:
+Create a directory to work in:
 
 ```console
-npm install
+mkdir eecs280exams
+cd eecs280exams
 ```
 
-Due to a [bug](https://github.com/highlightjs/highlight.js/issues/2682) in `highlight.js`, you'll also need to run the following:
+Initialize a new `npm` package and install `ts-node` and `examma-ray` as dependencies:
 
 ```console
-cp node_modules/highlight.js/types/index.d.ts node_modules/highlight.js/lib/core.d.ts
+npm init -y
+npm install ts-node
+npm install examma-ray
 ```
 
-
-## Directory Structure and Files
-
-Top-level `sections` directory, which contains a file for each section on Crabster, numbered the same as in the CSV.
-
-Top-level `rubric` directory, which contains typescript files that define question "graders" and rubric items. Organization can be whatever you want, and filenames don't matter.
-
-Top-level `exceptions` directory, which contains typescript files that define exceptions where a question should be graded differently for a particular student.
-
-`engr101f20final_alpha.csv` is the CSV download of student answers from Crabster.
-
-## Running the Autograder
-
-A standard run of the autograder will grade exams for all students and generate a `.html` report file for each, produce detailed analyses pages for each question, and generate an overview report for the exam.
+You'll want a place to store exam specifications (e.g. questions, student rosters, etc.), with a subfolder for each exam. 
 
 ```console
-npx ts-node engr101w21MATLAB_practice.ts --reports
+mkdir content
+mkdir content/eecs280w21final
 ```
 
-If you'd like to skip re-generating the reports (which takes a bit longer to run), you can use the `--no_reports` option.
+(Technically, you can put exam specification files wherever you want, and you might choose a different structure if e.g. you're creating a common question bank that might be used for several different exams across several terms.)
+
+Now, a few files to add:
+
+#### **`content/eecs280w21final/roster.csv`**
+```csv
+uniqname,name
+awdeorio,Drew DeOrio
+jbbeau,Jonathan Beaumont
+jjuett,James Juett
+lslavice,Laura Alford
+```
+
+#### **`content/eecs280w21final/instructions.md`**
+```markdown
+These instructions are shown at the top of each exam.
+
+Formatting with **Markdown** is fine.
+```
+
+You specify your exam and scripts to generate, grade, etc. using TypeScript code. Even for specification, this is preferred to plain JSON because the type checker can help greatly in making sure you don't miss a required property, spell something wrong, etc. If the code compiles, you've got a guarantee that your exam is reasonably well-formed. An IDE like VS Code will also provide autocomplete as you're working.
+
+Create an exam specification file:
+
+#### **`content/eecs280w21final/exam-spec.ts`**
+```typescript
+import { readFileSync } from "fs";
+import { Exam } from "./src/exams";
+
+// Create exam
+export const exam = new Exam({
+  id: "eecs280w21final",
+  title: "EECS 280 W21 Final Exam",
+  mk_intructions: readFileSync("content/eecs280w21final/instructions.md", "utf8"),
+  frontend_js_path: "../../../../js/frontend.min.js",
+  frontend_graded_js_path: "../../../../js/frontend-graded.min.js",
+  sections: [
+    // Empty for now
+  ]
+});
+```
+
+Create an exam generation script:
+
+#### **`content/eecs280w21final/gen.ts`**
+```typescript
+import { ExamGenerator, ExamUtils, } from 'examma-ray';
+import { readFileSync } from 'fs';
+
+// Note the import from our previous exam-spec file
+import { exam } from './exam-spec';
+
+let gen = new ExamGenerator(exam, {
+  student_ids: "uuidv5",
+  uuidv5_namespace: readFileSync("secret", "utf-8"),
+  students: ExamUtils.loadRoster("roster.csv")
+});
+
+gen.writeAll();
+```
+
+In the generation script above, we're opting to create V5 UUIDs to uniquely identify the assigned exam for each student and include in the generated exam filenames (this is the recommended approach). To do so, we need to create a unique "namespace" for our exam that is used to generate the UUIDs. The namespace should be a V4 UUID. Here's one way to generate it:
 
 ```console
-npx ts-node engr101f20final.ts --no-reports
+npm install --save-dev uuid
+npx uuid > content/eecs280w21final/secret
 ```
 
-Output files go to the `data/` directory. Specifically:
+You can put this file wherever you want. The `gen.ts` script reads it in and passes it as part of the generator configuration. Make one for each exam you give (**one** for the "overall exam" - not one for each student, and not one for each window during which you offer the exam). Keep it secret (e.g. don't check it in to a public repo - though you probably don't want all your exam questions public anyway!). Do **not** change it once you've generated/distributed an exam - you need it to match students' exams when they're turned in.
 
-- `data/students/` - Individual student reports (unless you specified `--no-reports`).
-- `data/questions/` - Analyses pages for each question.
-- `overview.html` - High-level overview of the exam, with links to student/question reports.
-- `scores.csv` - Total and per-question scores for each student by uniqname.
+Now you're ready to generate exams!
+
+```console
+npx ts-node content/eecs280w21final/gen.ts
+```
+
+This should create a bunch of folders within a `data` directory. This is where all generated content goes. It's also where you'll drop in the answers files students submit so that they can be graded. There should be a subfolder for each exam, depending on the ID you provided in your `exam-spec.ts` file.
+
+We could try to open the generated exams, but they won't work quite right yet. They need access to the `frontend.js` bundle. You can copy that out of `node_modules`, where is should have been pulled in when you installed `examma-ray`.
+
+```console
+mkdir data/js
+cp node_modules/examma-ray/dist/frontend/frontend.min.js data/js
+```
+
+Remember the `frontend_js_path` in `exam-spec.ts` from earlier? That's the relative path the exams need to get to the `frontend.js` file. It should be set correctly right now for local testing so that you can open the exam files in place, but you'll need to change it and re-generate the exams for distribution, depending on where `frontend.js` will live relative to your distributed `.html` files.
+
+Now, your `data` directory should look something like this:
+
+```console
+data
+├── eecs280sp20test
+│   ├── assigned
+│   │   ├── exams
+│   │   │   ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.html
+│   │   │   ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.html
+│   │   │   ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.html
+│   │   │   ├── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.html
+│   │   ├── files.csv
+│   │   ├── manifests
+│   │   │   ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.json
+│   │   │   ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.json
+│   │   │   ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.json
+│   │   │   ├── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.json
+│   │   └── stats.json
+└── js
+    ├── frontend-graded.js
+    └── frontend.js
+```
+
+A quick summary of the output of `gen.ts` in the `assigned` directory:
+
+- `assigned/exams` contains the actual exam html files
+- `assigned/manifests` contains a record of which questions each student was assigned
+- `assigned/student-ids.csv` contains a mapping from uniqnames to generated assigned exam IDs
+- `assigned/stats.json` contains information about overall exam generation
+
+
+
+# BELOW THIS LINE IS ALL TODO AND PROBABLY INACCURATE
 
 ## Defining the Rubric
 

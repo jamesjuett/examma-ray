@@ -1,7 +1,5 @@
 import 'mocha';
 import { expect } from 'chai';
-import { ExamSubmission, fillManifest } from '../../src/submissions';
-import { QuestionSpecification } from '../../src/specification';
 import { RESPONSE_HANDLERS } from '../../src/response/responses';
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from '../../src/response/common';
 import { JSDOM } from 'jsdom';
@@ -115,8 +113,7 @@ describe('FITB extractor', () => {
       $(`<div>
         <input type="text" value="test"></input>
       </div>`)))
-      .to.be.an("array")
-      .and.to.have.ordered.members(["test"]);
+      .to.be.an("array").with.ordered.members(["test"]);
 
     expect(FITB_HANDLER.extract(
       $(`<div>
@@ -131,7 +128,7 @@ describe('FITB extractor', () => {
         </div>
       </div>`)))
       .to.be.an("array")
-      .and.to.have.ordered.members(["test1", "test2", "test\n\ntest", "test3"]);
+      .with.ordered.members(["test1", "test2", "test\n\ntest", "test3"]);
   });
 
   it('extracts/identifies blank submissions', () => {
@@ -184,7 +181,7 @@ describe('FITB extractor', () => {
           </div>
         </div>`)))
         .to.be.an("array")
-        .and.to.have.ordered.members(["a", "", "", ""])
+        .with.ordered.members(["a", "", "", ""])
         .and.to.not.equal(BLANK_SUBMISSION);
   });
 
@@ -201,7 +198,8 @@ describe('FITB filler', () => {
     </div>`);
     FITB_HANDLER.fill(elem, ["test"]);
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
-      .to.be.an("array").with.members(["test"]);
+      .to.be.an("array")
+      .with.ordered.members(["test"]);
 
     elem = $(`<div>
         <input type="text"></input>
@@ -216,7 +214,8 @@ describe('FITB filler', () => {
       </div>`);
     FITB_HANDLER.fill(elem, ["test1", "test2", "test\ntest\ntest", "test3"]);
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
-      .to.be.an("array").with.members(["test1", "test2", "test\ntest\ntest", "test3"]);
+      .to.be.an("array")
+      .with.ordered.members(["test1", "test2", "test\ntest\ntest", "test3"]);
 
   });
 
@@ -235,7 +234,8 @@ describe('FITB filler', () => {
       </div>`);
     FITB_HANDLER.fill(elem, ["test1", "test2", "test\ntest\ntest", "test3"]);
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
-      .to.be.an("array").with.members(["test1", "test2", "test\ntest\ntest", "test3"]);
+      .to.be.an("array")
+      .with.ordered.members(["test1", "test2", "test\ntest\ntest", "test3"]);
       
   });
 

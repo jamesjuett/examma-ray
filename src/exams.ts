@@ -518,8 +518,6 @@ export class Exam {
   public readonly id: string;
   public readonly title: string;
 
-  public readonly pointsPossible: number;
-
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
 
@@ -532,7 +530,6 @@ export class Exam {
     this.id = spec.id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
-    this.pointsPossible = spec.pointsPossible;
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
     this.frontendJsPath = spec.frontend_js_path;
     this.frontendGradedJsPath = spec.frontend_graded_js_path;

@@ -10,7 +10,6 @@ export const CHOOSE_ALL = Symbol("choose_all");
 export type ExamSpecification = {
   id: string,
   title: string,
-  pointsPossible: number,
   mk_intructions: string,
   mk_announcements?: string[],
   frontend_js_path: string,
