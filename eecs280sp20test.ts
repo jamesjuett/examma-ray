@@ -15,7 +15,6 @@ import { RANDOM_SECTION } from "./src/specification";
 export const exam = new Exam({
   id: "eecs280sp20test",
   title: "EECS 280 Test Exam",
-  pointsPossible: 100,
   mk_intructions: readFileSync("instructions.md", "utf8"),
   frontend_js_path: "../../../js/frontend.js",
   frontend_graded_js_path: "../../../js/frontend-graded.js",

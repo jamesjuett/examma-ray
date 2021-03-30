@@ -7,7 +7,7 @@ export {
   Section,
   AssignedSection,
   AssignedExam,
-  DEFAULT_SAVER_MESSAGE_CANVAS,
+  MK_DEFAULT_SAVER_MESSAGE_CANVAS as DEFAULT_SAVER_MESSAGE_CANVAS,
   Exam
 } from "./exams";
 

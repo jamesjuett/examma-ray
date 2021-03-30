@@ -405,7 +405,7 @@ export class AssignedExam {
   public renderSaverButton() {
     return `
       <div class="examma-ray-exam-saver-status">
-        <div><button id="exam-saver-button" class="btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
+        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
         <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
       </div>`
   }
@@ -423,7 +423,9 @@ export class AssignedExam {
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
-
+          <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+            ${mk2html(MK_DEFAULT_BOTTOM_MESSAGE_CANVAS)}
+          </div>
         </div>
       </div>
     </div>`;
@@ -502,7 +504,7 @@ export class Randomizer {
 
 }
 
-export const DEFAULT_SAVER_MESSAGE_CANVAS = `
+export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
   Click the button below to save a copy of your answers as a \`.json\`
   file. You may save as many times as you like. You can also restore answers
   from a previously saved file.
@@ -511,6 +513,10 @@ export const DEFAULT_SAVER_MESSAGE_CANVAS = `
   BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
   It is up to you to download your answer file and turn it in on **Canvas**.`;
 
+export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
+  You've reached the bottom of the exam! If you're done, make sure to
+  click the **"Answers File"** button, download a **\`.json\`
+  answers file**, and submit to **Canvas** before the end of the exam!`
 
 
 export class Exam {
@@ -590,7 +596,7 @@ function renderModals(ex: AssignedExam) {
             </button>
           </div>
           <div class="modal-body" style="text-align: center;">
-            <div class="alert alert-info">${mk2html(DEFAULT_SAVER_MESSAGE_CANVAS)}</div>
+            <div class="alert alert-info">${mk2html(MK_DEFAULT_SAVER_MESSAGE_CANVAS)}</div>
             <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
             <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
             <br />

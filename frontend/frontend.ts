@@ -153,7 +153,7 @@ const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers F
 let HAS_UNSAVED_CHANGES = false;
 
 function onUnsavedChanges() {
-  $("#exam-saver-button")
+  $(".examma-ray-exam-answers-file-button")
     .html(UNSAVED_CHANGES_HTML);
 
   $("#examma-ray-exam-saver-status-note")
@@ -164,7 +164,7 @@ function onUnsavedChanges() {
 }
 
 function onSaved() {
-  $("#exam-saver-button")
+  $(".examma-ray-exam-answers-file-button")
     .html(SAVED_HTML);
 
   $("#examma-ray-exam-saver-status-note")
