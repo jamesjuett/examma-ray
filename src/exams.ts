@@ -12,6 +12,7 @@ import { Grader, isGrader } from './graders/common';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification } from './specification';
 import { QuestionSkin } from './skins';
 import { writeFileSync } from 'fs';
+import { ExamManifest } from './submissions';
 
 
 export enum RenderMode {
@@ -32,7 +33,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   // public readonly description: string;
   // public readonly section: Section;
   public readonly spec: QuestionSpecification<QT>;
-  public readonly id: string;
+  public readonly question_id: string;
   public readonly tags: readonly string[];
   public readonly mk_description: string;
   public readonly pointsPossible : number;
@@ -42,7 +43,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
-    this.id = spec.id;
+    this.question_id = spec.id;
     this.tags = spec.tags ?? [];
     this.mk_description = spec.mk_description;
     this.pointsPossible = spec.points;
@@ -51,8 +52,8 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.skins = spec.skins;
   }
 
-  public renderResponse(skin?: QuestionSkin) {
-    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, this.id, skin)}</div>`;
+  public renderResponse(uuid: string, skin?: QuestionSkin) {
+    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, uuid, skin)}</div>`;
   }
 
   public renderDescription(skin?: QuestionSkin) {
@@ -75,6 +76,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   private readonly html_description: string;
 
   public constructor(
+    public readonly uuid: string,
     public readonly exam: Exam,
     public readonly student: StudentInfo,
     public readonly question: Question<QT>,
@@ -114,7 +116,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     if (mode === RenderMode.ORIGINAL) {
       question_header_html += ` ${renderPointsWorthBadge(this.question.pointsPossible)}`;
       return `
-        <div id="question-${this.question.id}" data-question-id="${this.question.id}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
+        <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
           <div class="card">
             <div class="card-header">
               ${question_header_html}
@@ -123,7 +125,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
               <div class="examma-ray-question-description">
                 ${this.html_description}
               </div>
-              ${this.question.renderResponse(this.skin)}
+              ${this.question.renderResponse(this.uuid, this.skin)}
             </div>
           </div>
         </div>
@@ -146,7 +148,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         </div>`; 
       }
 
-      return renderQuestion(this.question.id, this.displayIndex, this.html_description, question_header_html, exception_html, graded_html);
+      return renderQuestion(this.uuid, this.displayIndex, this.html_description, question_header_html, exception_html, graded_html);
     }
   }
 
@@ -177,9 +179,9 @@ interface GradedQuestion<QT extends ResponseKind> extends AssignedQuestion<QT> {
 
 
 // TODO rework this function ew
-export function renderQuestion(id: string, displayIndex: string, description: string, header: string, exception: string, gradingReport: string) {
+export function renderQuestion(uuid: string, displayIndex: string, description: string, header: string, exception: string, gradingReport: string) {
   return `
-  <div id="question-${id}" data-question-id="${id}" data-question-display-index="${displayIndex}" class="examma-ray-question card-group">
+  <div id="question-${uuid}" data-question-uuid="${uuid}" data-question-display-index="${displayIndex}" class="examma-ray-question card-group">
     <div class="card">
       <div class="card-header">
         ${header}
@@ -208,7 +210,7 @@ export class Section {
   // public readonly description: string;
   // public readonly section: Section;
   public readonly spec: SectionSpecification;
-  public readonly id: string;
+  public readonly section_id: string;
   public readonly title: string;
   public readonly mk_description: string;
   public readonly mk_reference?: string;
@@ -217,7 +219,7 @@ export class Section {
 
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
-    this.id = spec.id;
+    this.section_id = spec.id;
     this.title = spec.title;
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
@@ -249,29 +251,6 @@ export class Section {
     return this.mk_reference && mk2html(this.mk_reference, skin);
   }
 
-  public buildRandomizedSection(
-    exam: Exam, student: StudentInfo, sectionIndex: number,
-    rand: Randomizer = new Randomizer(student.uniqname + "_" + exam.id + "_" + this.id))
-  {
-    let sSkin = this.skins?.generate(exam, student, new Randomizer(student.uniqname + "_" + exam.id + "_" + this.id));
-    return new AssignedSection(
-      this,
-      sectionIndex,
-      sSkin,
-      this.questions.flatMap(chooser => 
-        typeof chooser === "function" ? chooser(exam, student, rand) :
-        chooser instanceof Question ? [chooser] :
-        new Question(chooser)
-      ).map((q, partIndex) => {
-        
-        let qSkin = q.skins?.generate(exam, student, new Randomizer(student.uniqname + "_" + exam.id + "_" + q.id));
-        qSkin ??= sSkin;
-        return new AssignedQuestion(exam, student, q, qSkin, sectionIndex, partIndex, "")
-      })
-    );
-  }
-    
-
 }
 
 
@@ -289,6 +268,7 @@ export class AssignedSection {
   private readonly html_reference?: string;
 
   public constructor(
+    public readonly uuid: string,
     public readonly section: Section, 
     public readonly sectionIndex : number,
     public readonly skin: QuestionSkin | undefined,
@@ -303,14 +283,14 @@ export class AssignedSection {
 
   public gradeAllQuestions(ex: AssignedExam, graders: GraderMap) {
     this.assignedQuestions.forEach(aq => {
-      let grader = graders[aq.question.id];
+      let grader = graders[aq.question.question_id];
       if (grader) {
-        console.log(`Grading ${aq.question.id}`);
+        console.log(`Grading ${aq.question.question_id}`);
         assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
       }
       else {
-        console.log(`No grader found for ${aq.question.id}`);
+        console.log(`No grader found for ${aq.question.question_id}`);
       }
     });
     asMutable(this).pointsEarned = <number>this.assignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0);
@@ -335,7 +315,7 @@ export class AssignedSection {
 
   public render(mode: RenderMode) {
     return `
-      <div id="section-${this.section.id}" class="examma-ray-section" data-section-id="${this.section.id}" data-section-display-index="${this.displayIndex}">
+      <div id="section-${this.uuid}" class="examma-ray-section" data-section-uuid="${this.uuid}" data-section-display-index="${this.displayIndex}">
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
@@ -364,16 +344,17 @@ export class AssignedExam {
   public readonly isFullyGraded: boolean = false;
 
   public constructor(
+    public readonly uuid: string,
     public readonly exam: Exam,
     public readonly student: StudentInfo,
     public readonly assignedSections: readonly AssignedSection[]
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
 
-    let sectionIds = assignedSections.map(s => s.section.id);
+    let sectionIds = assignedSections.map(s => s.section.section_id);
     assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
-    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.id));
-    assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
+    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
+    assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
   }
 
   public gradeAll(graders: GraderMap) {
@@ -397,7 +378,7 @@ export class AssignedExam {
             mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary") :
             s.isFullyGraded ? renderScoreBadge(s.pointsEarned!, s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
-          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section.id}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
+          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
         }).join("")}
       </ul>`
   }
@@ -411,7 +392,7 @@ export class AssignedExam {
   }
 
   public renderBody(mode: RenderMode) {
-    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.id}">
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.exam_id}" data-exam-uuid="${this.uuid}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <h3 class="text-center pb-1 border-bottom">
@@ -450,18 +431,21 @@ export class AssignedExam {
     `;
   }
 
-  public createManifest() {
+  public createManifest() : ExamManifest {
     return {
-      exam_id: this.exam.id,
+      exam_id: this.exam.exam_id,
+      uuid: this.uuid,
       student: this.student,
       timestamp: Date.now(),
-      trusted: false,
+      trusted: true,
       saverId: 0,
       sections: this.assignedSections.map(s => ({
-        id: s.section.id,
+        section_id: s.section.section_id,
+        uuid: s.uuid,
         display_index: s.displayIndex,
         questions: s.assignedQuestions.map(q => ({
-          id: q.question.id,
+          question_id: q.question.question_id,
+          uuid: q.uuid,
           display_index: q.displayIndex,
           kind: q.question.kind,
           response: ""
@@ -521,7 +505,7 @@ export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
 
 export class Exam {
 
-  public readonly id: string;
+  public readonly exam_id: string;
   public readonly title: string;
 
   public readonly html_instructions: string;
@@ -533,7 +517,7 @@ export class Exam {
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
   public constructor(spec: ExamSpecification) {
-    this.id = spec.id;
+    this.exam_id = spec.id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];

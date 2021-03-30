@@ -32,7 +32,8 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
-    id: question.data("question-id"),
+    question_id: "",
+    uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
     response: stringify_response(extract_response(response.data("response-kind"), response))
@@ -42,7 +43,8 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
 function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   let section = $(this);
   return {
-    id: section.data("section-id"),
+    section_id: "",
+    uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
   }
@@ -55,6 +57,7 @@ function extractExamAnswers() : ExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
+    uuid: examElem.data("exam-uuid"),
     student: {
       uniqname: examElem.data("uniqname"),
       name: examElem.data("name")
@@ -71,7 +74,7 @@ function isBlankAnswers(answers: ExamSubmission) {
 }
 
 function loadQuestionAnswer(qa: QuestionAnswer) {
-  let questionElem = $(`#question-${qa.id}`);
+  let questionElem = $(`#question-${qa.uuid}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
   let sub = parse_submission(qa.kind, qa.response);
   fill_response(responseElem, qa.kind, sub);

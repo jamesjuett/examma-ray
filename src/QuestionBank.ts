@@ -17,7 +17,7 @@ export class QuestionBank {
         q = new Question(q);
       }
       asMutable(this.questions).push(q);
-      this.questionsById[q.id] = q;
+      this.questionsById[q.question_id] = q;
       q.tags.forEach(tag => 
         (this.questionsByTag[tag] ??= []).push(<Question>q)
       );

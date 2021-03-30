@@ -56,7 +56,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     }
     let submission = orig_submission.slice();
 
-    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${question.id}`.red);
+    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${question.question_id}`.red);
 
     let score = this.grade_helper(submission);
 
@@ -64,7 +64,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     submissionWords.forEach(subWord => this.solutionWords.forEach(solWord => {
       let newScore = this.grade_helper(replaceWordInSubmission(submission, subWord, solWord));
       if (newScore > score + this.minRubricItemPoints) {
-        console.log(`HEYYYYY, might be double jeopardy here. ${question.id} Replace ${subWord} with ${solWord}! ${score} --> ${newScore}`);
+        console.log(`HEYYYYY, might be double jeopardy here. ${question.question_id} Replace ${subWord} with ${solWord}! ${score} --> ${newScore}`);
       }
     }));
 
@@ -104,7 +104,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
 
       let explanation: string = riMatch?.explanation ?? "Your response for this blank was incomplete or incorrect.";
 
-      let elem_id = `question-${question.id}-item-${i}`;
+      let elem_id = `question-${question.question_id}-item-${i}`;
 
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
