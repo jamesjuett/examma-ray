@@ -51,21 +51,48 @@ function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | 
 
 function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: QuestionSkin) {
   let item_index = 0;
-  return `<pre>${response.choices.map(
-    group => group.kind === "item"
-      ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
-      : group.items.map(item => renderSASItem(item, question_id, item_index++, response.code_language, skin)).join("\n")
-  ).join("\n")}</pre>`;
+  return `
+    <div style="text-align: right; margin-bottom: 5px;">
+      <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-sm active">
+          <input class="examma-ray-sas-show-choices-button" type="radio" name="options" autocomplete="off" checked> All Choices
+        </label>
+        <label class="btn btn-outline-primary btn-sm">
+          <input class="examma-ray-sas-show-preview-button" type="radio" name="options" autocomplete="off"> Selected Only
+        </label>
+      </div>
+    </div>
+    <div class="examma-ray-sas-choices">
+      ${response.choices.map(
+        group => group.kind === "item"
+          ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
+          : group.items.map(item => renderSASItem(item, question_id, item_index++, response.code_language, skin)).join("\n")
+      ).join("\n")}
+    </div>
+  `;
 }
 
 function renderSASItem(item: SASItem, question_id: string, item_index: number, code_language: string, skin?: QuestionSkin) {
-  return `<input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">${highlightCode(applySkin(item.text, skin), code_language)}</label>`;
-  // let highlightedText = hljs.highlight(code_language, item.text).value;
-  // return highlightedText;
+  return `
+    <div class="examma-ray-sas-line">
+      <input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> 
+      <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">
+        <pre><code>${highlightCode(applySkin(item.text, skin), code_language)}</code></pre>
+      </label><br />
+    </div>`;
+}
+
+function SAS_ACTIVATE(responseElem: JQuery) {
+  responseElem.find(".examma-ray-sas-show-choices-button").on("click",
+    () => responseElem.find(".examma-ray-sas-line").slideDown()
+  );
+  responseElem.find(".examma-ray-sas-show-preview-button").on("click",
+    () => responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").slideUp()
+  );
 }
 
 function SAS_EXTRACTOR(responseElem: JQuery) {
-  let chosen = responseElem.find("input:checked").map(function() {
+  let chosen = responseElem.find(".examma-ray-sas-choices input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
   return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
@@ -75,7 +102,7 @@ function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
   
   // blank out all selections (note this will blank required selections
   // but it's presumed the input file will fill them in subsequently)
-  let inputs = elem.find("input");
+  let inputs = elem.find(".examma-ray-sas-choices input");
   inputs.prop("checked", false);
 
   if (submission !== BLANK_SUBMISSION) {
@@ -87,6 +114,7 @@ function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
 export const SAS_HANDLER = {
   parse: SAS_PARSER,
   render: SAS_RENDERER,
+  activate: SAS_ACTIVATE,
   extract: SAS_EXTRACTOR,
   fill: SAS_FILLER
 };

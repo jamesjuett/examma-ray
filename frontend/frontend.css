@@ -303,6 +303,14 @@ code {
   cursor: not-allowed;
 }
 
+.examma-ray-sas-choices {
+  overflow-x: auto;
+}
+
+.examma-ray-sas-line {
+  white-space: nowrap;
+}
+
 .sas-select-input {
   vertical-align: middle;
   margin-bottom: 0.5em;
@@ -319,6 +327,10 @@ code {
   border: solid 1px rgba(0, 0, 255, 0.3);
   background-color: rgba(0, 0, 255, 0.1);
   border-radius: 2px;
+}
+
+.sas-select-label > pre {
+  margin-bottom: 0;
 }
 
 .examma-ray-codemirror {

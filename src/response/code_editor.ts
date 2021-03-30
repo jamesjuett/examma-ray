@@ -27,13 +27,13 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
         Theme: 
         <div class="btn-group btn-group-toggle" data-toggle="buttons">
           <label class="examma-ray-theme-button btn btn-outline-primary btn-sm active" data-codemirror-theme="default">
-            <input type="radio" name="options" id="option1" autocomplete="off" checked> Light
+            <input type="radio" name="options" autocomplete="off" checked> Light
           </label>
           <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="monokai">
-            <input type="radio" name="options" id="option2" autocomplete="off"> Dark
+            <input type="radio" name="options" autocomplete="off"> Dark
           </label>
           <label class="examma-ray-theme-button btn btn-outline-primary btn-sm" data-codemirror-theme="">
-            <input type="radio" name="options" id="option3" autocomplete="off"> None
+            <input type="radio" name="options" autocomplete="off"> None
           </label>
         </div>
       </div>

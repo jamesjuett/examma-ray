@@ -71,8 +71,8 @@ export const exam = new Exam({
   id: "eecs280w21final",
   title: "EECS 280 W21 Final Exam",
   mk_intructions: readFileSync("content/eecs280w21final/instructions.md", "utf8"),
-  frontend_js_path: "../../../../js/frontend.min.js",
-  frontend_graded_js_path: "../../../../js/frontend-graded.min.js",
+  frontend_js_path: "../../../js/frontend.min.js",
+  frontend_graded_js_path: "../../../js/frontend-graded.min.js",
   sections: [
     // Empty for now
   ]

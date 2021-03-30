@@ -23,7 +23,7 @@ export type SubmissionType<QT extends ResponseKind> =
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
   render: (response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) => string,
-  activate?: () => void,
+  activate?: (responseElem: JQuery) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
 };
@@ -43,6 +43,11 @@ export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmissio
 
 export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, skin);
+}
+
+export function activate_response<QT extends ResponseKind>(kind: QT, responseElem: JQuery) : void {
+  let activateFn = (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).activate;
+  activateFn && activateFn(responseElem);
 }
 
 export function extract_response<QT extends ResponseKind>(kind: QT, responseElem: JQuery) : SubmissionType<QT> {
