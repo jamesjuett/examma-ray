@@ -49,14 +49,14 @@ export class ExamGrader {
         chooser instanceof Section ? chooser :
           new Section(chooser)
     );
-    this.allSections.forEach(section => this.sectionsMap[section.id] = section);
+    this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser =>
       typeof chooser === "function" ? chooser(exam, ignore, CHOOSE_ALL) :
         chooser instanceof Question ? [chooser] :
           new Question(chooser)
     );
-    this.allQuestions.forEach(question => this.questionsMap[question.id] = question);
+    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
@@ -68,26 +68,31 @@ export class ExamGrader {
   }
 
   public loadAllSubmissions() {
-    this.addSubmissions(ExamUtils.loadTrustedSubmissions(`data/${this.exam.id}/assigned/manifests/`, `data/${this.exam.id}/submissions/`))
+    this.addSubmissions(ExamUtils.loadTrustedSubmissions(
+      `data/${this.exam.exam_id}/assigned/manifests/`,
+      `data/${this.exam.exam_id}/submissions/`))
   }
 
   private createExamFromSubmission(submission: TrustedExamSubmission) {
     let student = submission.student;
     return new AssignedExam(
+      submission.exam_id,
       this.exam,
       student,
       submission.sections.map((s, s_i) => {
-        let section = this.sectionsMap[s.id] ?? assertFalse();
-        let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.id + "_" + section.id));
+        let section = this.sectionsMap[s.section_id] ?? assertFalse();
+        let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id));
         return new AssignedSection(
+          s.uuid,
           section,
           s_i,
           sSkin,
           s.questions.map((q, q_i) => {
-            let question = this.questionsMap[q.id] ?? assertFalse();
-            let qSkin = question.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.id + "_" + question.id));
+            let question = this.questionsMap[q.question_id] ?? assertFalse();
+            let qSkin = question.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + question.question_id));
             qSkin ??= sSkin;
             return new AssignedQuestion(
+              q.uuid,
               this.exam,
               submission.student,
               question,
@@ -142,7 +147,7 @@ export class ExamGrader {
 
   private addAppropriateExceptions(aq: AssignedQuestion, student: StudentInfo) {
     let studentExMap = this.exceptionMap[student.uniqname];
-    let questionEx = studentExMap && studentExMap[aq.question.id];
+    let questionEx = studentExMap && studentExMap[aq.question.question_id];
     if (questionEx) {
       aq.addException(questionEx);
     }
@@ -153,14 +158,14 @@ export class ExamGrader {
   public writeAll() {
 
     // Create output directories
-    mkdirSync(`data/${this.exam.id}/graded/exams/`, { recursive: true });
+    mkdirSync(`data/${this.exam.exam_id}/graded/exams/`, { recursive: true });
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`data/${this.exam.id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
+        writeFileSync(`data/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
       });
 
     console.log("Rendering question stats files...");
@@ -176,13 +181,13 @@ export class ExamGrader {
         let student_data : {[index:string]: any} = {};
         student_data["uniqname"] = ex.student.uniqname;
         student_data["total"] = ex.pointsEarned;
-        ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.id] = q.pointsEarned));
+        ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.question_id] = q.pointsEarned));
         return student_data;
       });
 
     
-    writeFileSync(`data/${this.exam.id}/graded/scores.csv`, unparse({
-      fields: this.allQuestions.map(q => q.id),
+    writeFileSync(`data/${this.exam.exam_id}/graded/scores.csv`, unparse({
+      fields: this.allQuestions.map(q => q.question_id),
       data: data
     }));
   }
@@ -190,21 +195,21 @@ export class ExamGrader {
   private getSubmissionsForQuestion<QT extends ResponseKind>(question: Question<QT>) {
     return this.submittedExams.flatMap(
       ex => ex.assignedSections.flatMap(
-        s => s.assignedQuestions.filter(aq => aq.question.id === question.id).map(aq => aq.submission)
+        s => s.assignedQuestions.filter(aq => aq.question.question_id === question.question_id).map(aq => aq.submission)
       )
     );
   }
 
   private renderStatsToFile(question: Question) {
 
-    let grader = this.graderMap[question.id];
+    let grader = this.graderMap[question.question_id];
     if (!grader) {
       return;
     }
 
     // Create output directories
-    mkdirSync(`data/${this.exam.id}/graded/questions/`, { recursive: true });
-    let out_filename = `data/${this.exam.id}/graded/questions/${question.id}.html`;
+    mkdirSync(`data/${this.exam.exam_id}/graded/questions/`, { recursive: true });
+    let out_filename = `data/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader) {
@@ -213,7 +218,7 @@ export class ExamGrader {
 
     let statsReport = grader.renderStats(question,this.getSubmissionsForQuestion(question));
 
-    let header = `<div style="margin: 2em">${renderQuestion(question.id, "N/A", "", "", "", "")}</div>`
+    let header = `<div style="margin: 2em">${renderQuestion(question.question_id, "N/A", "", "", "", "")}</div>`
 
     writeStatsFile(this.exam, out_filename, `
       ${header}

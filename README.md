@@ -156,6 +156,26 @@ A quick summary of the output of `gen.ts` in the `assigned` directory:
 
 
 
+
+
+# Markdown Styling
+
+You may also use components from Bootstrap 4 as HTML tags inside any Markdown. This will generally work fine. For example, let's say you want a Bootstrap `alert` at the top of your exam instructions:
+
+#### **`content/eecs280w21final/instructions.md`**
+```markdown
+<div markdown=1 class="alert alert-info">
+
+This is a practice exam for EECS 280, covering content from lectures 11 (containers) through 16 (linked lists). Your final exam will be delivered via this same exam platform, so it's a good idea to get familiar with it.
+
+**PLEASE NOTE** This exam is out of "50 points", and the final exam is out of "100 points", but the final exam is not likely to be quite "twice as long" as this one.
+
+</div>
+```
+
+Note the use of the additional attribute `markdown=1` is required if you intend to use Markdown syntax (such as the `**PLEASE NOTE**` in the example above) within the HTML element.
+
+
 # BELOW THIS LINE IS ALL TODO AND PROBABLY INACCURATE
 
 ## Defining the Rubric

@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { ExamSubmission, fillManifest } from '../src/submissions';
 
 const manifest : ExamSubmission = {
+  "uuid": "exam_uuid_1",
   "exam_id": "eecs280sp20test",
   "student": {
     "uniqname": "student",
@@ -13,17 +14,20 @@ const manifest : ExamSubmission = {
   "saverId": 0,
   "sections": [
     {
-      "id": "1_true_false",
+      "uuid": "section_uuid_1",
+      "section_id": "1_true_false",
       "display_index": "1",
       "questions": [
         {
-          "id": "sp20_mc_time_complexity_4",
+          "uuid": "question_uuid_1",
+          "question_id": "sp20_mc_time_complexity_4",
           "display_index": "1.1",
           "kind": "multiple_choice",
           "response": ""
         },
         {
-          "id": "sp20_mc_containers_and_templates_1",
+          "uuid": "question_uuid_2",
+          "question_id": "sp20_mc_containers_and_templates_1",
           "display_index": "1.2",
           "kind": "multiple_choice",
           "response": ""
@@ -31,17 +35,20 @@ const manifest : ExamSubmission = {
       ]
     },
     {
-      "id": "sp20_2_2_containers",
+      "uuid": "section_uuid_2",
+      "section_id": "sp20_2_2_containers",
       "display_index": "2",
       "questions": [
         {
-          "id": "sp20_2_2_part1",
+          "uuid": "question_uuid_3",
+          "question_id": "sp20_2_2_part1",
           "display_index": "2.1",
           "kind": "fitb",
           "response": ""
         },
         {
-          "id": "sp20_2_2_part2",
+          "uuid": "question_uuid_4",
+          "question_id": "sp20_2_2_part2",
           "display_index": "2.2",
           "kind": "code_editor",
           "response": ""
@@ -57,6 +64,7 @@ const manifest : ExamSubmission = {
 //  - metadata changed
 //  - student info changed
 const submitted : ExamSubmission = {
+  "uuid": "exam_uuid_1",
   "exam_id": "eecs280sp20test1",
   "student": {
     "uniqname": "student1",
@@ -67,17 +75,20 @@ const submitted : ExamSubmission = {
   "saverId": 234,
   "sections": [
     {
-      "id": "sp20_2_2_containers",
+      "uuid": "section_uuid_2",
+      "section_id": "sp20_2_2_containers",
       "display_index": "1",
       "questions": [
         {
-          "id": "sp20_2_2_part1",
+          "uuid": "question_uuid_3",
+          "question_id": "sp20_2_2_part1",
           "display_index": "2.1",
           "kind": "fitb",
           "response": "test_response_sp20_2_2_part1"
         },
         {
-          "id": "sp20_2_2_part2",
+          "uuid": "question_uuid_4",
+          "question_id": "sp20_2_2_part2",
           "display_index": "2.2",
           "kind": "code_editor",
           "response": "test_response_sp20_2_2_part2"
@@ -85,17 +96,20 @@ const submitted : ExamSubmission = {
       ]
     },
     {
-      "id": "1_true_false",
+      "uuid": "section_uuid_1",
+      "section_id": "1_true_false",
       "display_index": "523",
       "questions": [
         {
-          "id": "sp20_mc_containers_and_templates_1",
+          "uuid": "question_uuid_2",
+          "question_id": "sp20_mc_containers_and_templates_1",
           "display_index": "1.2",
           "kind": "fitb",
           "response": "test_response_sp20_mc_containers_and_templates_1"
         },
         {
-          "id": "sp20_mc_time_complexity_4",
+          "uuid": "question_uuid_1",
+          "question_id": "sp20_mc_time_complexity_4",
           "display_index": "1.1",
           "kind": "fitb",
           "response": "test_response_sp20_mc_time_complexity_4"

@@ -7,7 +7,7 @@ export const S1_true_false = new Section({
   "title": "True/False",
   "mk_description": "Determine whether the following statements are true or false.",
   "mk_reference": "This section has no reference material.",
-  "content": [
+  "questions": [
     RANDOM_BY_TAG("tf_time_complexity", 1, TF_QUESTIONS),
     RANDOM_BY_TAG("tf_containers_and_templates", 1, TF_QUESTIONS),
     RANDOM_BY_TAG("tf_representation_invariants", 1, TF_QUESTIONS),

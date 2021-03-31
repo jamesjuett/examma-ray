@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, Randomizer } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, Randomizer, AssignedQuestion, AssignedSection } from './exams';
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
 import { assert, assertNever } from './util';
@@ -65,23 +65,57 @@ export class ExamGenerator {
     students.forEach(s => this.assignRandomizedExam(s));
   }
 
-  public createRandomizedExam(
+  private createRandomizedExam(
     student: StudentInfo,
-    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.exam.id))
+    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.exam.exam_id))
   {
-    let ae = new AssignedExam(this.exam, student,
+    let ae = new AssignedExam(
+      this.createStudentUuid(student, this.exam.exam_id),
+      this.exam,
+      student,
       this.exam.sections.flatMap(chooser => 
         typeof chooser === "function" ? chooser(this.exam, student, rand) :
         chooser instanceof Section ? chooser :
         new Section(chooser)
       ).map(
-        (s, sectionIndex) => s.buildRandomizedSection(this.exam, student, sectionIndex)
+        (s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)
       )
     );
 
     this.checkExam(ae);
 
     return ae;
+  }
+
+  private createRandomizedSection(
+    section: Section,
+    student: StudentInfo,
+    sectionIndex: number,
+    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id))
+  {
+    let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id));
+    return new AssignedSection(
+      this.createStudentUuid(student, section.section_id),
+      section,
+      sectionIndex,
+      sSkin,
+      section.questions.flatMap(chooser => 
+        typeof chooser === "function" ? chooser(this.exam, student, rand) :
+        chooser instanceof Question ? [chooser] :
+        new Question(chooser)
+      ).map((q, partIndex) => {
+        let qSkin = q.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + q.question_id));
+        qSkin ??= sSkin;
+        return new AssignedQuestion(
+          this.createStudentUuid(student, q.question_id),
+          this.exam,
+          student,
+          q,
+          qSkin,
+          sectionIndex,
+          partIndex, "")
+      })
+    );
   }
 
   private checkExam(ae: AssignedExam) {
@@ -91,9 +125,9 @@ export class ExamGenerator {
     // Verify that every section with the same ID originated from the same specification
     // If there wasn't a previous stats entry for that section ID, add one
     sections.forEach(
-      section => this.sectionStatsMap[section.id]
-        ? ++this.sectionStatsMap[section.id].n && assert(section.spec === this.sectionStatsMap[section.id].section.spec, `Multiple sections from different specifications with the ID "${section.id}" were detected.`)
-        : this.sectionStatsMap[section.id] = {
+      section => this.sectionStatsMap[section.section_id]
+        ? ++this.sectionStatsMap[section.section_id].n && assert(section.spec === this.sectionStatsMap[section.section_id].section.spec, `Multiple sections from different specifications with the ID "${section.section_id}" were detected.`)
+        : this.sectionStatsMap[section.section_id] = {
           section: section,
           n: 1
         }
@@ -104,9 +138,9 @@ export class ExamGenerator {
 
     // Verify that every question with the same ID originated from the same specification
     questions.forEach(
-      question => this.questionStatsMap[question.id]
-        ? ++this.questionStatsMap[question.id].n && assert(question.spec === this.questionStatsMap[question.id].question.spec, `Multiple questions from different specifications with the ID "${question.id}" were detected.`)
-        : this.questionStatsMap[question.id] = {
+      question => this.questionStatsMap[question.question_id]
+        ? ++this.questionStatsMap[question.question_id].n && assert(question.spec === this.questionStatsMap[question.question_id].question.spec, `Multiple questions from different specifications with the ID "${question.question_id}" were detected.`)
+        : this.questionStatsMap[question.question_id] = {
           question: question,
           n: 1
         }
@@ -116,10 +150,10 @@ export class ExamGenerator {
 
   private writeStats() {
     // Create output directory
-    mkdirSync(`data/${this.exam.id}/assigned/`, { recursive: true });
+    mkdirSync(`data/${this.exam.exam_id}/assigned/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`data/${this.exam.id}/assigned/stats.json`, json_stable_stringify({
+    writeFileSync(`data/${this.exam.exam_id}/assigned/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
@@ -128,8 +162,8 @@ export class ExamGenerator {
 
   public writeAll() {
 
-    const examDir = `data/${this.exam.id}/assigned/exams`;
-    const manifestDir = `data/${this.exam.id}/assigned/manifests`;
+    const examDir = `data/${this.exam.exam_id}/assigned/exams`;
+    const manifestDir = `data/${this.exam.exam_id}/assigned/manifests`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
@@ -147,7 +181,7 @@ export class ExamGenerator {
       .forEach((ex, i, arr) => {
 
         // Create filename, add to list
-        let filenameBase = this.createFilenameBase(ex.student);
+        let filenameBase = ex.student.uniqname + "-" + this.createStudentUuid(ex.student, ex.exam.exam_id);
         filenames.push([ex.student.uniqname, filenameBase])
 
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
@@ -156,22 +190,31 @@ export class ExamGenerator {
         writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
       });
 
-    writeFileSync(`data/${this.exam.id}/assigned/student-ids.csv`, unparse({
+    writeFileSync(`data/${this.exam.exam_id}/assigned/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));
 
   }
 
-  private createFilenameBase(student: StudentInfo) {
+  /**
+   * Takes an ID for an exam, section, or question and creates a uuid
+   * for a particular student's instance of that entity. The uuid is
+   * created based on the policy specified in the `ExamGenerator`'s
+   * options when it is created.
+   * @param student 
+   * @param id 
+   * @returns 
+   */
+  private createStudentUuid(student: StudentInfo, id: string) {
     if(this.options.student_ids === "uniqname") {
-      return student.uniqname;
+      return student.uniqname + "-" + id;
     }
     else if (this.options.student_ids === "uuidv4") {
-      return student.uniqname + "-" + uuidv4();
+      return uuidv4();
     }
     else if (this.options.student_ids === "uuidv5") {
-      return student.uniqname + "-" + uuidv5(student.uniqname, this.options.uuidv5_namespace!);
+      return uuidv5(student.uniqname + "-" + id, this.options.uuidv5_namespace!);
     }
     else {
       assertNever(this.options.student_ids);

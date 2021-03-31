@@ -32,7 +32,8 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
-    id: question.data("question-id"),
+    question_id: "",
+    uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
     response: stringify_response(extract_response(response.data("response-kind"), response))
@@ -42,7 +43,8 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
 function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   let section = $(this);
   return {
-    id: section.data("section-id"),
+    section_id: "",
+    uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
   }
@@ -55,6 +57,7 @@ function extractExamAnswers() : ExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
+    uuid: examElem.data("exam-uuid"),
     student: {
       uniqname: examElem.data("uniqname"),
       name: examElem.data("name")
@@ -71,7 +74,7 @@ function isBlankAnswers(answers: ExamSubmission) {
 }
 
 function loadQuestionAnswer(qa: QuestionAnswer) {
-  let questionElem = $(`#question-${qa.id}`);
+  let questionElem = $(`#question-${qa.uuid}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
   let sub = parse_submission(qa.kind, qa.response);
   fill_response(responseElem, qa.kind, sub);
@@ -93,11 +96,12 @@ function updateExamSaverModal() {
 
   // Timeout so that the "Preparing..." message actually gets shown before we do the work
   setTimeout(() => {
-    let blob = new Blob([JSON.stringify(extractExamAnswers(), null, 2)], {type: "application/json"});
+    let answers = extractExamAnswers();
+    let blob = new Blob([JSON.stringify(answers, null, 2)], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
-      .attr("download", "exam-answers.json")
+      .attr("download", `${answers.student.uniqname}-answers.json`)
       .attr("href", url)
       .removeClass("disabled");
 
@@ -105,8 +109,8 @@ function updateExamSaverModal() {
   });
 }
 
-function localStorageExamKey(examId: string, uniqname: string) {
-  return examId + "-" + uniqname;
+function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
+  return examId + "-" + uniqname + "-" + uuid;
 }
 
 function autosaveToLocalStorage() {
@@ -115,7 +119,7 @@ function autosaveToLocalStorage() {
 
     let answers = extractExamAnswers();
 
-    let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname));
+    let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
 
       let prevAnswers = <ExamSubmission>JSON.parse(prevAnswersLS);
@@ -138,7 +142,7 @@ function autosaveToLocalStorage() {
 
     // Only save if there is something to save
     if (!isBlankAnswers(answers)) {
-      localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname), JSON.stringify(answers, null, 2));
+      localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid), JSON.stringify(answers, null, 2));
       ++saveCount;
     }
 
@@ -216,7 +220,7 @@ function setupSaverModal() {
     if (files && files.length > 0) {
       try {
         let answers = <ExamSubmission>JSON.parse(await files[0].text());
-        if (answers.exam_id !== $("#examma-ray-exam").data("exam-id")) {
+        if (answers.uuid !== $("#examma-ray-exam").data("exam-uuid")) {
           alert("Error - That answers file appears to be for a different exam.");
         }
         else if (answers.student.uniqname !== $("#examma-ray-exam").data("uniqname")) {
@@ -322,11 +326,12 @@ function startExam() {
   
   let examElem = $("#examma-ray-exam");
   let examId = examElem.data("exam-id");
+  let examUuid = examElem.data("exam-uuid");
   let uniqname = examElem.data("uniqname");
   
   // Check whether an autosave exists in local storage
   if (storageAvailable("localStorage")) {
-    let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname));
+    let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname, examUuid));
     if (autosavedAnswers) {
       loadExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
       $("#exam-welcome-restored-modal").modal("show");
