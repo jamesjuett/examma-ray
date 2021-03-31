@@ -131,7 +131,9 @@ code {
   vertical-align: top;
 }
 
-.examma-ray-instructions {}
+.examma-ray-instructions {
+  max-width: 850px;
+}
 
 .examma-ray-section-description {
   font-size: 90%;

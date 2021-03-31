@@ -223,7 +223,7 @@ export class Section {
     this.title = spec.title;
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
-    this.questions = Array.isArray(spec.content) ? spec.content : [spec.content];
+    this.questions = Array.isArray(spec.questions) ? spec.questions : [spec.questions];
     this.skins = spec.skins;
 
     // let json = JSON.parse(readFileSync(`sections/${sectionIndex}.json`, 'utf8'));
@@ -546,7 +546,7 @@ export class Exam {
   }
 
   public renderInstructions() {
-    return `<div class="examma-ray-instructions">
+    return `<div class="container examma-ray-instructions">
       ${this.html_instructions}
     </div>`
   }

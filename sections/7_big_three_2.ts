@@ -6,7 +6,7 @@ export const S7_2_gallery : SectionSpecification = {
   "title": "The Big Three",
   "mk_description": "Consider the class shown in the reference material used to represent a `{{MuseumPart}}` in a museum containing paintings and sculptures.",
   "mk_reference": "```cpp\nclass Painting {\n\npublic:\n  // Default construct a blank canvas\n  Painting();\n\n  // Custom constructor for a specific painting\n  Painting(const string &name, double value);\n\n  // Assume the Big Three for Painting are properly implemented\n};\n\nclass Sculpture {\npublic:\n  // Custom constructor for a specific sculpture\n  Sculpture(const string &name, double value);\n\n  // Assume the Big Three for Sculpture are properly implemented\n};\n\nclass {{MuseumPart}} {\npublic:\n  // Default ctor. Note all the paintings will be default\n  // constructed as part of the paintings array.\n  {{MuseumPart}}() \n    : mainExhibit(&paintings[0]) { }\n\nprivate:\n  // An array of the paintings. A gallery always\n  // has 10 valid paintings (i.e. none of the elements\n  // are memory junk, though some might be default-\n  // constructed blank canvases).\n  Painting paintings[10];\n\n  // A pointer to the gallery's MVP - \"Most Valuable\n  // Painting\". This will always point to one of the\n  // gallery's 10 paintings, but may change if the\n  // paintings change value\n  Painting *mainExhibit;\n\n  // A vector of pointers to dynamically allocated sculptures\n  vector<Sculpture*> sculptures;\n\n};\n```",
-  "content": [
+  "questions": [
     {
       "id": "sp20_7_2_assn_op",
       "tags": [],
