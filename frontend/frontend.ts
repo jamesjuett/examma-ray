@@ -96,11 +96,12 @@ function updateExamSaverModal() {
 
   // Timeout so that the "Preparing..." message actually gets shown before we do the work
   setTimeout(() => {
-    let blob = new Blob([JSON.stringify(extractExamAnswers(), null, 2)], {type: "application/json"});
+    let answers = extractExamAnswers();
+    let blob = new Blob([JSON.stringify(answers, null, 2)], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
-      .attr("download", "exam-answers.json")
+      .attr("download", `${answers.student.uniqname}-answers.json`)
       .attr("href", url)
       .removeClass("disabled");
 
