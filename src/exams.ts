@@ -586,13 +586,21 @@ function renderModals(ex: AssignedExam) {
           <div class="modal-header">
             <h5 class="modal-title">${ex.exam.title}</h5>
           </div>
-          <div class="modal-body" style="text-align: center;">
-          <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
-          <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
-          <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this likely won't work.</div>
-          <div>
-            <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
-          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
+            <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this won't work.</div>
+
+            <p style="margin-left: 2em; margin-right: 2em;">
+              By taking this exam and submitting an answers file, you attest to the CoE Honor Pledge:
+            </p>
+            <p style="margin-left: 4em; margin-right: 4em;">
+              <span style="font-style: italic">I have neither given nor received unauthorized aid on this examination, nor have I concealed any violations of the Honor Code."
+            </p>
+            
+            <div style="text-align: center;">
+              <button class="btn btn-primary" data-dismiss="modal">I am <b>${ex.student.uniqname}</b> and I understand</button>
+            </div>
           </div>
         </div>
       </div>

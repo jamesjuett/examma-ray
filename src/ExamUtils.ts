@@ -46,5 +46,7 @@ export namespace ExamUtils {
       assert(s.uniqname !== "", "Student uniqname may not be empty. Double check your roster file.");
       assert(s.name !== "", "Student name may not be empty. Double check your roster file.");
     })
+
+    return students;
   }
 }
