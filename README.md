@@ -22,12 +22,13 @@ mkdir eecs280exams
 cd eecs280exams
 ```
 
-Initialize a new `npm` package and install `ts-node` and `examma-ray` as dependencies:
+Initialize a new `npm` package and install `ts-node` and `examma-ray` as dependencies. You'll also want types for the node environment:
 
 ```console
 npm init -y
 npm install ts-node
 npm install examma-ray
+npm install --save-dev @types/node
 ```
 
 You'll want a place to store exam specifications (e.g. questions, student rosters, etc.), with a subfolder for each exam. 
@@ -64,7 +65,7 @@ Create an exam specification file:
 #### **`content/eecs280w21final/exam-spec.ts`**
 ```typescript
 import { readFileSync } from "fs";
-import { Exam } from "./src/exams";
+import { Exam } from "examma-ray";
 
 // Create exam
 export const exam = new Exam({
@@ -91,8 +92,8 @@ import { exam } from './exam-spec';
 
 let gen = new ExamGenerator(exam, {
   student_ids: "uuidv5",
-  uuidv5_namespace: readFileSync("secret", "utf-8"),
-  students: ExamUtils.loadRoster("roster.csv")
+  uuidv5_namespace: readFileSync("content/eecs280w21final/secret", "utf-8"),
+  students: ExamUtils.loadCSVRoster("content/eecs280w21final/roster.csv")
 });
 
 gen.writeAll();
@@ -105,7 +106,7 @@ npm install --save-dev uuid
 npx uuid > content/eecs280w21final/secret
 ```
 
-You can put this file wherever you want. The `gen.ts` script reads it in and passes it as part of the generator configuration. Make one for each exam you give (**one** for the "overall exam" - not one for each student, and not one for each window during which you offer the exam). Keep it secret (e.g. don't check it in to a public repo - though you probably don't want all your exam questions public anyway!). Do **not** change it once you've generated/distributed an exam - you need it to match students' exams when they're turned in.
+You can put this `secret` file wherever you want. The `gen.ts` script reads it in and passes it as part of the generator configuration. Keep it secret (e.g. don't check it in to a public repo - though you probably don't want all your exam questions public anyway!). Do **not** change it once you've generated/distributed an exam. You may create a new secret for each exam, or reuse the same secret for several exams.
 
 Now you're ready to generate exams!
 
@@ -155,8 +156,17 @@ A quick summary of the output of `gen.ts` in the `assigned` directory:
 - `assigned/stats.json` contains information about overall exam generation
 
 
+### Version Control
 
+If you're using `git`, you'll want a `.gitignore` file that includes `node_modules` and most likely also the `data` directory:
 
+#### **`.gitignore`**
+```
+node_modules/
+data/
+```
+
+When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exams generated for each student. (Although this is not strictly necessary since the generation process is deterministic as long as the exam ID, content, secret v5 uuid namespace, etc. do not change, it would make me nervous not to have a copy!)
 
 # Markdown Styling
 

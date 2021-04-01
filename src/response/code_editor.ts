@@ -5,7 +5,7 @@ import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 
 export type CodeEditorSpecification = {
   kind: "code_editor",
-  language: string,
+  code_language: string,
   starter: string
 };
 

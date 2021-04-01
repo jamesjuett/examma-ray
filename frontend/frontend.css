@@ -91,6 +91,15 @@ code {
   color: unset;
 }
 
+.examma-ray-question-description code:not(pre code),
+.examma-ray-section-description code:not(pre code),
+.examma-ray-section-reference code:not(pre code) {
+  background: #eee;
+  border-radius: 3px;
+  padding: 2px;
+}
+
+
 .examma-ray-fitb-diff {
   font-size: 0.8rem;
 }
@@ -169,7 +178,7 @@ code {
 .examma-ray-section-contents h4,
 .examma-ray-section-contents h5,
 .examma-ray-section-contents h6 {
-  font-size: 1rem;
+  /* font-size: initial; */
 }
 
 
@@ -180,7 +189,7 @@ code {
 .examma-ray-question-description h5,
 .examma-ray-question-description h6,
 .examma-ray-question-description h7 {
-  font-size: initial;
+  /* font-size: initial; */
 }
 
 .examma-ray-question-description p {

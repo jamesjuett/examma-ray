@@ -96,7 +96,7 @@ export class ExamGenerator {
   {
     let sSkin = section.skins?.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
     return new AssignedSection(
-      this.createStudentUuid(student, section.section_id),
+      this.createStudentUuid(student, this.exam.exam_id + "-" + section.section_id),
       section,
       sectionIndex,
       sSkin,
@@ -108,7 +108,7 @@ export class ExamGenerator {
         let qSkin = q.skins?.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, q));
         qSkin ??= sSkin;
         return new AssignedQuestion(
-          this.createStudentUuid(student, q.question_id),
+          this.createStudentUuid(student, this.exam.exam_id + "-" + q.question_id),
           this.exam,
           student,
           q,
@@ -182,7 +182,7 @@ export class ExamGenerator {
       .forEach((ex, i, arr) => {
 
         // Create filename, add to list
-        let filenameBase = ex.student.uniqname + "-" + this.createStudentUuid(ex.student, ex.exam.exam_id);
+        let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         filenames.push([ex.student.uniqname, filenameBase])
 
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
