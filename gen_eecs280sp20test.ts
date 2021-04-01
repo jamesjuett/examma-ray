@@ -9,7 +9,7 @@ let gen = new ExamGenerator(exam, {
   uuidv5_namespace: readFileSync("secret", "utf-8")
 });
 
-let students = ExamUtils.loadRoster("roster/roster.csv");
+let students = ExamUtils.loadCSVRoster("roster/roster.csv");
 
 gen.assignRandomizedExams(students);
 

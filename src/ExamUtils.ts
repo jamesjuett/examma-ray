@@ -3,6 +3,7 @@ import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissio
 import Papa from "papaparse";
 import { StudentInfo } from "./exams";
 import path from "path";
+import { assert } from "./util";
 
 export namespace ExamUtils {
 
@@ -35,7 +36,15 @@ export namespace ExamUtils {
     return trustedAnswers;
   }
 
-  export function loadRoster(filename: string) {
-    return Papa.parse<StudentInfo>(readFileSync(filename, "utf8"), { header: true }).data;
+  export function loadCSVRoster(filename: string) {
+    let students = Papa.parse<StudentInfo>(readFileSync(filename, "utf8"), {
+      header: true,
+      skipEmptyLines: true
+    }).data;
+
+    students.forEach(s => {
+      assert(s.uniqname !== "", "Student uniqname may not be empty. Double check your roster file.");
+      assert(s.name !== "", "Student name may not be empty. Double check your roster file.");
+    })
   }
 }
