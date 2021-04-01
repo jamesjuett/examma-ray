@@ -459,7 +459,7 @@ export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
   file. You may save as many times as you like. You can also restore answers
   from a previously saved file.
   
-  **Important!** You MUST submit your answers \`.json\` file to **Canvas**
+  **Important!** You MUST submit your \`.json\` answers file to **Canvas**
   BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
   It is up to you to download your answer file and turn it in on **Canvas**.
   
