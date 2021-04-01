@@ -1,4 +1,5 @@
-import { Exam, Randomizer, Question, Section, StudentInfo } from "./exams";
+import { Exam, Question, Section, StudentInfo } from "./exams";
+import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "./response/common";
 import { ResponseSpecification } from "./response/responses";

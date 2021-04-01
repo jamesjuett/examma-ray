@@ -1,6 +1,5 @@
 
 import 'colors';
-import { RandomSeed, create as createRNG } from 'random-seed';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
@@ -453,39 +452,6 @@ export class AssignedExam {
       }))
     };
   }
-}
-
-export class Randomizer {
-
-  private rng: RandomSeed;
-
-  public constructor(seed: string) {
-    this.rng = createRNG(seed);
-  }
-
-  public float() {
-    return this.rng.random;
-  }
-
-  public range(n: number) {
-    return this.rng.range(n);
-  };
-
-  public choose<T>(choices: readonly T[]) {
-    assert(choices.length > 0, "No choices available.");
-    return choices[this.rng.range(choices.length)];
-  };
-  
-  public chooseN<T>(choices: readonly T[], n: number) {
-    assert(choices.length >= n, "Number to randomly choose is larger than number of choices.");
-    return choices
-      .slice()
-      .map(c => ({i: this.rng.random(), c: c}))
-      .sort((a, b) => a.i - b.i)
-      .map(x => x.c)
-      .slice(0,n);
-  }
-
 }
 
 export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `

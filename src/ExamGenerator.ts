@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, Randomizer, AssignedQuestion, AssignedSection } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
+import { createExamRandomizer, createQuestionSkinRandomizer, createSectionRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
 import { assert, assertNever } from './util';
@@ -67,7 +68,7 @@ export class ExamGenerator {
 
   private createRandomizedExam(
     student: StudentInfo,
-    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.exam.exam_id))
+    rand: Randomizer = createExamRandomizer(student, this.exam))
   {
     let ae = new AssignedExam(
       this.createStudentUuid(student, this.exam.exam_id),
@@ -91,9 +92,9 @@ export class ExamGenerator {
     section: Section,
     student: StudentInfo,
     sectionIndex: number,
-    rand: Randomizer = new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id))
+    rand: Randomizer = createSectionRandomizer(student, this.exam, section))
   {
-    let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id));
+    let sSkin = section.skins?.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
     return new AssignedSection(
       this.createStudentUuid(student, section.section_id),
       section,
@@ -104,7 +105,7 @@ export class ExamGenerator {
         chooser instanceof Question ? [chooser] :
         new Question(chooser)
       ).map((q, partIndex) => {
-        let qSkin = q.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + q.question_id));
+        let qSkin = q.skins?.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, q));
         qSkin ??= sSkin;
         return new AssignedQuestion(
           this.createStudentUuid(student, q.question_id),

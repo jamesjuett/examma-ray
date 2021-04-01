@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, renderQuestion, Randomizer } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, renderQuestion } from './exams';
+import { createQuestionSkinRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
 import { CHOOSE_ALL } from './specification';
@@ -81,7 +82,7 @@ export class ExamGrader {
       student,
       submission.sections.map((s, s_i) => {
         let section = this.sectionsMap[s.section_id] ?? assertFalse();
-        let sSkin = section.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + section.section_id));
+        let sSkin = section.skins?.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
         return new AssignedSection(
           s.uuid,
           section,
@@ -89,7 +90,7 @@ export class ExamGrader {
           sSkin,
           s.questions.map((q, q_i) => {
             let question = this.questionsMap[q.question_id] ?? assertFalse();
-            let qSkin = question.skins?.generate(this.exam, student, new Randomizer(student.uniqname + "_" + this.exam.exam_id + "_" + question.question_id));
+            let qSkin = question.skins?.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, question));
             qSkin ??= sSkin;
             return new AssignedQuestion(
               q.uuid,
