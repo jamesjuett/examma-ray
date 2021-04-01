@@ -461,7 +461,9 @@ export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
   
   **Important!** You MUST submit your answers \`.json\` file to **Canvas**
   BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
-  It is up to you to download your answer file and turn it in on **Canvas**.`;
+  It is up to you to download your answer file and turn it in on **Canvas**.
+  
+  **Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
 
 export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
   You've reached the bottom of the exam! If you're done, make sure to
