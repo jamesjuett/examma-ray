@@ -75,7 +75,7 @@ function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: Qu
 function renderSASItem(item: SASItem, question_id: string, item_index: number, code_language: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-sas-line">
-      <input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"></input> 
+      <input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"${item.forced ? " checked=\"checked\" disabled=\"disabled\"" : ""}></input> 
       <label for="${question_id}-sas-choice-${item_index}" class="sas-select-label">
         <pre><code>${highlightCode(applySkin(item.text, skin), code_language)}</code></pre>
       </label><br />
@@ -108,10 +108,11 @@ function SAS_EXTRACTOR(responseElem: JQuery) {
 
 function SAS_FILLER(responseElem: JQuery, submission: SASSubmission) {
   
-  // blank out all selections (note this will blank required selections
-  // but it's presumed the input file will fill them in subsequently)
   let inputs = responseElem.find(".examma-ray-sas-choices input");
-  inputs.prop("checked", false);
+
+  // blank out all selections, except those that are disabled
+  // which would be the "forced" items in the list of SAS choices
+  inputs.filter(":not(:disabled)").prop("checked", false);
 
   if (submission !== BLANK_SUBMISSION) {
     let inputElems = inputs.get();
