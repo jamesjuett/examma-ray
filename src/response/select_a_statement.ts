@@ -82,12 +82,20 @@ function renderSASItem(item: SASItem, question_id: string, item_index: number, c
     </div>`;
 }
 
+
 function SAS_ACTIVATE(responseElem: JQuery) {
+  responseElem.data("sas-view", "choices");
   responseElem.find(".examma-ray-sas-show-choices-button").on("click",
-    () => responseElem.find(".examma-ray-sas-line").slideDown()
+    () => {
+      responseElem.data("sas-view", "choices");
+      responseElem.find(".examma-ray-sas-line").slideDown();
+    }
   );
   responseElem.find(".examma-ray-sas-show-preview-button").on("click",
-    () => responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").slideUp()
+    () => {
+      responseElem.data("sas-view", "preview");
+      responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").slideUp();
+    }
   );
 }
 
@@ -98,16 +106,24 @@ function SAS_EXTRACTOR(responseElem: JQuery) {
   return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
 }
 
-function SAS_FILLER(elem: JQuery, submission: SASSubmission) {
+function SAS_FILLER(responseElem: JQuery, submission: SASSubmission) {
   
   // blank out all selections (note this will blank required selections
   // but it's presumed the input file will fill them in subsequently)
-  let inputs = elem.find(".examma-ray-sas-choices input");
+  let inputs = responseElem.find(".examma-ray-sas-choices input");
   inputs.prop("checked", false);
 
   if (submission !== BLANK_SUBMISSION) {
     let inputElems = inputs.get();
     submission.forEach(n => $(inputElems[n]).prop("checked", true));
+  }
+
+  // Initially revert to showing everything
+  responseElem.find(".examma-ray-sas-line").show();
+  
+  // If we're in preview mode, hide anything that isn't checked
+  if (responseElem.data("sas-view") === "preview") {
+    responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").hide();
   }
 }
 
