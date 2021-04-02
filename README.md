@@ -186,9 +186,8 @@ This is a practice exam for EECS 280, covering content from lectures 11 (contain
 Note the use of the additional attribute `markdown=1` is required if you intend to use Markdown syntax (such as the `**PLEASE NOTE**` in the example above) within the HTML element.
 
 
-# BELOW THIS LINE IS ALL TODO AND PROBABLY INACCURATE
 
-## Defining the Rubric
+# Defining a Rubric
 
 The code in each file in the `rubric` directory defines "graders" which are registered for specific questions. For example, a file containing this TS code would define a multiple choice grader where the first (index 0) option is correct and register it for problem 1.1:
 
@@ -200,22 +199,13 @@ Exam.registerGraders({
 });
 ```
 
-In the `engr101f20final.ts` file, make sure to add import lines for all of the rubric files. For example:
+Several graders are currently supported:
 
-```typescript
-// Import from ALL rubric files that you want to use
-import "./rubric/real_exam";
-import "./rubric/true_false";
-import "./rubric/vec_of_vecs";
-import "./rubric/driver";
-...
-```
-
-Three graders are currently supported that cover almost all of the questions:
-
-- `SimpleMCGrader` - see example in `rubric/true_false.ts`
-- `FITBRegexGrader` - see example in `rubric/vec_of_vecs.ts` (note this example has placeholder data)
-- `StandardSASGrader` - see example in `rubric/driver.ts`
+- `FreebieGrader` - Gives points to everyone (or, optionally, to all non-blank submissions)
+- `SimpleMCGrader` - Grades an MC question with one right answer
+- `SummationMCGrader` - Grades a multiple-select MC question where each selection is worth positive or negative points
+- `FITBRegexGrader` - Uses regular expressions to grade each blank in an FITB question. Also comes with an interface for human review of unique answers
+- `StandardSASGrader` - Grades SAS ("select-a-statement") questions based on which lines should/shouldn't be included
 
 The format for the graders looks like JSON, but it's actually typescript code defining an object literal, so autocomplete, etc. should be available in VS Code.
 
@@ -224,6 +214,8 @@ For the FITB Regex grader, you'll need to be familiar with javascript regular ex
 - Tutorial/Documentation at [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions)
 - Interactive tool for testing out regexes, really neat. [https://regex101.com/](https://regex101.com/) Make sure to select the "ECMAScript/Javascript" flavor on the left side.
 - Tip: Normally, the regex will match against any substring of what the student entered. If you want it to only match the WHOLE thing, use `^` and `$`. For example, if you're looking to match any decimal number `/[\d\.]+` will match `6.2` and `My answer is 6.2`, whereas `^[\d\.]+$` will only match `6.2`. Essentially `^` means "beginning of string" and `$` means "end of string".
+
+For now, refer to examples of existing graders. More thorough documentation coming.
 
 ## Entering Exceptions
 
