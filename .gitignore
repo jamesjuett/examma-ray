@@ -104,6 +104,4 @@ dist
 .tern-port
 
 # examma-ray custom
-data/
 dist/
-secrets/
