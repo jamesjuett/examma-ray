@@ -11,20 +11,22 @@ export namespace ExamUtils {
     return <ExamSubmission>JSON.parse(readFileSync(filename, "utf8"));
   }
 
-  export function loadTrustedSubmission(manifestFilename: string, submittedFilename: string) {
+  export function loadTrustedSubmission(manifestDirectory: string, submittedFilename: string) {
+    let submitted = loadExamAnswers(submittedFilename);
+    let manifest = loadExamAnswers(path.join(manifestDirectory, submitted.student.uniqname + "-" + submitted.uuid + ".json"))
     return fillManifest(
-      loadExamAnswers(manifestFilename),
-      loadExamAnswers(submittedFilename)
+      manifest,
+      submitted
     );
   }
 
   export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string) {
     let trustedAnswers : TrustedExamSubmission[] = [];
-    readdirSync(manifestDirectory).forEach(
+    readdirSync(submittedDirectory).forEach(
       filename => {
         try {
           trustedAnswers.push(loadTrustedSubmission(
-            path.join(manifestDirectory, filename),
+            manifestDirectory,
             path.join(submittedDirectory, filename)
           ));
         }

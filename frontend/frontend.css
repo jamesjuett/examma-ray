@@ -140,6 +140,10 @@ code {
   vertical-align: top;
 }
 
+.examma-ray-questions-container {
+  padding-bottom: 30vh;
+}
+
 .examma-ray-instructions {
   max-width: 850px;
 }
@@ -320,6 +324,14 @@ code {
 
 .examma-ray-sas-choices {
   overflow-x: auto;
+  padding: 0.5em;
+  margin-bottom: 1em;
+}
+
+.examma-ray-sas-choices.sas-view-preview {
+  border: solid 1px rgba(0, 0, 255, 0.2);
+  background-color: rgba(0, 0, 255, 0.05);
+  border-radius: 2px;
 }
 
 .examma-ray-sas-line {
@@ -338,9 +350,9 @@ code {
   padding-left: 3px;
 }
 
-.sas-select-input:checked+.sas-select-label {
-  border: solid 1px rgba(0, 0, 255, 0.3);
-  background-color: rgba(0, 0, 255, 0.1);
+.examma-ray-sas-choices.sas-view-choices .sas-select-input:checked+.sas-select-label {
+  border: solid 1px rgba(0, 0, 255, 0.2);
+  background-color: rgba(0, 0, 255, 0.05);
   border-radius: 2px;
 }
 

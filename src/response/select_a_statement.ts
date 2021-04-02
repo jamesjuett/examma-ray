@@ -62,7 +62,7 @@ function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: Qu
         </label>
       </div>
     </div>
-    <div class="examma-ray-sas-choices">
+    <div class="examma-ray-sas-choices sas-view-choices">
       ${response.choices.map(
         group => group.kind === "item"
           ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
@@ -87,6 +87,9 @@ function SAS_ACTIVATE(responseElem: JQuery) {
   responseElem.data("sas-view", "choices");
   responseElem.find(".examma-ray-sas-show-choices-button").on("click",
     () => {
+      responseElem.find(".examma-ray-sas-choices")
+        .addClass("sas-view-choices")
+        .removeClass("sas-view-preview");
       responseElem.data("sas-view", "choices");
       responseElem.find(".examma-ray-sas-line").slideDown();
     }
@@ -94,7 +97,11 @@ function SAS_ACTIVATE(responseElem: JQuery) {
   responseElem.find(".examma-ray-sas-show-preview-button").on("click",
     () => {
       responseElem.data("sas-view", "preview");
-      responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").slideUp();
+      responseElem.find(".examma-ray-sas-line").has("input:not(:checked)").slideUp(400, () => {
+        responseElem.find(".examma-ray-sas-choices")
+          .addClass("sas-view-preview")
+          .removeClass("sas-view-choices");
+      });
     }
   );
 }

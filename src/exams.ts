@@ -318,7 +318,7 @@ export class AssignedSection {
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
-            <td>
+            <td class="examma-ray-questions-container">
               ${this.renderHeader(mode)}
               <div class="examma-ray-section-description">${this.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
