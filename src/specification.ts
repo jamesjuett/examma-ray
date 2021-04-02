@@ -1,9 +1,9 @@
 import { Exam, Question, Section, StudentInfo } from "./exams";
-import { Randomizer } from "./randomization";
+import { Randomizer, SeededRandomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "./response/common";
 import { ResponseSpecification } from "./response/responses";
-import { QuestionSkin } from "./skins";
+import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
 
 export const CHOOSE_ALL = Symbol("choose_all");
@@ -18,10 +18,16 @@ export type ExamSpecification = {
   sections: readonly (SectionSpecification | Section | SectionChooser)[]
 };
 
-export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => readonly Section[];
+export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
+
+export function chooseSections(chooser: SectionSpecification | Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return typeof chooser === "function" ? chooser(exam, student, rand) :
+      chooser instanceof Section ? [chooser] :
+      [new Section(chooser)]
+}
 
 export function RANDOM_SECTION(n: number, sections: (SectionSpecification | Section)[]) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     if (rand === CHOOSE_ALL) {
       return sections.map(s => s instanceof Section ? s : new Section(s));
     }
@@ -43,10 +49,16 @@ export type SectionSpecification = {
   readonly skins?: SkinGenerator;
 }
 
-export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => readonly Question[];
+export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
+
+export function chooseQuestions(chooser: QuestionSpecification| Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return typeof chooser === "function" ? chooser(exam, student, rand) :
+      chooser instanceof Question ? [chooser] :
+      [new Question(chooser)]
+}
 
 export function BY_ID(id: string, questionBank: QuestionBank) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     let q = questionBank.getQuestionById(id);
     assert(q, `No question with ID: ${id}.`);
     return [q];
@@ -54,7 +66,7 @@ export function BY_ID(id: string, questionBank: QuestionBank) {
 }
 
 export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     let qs = questionBank.getQuestionsByTag(tag);
     if (rand === CHOOSE_ALL) {
       return qs;
@@ -68,7 +80,7 @@ export function RANDOM_ANY(n: number, questionBank: QuestionBank | (QuestionSpec
   if (!(questionBank instanceof QuestionBank)) {
     questionBank = new QuestionBank(questionBank);
   }
-  return (exam: Exam, student: StudentInfo, rand: Randomizer | typeof CHOOSE_ALL) => {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     let qs = (<QuestionBank>questionBank).questions;
     if (rand === CHOOSE_ALL) {
       return qs;
@@ -94,8 +106,14 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
 
 
 export type SkinGenerator = {
-  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => QuestionSkin
+  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[]
 };
+
+export const DEFAULT_SKIN_GENERATOR : SkinGenerator = {
+  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    return [DEFAULT_SKIN];
+  }
+}
 
 export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
   let skinMap : {[index: string]: QuestionSkin | undefined} = {};
@@ -103,7 +121,7 @@ export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
   return {
     generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
       assert(skins.length > 0, `Error - array of skin choices is empty.`);
-      return rand.choose(skins)
+      return rand === CHOOSE_ALL ? skins : [rand.choose(skins)]
     },
     getById: (id: string) => skinMap[id]
   };

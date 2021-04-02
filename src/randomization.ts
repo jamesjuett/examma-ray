@@ -1,9 +1,10 @@
 import { RandomSeed, create as createRNG } from 'random-seed';
 import { Exam, Question, Section, StudentInfo } from './exams';
+import { CHOOSE_ALL } from './specification';
 import { assert } from './util';
 
 
-class RandomizerImpl {
+class SeededRandomizerImpl {
 
   private rng: RandomSeed;
 
@@ -36,24 +37,26 @@ class RandomizerImpl {
 
 }
 
-export interface Randomizer extends RandomizerImpl {
+export interface SeededRandomizer extends SeededRandomizerImpl {
 
 }
 
-export function createExamRandomizer(student: StudentInfo, exam: Exam) : Randomizer {
-  return new RandomizerImpl(student.uniqname + "-" + exam.exam_id);
+export type Randomizer = SeededRandomizer | typeof CHOOSE_ALL;
+
+export function createSectionChoiceRandomizer(student: StudentInfo, exam: Exam) : SeededRandomizer {
+  return new SeededRandomizerImpl(student.uniqname + "-" + exam.exam_id);
 }
 
-export function createSectionRandomizer(student: StudentInfo, exam: Exam, section: Section) : Randomizer {
-  return new RandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + section.section_id);
+export function createQuestionChoiceRandomizer(student: StudentInfo, exam: Exam, section: Section) : SeededRandomizer {
+  return new SeededRandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + section.section_id);
 }
 
-export function createSectionSkinRandomizer(student: StudentInfo, exam: Exam, section: Section) : Randomizer {
+export function createSectionSkinRandomizer(student: StudentInfo, exam: Exam, section: Section) : SeededRandomizer {
   // Note that it's important the seed for the section skin randomizer is different from the section randomizer.
   // Otherwise, students who get one section would always get the same section skin.
-  return new RandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + section.section_id + "-skin");
+  return new SeededRandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + section.section_id + "-skin");
 }
 
-export function createQuestionSkinRandomizer(student: StudentInfo, exam: Exam, question: Question) : Randomizer {
-  return new RandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + question.question_id + "-skin");
+export function createQuestionSkinRandomizer(student: StudentInfo, exam: Exam, question: Question) : SeededRandomizer {
+  return new SeededRandomizerImpl(student.uniqname + "-" + exam.exam_id + "-" + question.question_id + "-skin");
 }

@@ -1,13 +1,14 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, renderQuestion } from './exams';
-import { createQuestionSkinRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
+import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./randomization";
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
-import { CHOOSE_ALL } from './specification';
+import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { assertFalse } from './util';
 import { unparse } from 'papaparse';
 import { ExamUtils } from './ExamUtils';
+import { createCompositeSkin } from './skins';
 
 export interface GraderMap {
   [index: string]: Grader | undefined;
@@ -45,18 +46,10 @@ export class ExamGrader {
     exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
 
-    this.allSections = exam.sections.flatMap(chooser =>
-      typeof chooser === "function" ? chooser(this.exam, ignore, CHOOSE_ALL) :
-        chooser instanceof Section ? chooser :
-          new Section(chooser)
-    );
+    this.allSections = exam.sections.flatMap(chooser => chooseSections(chooser, exam, ignore, CHOOSE_ALL));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser =>
-      typeof chooser === "function" ? chooser(exam, ignore, CHOOSE_ALL) :
-        chooser instanceof Question ? [chooser] :
-          new Question(chooser)
-    );
+    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
   }
 
@@ -80,30 +73,30 @@ export class ExamGrader {
       submission.exam_id,
       this.exam,
       student,
-      submission.sections.map((s, s_i) => {
+      submission.sections.flatMap((s, s_i) => {
         let section = this.sectionsMap[s.section_id] ?? assertFalse();
-        let sSkin = section.skins?.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
-        return new AssignedSection(
+        let sectionSkins = section.skins.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
+        return sectionSkins.map(sectionSkin => new AssignedSection(
           s.uuid,
           section,
           s_i,
-          sSkin,
-          s.questions.map((q, q_i) => {
+          sectionSkin,
+          s.questions.flatMap((q, q_i) => {
             let question = this.questionsMap[q.question_id] ?? assertFalse();
-            let qSkin = question.skins?.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, question));
-            qSkin ??= sSkin;
-            return new AssignedQuestion(
+            let questionSkins = question.skins.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, question))
+              .map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+            return questionSkins.map(questionSkin => new AssignedQuestion(
               q.uuid,
               this.exam,
               submission.student,
               question,
-              qSkin,
+              questionSkin,
               s_i,
               q_i,
               q.response
-            ); 
+            )); 
           })
-        );
+        ));
       })
     );
   }

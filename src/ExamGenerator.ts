@@ -1,27 +1,31 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
-import { createExamRandomizer, createQuestionSkinRandomizer, createSectionRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
+import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
 import { v4 as uuidv4} from 'uuid';
 import uuidv5 from 'uuid/v5';
 import { assert, assertNever } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
+import { ResponseKind } from './examma-ray';
+import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
+import { createCompositeSkin, QuestionSkin } from './skins';
 
 type SectionStats = {
-  section: Section;
-  n: number;
+  section: Section,
+  n: number
 };
 
 type QuestionStats = {
-  question: Question;
-  n: number;
+  question: Question,
+  n: number
 };
 
 export type ExamGeneratorOptions = {
-  student_ids: "uniqname" | "uuidv4" | "uuidv5"
-  uuidv5_namespace?: string;
-  students: readonly StudentInfo[]
+  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  uuidv5_namespace?: string,
+  students: readonly StudentInfo[],
+  choose_all?: boolean
 };
 
 const DEFAULT_OPTIONS = {
@@ -68,19 +72,15 @@ export class ExamGenerator {
 
   private createRandomizedExam(
     student: StudentInfo,
-    rand: Randomizer = createExamRandomizer(student, this.exam))
+    rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionChoiceRandomizer(student, this.exam))
   {
     let ae = new AssignedExam(
       this.createStudentUuid(student, this.exam.exam_id),
       this.exam,
       student,
-      this.exam.sections.flatMap(chooser => 
-        typeof chooser === "function" ? chooser(this.exam, student, rand) :
-        chooser instanceof Section ? chooser :
-        new Section(chooser)
-      ).map(
-        (s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)
-      )
+      this.exam.sections
+        .flatMap(chooser => chooseSections(chooser, this.exam, student, rand))
+        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex))
     );
 
     this.checkExam(ae);
@@ -92,30 +92,38 @@ export class ExamGenerator {
     section: Section,
     student: StudentInfo,
     sectionIndex: number,
-    rand: Randomizer = createSectionRandomizer(student, this.exam, section))
+    rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionChoiceRandomizer(student, this.exam, section),
+    skinRand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionSkinRandomizer(student, this.exam, section))
   {
-    let sSkin = section.skins?.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
-    return new AssignedSection(
+    let sectionSkins = section.skins.generate(this.exam, student, skinRand);
+    return sectionSkins.map(sectionSkin => new AssignedSection(
       this.createStudentUuid(student, this.exam.exam_id + "-" + section.section_id),
       section,
       sectionIndex,
-      sSkin,
-      section.questions.flatMap(chooser => 
-        typeof chooser === "function" ? chooser(this.exam, student, rand) :
-        chooser instanceof Question ? [chooser] :
-        new Question(chooser)
-      ).map((q, partIndex) => {
-        let qSkin = q.skins?.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, q));
-        qSkin ??= sSkin;
-        return new AssignedQuestion(
-          this.createStudentUuid(student, this.exam.exam_id + "-" + q.question_id),
-          this.exam,
-          student,
-          q,
-          qSkin,
-          sectionIndex,
-          partIndex, "")
-      })
+      sectionSkin,
+      section.questions
+        .flatMap(chooser => chooseQuestions(chooser, this.exam, student, rand))
+        .flatMap((q, partIndex) => this.createRandomizedQuestion(q, student, sectionIndex, partIndex, sectionSkin))
+    ));
+  }
+
+  private createRandomizedQuestion(
+    question: Question,
+    student: StudentInfo,
+    sectionIndex: number,
+    partIndex: number,
+    sectionSkin: QuestionSkin,
+    rand: Randomizer = createQuestionSkinRandomizer(student, this.exam, question)) {
+
+    let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+    return questionSkins.map(questionSkin => new AssignedQuestion(
+      this.createStudentUuid(student, this.exam.exam_id + "-" + question.question_id),
+      this.exam,
+      student,
+      question,
+      questionSkin,
+      sectionIndex,
+      partIndex, "")
     );
   }
 

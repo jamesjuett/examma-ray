@@ -8,8 +8,8 @@ import { mk2html } from './render';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
 import { Grader, isGrader } from './graders/common';
-import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification } from './specification';
-import { QuestionSkin } from './skins';
+import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
+import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { writeFileSync } from 'fs';
 import { ExamManifest } from './submissions';
 
@@ -38,7 +38,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
-  public readonly skins?: SkinGenerator;
+  public readonly skins: SkinGenerator;
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
@@ -48,7 +48,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
-    this.skins = spec.skins;
+    this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
   }
 
   public renderResponse(uuid: string, skin?: QuestionSkin) {
@@ -79,7 +79,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     public readonly exam: Exam,
     public readonly student: StudentInfo,
     public readonly question: Question<QT>,
-    public readonly skin: QuestionSkin | undefined,
+    public readonly skin: QuestionSkin,
     public readonly sectionIndex : number,
     public readonly partIndex : number,
     public readonly rawSubmission: string,
@@ -214,7 +214,7 @@ export class Section {
   public readonly mk_description: string;
   public readonly mk_reference?: string;
   public readonly questions: (QuestionSpecification | Question | QuestionChooser)[];
-  public readonly skins?: SkinGenerator;
+  public readonly skins: SkinGenerator;
 
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
@@ -223,7 +223,7 @@ export class Section {
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
     this.questions = Array.isArray(spec.questions) ? spec.questions : [spec.questions];
-    this.skins = spec.skins;
+    this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
 
     // let json = JSON.parse(readFileSync(`sections/${sectionIndex}.json`, 'utf8'));
     // let question = (<any[]>json["questions"]).find(q => parseInt(q.index) === partIndex) ?? json["questions"][partIndex-1];
@@ -270,7 +270,7 @@ export class AssignedSection {
     public readonly uuid: string,
     public readonly section: Section, 
     public readonly sectionIndex : number,
-    public readonly skin: QuestionSkin | undefined,
+    public readonly skin: QuestionSkin,
     public readonly assignedQuestions: readonly AssignedQuestion[])
   {
     this.displayIndex = "" + (sectionIndex+1);
@@ -350,10 +350,10 @@ export class AssignedExam {
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
 
-    let sectionIds = assignedSections.map(s => s.section.section_id);
+    let sectionIds = assignedSections.map(s => s.section.section_id + "-" + s.skin.id);
     assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
-    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
-    assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
+    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id + "-" + q.skin.id));
+    assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${questionIds.sort().join("\n  ")}`);
   }
 
   public gradeAll(graders: GraderMap) {
@@ -403,8 +403,10 @@ export class AssignedExam {
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
-          <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-            ${mk2html(MK_DEFAULT_BOTTOM_MESSAGE_CANVAS)}
+          <div class="container examma-ray-bottom-message">
+            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+              ${mk2html(MK_DEFAULT_BOTTOM_MESSAGE_CANVAS)}
+            </div>
           </div>
         </div>
       </div>
