@@ -31,7 +31,6 @@
     "csv-stringify": "^5.5.3",
     "del": "^6.0.0",
     "he": "^1.2.0",
-    "html-pdf": "^2.2.0",
     "javascript-time-ago": "^2.3.4",
     "jquery": "^3.6.0",
     "json-stable-stringify": "^1.0.1",
