@@ -350,10 +350,12 @@ export class AssignedExam {
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
 
-    let sectionIds = assignedSections.map(s => s.section.section_id + "-" + s.skin.id);
-    assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
-    let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id + "-" + q.skin.id));
-    assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${questionIds.sort().join("\n  ")}`);
+    if (!exam.allow_duplicates) {
+      let sectionIds = assignedSections.map(s => s.section.section_id);
+      assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
+      let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
+      assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${questionIds.sort().join("\n  ")}`);
+    }
   }
 
   public gradeAll(graders: GraderMap) {
@@ -486,6 +488,8 @@ export class Exam {
 
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
+  public readonly allow_duplicates: boolean;
+
   public constructor(spec: ExamSpecification) {
     this.exam_id = spec.id;
     this.title = spec.title;
@@ -494,6 +498,7 @@ export class Exam {
     this.frontendJsPath = spec.frontend_js_path;
     this.frontendGradedJsPath = spec.frontend_graded_js_path;
     this.sections = spec.sections;
+    this.allow_duplicates = !!spec.allow_duplicates;
   }
 
   public addAnnouncement(announcement_mk: string) {

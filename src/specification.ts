@@ -15,7 +15,8 @@ export type ExamSpecification = {
   mk_announcements?: string[],
   frontend_js_path: string,
   frontend_graded_js_path: string,
-  sections: readonly (SectionSpecification | Section | SectionChooser)[]
+  sections: readonly (SectionSpecification | Section | SectionChooser)[],
+  allow_duplicates?: boolean
 };
 
 export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
