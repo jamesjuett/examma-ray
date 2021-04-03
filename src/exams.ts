@@ -52,7 +52,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   }
 
   public renderResponse(uuid: string, skin?: QuestionSkin) {
-    return `<div class="examma-ray-question-response" data-response-kind="${this.kind}">${render_response(this.response, uuid, skin)}</div>`;
+    return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, uuid, skin)}</div>`;
   }
 
   public renderDescription(skin?: QuestionSkin) {
