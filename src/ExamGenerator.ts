@@ -97,7 +97,7 @@ export class ExamGenerator {
   {
     let sectionSkins = section.skins.generate(this.exam, student, skinRand);
     return sectionSkins.map(sectionSkin => new AssignedSection(
-      this.createStudentUuid(student, this.exam.exam_id + "-" + section.section_id),
+      this.createStudentUuid(student, this.exam.exam_id + "-s-" + section.section_id),
       section,
       sectionIndex,
       sectionSkin,
@@ -117,7 +117,7 @@ export class ExamGenerator {
 
     let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     return questionSkins.map(questionSkin => new AssignedQuestion(
-      this.createStudentUuid(student, this.exam.exam_id + "-" + question.question_id),
+      this.createStudentUuid(student, this.exam.exam_id + "-q-" + question.question_id),
       this.exam,
       student,
       question,
