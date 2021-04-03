@@ -144,6 +144,10 @@ code {
   padding-bottom: 30vh;
 }
 
+.examma-ray-question .card-body {
+  padding-bottom: 1em;
+}
+
 .examma-ray-instructions {
   max-width: 850px;
 }
@@ -325,7 +329,6 @@ code {
 .examma-ray-sas-choices {
   overflow-x: auto;
   padding: 0.5em;
-  margin-bottom: 1em;
 }
 
 .examma-ray-sas-choices.sas-view-preview {
@@ -357,6 +360,16 @@ code {
 }
 
 .sas-select-label > pre {
+  margin-bottom: 0;
+}
+
+.examma-ray-sas-header,
+.examma-ray-sas-footer {
+  margin-left: 1.75em;
+}
+
+.examma-ray-sas-header pre,
+.examma-ray-sas-footer pre {
   margin-bottom: 0;
 }
 

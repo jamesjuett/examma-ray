@@ -18,9 +18,11 @@ export type SASGroup = {
 };
 
 export type SASSpecification = {
-  kind: "select_a_statement";
-  code_language: string;
-  choices: (SASGroup | SASItem)[]
+  kind: "select_a_statement",
+  code_language: string,
+  choices: (SASGroup | SASItem)[],
+  header?: string,
+  footer?: string
 };
 
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;
@@ -62,12 +64,18 @@ function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: Qu
         </label>
       </div>
     </div>
+    <div class="examma-ray-sas-header">
+      ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+    </div>
     <div class="examma-ray-sas-choices sas-view-choices">
       ${response.choices.map(
         group => group.kind === "item"
           ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
           : group.items.map(item => renderSASItem(item, question_id, item_index++, response.code_language, skin)).join("\n")
       ).join("\n")}
+    </div>
+    <div class="examma-ray-sas-footer">
+      ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
     </div>
   `;
 }
