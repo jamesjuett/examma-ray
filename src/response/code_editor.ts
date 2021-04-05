@@ -1,12 +1,14 @@
 import { encode } from "he";
-import { applySkin } from "../render";
+import { applySkin, highlightCode } from "../render";
 import { QuestionSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 
 export type CodeEditorSpecification = {
   kind: "code_editor",
   code_language: string,
-  starter: string
+  starter: string,
+  header?: string,
+  footer?: string
 };
 
 export type CodeEditorSubmission = string | typeof BLANK_SUBMISSION;
@@ -37,7 +39,13 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
           </label>
         </div>
       </div>
+      <div class="examma-ray-code-editor-header">
+        ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+      </div>
       <div class="examma-ray-codemirror">${encode(applySkin(response.starter, skin))}</div>
+      <div class="examma-ray-code-editor-footer">
+        ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+      </div>
     </div>
   `;
 }

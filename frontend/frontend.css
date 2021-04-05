@@ -379,7 +379,17 @@ code {
   margin-bottom: 0;
 }
 
+.examma-ray-code-editor-header,
+.examma-ray-code-editor-footer {
+  margin-left: 0ch;
+}
+
+.examma-ray-code-editor-header pre,
+.examma-ray-code-editor-footer pre {
+  margin-bottom: 0;
+}
+
 .examma-ray-codemirror {
+  margin-left: 1ch;
   border: solid 1px #333;
-  margin-bottom: 1em;
 }

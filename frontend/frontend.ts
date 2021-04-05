@@ -303,7 +303,7 @@ function setupCodeEditors() {
     let cm = CodeMirror(cmElem[0], {
       mode: "text/x-c++src",
       theme: "default",
-      lineNumbers: true,
+      lineNumbers: false,
       tabSize: 2,
       keyMap: "sublime",
       extraKeys: {
