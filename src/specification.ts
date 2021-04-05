@@ -16,8 +16,7 @@ export type ExamSpecification = {
   frontend_js_path: string,
   frontend_graded_js_path: string,
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
-  allow_duplicates?: boolean,
-  reference_width?: number
+  allow_duplicates?: boolean
 };
 
 export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
@@ -43,12 +42,13 @@ export function RANDOM_SECTION(n: number, sections: (SectionSpecification | Sect
 
 
 export type SectionSpecification = {
-  readonly id: string;
-  readonly title: string;
-  readonly mk_description: string;
-  readonly mk_reference?: string;
-  readonly questions: QuestionSpecification | Question | QuestionChooser | (QuestionSpecification | Question | QuestionChooser)[];
-  readonly skins?: SkinGenerator;
+  readonly id: string,
+  readonly title: string,
+  readonly mk_description: string,
+  readonly mk_reference?: string,
+  readonly questions: QuestionSpecification | Question | QuestionChooser | (QuestionSpecification | Question | QuestionChooser)[],
+  readonly skins?: SkinGenerator,
+  reference_width?: number
 }
 
 export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];

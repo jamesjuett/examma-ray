@@ -201,7 +201,7 @@ export function renderQuestion(uuid: string, displayIndex: string, description: 
 }
 
 
-
+const DEFAULT_REFERENCE_WIDTH = 40;
 
 export class Section {
 
@@ -216,6 +216,12 @@ export class Section {
   public readonly questions: (QuestionSpecification | Question | QuestionChooser)[];
   public readonly skins: SkinGenerator;
 
+  /**
+   * Desired width of reference material as a percent (e.g. 40 means 40%).
+   * Guaranteed to be an integral value.
+   */
+  public readonly reference_width: number;
+
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
     this.section_id = spec.id;
@@ -225,21 +231,12 @@ export class Section {
     this.questions = Array.isArray(spec.questions) ? spec.questions : [spec.questions];
     this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
 
-    // let json = JSON.parse(readFileSync(`sections/${sectionIndex}.json`, 'utf8'));
-    // let question = (<any[]>json["questions"]).find(q => parseInt(q.index) === partIndex) ?? json["questions"][partIndex-1];
-    // assert(question, `Missing question ${partIndex} in section ${sectionIndex}.json`);
-    // this.data = question["data"];
-    // // this.raw_description = question["questionDescription"] ?? "";
+    this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
 
-
-    // this.section = {
-    //   index: this.sectionIndex,
-    //   title: <string>json["title"],
-    //   raw_description: <string>json["sectionDescription"],
-    //   description: mk2html(<string>json["sectionDescription"]),
-    //   raw_referenceMaterial: <string>json["referenceMaterial"],
-    //   referenceMaterial: mk2html(<string>json["referenceMaterial"]),
-    // }
+    assert(
+      Number.isInteger(this.reference_width) && 0 <= this.reference_width && this.reference_width <= 100,
+      "Reference material width must be an integer between 0 and 100, inclusive."
+    );
   }
 
   public renderDescription(skin?: QuestionSkin) {
@@ -323,7 +320,7 @@ export class AssignedSection {
               <div class="examma-ray-section-description">${this.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
-            <td style="width: 35%;">
+            <td style="width: ${this.section.reference_width}%;">
               <div class="examma-ray-section-reference">
                 <h6>Reference Material (Section ${this.displayIndex})</h6>
                 ${this.html_reference ?? NO_REFERNECE_MATERIAL}
