@@ -1,5 +1,3 @@
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/response/responses";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
