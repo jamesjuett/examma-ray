@@ -14,9 +14,9 @@ module.exports = {
     umdNamedDefine: true
   },
   optimization: {
-    minimize: false,
+    minimize: true,
   },
-  devtool: "source-map",
+  // devtool: "source-map",
   module: {
     rules: [
       {
@@ -43,6 +43,9 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ]
+    extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      handlebars: 'handlebars/dist/handlebars.min.js'
+    }
   }
 };
