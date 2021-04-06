@@ -113,7 +113,7 @@ export class ExamGenerator {
     sectionIndex: number,
     partIndex: number,
     sectionSkin: QuestionSkin,
-    rand: Randomizer = createQuestionSkinRandomizer(student, this.exam, question)) {
+    rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionSkinRandomizer(student, this.exam, question)) {
 
     let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     return questionSkins.map(questionSkin => new AssignedQuestion(
