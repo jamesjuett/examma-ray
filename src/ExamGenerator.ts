@@ -58,6 +58,7 @@ export class ExamGenerator {
 
   public assignRandomizedExam(student: StudentInfo) {
 
+    console.log(`Creating randomized exam for ${student.uniqname}...`);
     let ae = this.createRandomizedExam(student);
 
     this.assignedExams.push(ae);
