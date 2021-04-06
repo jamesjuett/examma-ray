@@ -1,6 +1,11 @@
 export * from "./specification";
 
 export {
+  QuestionSkin,
+  SINGLE_REPLACEMENT_SKINS
+} from "./skins";
+
+export {
   StudentInfo,
   Question,
   AssignedQuestion,

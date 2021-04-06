@@ -17,3 +17,14 @@ export function createCompositeSkin(sectionSkin: QuestionSkin, questionSkin: Que
     replacements: Object.assign({}, sectionSkin.replacements, questionSkin.replacements)
   };
 }
+
+export function SINGLE_REPLACEMENT_SKINS(target: string, replacements: readonly string[]) {
+  return replacements.map(rep => {
+    let reps: {[index: string]: string} = {};
+    reps[target] = rep;
+    return {
+      id: target + "_" + rep,
+      replacements: reps
+    };
+  });
+}
