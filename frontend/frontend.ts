@@ -263,9 +263,10 @@ function setupSaverModal() {
 function setupChangeListeners() {
   // https://stackoverflow.com/questions/7317273/warn-user-before-leaving-web-page-with-unsaved-changes
   window.addEventListener("beforeunload", function (e) {
-    if (!HAS_UNSAVED_CHANGES) {
-        return undefined;
-    }
+    // EDITED - show the warning always, even if they don't have unsaved changes
+    // if (!HAS_UNSAVED_CHANGES) {
+    //     return undefined;
+    // }
 
     // Note many browsers will ignore this message and just show a
     // default one for security purposes. That's ok.
