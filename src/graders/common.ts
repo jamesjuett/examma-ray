@@ -1,15 +1,15 @@
 import { decode } from "he";
-import { Question } from "../exams";
+import { AssignedQuestion, Question } from "../exams";
 import { ResponseKind } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { QuestionSkin } from "../skins";
 
 export interface Grader<QT extends ResponseKind = ResponseKind> {
   readonly questionType: QT;
-  grade(question: Question<QT>, submission: SubmissionType<QT>): number;
-  renderReport(question: Question<QT>, submission: SubmissionType<QT>, questionSkin: QuestionSkin | undefined): string;
-  renderStats(question: Question<QT>, submissions: readonly SubmissionType<QT>[]): string;
-  renderOverview(question: Question<QT>, submissions: readonly SubmissionType<QT>[]): string;
+  grade(aq: AssignedQuestion<QT>): number;
+  renderReport(aq: AssignedQuestion<QT>): string;
+  renderStats(aqs: readonly AssignedQuestion<QT>[]): string;
+  renderOverview(aqs: readonly AssignedQuestion<QT>[]): string;
 
 };
 

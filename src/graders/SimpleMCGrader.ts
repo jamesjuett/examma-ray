@@ -1,6 +1,6 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { Question } from "../exams";
+import { AssignedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
@@ -23,7 +23,9 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
     public readonly correctIndex: number
   ) { }
 
-  public grade(question: Question<"multiple_choice">, submission: MCSubmission) {
+  public grade(aq: AssignedQuestion<"multiple_choice">) {
+    let question = aq.question;
+    let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return 0;
     }
@@ -33,20 +35,19 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
     return submission[0] === this.correctIndex ? question.pointsPossible : 0;
   }
 
-  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission, skin: QuestionSkin | undefined) {
-    // if (submission === BLANK_SUBMISSION || submission.length === 0) {
-    //   return "You did not select an answer for this question.";
-    // }
+  public renderReport(aq: AssignedQuestion<"multiple_choice">) {
+    let question = aq.question;
+    let submission = aq.submission;
+    
     assert(submission === BLANK_SUBMISSION || submission.length <= 1, "SimpleMCGrader cannot be used for questions where more than one selection is allowed.");
 
-    let score = this.grade(question, submission);
     let chosen: number = submission === BLANK_SUBMISSION || submission.length === 0 ? -1 : submission[0];
 
     let report = `
       <form>
       ${question.response.choices.map((item, i) => `
         <div><input type="radio" ${i === chosen ? "checked" : "disabled"}/>
-        <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, skin)}</label></div>`).join("")}
+        <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, aq.skin)}</label></div>`).join("")}
       </form>
       
       `;
@@ -63,7 +64,9 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview(question: Question<"multiple_choice">, submissions: readonly SubmissionType<"multiple_choice">[]) {
+  public renderOverview(aqs: readonly AssignedQuestion<"multiple_choice">[]) {
+    let question = aqs[0].question;
+    let submissions = aqs.map(aq => aq.submission);
     let f = function (sub: MCSubmission): sub is number[] {
       return sub !== BLANK_SUBMISSION && sub.length > 0;
     };

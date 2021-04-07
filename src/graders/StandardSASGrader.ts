@@ -1,6 +1,6 @@
 import { applySkin, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
-import { Question } from "../exams";
+import { AssignedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
 import { Grader } from "./common";
@@ -34,7 +34,8 @@ export class StandardSASGrader implements Grader<"select_a_statement"> {
     public readonly rubric: readonly SASRubricItem[]
   ) { }
 
-  public grade(question: Question<"select_a_statement">, submission: SASSubmission) {
+  public grade(aq: AssignedQuestion<"select_a_statement">) {
+    let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return 0;
     }
@@ -42,12 +43,19 @@ export class StandardSASGrader implements Grader<"select_a_statement"> {
     return this.rubric.reduce((prev, rubricItem) => prev + gradeSASRubricItem(rubricItem, submission), 0);
   }
 
-  public renderReport(question: Question<"select_a_statement">, submission: SASSubmission, skin: QuestionSkin | undefined) {
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+  public renderReport(aq: AssignedQuestion<"select_a_statement">) {
+    let question = aq.question;
+    let orig_submission = aq.submission;
+    let submission: readonly number[];
+    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
       return "Your answer for this question was blank.";
     }
+    else {
+      submission = orig_submission;
+    }
 
-    let score = this.grade(question, submission);
+    let skin = aq.skin;
+
     return `
     <table class="examma-ray-sas-diff table table-sm">
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>

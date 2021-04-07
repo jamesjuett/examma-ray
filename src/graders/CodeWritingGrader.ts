@@ -1,63 +1,39 @@
 import { encode } from "he";
 import { min } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
-import { AssignedQuestion, Question } from "../exams";
+import { Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
 import { Grader } from "./common";
 import { renderNumBadge, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
+import { CodeEditorSubmission } from "../response/code_editor";
 
+export type CodeWritingRubricItem = {
+    id: string,
+    points: number,
+    title: string,
+    description: string
+  };
+  
 
+export class FITBRegexGrader implements Grader<"code_editor"> {
 
-export type FITBRegexMatcher = {
-  pattern: RegExp | readonly string[];
-  points: number;
-  explanation: string;
-};
+  public readonly questionType = "code_editor";
+  public readonly rubric: readonly CodeWritingRubricItem[];
 
-export type FITBRegexRubricItem = {
-  blankIndex: number;
-  points: number;
-  title: string;
-  description: string;
-  solution: string;
-  patterns: FITBRegexMatcher[];
-};
-
-function identifyCodeWords(blanks: string[]) {
-  let result = new Set<string>();
-  blanks.forEach(code => code.split(/[^a-zA-Z0-9_]/).forEach(w => result.add(w)));
-  return result;
-}
-
-function replaceWordInSubmission(submission: string[], word: string, replacement: string) {
-  return submission.map(blankStr => blankStr.replace(word, replacement));
-}
-
-export class FITBRegexGrader implements Grader<"fitb"> {
-
-  public readonly questionType = "fitb";
-  private solutionWords: ReadonlySet<string>;
-  private minRubricItemPoints: number;
-
-  public constructor(
-    public readonly rubric: readonly FITBRegexRubricItem[]
-  ) {
-
-    this.solutionWords = identifyCodeWords(rubric.map(ri => ri.solution));
-    this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
+  public constructor(rubric: readonly CodeWritingRubricItem[]) {
+    this.rubric = rubric;
   }
 
-  public grade(aq: AssignedQuestion<"fitb">) {
-    let orig_submission = aq.submission;
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+  public grade(question: Question<"code_editor">, orig_submission: CodeEditorSubmission) {
+    if (orig_submission === BLANK_SUBMISSION || orig_submission === "") {
       return 0;
     }
     let submission = orig_submission.slice();
 
-    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
+    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${question.question_id}`.red);
 
     let score = this.grade_helper(submission);
 
@@ -65,7 +41,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     submissionWords.forEach(subWord => this.solutionWords.forEach(solWord => {
       let newScore = this.grade_helper(replaceWordInSubmission(submission, subWord, solWord));
       if (newScore > score + this.minRubricItemPoints) {
-        console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${score} --> ${newScore}`);
+        console.log(`HEYYYYY, might be double jeopardy here. ${question.question_id} Replace ${subWord} with ${solWord}! ${score} --> ${newScore}`);
       }
     }));
 
@@ -82,19 +58,12 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     }, 0);
   }
 
-  public renderReport(aq: AssignedQuestion<"fitb">) {
-    let question = aq.question;
-    let orig_submission = aq.submission;
-    let skin = aq.skin;
-    let submission: readonly string[];
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+  public renderReport(question: Question<"fitb">, submission: FITBSubmission, skin: QuestionSkin | undefined) {
+    if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return "Your answer for this question was blank.";
     }
-    else {
-      submission = orig_submission;
-    }
 
-    let overallScore = this.grade(aq);
+    let overallScore = this.grade(question, submission);
     let scores = this.rubric.map((rubricItem, i) => {
       let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
       return riMatch?.points ?? 0;
@@ -140,9 +109,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     </table>`;
   }
 
-  public renderStats(aqs: readonly AssignedQuestion<"fitb">[]) {
-    let question = aqs[0].question;
-    let submissions = aqs.map(aq => aq.submission);
+  public renderStats(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
     let solutionFilled = createFilledFITB(question.response.content, this.rubric.map(ri => ri.solution));
@@ -195,7 +162,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(aqs: readonly AssignedQuestion<"fitb">[]) {
+  public renderOverview(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
     return assertFalse();
     // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
     // let blankAverages = gradedBlankSubmissions.map(

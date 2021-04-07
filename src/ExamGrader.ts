@@ -9,6 +9,7 @@ import { assertFalse } from './util';
 import { unparse } from 'papaparse';
 import { ExamUtils } from './ExamUtils';
 import { createCompositeSkin } from './skins';
+import del from 'del';
 
 export interface GraderMap {
   [index: string]: Grader | undefined;
@@ -150,9 +151,11 @@ export class ExamGrader {
 
 
   public writeAll() {
+    const examDir = `data/${this.exam.exam_id}/graded/exams`;
 
-    // Create output directories
-    mkdirSync(`data/${this.exam.exam_id}/graded/exams/`, { recursive: true });
+    // Create output directories and clear previous contents
+    mkdirSync(examDir, { recursive: true });
+    del.sync(`${examDir}/*`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -164,8 +167,6 @@ export class ExamGrader {
 
     console.log("Rendering question stats files...");
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
-
-
   }
 
   private writeScoresCsv() {
@@ -186,10 +187,10 @@ export class ExamGrader {
     }));
   }
 
-  private getSubmissionsForQuestion<QT extends ResponseKind>(question: Question<QT>) {
+  private getAssignedQuestions<QT extends ResponseKind>(question: Question<QT>) {
     return this.submittedExams.flatMap(
       ex => ex.assignedSections.flatMap(
-        s => s.assignedQuestions.filter(aq => aq.question.question_id === question.question_id).map(aq => aq.submission)
+        s => s.assignedQuestions.filter(aq => aq.question.question_id === question.question_id)
       )
     );
   }
@@ -210,7 +211,7 @@ export class ExamGrader {
       return;
     }
 
-    let statsReport = grader.renderStats(question,this.getSubmissionsForQuestion(question));
+    let statsReport = grader.renderStats(this.getAssignedQuestions(question));
 
     let header = `<div style="margin: 2em">${renderQuestion(question.question_id, "N/A", "", "", "", "")}</div>`
 

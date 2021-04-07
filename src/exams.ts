@@ -92,10 +92,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public grade(grader: Grader<QT>) {
     console.log("here");
-    this.setPointsEarned(grader.grade(
-      this.question,
-      this.submission
-    ));
+    this.setPointsEarned(grader.grade(this));
     (<Mutable<this>>this).gradedBy = grader;
   }
 
@@ -137,7 +134,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
       let exception_html = "";
       
       if (this.isGraded()) {
-        graded_html = this.gradedBy.renderReport(this.question, this.submission, this.skin);
+        graded_html = this.gradedBy.renderReport(this);
         exception_html = this.renderExceptionIfPresent();
       }
       else {
