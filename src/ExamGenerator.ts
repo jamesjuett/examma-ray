@@ -64,6 +64,8 @@ export class ExamGenerator {
     this.assignedExams.push(ae);
     this.assignedExamsByUniqname[student.uniqname] = ae;
 
+    assert(ae.pointsPossible === this.assignedExams[0].pointsPossible, `Error: Inconsistent total point values. ${this.assignedExams[0].student.uniqname}=${this.assignedExams[0].pointsPossible}, ${ae.student.uniqname}=${ae.pointsPossible}.`.red);
+
     return ae;
   }
 
