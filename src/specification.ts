@@ -27,7 +27,7 @@ export function chooseSections(chooser: SectionSpecification | Section | Section
       [new Section(chooser)]
 }
 
-export function RANDOM_SECTION(n: number, sections: (SectionSpecification | Section)[]) {
+export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | Section)[]) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     if (rand === CHOOSE_ALL) {
       return sections.map(s => s instanceof Section ? s : new Section(s));
@@ -78,7 +78,7 @@ export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank
   }
 }
 
-export function RANDOM_ANY(n: number, questionBank: QuestionBank | (QuestionSpecification | Question)[]) {
+export function RANDOM_ANY(n: number, questionBank: QuestionBank | readonly (QuestionSpecification | Question)[]) {
   if (!(questionBank instanceof QuestionBank)) {
     questionBank = new QuestionBank(questionBank);
   }
