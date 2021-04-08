@@ -108,9 +108,8 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public render(mode: RenderMode) {
 
-    let question_header_html = `<b>${this.displayIndex}</b>`;
     if (mode === RenderMode.ORIGINAL) {
-      question_header_html += ` ${renderPointsWorthBadge(this.question.pointsPossible)}`;
+      let question_header_html = `<b>${this.displayIndex}</b> ${renderPointsWorthBadge(this.question.pointsPossible)}`;
       return `
         <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
           <div class="card">
@@ -128,8 +127,8 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
       `;
     }
     else {
-      question_header_html += ` ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
-    
+      let question_header_html = `<b>${this.displayIndex}</b> ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
+
       let graded_html: string;
       let exception_html = "";
       
@@ -144,7 +143,38 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         </div>`; 
       }
 
-      return renderQuestion(this.uuid, this.displayIndex, this.html_description, question_header_html, exception_html, graded_html);
+      let regrades = `
+        <div style="text-align: right">
+          <input type="checkbox" id="regrade-${this.uuid}-checkbox" data-toggle="collapse" data-target="#regrade-${this.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${this.uuid}"></input>
+          <label for="regrade-${this.uuid}-checkbox">Mark for Regrade</label>
+        </div>
+        <div class="collapse examma-ray-question-regrade" id="regrade-${this.uuid}">
+          <p>Please describe your regrade request for this question in the box below. After
+          marking <b>all</b> questions for which you would like to request a regrade,
+          click "Submit Regrade Request" at the bottom of the page.</p>
+        </div>
+      `;
+
+      return `
+      <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
+        <div class="card">
+          <div class="card-header">
+            ${question_header_html}
+          </div>
+          <div class="card-body" style="margin-bottom: 1em">
+            <div class="examma-ray-question-description">
+              ${this.html_description}
+            </div>
+            <div class="examma-ray-question-exception">
+              ${exception_html}
+            </div>
+            <div class="examma-ray-grading-report">
+              ${graded_html}
+            </div>
+            ${this.exam.enable_regrades ? regrades : ""}
+          </div>
+        </div>
+      </div>`;
     }
   }
 
@@ -173,29 +203,6 @@ interface GradedQuestion<QT extends ResponseKind> extends AssignedQuestion<QT> {
 
 
 
-
-// TODO rework this function ew
-export function renderQuestion(uuid: string, displayIndex: string, description: string, header: string, exception: string, gradingReport: string) {
-  return `
-  <div id="question-${uuid}" data-question-uuid="${uuid}" data-question-display-index="${displayIndex}" class="examma-ray-question card-group">
-    <div class="card">
-      <div class="card-header">
-        ${header}
-      </div>
-      <div class="card-body">
-        <div class="examma-ray-question-description">
-          ${description}
-        </div>
-        <div class="examma-ray-question-exception">
-          ${exception}
-        </div>
-        <div class="examma-ray-grading-report">
-          ${gradingReport}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
 
 
 const DEFAULT_REFERENCE_WIDTH = 40;
@@ -466,7 +473,14 @@ export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
 export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
   You've reached the bottom of the exam! If you're done, make sure to
   click the **"Answers File"** button, download a **\`.json\`
-  answers file**, and submit to **Canvas** before the end of the exam!`
+  answers file**, and submit to **Canvas** before the end of the exam!`;
+
+
+export const MK_DEFAULT_REGRADE_MESSAGE = 
+`Please note that you should only submit a regrade request
+if you belive a grading **mistake** was made. Do not submit
+regrade requests based on a disagreement with the rubric or
+point values/weighting for rubric items.`;
 
 
 export class Exam {
@@ -483,6 +497,7 @@ export class Exam {
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
   public readonly allow_duplicates: boolean;
+  public readonly enable_regrades: boolean;
 
   public constructor(spec: ExamSpecification) {
     this.exam_id = spec.id;
@@ -493,6 +508,7 @@ export class Exam {
     this.frontendGradedJsPath = spec.frontend_graded_js_path;
     this.sections = spec.sections;
     this.allow_duplicates = !!spec.allow_duplicates;
+    this.enable_regrades = !!spec.enable_regrades;
   }
 
   public addAnnouncement(announcement_mk: string) {

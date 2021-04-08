@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, renderQuestion } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
 import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./randomization";
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
@@ -213,7 +213,10 @@ export class ExamGrader {
 
     let statsReport = grader.renderStats(this.getAssignedQuestions(question));
 
-    let header = `<div style="margin: 2em">${renderQuestion(question.question_id, "N/A", "", "", "", "")}</div>`
+    let header = `
+      <div style="margin: 2em">
+          ${question.question_id}
+      </div>`;
 
     writeStatsFile(this.exam, out_filename, `
       ${header}

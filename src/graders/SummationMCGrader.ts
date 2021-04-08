@@ -1,5 +1,5 @@
 import { mk2html } from "../render";
-import { Question } from "../exams";
+import { AssignedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
@@ -20,7 +20,9 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
     public readonly pointValues: readonly number[]
   ) { }
 
-  public grade(question: Question<"multiple_choice">, submission: MCSubmission) {
+  public grade(aq: AssignedQuestion<"multiple_choice">) {
+    let question = aq.question;
+    let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return 0;
     }
@@ -28,12 +30,17 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
     return Math.max(0, Math.min(question.pointsPossible, submission.reduce((prev, selection) => prev + this.pointValues[selection], 0)));
   }
 
-  public renderReport(question: Question<"multiple_choice">, submission: MCSubmission, skin: QuestionSkin | undefined) {
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+  public renderReport(aq: AssignedQuestion<"multiple_choice">) {
+    let question = aq.question;
+    let skin = aq.skin;
+    let orig_submission = aq.submission;
+    let submission: readonly number[];
+    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
       return "You did not select an answer for this question.";
     }
-
-    let score = this.grade(question, submission);
+    else {
+      submission = orig_submission;
+    }
 
     return `
       <form class="examma-ray-summation-grader">
