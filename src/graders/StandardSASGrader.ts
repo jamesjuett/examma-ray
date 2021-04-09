@@ -1,11 +1,21 @@
 import { applySkin, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
-import { AssignedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
-import { Grader } from "./common";
+import { Grader, GradingResult } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
+import { assert } from "../util";
+
+
+export type StandardSASGradingResult = GradingResult & {
+  readonly itemResults: readonly {
+    applied: boolean,
+    pointsEarned: number,
+    submittedLines: number[]
+  }[]
+};
 
 type SASRubricItem = {
   points: number;
@@ -14,16 +24,14 @@ type SASRubricItem = {
   title: string;
   description: string;
 };
-function gradeSASRubricItem(rubricItem: SASRubricItem, submission: SASSubmission) {
-  if (submission === BLANK_SUBMISSION ||
-    !rubricItem.required.every(line => submission.indexOf(line) !== -1) ||
-    !rubricItem.prohibited.every(line => submission.indexOf(line) === -1)) {
-    return 0;
-  }
 
-  return rubricItem.points;
+function gradeSASRubricItem(rubricItem: SASRubricItem, submission: Exclude<SASSubmission, typeof BLANK_SUBMISSION>) {
+  return {
+    applied: true,
+    pointsEarned: rubricItem.points,
+    submittedLines: rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1)
+  };
 }
-
 
 
 export class StandardSASGrader implements Grader<"select_a_statement"> {
@@ -34,36 +42,50 @@ export class StandardSASGrader implements Grader<"select_a_statement"> {
     public readonly rubric: readonly SASRubricItem[]
   ) { }
 
-  public grade(aq: AssignedQuestion<"select_a_statement">) {
-    let submission = aq.submission;
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
-      return 0;
+  public grade(aq: AssignedQuestion<"select_a_statement">) : StandardSASGradingResult {
+    let orig_submission = aq.submission;
+    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+      return {
+        wasBlankSubmission: true,
+        pointsEarned: 0,
+        itemResults: []
+      };
     }
+    let submission = orig_submission;
 
-    return this.rubric.reduce((prev, rubricItem) => prev + gradeSASRubricItem(rubricItem, submission), 0);
+    let itemResults = this.rubric.map(rubricItem => gradeSASRubricItem(rubricItem, submission));
+    return {
+      wasBlankSubmission: false,
+      pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
+      itemResults: itemResults
+    }
   }
 
-  public renderReport(aq: AssignedQuestion<"select_a_statement">) {
+  public renderReport(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {
     let question = aq.question;
     let orig_submission = aq.submission;
     let submission: readonly number[];
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+    let gr = aq.gradingResult;
+    if (gr.wasBlankSubmission) {
       return "Your answer for this question was blank.";
     }
     else {
+      assert(orig_submission !== BLANK_SUBMISSION)
       submission = orig_submission;
     }
 
     let skin = aq.skin;
 
+    let itemResults = gr.itemResults;
+    assert(itemResults.length === this.rubric.length);
+
     return `
     <table class="examma-ray-sas-diff table table-sm">
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
-      ${this.rubric.map((rubricItem, i) => {
+      ${itemResults.map((itemResult, i) => {
+        let rubricItem = this.rubric[i];
         let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
-        let missing = rubricItem.required.filter(line => submission.indexOf(line) === -1);
-        let extra = rubricItem.prohibited.filter(line => submission.indexOf(line) !== -1);
-        let riScore = gradeSASRubricItem(rubricItem, submission);
+        let riScore = itemResult.pointsEarned;
 
         // let details: string;
         // if (missing.length === 0 && extra.length === 0) {

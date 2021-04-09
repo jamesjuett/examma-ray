@@ -1,10 +1,10 @@
-import { AssignedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { QuestionSkin } from "../skins";
-import { Grader } from "./common";
+import { Grader, GradingResult } from "./common";
 
-
+export type FreebieGradingResult = GradingResult;
 
 export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
 
@@ -18,14 +18,15 @@ export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
     public readonly blankAllowed = false
   ) { }
 
-  public grade(aq: AssignedQuestion<QT>) {
-    let submission = aq.submission;
-    return this.blankAllowed || submission !== BLANK_SUBMISSION ? this.pointValue : 0;
+  public grade(aq: AssignedQuestion<QT>) : FreebieGradingResult {
+    return {
+      wasBlankSubmission: aq.submission === BLANK_SUBMISSION,
+      pointsEarned: this.blankAllowed || aq.submission !== BLANK_SUBMISSION ? this.pointValue : 0
+    };
   }
 
-  public renderReport(aq: AssignedQuestion<QT>) {
-    let submission = aq.submission;
-    if (!this.blankAllowed && submission === BLANK_SUBMISSION) {
+  public renderReport(aq: GradedQuestion<QT, FreebieGradingResult>) {
+    if (!this.blankAllowed && aq.gradingResult.wasBlankSubmission) {
       return "You did not select an answer for this question.";
     }
     else {

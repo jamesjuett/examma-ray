@@ -1,12 +1,19 @@
 import { mk2html } from "../render";
-import { AssignedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
-import { Grader } from "./common";
+import { Grader, GradingResult } from "./common";
 import { QuestionSkin } from "../skins";
+import { assert } from "../util";
 
 
+export type SummationMCGradingResult = GradingResult & {
+  readonly selections: readonly {
+    optionIndex: number,
+    pointsEarned: number
+  }[]
+};
 
 export class SummationMCGrader implements Grader<"multiple_choice"> {
 
@@ -20,37 +27,54 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
     public readonly pointValues: readonly number[]
   ) { }
 
-  public grade(aq: AssignedQuestion<"multiple_choice">) {
+  public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
-    let submission = aq.submission;
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
-      return 0;
+    let orig_submission = aq.submission;
+    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+      return {
+        wasBlankSubmission: true,
+        pointsEarned: 0,
+        selections: []
+      }
     }
 
-    return Math.max(0, Math.min(question.pointsPossible, submission.reduce((prev, selection) => prev + this.pointValues[selection], 0)));
+    let submission = orig_submission;
+    let selections = submission.map(selection => ({
+      optionIndex: selection,
+      pointsEarned: this.pointValues[selection]
+    }));
+
+    return {
+      wasBlankSubmission: false,
+      pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsEarned, 0))),
+      selections: selections
+    }
   }
 
-  public renderReport(aq: AssignedQuestion<"multiple_choice">) {
+  public renderReport(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {
     let question = aq.question;
     let skin = aq.skin;
     let orig_submission = aq.submission;
-    let submission: readonly number[];
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+    let gr = aq.gradingResult;
+    if (gr.wasBlankSubmission) {
       return "You did not select an answer for this question.";
     }
-    else {
-      submission = orig_submission;
-    }
+
+    assert(orig_submission !== BLANK_SUBMISSION);
+    
+    let selections = gr.selections;
+    let choices = question.response.choices;
+    assert(selections.length === choices.length);
 
     return `
       <form class="examma-ray-summation-grader">
       ${question.response.choices.map((item, i) => {
-      let chosen = submission.indexOf(i) !== -1;
-      return `
+        let chosen = selections.map(s => s.optionIndex).indexOf(i) !== -1;
+        return `
           <div><span ${!chosen ? 'style="visibility: hidden"' : ""}>${renderPointAdjustmentBadge(this.pointValues[i])}</span><input type="checkbox" ${chosen ? "checked" : ""} style="pointer-events: none;" />
-          <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>`;
-    }
-    ).join("")}
+          <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>
+        `;
+      }).join("")}
       </form>
     `;
   }
