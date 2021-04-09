@@ -7,7 +7,7 @@ import { ResponseKind } from './response/common';
 import { mk2html } from './render';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
-import { Grader, isGrader } from './graders/common';
+import { Grader, GradingResult, isGrader } from './graders/common';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { writeFileSync } from 'fs';
@@ -63,9 +63,9 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
-  public readonly pointsEarned?: number;
   public readonly nonExceptionPoints?: number;
   public readonly gradedBy?: Grader<QT>
+  public readonly gradingResult?: GradingResult;
   public readonly exception?: Exception;
 
   public readonly submission: SubmissionType<QT>;
@@ -92,18 +92,16 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public grade(grader: Grader<QT>) {
     console.log("here");
-    this.setPointsEarned(grader.grade(this));
+    (<Mutable<this>>this).gradingResult = grader.grade(this);
     (<Mutable<this>>this).gradedBy = grader;
-  }
-
-  private setPointsEarned(points: number) {
-    (<Mutable<this>>this).pointsEarned = Math.min(this.question.pointsPossible, Math.max(points, 0));
   }
 
   public addException(exception: Exception) {
     (<Mutable<this>>this).exception = exception;
-    (<Mutable<this>>this).nonExceptionPoints = this.pointsEarned;
-    this.setPointsEarned(exception.adjustedScore);
+  }
+
+  public get pointsEarned() {
+    return this.exception?.adjustedScore ?? this.gradingResult?.pointsEarned;
   }
 
   public render(mode: RenderMode) {
@@ -197,9 +195,10 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   
 }
 
-interface GradedQuestion<QT extends ResponseKind> extends AssignedQuestion<QT> {
+export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResult = GradingResult> extends AssignedQuestion<QT> {
   readonly pointsEarned: number;
-  readonly gradedBy: Grader<QT>
+  readonly gradedBy: Grader<QT>;
+  readonly gradingResult: GR;
 }
 
 

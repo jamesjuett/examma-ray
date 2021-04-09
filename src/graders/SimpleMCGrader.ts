@@ -1,17 +1,23 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { AssignedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
 import { assert } from "../util";
-import { Grader } from "./common";
+import { Grader, GradingResult, wasGradedBy } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
 
+/**
+ * chosen is -1 if the submission was blank
+ */
+export type SimpleMCGradingResult = GradingResult & {
+  indexChosen: number,
+  indexCorrect: number
+}
 
-
-export class SimpleMCGrader implements Grader<"multiple_choice"> {
+export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGradingResult> {
 
   public readonly questionType = "multiple_choice";
 
@@ -23,25 +29,34 @@ export class SimpleMCGrader implements Grader<"multiple_choice"> {
     public readonly correctIndex: number
   ) { }
 
-  public grade(aq: AssignedQuestion<"multiple_choice">) {
+  public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
-      return 0;
+      return {
+        blankSubmission: true,
+        pointsEarned: 0,
+        indexChosen: -1,
+        indexCorrect: this.correctIndex
+      };
     }
 
     assert(submission.length <= 1, `${question}\nSimpleMCGrader cannot be used for questions where more than one selection is allowed.`);
 
-    return submission[0] === this.correctIndex ? question.pointsPossible : 0;
+    return {
+      blankSubmission: false,
+      pointsEarned: submission[0] === this.correctIndex ? question.pointsPossible : 0,
+      indexChosen: submission[0],
+      indexCorrect: this.correctIndex
+    };
   }
 
-  public renderReport(aq: AssignedQuestion<"multiple_choice">) {
-    let question = aq.question;
-    let submission = aq.submission;
-    
-    assert(submission === BLANK_SUBMISSION || submission.length <= 1, "SimpleMCGrader cannot be used for questions where more than one selection is allowed.");
+  public renderReport(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>) {
 
-    let chosen: number = submission === BLANK_SUBMISSION || submission.length === 0 ? -1 : submission[0];
+    let question = aq.question;
+    let gr = aq.gradingResult;
+
+    let chosen: number = gr.indexChosen;
 
     let report = `
       <form>
