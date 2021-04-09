@@ -218,39 +218,7 @@ code {
   margin-bottom: 1em;
 }
 
-.examma-ray-grading-report {
-  overflow-x: auto;
-  max-height: 70vh;
-}
 
-.examma-ray-grading-report form {
-  margin-bottom: 0;
-}
-
-.examma-ray-grading-report .btn-link {
-  font-size: 0.8rem;
-}
-
-.nav .examma-ray-score-badge {
-  width: 5em;
-}
-
-.rubric-item-card {
-  width: 17em;
-}
-
-.rubric-item-card .card-header {
-  padding: 0.25rem;
-}
-
-.rubric-item-card .card-body {
-  overflow-x: auto;
-}
-
-.rubric-item-card a.nav-link {
-  font-weight: 500;
-  padding: 0;
-}
 
 
 
@@ -396,4 +364,49 @@ code {
 .examma-ray-codemirror {
   margin-left: 1ch;
   border: solid 1px #333;
+}
+
+
+
+
+
+
+/* GRADING */
+
+.examma-ray-grading-report {
+  overflow-x: auto;
+  max-height: 70vh;
+}
+
+.examma-ray-grading-report form {
+  margin-bottom: 0;
+}
+
+.examma-ray-grading-report .btn-link {
+  font-size: 0.8rem;
+}
+
+.nav .examma-ray-score-badge {
+  width: 5em;
+}
+
+.rubric-item-card {
+  width: 17em;
+}
+
+.rubric-item-card .card-header {
+  padding: 0.25rem;
+}
+
+.rubric-item-card .card-body {
+  overflow-x: auto;
+}
+
+.rubric-item-card a.nav-link {
+  font-weight: 500;
+  padding: 0;
+}
+
+.examm-ray-regrade-entry {
+  width: 100%;
 }

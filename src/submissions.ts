@@ -7,6 +7,8 @@ export type QuestionAnswer = {
   display_index: string,
   kind: ResponseKind,
   response: string,
+  marked_for_regrade?: boolean,
+  regrade_request?: string
 };
 
 export type SectionAnswers = {

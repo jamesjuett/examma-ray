@@ -145,13 +145,14 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
       let regrades = `
         <div style="text-align: right">
-          <input type="checkbox" id="regrade-${this.uuid}-checkbox" data-toggle="collapse" data-target="#regrade-${this.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${this.uuid}"></input>
+          <input type="checkbox" id="regrade-${this.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${this.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${this.uuid}"></input>
           <label for="regrade-${this.uuid}-checkbox">Mark for Regrade</label>
         </div>
         <div class="collapse examma-ray-question-regrade" id="regrade-${this.uuid}">
           <p>Please describe your regrade request for this question in the box below. After
           marking <b>all</b> questions for which you would like to request a regrade,
           click "Submit Regrade Request" at the bottom of the page.</p>
+          <textarea class="examma-ray-regrade-entry"></textarea>
         </div>
       `;
 
