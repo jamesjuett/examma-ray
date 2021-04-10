@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     'frontend': './frontend/frontend',
     'frontend-graded': './frontend/frontend-graded',
+    'code-grader': './frontend/code-grader',
   },
   output: {
     path: path.join(__dirname, '/dist/frontend/'),
@@ -15,14 +16,14 @@ module.exports = {
     umdNamedDefine: true
   },
   optimization: {
-    minimize: true,
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          safari10: true
-        },
-      }),
-    ],
+    minimize: false,
+    // minimizer: [
+    //   new TerserPlugin({
+    //     terserOptions: {
+    //       safari10: true
+    //     },
+    //   }),
+    // ],
   },
   // devtool: "source-map",
   module: {

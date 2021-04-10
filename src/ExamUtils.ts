@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "fs";
 import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissions";
 import Papa from "papaparse";
-import { StudentInfo } from "./exams";
+import { AssignedQuestion, StudentInfo } from "./exams";
 import path from "path";
 import { assert } from "./util";
 
@@ -51,4 +51,5 @@ export namespace ExamUtils {
 
     return students;
   }
+
 }

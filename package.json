@@ -21,6 +21,7 @@
   "homepage": "https://github.com/jamesjuett/examma-ray#readme",
   "dependencies": {
     "@types/katex": "^0.11.0",
+    "@types/wicg-file-system-access": "^2020.9.1",
     "blob-polyfill": "^5.0.20210201",
     "chart.js": "^2.9.4",
     "chroma-js": "^2.1.0",

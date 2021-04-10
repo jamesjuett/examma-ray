@@ -241,7 +241,7 @@ function setupSaverModal() {
     }
     fileInput.val("");
     loadButton.prop("disabled", true).addClass("disabled");
-  })
+  });
 
   // When the exam saver modal is shown, generate the data a potential
   // download of all current answers

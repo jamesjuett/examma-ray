@@ -7,7 +7,7 @@ import { QuestionSkin } from "../skins";
 
 export type GradingResult = {
   pointsEarned: number,
-  blankSubmission: boolean
+  wasBlankSubmission: boolean
 }
 
 export interface Grader<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> {

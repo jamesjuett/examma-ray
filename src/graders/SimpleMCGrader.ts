@@ -34,7 +34,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGrading
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return {
-        blankSubmission: true,
+        wasBlankSubmission: true,
         pointsEarned: 0,
         indexChosen: -1,
         indexCorrect: this.correctIndex
@@ -44,7 +44,7 @@ export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGrading
     assert(submission.length <= 1, `${question}\nSimpleMCGrader cannot be used for questions where more than one selection is allowed.`);
 
     return {
-      blankSubmission: false,
+      wasBlankSubmission: false,
       pointsEarned: submission[0] === this.correctIndex ? question.pointsPossible : 0,
       indexChosen: submission[0],
       indexCorrect: this.correctIndex

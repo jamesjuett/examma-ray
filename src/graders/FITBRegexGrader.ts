@@ -16,7 +16,7 @@ export type FITBRegexGradingResult = GradingResult & {
     pointsEarned: number,
     explanation?: string
   }[]
-}
+};
 
 export type FITBRegexMatcher = {
   pattern: RegExp | readonly string[];

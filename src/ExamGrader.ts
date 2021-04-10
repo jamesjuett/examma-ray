@@ -5,11 +5,14 @@ import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./ran
 import { Grader } from './graders/common';
 import { ResponseKind } from './response/common';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
-import { assertFalse } from './util';
+import { assert, assertFalse } from './util';
 import { unparse } from 'papaparse';
 import { ExamUtils } from './ExamUtils';
 import { createCompositeSkin } from './skins';
 import del from 'del';
+import { chunk } from 'simple-statistics';
+import { GradingAssignmentSpecification } from "./grading/common";
+import { stringify_response } from './response/responses';
 
 export interface GraderMap {
   [index: string]: Grader | undefined;
@@ -187,10 +190,10 @@ export class ExamGrader {
     }));
   }
 
-  private getAssignedQuestions<QT extends ResponseKind>(question: Question<QT>) {
+  private getAssignedQuestions(question_id: string) {
     return this.submittedExams.flatMap(
       ex => ex.assignedSections.flatMap(
-        s => s.assignedQuestions.filter(aq => aq.question.question_id === question.question_id)
+        s => s.assignedQuestions.filter(aq => aq.question.question_id === question_id)
       )
     );
   }
@@ -211,7 +214,7 @@ export class ExamGrader {
       return;
     }
 
-    let statsReport = grader.renderStats(this.getAssignedQuestions(question));
+    let statsReport = grader.renderStats(this.getAssignedQuestions(question.question_id));
 
     let header = `
       <div style="margin: 2em">
@@ -224,6 +227,35 @@ export class ExamGrader {
     `);
   }
 
+  public createGradingAssignments(question_id: string, staff: readonly string[]) : GradingAssignmentSpecification[] {
+    let allAqs = this.getAssignedQuestions(question_id);
+    let chunks = chunk(allAqs, Math.ceil(allAqs.length / staff.length))
+    assert(chunks.length === staff.length, "Not enough exams to split between that many staff");
+    return chunks.map((c, i) => ({
+      staff_uniqname: staff[i],
+      question_id: question_id,
+      submissions: c.map(aq => ({
+        question_uuid: aq.uuid,
+        student: aq.student,
+        response: stringify_response(aq.submission)
+      }))
+    }));
+  }
+
+  public writeGradingAssignments(question_id: string, staff: readonly string[]) {
+
+    const dir = `data/${this.exam.exam_id}/manual_grading`;
+
+    // Create output directories and clear previous contents
+    mkdirSync(dir, { recursive: true });
+    del.sync(`${dir}/*`);
+
+    let assns = this.createGradingAssignments(question_id, staff);
+    assns.forEach(assn => writeFileSync(
+      `${dir}/${assn.staff_uniqname}-${assn.question_id}.json`,
+      JSON.stringify(assn, null, 2)
+    ));
+  }
 }
 
 
