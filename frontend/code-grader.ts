@@ -2,11 +2,25 @@ import { GradingAssignmentSpecification, GradingAssignmentSubmission } from "../
 import { CodeWritingGradingResult } from "../src/graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
 import { BLANK_SUBMISSION } from "../src/response/common";
+import { Program, SourceFile } from "lobster/dist/js/core/Program"
+import { SimpleExerciseLobsterOutlet } from "lobster/dist/js/view/SimpleExerciseLobsterOutlet"
+import { createRunestoneExerciseOutlet } from "lobster/dist/js/view/embeddedExerciseOutlet"
 
 import { highlightCode } from "../src/render";
 import "highlight.js/styles/github.css";
 
 import "./code-grader.css";
+import { COMPLETION_ALL_CHECKPOINTS, COMPLETION_LAST_CHECKPOINT, Exercise, Project } from "lobster/dist/js/core/Project";
+import "lobster/dist/css/buttons.css"
+import "lobster/dist/css/main.css"
+import "lobster/dist/css/code.css"
+import "lobster/dist/css/exercises.css"
+import "lobster/dist/css/frontend.css"
+import { ProjectEditor } from "lobster/dist/js/view/editors";
+import { EndOfMainStateCheckpoint, OutputCheckpoint, StaticAnalysisCheckpoint } from "lobster/dist/js/analysis/checkpoints";
+import { Predicates } from "lobster/dist/js/core/predicates";
+import { containsConstruct } from "lobster/dist/js/analysis/analysis";
+import { Simulation } from "lobster/dist/js/core/Simulation";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and
@@ -27,18 +41,26 @@ async function writeFile(fileHandle: FileSystemFileHandle, contents: string) {
   await writable.close();
 }
 
-function renderSubmissionCard(sub: CodeWritingSubmission) {
-  console.log("r: " + (sub.response === BLANK_SUBMISSION ? "" : sub.response));
-  return `
-    <div class="card">
-      <div class="card-header">
-        ${sub.student.uniqname}
+function lobsterLoadSubmissionCode(code: string) {
+  LOBSTER.project.setFileContents(new SourceFile("file.cpp", applyHarness(code)));
+}
+
+function createSubmissionCard(sub: CodeWritingSubmission) {
+  let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+  let jq = $(`
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        ${sub.student.uniqname} <button class="btn btn-primary">Load</button>
       </div>
-      <div class="card-body">
-        <pre><code>${highlightCode(sub.response === BLANK_SUBMISSION ? "" : sub.response, CODE_LANGUAGE)}</code></pre>
+      <div class="panel-body">
+        <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
       </div>
     </div>
-  `;
+  `);
+  jq.find("button").on("click", () => {
+    lobsterLoadSubmissionCode(code);
+  })
+  return jq;
 }
 
 $(() => {
@@ -55,6 +77,7 @@ $(() => {
   //     loadButton.prop("disabled", true).addClass("disabled");
   //   }
   // });
+  createLobster();
 
   loadButton.on("click", async () => {
     let [fileHandle] = await window.showOpenFilePicker();
@@ -68,7 +91,12 @@ $(() => {
     
     // await writeFile(fileHandle, JSON.stringify(assn, null, 2));
     
-    $(".examma-ray-submissions-column").html(assn.submissions.map(sub => renderSubmissionCard(sub)).join(""))
+    assn.submissions.forEach(sub => $(".examma-ray-submissions-column").append(createSubmissionCard(sub)));
+    let sub = assn.submissions[0];
+
+    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    lobsterLoadSubmissionCode(code);
+
     // let files = (<HTMLInputElement>fileInput[0]).files;
 
     // // only do something if there was a file selected
@@ -89,3 +117,65 @@ $(() => {
     // loadButton.prop("disabled", true).addClass("disabled");
   })
 });
+
+let LOBSTER: SimpleExerciseLobsterOutlet;
+
+function createLobster() {
+  let lobsterElem = $("#lobster-exercise");
+
+  lobsterElem.append(createRunestoneExerciseOutlet("1"));
+
+  let ex = new Exercise({
+    checkpoints: [
+      
+      new StaticAnalysisCheckpoint("Contains Recursive Call", (program: Program) => {
+          return containsConstruct(program, Predicates.byFunctionCallName("countEqual"));
+      }),
+      new StaticAnalysisCheckpoint("Contains Recursive Call", (program: Program) => {
+          return containsConstruct(program, Predicates.byFunctionCallName("countEqual"));
+      }),
+      new EndOfMainStateCheckpoint("Passes Test Cases", (sim: Simulation) => {
+        return !sim.hasAnyEventOccurred
+      }, "", 10000)
+    ],
+    completionCriteria: COMPLETION_LAST_CHECKPOINT,
+    starterCode: "",
+    completionMessage: "Code passes test cases - submission is 100% correct!"
+  })
+
+  let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: applyHarness("") }], ex).turnOnAutoCompile(500);
+  // new ProjectEditor($("#lobster-project-editor"), project);
+  LOBSTER = new SimpleExerciseLobsterOutlet(lobsterElem, project);
+}
+
+function applyHarness(sub: string) {
+  return  `
+  struct Node {
+      int datum;
+      Node *left;
+      Node *right;
+      
+      Node(int datum, Node *left, Node *right)
+        : datum(datum), left(left), right(right) { }
+    };
+    
+    int countEqual(const Node *root, int compare) {
+      ${sub}
+    }
+    
+    int main() {
+      Node *null = 0;
+      Node *lll = new Node(4,null,null);
+      Node *llr = new Node(5,null,null);
+      Node *ll = new Node(2,lll,llr);
+      Node *lrl = new Node(4,null,null);
+      Node *lr = new Node(1,lrl,null);
+      Node *l = new Node(3,ll,lr);
+      Node *rrl = new Node(4,null,null);
+      Node *rr = new Node(4,rrl,null);
+      Node *r = new Node(1,null,rr);
+      Node *root = new Node(4,l,r);
+      assert(countEqual(root, 4) == 5);
+    }
+`;
+}
