@@ -1,12 +1,13 @@
-import { GradingAssignmentSpecification, GradingAssignmentSubmission } from "../src/grading/common";
-import { CodeWritingGradingResult } from "../src/graders/CodeWritingGrader"
+import { GradingAssignmentSpecification, GradingAssignmentSubmission } from "./common";
+import { CodeWritingGradingResult, CodeWritingRubricItem } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
-import { BLANK_SUBMISSION } from "../src/response/common";
+import { BLANK_SUBMISSION } from "../response/common";
+import indentString from "indent-string";
 import { Program, SourceFile } from "lobster/dist/js/core/Program"
 import { SimpleExerciseLobsterOutlet } from "lobster/dist/js/view/SimpleExerciseLobsterOutlet"
 import { createRunestoneExerciseOutlet } from "lobster/dist/js/view/embeddedExerciseOutlet"
 
-import { highlightCode } from "../src/render";
+import { highlightCode } from "../render";
 import "highlight.js/styles/github.css";
 
 import "./code-grader.css";
@@ -21,6 +22,10 @@ import { EndOfMainStateCheckpoint, OutputCheckpoint, StaticAnalysisCheckpoint } 
 import { Predicates } from "lobster/dist/js/core/predicates";
 import { containsConstruct } from "lobster/dist/js/analysis/analysis";
 import { Simulation } from "lobster/dist/js/core/Simulation";
+import { renderScoreBadge, renderUngradedBadge } from "../ui_components";
+import { asMutable } from "../util";
+import { Question } from "../exams";
+import { QuestionSpecification } from "../specification";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and
@@ -41,42 +46,25 @@ async function writeFile(fileHandle: FileSystemFileHandle, contents: string) {
   await writable.close();
 }
 
-function lobsterLoadSubmissionCode(code: string) {
-  LOBSTER.project.setFileContents(new SourceFile("file.cpp", applyHarness(code)));
-}
-
-function createSubmissionCard(sub: CodeWritingSubmission) {
-  let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
-  let jq = $(`
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        ${sub.student.uniqname} <button class="btn btn-primary">Load</button>
-      </div>
-      <div class="panel-body">
-        <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
-      </div>
-    </div>
-  `);
-  jq.find("button").on("click", () => {
-    lobsterLoadSubmissionCode(code);
-  })
-  return jq;
-}
 
 $(() => {
+  $("body").html(`
+    <div class="examma-ray-grading-sidebar">
+      <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
+      <div class="examma-ray-submissions-column">
+
+      </div>
+    </div>
+    <div class="examma-ray-grading-main-panel">
+      <div id="lobster-exercise">
+
+      </div>
+    </div>`
+  );
+
   // let fileInput = $("#load-grading-assignment-input");
   let loadButton = $("#load-grading-assignment-button");
 
-  // Enable/disable the load button based on whether a file is selected
-  // fileInput.on("change", function() {
-  //   let files = (<HTMLInputElement>this).files;
-  //   if (files && files.length > 0) {
-  //     loadButton.prop("disabled", false).removeClass("disabled");
-  //   }
-  //   else {
-  //     loadButton.prop("disabled", true).addClass("disabled");
-  //   }
-  // });
   createLobster();
 
   loadButton.on("click", async () => {
@@ -86,16 +74,11 @@ $(() => {
     let assn = <CodeWritingGradingAssignment>JSON.parse(contents);
     console.log(assn);
 
+    GRADING_APP.loadGradingAssignment(assn);
     // await writeFile(fileHandle, JSON.stringify(assn, null, 8));
 
     
     // await writeFile(fileHandle, JSON.stringify(assn, null, 2));
-    
-    assn.submissions.forEach(sub => $(".examma-ray-submissions-column").append(createSubmissionCard(sub)));
-    let sub = assn.submissions[0];
-
-    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
-    lobsterLoadSubmissionCode(code);
 
     // let files = (<HTMLInputElement>fileInput[0]).files;
 
@@ -127,7 +110,6 @@ function createLobster() {
 
   let ex = new Exercise({
     checkpoints: [
-      
       new StaticAnalysisCheckpoint("Contains Recursive Call", (program: Program) => {
           return containsConstruct(program, Predicates.byFunctionCallName("countEqual"));
       }),
@@ -143,39 +125,99 @@ function createLobster() {
     completionMessage: "Code passes test cases - submission is 100% correct!"
   })
 
-  let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: applyHarness("") }], ex).turnOnAutoCompile(500);
+  let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: "" }], ex).turnOnAutoCompile(500);
   // new ProjectEditor($("#lobster-project-editor"), project);
   LOBSTER = new SimpleExerciseLobsterOutlet(lobsterElem, project);
+
 }
 
-function applyHarness(sub: string) {
-  return  `
-  struct Node {
-      int datum;
-      Node *left;
-      Node *right;
-      
-      Node(int datum, Node *left, Node *right)
-        : datum(datum), left(left), right(right) { }
-    };
-    
-    int countEqual(const Node *root, int compare) {
-      ${sub}
-    }
-    
-    int main() {
-      Node *null = 0;
-      Node *lll = new Node(4,null,null);
-      Node *llr = new Node(5,null,null);
-      Node *ll = new Node(2,lll,llr);
-      Node *lrl = new Node(4,null,null);
-      Node *lr = new Node(1,lrl,null);
-      Node *l = new Node(3,ll,lr);
-      Node *rrl = new Node(4,null,null);
-      Node *rr = new Node(4,rrl,null);
-      Node *r = new Node(1,null,rr);
-      Node *root = new Node(4,l,r);
-      assert(countEqual(root, 4) == 5);
-    }
-`;
+export type CodeWritingManualGraderInterfaceSpecification = {
+  question: QuestionSpecification,
+  rubric: readonly CodeWritingRubricItem[],
+  testHarness: string
 }
+
+class CodeWritingManualGraderApp {
+
+  public readonly question: QuestionSpecification;
+  public readonly rubric: readonly CodeWritingRubricItem[];
+  
+  private testHarness: string;
+
+  private submissionGraders: CodeWritingManualGrader[] = [];
+
+  public constructor(spec: CodeWritingManualGraderInterfaceSpecification) {
+    this.question = spec.question;
+    this.rubric = spec.rubric;
+    this.testHarness = spec.testHarness;
+  }
+
+  private clearGradingAssignment() {
+
+  }
+
+  public loadGradingAssignment(assn: CodeWritingGradingAssignment) {
+
+    this.submissionGraders = assn.submissions.map(sub => new CodeWritingManualGrader(this, sub));
+    this.submissionGraders.forEach(sg => $(".examma-ray-submissions-column").append(sg.thumbnailElem));
+  }
+
+  public openSubmission(sub: CodeWritingManualGrader) {
+    let submission = sub.submission.response === BLANK_SUBMISSION ? "" : sub.submission.response;
+    let code = this.testHarness.replace("{{submission}}", indentString(submission, 2));
+    LOBSTER.project.setFileContents(new SourceFile("file.cpp", code));
+  }
+
+};
+
+let GRADING_APP: CodeWritingManualGraderApp;
+export function configureGradingApp(spec: CodeWritingManualGraderInterfaceSpecification) {
+  GRADING_APP = new CodeWritingManualGraderApp(spec);
+}
+
+class CodeWritingManualGrader {
+  
+  public readonly app: CodeWritingManualGraderApp;
+  public readonly submission: CodeWritingSubmission;
+
+  public readonly thumbnailElem: JQuery;
+
+  public constructor(app: CodeWritingManualGraderApp, submission: CodeWritingSubmission) {
+    this.app = app;
+    this.submission = submission;
+
+    this.thumbnailElem = this.createSubmissionCard(this.submission);
+  }
+
+  private createSubmissionCard(sub: CodeWritingSubmission) {
+    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    let jq = $(`
+      <div class="panel panel-default examma-ray-code-submission-thumbnail">
+        <div class="panel-heading">
+          <button class="btn btn-primary">Load</button>
+          ${sub.student.uniqname}
+          ${sub.grading_result ? renderScoreBadge(sub.grading_result.pointsEarned, this.app.question.points) : renderUngradedBadge(this.app.question.points)}
+        </div>
+        <div class="panel-body">
+          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
+        </div>
+      </div>
+    `);
+    jq.find("button").on("click", () => {
+      this.app.openSubmission(this)
+    })
+    return jq;
+  }
+
+  public updateGradingResult(result: CodeWritingGradingResult) {
+    this.submission.grading_result = result;
+    this.thumbnailElem.find("badge").replaceWith(renderScoreBadge(result.pointsEarned, this.app.question.points))
+  }
+
+}
+
+
+
+
+
+

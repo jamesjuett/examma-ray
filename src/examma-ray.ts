@@ -119,3 +119,7 @@ export {
   QuestionGradingRecords,
   QuestionGradingRecord
 } from "./grading/common";
+
+export {
+  configureGradingApp
+} from "./grading/code-grader";

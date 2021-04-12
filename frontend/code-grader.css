@@ -1,8 +1,18 @@
 .examma-ray-grading-sidebar {
-  width: 200px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .examma-ray-grading-main-panel {
   vertical-align: top;
   padding: 1em;
+  margin-left: 300px;
+}
+
+.examma-ray-code-submission-thumbnail .panel-body pre {
+  font-size: 0.5em;
 }
