@@ -11,8 +11,22 @@
   vertical-align: top;
   padding: 1em;
   margin-left: 300px;
+  margin-right: 200px;
+}
+
+.examma-ray-grading-right-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 200px;
+  overflow-y: auto;
 }
 
 .examma-ray-code-submission-thumbnail .panel-body pre {
   font-size: 0.5em;
+}
+
+.list-group-item.grayed {
+  color: #777;
+  background-color: #eee;
 }

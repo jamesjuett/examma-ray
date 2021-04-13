@@ -3,8 +3,8 @@ import { QuestionGradingRecords } from "../grading/common";
 import { BLANK_SUBMISSION } from "../response/common";
 import { Grader, GradingResult } from "./common";
 
-type AutograderRubricItemStatus = "on" | "off" | "unknown";
-type ManualOverrideRubricItemStatus = "on" | "off";
+export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
+// type ManualOverrideRubricItemStatus = "on" | "off";
 
 export type CodeWritingRubricItem = {
   id: string,
@@ -14,14 +14,15 @@ export type CodeWritingRubricItem = {
 };
 
 export type CodeWritingRubricItemGradingResult = {
-  auto_graded_status?: AutograderRubricItemStatus,
-  manual_override_status?: ManualOverrideRubricItemStatus,
+  status: CodeWritingRubricItemStatus,
+  // manual_override_status?: ManualOverrideRubricItemStatus,
   pointsEarned: number,
-  verified: boolean
+  // verified: boolean
 };
 
 export type CodeWritingGradingResult = GradingResult & {
-  itemResults: CodeWritingRubricItemGradingResult[]
+  itemResults: CodeWritingRubricItemGradingResult[],
+  verified?: boolean
 };
 
 export class CodeWritingGrader implements Grader<"code_editor"> {

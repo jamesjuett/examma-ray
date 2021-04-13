@@ -1,5 +1,5 @@
 import { GradingAssignmentSpecification, GradingAssignmentSubmission } from "./common";
-import { CodeWritingGradingResult, CodeWritingRubricItem } from "../graders/CodeWritingGrader"
+import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemGradingResult, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
 import { BLANK_SUBMISSION } from "../response/common";
 import indentString from "indent-string";
@@ -18,12 +18,13 @@ import "lobster/dist/css/code.css"
 import "lobster/dist/css/exercises.css"
 import "lobster/dist/css/frontend.css"
 import { ProjectEditor } from "lobster/dist/js/view/editors";
-import { EndOfMainStateCheckpoint, OutputCheckpoint, StaticAnalysisCheckpoint } from "lobster/dist/js/analysis/checkpoints";
+import { Checkpoint, EndOfMainStateCheckpoint, OutputCheckpoint, StaticAnalysisCheckpoint } from "lobster/dist/js/analysis/checkpoints";
 import { Predicates } from "lobster/dist/js/core/predicates";
 import { containsConstruct } from "lobster/dist/js/analysis/analysis";
 import { Simulation } from "lobster/dist/js/core/Simulation";
-import { renderScoreBadge, renderUngradedBadge } from "../ui_components";
-import { asMutable } from "../util";
+import "lobster/dist/js/lib/standard";
+import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "../ui_components";
+import { asMutable, assert } from "../util";
 import { Question } from "../exams";
 import { QuestionSpecification } from "../specification";
 
@@ -59,13 +60,15 @@ $(() => {
       <div id="lobster-exercise">
 
       </div>
+    </div>
+    <div class="examma-ray-grading-right-panel">
+      <div class="examma-ray-grading-rubric-buttons">
+      </div>
     </div>`
   );
 
   // let fileInput = $("#load-grading-assignment-input");
   let loadButton = $("#load-grading-assignment-button");
-
-  createLobster();
 
   loadButton.on("click", async () => {
     let [fileHandle] = await window.showOpenFilePicker();
@@ -101,55 +104,76 @@ $(() => {
   })
 });
 
-let LOBSTER: SimpleExerciseLobsterOutlet;
 
-function createLobster() {
-  let lobsterElem = $("#lobster-exercise");
 
-  lobsterElem.append(createRunestoneExerciseOutlet("1"));
 
-  let ex = new Exercise({
-    checkpoints: [
-      new StaticAnalysisCheckpoint("Contains Recursive Call", (program: Program) => {
-          return containsConstruct(program, Predicates.byFunctionCallName("countEqual"));
-      }),
-      new StaticAnalysisCheckpoint("Contains Recursive Call", (program: Program) => {
-          return containsConstruct(program, Predicates.byFunctionCallName("countEqual"));
-      }),
-      new EndOfMainStateCheckpoint("Passes Test Cases", (sim: Simulation) => {
-        return !sim.hasAnyEventOccurred
-      }, "", 10000)
-    ],
-    completionCriteria: COMPLETION_LAST_CHECKPOINT,
-    starterCode: "",
-    completionMessage: "Code passes test cases - submission is 100% correct!"
-  })
-
-  let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: "" }], ex).turnOnAutoCompile(500);
-  // new ProjectEditor($("#lobster-project-editor"), project);
-  LOBSTER = new SimpleExerciseLobsterOutlet(lobsterElem, project);
-
-}
-
-export type CodeWritingManualGraderInterfaceSpecification = {
+export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
   rubric: readonly CodeWritingRubricItem[],
-  testHarness: string
-}
+  testHarness: string,
+  autograders: {[index: string]: Checkpoint}
+};
 
 class CodeWritingManualGraderApp {
 
   public readonly question: QuestionSpecification;
   public readonly rubric: readonly CodeWritingRubricItem[];
   
+  public readonly assn?: CodeWritingGradingAssignment;
+  public readonly currentSubmission?: CodeWritingSubmission;
+
+  public lobster: SimpleExerciseLobsterOutlet;
+
   private testHarness: string;
 
   private submissionGraders: CodeWritingManualGrader[] = [];
 
-  public constructor(spec: CodeWritingManualGraderInterfaceSpecification) {
+  private rubricButtonElems: JQuery[] = [];
+
+  public constructor(spec: CodeWritingManualGraderAppSpecification) {
     this.question = spec.question;
     this.rubric = spec.rubric;
     this.testHarness = spec.testHarness;
+    this.lobster = this.createLobster(spec);
+
+    this.createRubricBar();
+  }
+
+  private createRubricBar() {
+    let buttons = $(".examma-ray-grading-rubric-buttons");
+    buttons.addClass("list-group")
+
+    this.rubric.forEach((ri, i) => {
+        let button = $(
+          `<button type="button" class="list-group-item">
+            <div><b>${ri.title}</b> ${renderPointsWorthBadge(ri.points)}</div>
+            <p>${ri.description}</p>
+          </button>`
+        ).on("click", () => {
+          this.toggleRubricItem(i);
+        });
+          
+        buttons.append(button);
+        this.rubricButtonElems.push(button);
+    });
+  }
+
+  private createLobster(spec: CodeWritingManualGraderAppSpecification) {
+    let lobsterElem = $("#lobster-exercise");
+  
+    lobsterElem.append(createRunestoneExerciseOutlet("1"));
+  
+    let ex = new Exercise({
+      checkpoints: spec.rubric.filter(ri => spec.autograders[ri.id]).map(ri => spec.autograders[ri.id]),
+      completionCriteria: COMPLETION_ALL_CHECKPOINTS,
+      starterCode: "",
+      completionMessage: "Code passes all checkpoints."
+    })
+  
+    let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: "" }], ex).turnOnAutoCompile(500);
+    // new ProjectEditor($("#lobster-project-editor"), project);
+    return new SimpleExerciseLobsterOutlet(lobsterElem, project);
+  
   }
 
   private clearGradingAssignment() {
@@ -157,21 +181,66 @@ class CodeWritingManualGraderApp {
   }
 
   public loadGradingAssignment(assn: CodeWritingGradingAssignment) {
-
+    asMutable(this).assn = assn;
     this.submissionGraders = assn.submissions.map(sub => new CodeWritingManualGrader(this, sub));
     this.submissionGraders.forEach(sg => $(".examma-ray-submissions-column").append(sg.thumbnailElem));
   }
 
-  public openSubmission(sub: CodeWritingManualGrader) {
-    let submission = sub.submission.response === BLANK_SUBMISSION ? "" : sub.submission.response;
-    let code = this.testHarness.replace("{{submission}}", indentString(submission, 2));
-    LOBSTER.project.setFileContents(new SourceFile("file.cpp", code));
+  public openSubmission(sub: CodeWritingSubmission) {
+    asMutable(this).currentSubmission = sub;
+
+    let submittedCode = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 2));
+    this.lobster.project.setFileContents(new SourceFile("file.cpp", code));
+
+    if (!sub.grading_result) {
+      sub.grading_result = {
+        wasBlankSubmission: sub.response === BLANK_SUBMISSION,
+        pointsEarned: 0,
+        itemResults: this.rubric.map(ri => ({
+          status: "unknown",
+          pointsEarned: 0
+        })),
+        verified: false
+      }
+    }
+
+    sub.grading_result.itemResults.forEach((res, i) => {
+      this.setRubricItemButtonStatus(i, res.status)
+    })
+  }
+
+  public setRubricItemButtonStatus(i: number, status: CodeWritingRubricItemStatus) {
+    let elem = this.rubricButtonElems[i];
+    elem.removeClass("active").removeClass("grayed");
+    if (status === "on") {
+      elem.addClass("active");
+    }
+    else if (status === "off") {
+      elem.addClass("grayed");
+    }
+  }
+
+  public toggleRubricItem(i: number) {
+    assert(this.currentSubmission?.grading_result);
+    let currentStatus = this.currentSubmission.grading_result.itemResults[i].status;
+    if (currentStatus === "unknown") {
+      currentStatus = "on";
+    }
+    else if (currentStatus === "on") {
+      currentStatus = "off";
+    }
+    else if (currentStatus === "off") {
+      currentStatus = "unknown";
+    }
+    this.currentSubmission.grading_result.itemResults[i].status = currentStatus;
+    this.setRubricItemButtonStatus(i, currentStatus);
   }
 
 };
 
 let GRADING_APP: CodeWritingManualGraderApp;
-export function configureGradingApp(spec: CodeWritingManualGraderInterfaceSpecification) {
+export function configureGradingApp(spec: CodeWritingManualGraderAppSpecification) {
   GRADING_APP = new CodeWritingManualGraderApp(spec);
 }
 
@@ -204,7 +273,7 @@ class CodeWritingManualGrader {
       </div>
     `);
     jq.find("button").on("click", () => {
-      this.app.openSubmission(this)
+      this.app.openSubmission(this.submission)
     })
     return jq;
   }
