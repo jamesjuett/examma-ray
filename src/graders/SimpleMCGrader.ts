@@ -5,14 +5,14 @@ import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
 import { assert } from "../util";
-import { Grader, GradingResult, wasGradedBy } from "./common";
+import { Grader, ImmutableGradingResult, wasGradedBy } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
 
 /**
  * chosen is -1 if the submission was blank
  */
-export type SimpleMCGradingResult = GradingResult & {
+export type SimpleMCGradingResult = ImmutableGradingResult & {
   indexChosen: number,
   indexCorrect: number
 }
@@ -49,6 +49,10 @@ export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGrading
       indexChosen: submission[0],
       indexCorrect: this.correctIndex
     };
+  }
+
+  public pointsEarned(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>) {
+    return aq.gradingResult.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>) {

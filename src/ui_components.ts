@@ -23,6 +23,11 @@ export function renderNumBadge(num: number | string) {
 export function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
   return `<span class="badge ${cssClass}">${num} ${num === 1 ? "point" : "points"}</span>`;
 }
+
+export function renderShortPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
+  return `<span class="badge ${cssClass} style="width: 3.5em">${num} ${num === 1 ? "pt" : "pts"}</span>`;
+}
+
 let percentCorrectScale = chroma.scale(["#dc3545", "#ffc107", "#28a745"]).mode("lab");
 
 export function renderPercentCorrectBadge(percent: number) {

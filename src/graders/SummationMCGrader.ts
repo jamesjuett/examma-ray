@@ -3,12 +3,12 @@ import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
-import { Grader, GradingResult } from "./common";
+import { Grader, GradingResult, ImmutableGradingResult } from "./common";
 import { QuestionSkin } from "../skins";
 import { assert } from "../util";
 
 
-export type SummationMCGradingResult = GradingResult & {
+export type SummationMCGradingResult = ImmutableGradingResult & {
   readonly selections: readonly {
     optionIndex: number,
     pointsEarned: number
@@ -49,6 +49,10 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
       pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsEarned, 0))),
       selections: selections
     }
+  }
+
+  public pointsEarned(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {
+    return aq.gradingResult.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {

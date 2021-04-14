@@ -16,7 +16,6 @@ export type CodeWritingRubricItem = {
 export type CodeWritingRubricItemGradingResult = {
   status: CodeWritingRubricItemStatus,
   // manual_override_status?: ManualOverrideRubricItemStatus,
-  pointsEarned: number,
   // verified: boolean
 };
 
@@ -42,7 +41,6 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
         wasBlankSubmission: false,
-        pointsEarned: 0,
         itemResults: []
       };
     }
@@ -59,6 +57,12 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
     // });
 
     return this.results.getGradingRecord(aq.uuid).grading_result;
+  }
+
+  public pointsEarned(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {
+    return Math.max(0, Math.min(aq.question.pointsPossible,
+      aq.gradingResult.itemResults.reduce((p, res, i) => p + (res.status === "on" ? this.rubric[i].points : 0), 0)
+    ));
   }
 
   public renderReport(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {

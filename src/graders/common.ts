@@ -6,13 +6,18 @@ import { QuestionSkin } from "../skins";
 
 
 export type GradingResult = {
-  pointsEarned: number,
   wasBlankSubmission: boolean
+}
+
+export type ImmutableGradingResult = GradingResult & {
+  readonly pointsEarned: number;
+  readonly wasBlankSubmission: boolean;
 }
 
 export interface Grader<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> {
   readonly questionType: QT;
   grade(aq: AssignedQuestion<QT>): GR;
+  pointsEarned(aq: GradedQuestion<QT, GR>): number;
   renderReport(aq: GradedQuestion<QT, GR>): string;
   renderStats(aqs: readonly AssignedQuestion<QT>[]): string;
   renderOverview(aqs: readonly AssignedQuestion<QT>[]): string;

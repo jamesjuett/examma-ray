@@ -2,9 +2,9 @@ import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { QuestionSkin } from "../skins";
-import { Grader, GradingResult } from "./common";
+import { Grader, GradingResult, ImmutableGradingResult } from "./common";
 
-export type FreebieGradingResult = GradingResult;
+export type FreebieGradingResult = ImmutableGradingResult;
 
 export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
 
@@ -23,6 +23,10 @@ export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
       wasBlankSubmission: aq.submission === BLANK_SUBMISSION,
       pointsEarned: this.blankAllowed || aq.submission !== BLANK_SUBMISSION ? this.pointValue : 0
     };
+  }
+
+  public pointsEarned(aq: GradedQuestion<QT, FreebieGradingResult>) {
+    return aq.gradingResult.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<QT, FreebieGradingResult>) {

@@ -22,11 +22,52 @@
   overflow-y: auto;
 }
 
+.examma-ray-code-submission-thumbnail {
+  cursor: pointer;
+}
+
 .examma-ray-code-submission-thumbnail .panel-body pre {
   font-size: 0.5em;
 }
 
-.list-group-item.grayed {
-  color: #777;
-  background-color: #eee;
+.examma-ray-grading-rubric-buttons {
+  margin: 0.5em;
+}
+
+.examma-ray-grading-rubric-buttons .list-group-item {
+  border: solid 1px #bbb;
+}
+
+/* Bootstrap 3 doesn't have colored badges, so we add them manually */
+.badge-primary {
+  color: #fff !important;
+  background-color: #007bff !important;
+}
+.badge-warning {
+  color: #212529 !important;
+  background-color: #ffc107 !important;
+}
+.badge-danger {
+  color: #fff !important;
+  background-color: #dc3545 !important;
+}
+.badge-success {
+  color: #fff !important;
+  background-color: #28a745 !important;
+}
+.badge-light {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+}
+.badge-info {
+  color: #fff !important;
+  background-color: #17a2b8 !important;
+}
+.badge-secondary {
+  color: #fff !important;
+  background-color: #6c757d !important;
+}
+.badge-dark {
+  color: #fff !important;
+  background-color: #343a40 !important;
 }

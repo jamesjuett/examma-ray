@@ -23,7 +23,7 @@ import { Predicates } from "lobster/dist/js/core/predicates";
 import { containsConstruct } from "lobster/dist/js/analysis/analysis";
 import { Simulation } from "lobster/dist/js/core/Simulation";
 import "lobster/dist/js/lib/standard";
-import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "../ui_components";
+import { renderPointsWorthBadge, renderScoreBadge, renderShortPointsWorthBadge, renderUngradedBadge } from "../ui_components";
 import { asMutable, assert } from "../util";
 import { Question } from "../exams";
 import { QuestionSpecification } from "../specification";
@@ -37,15 +37,6 @@ const CODE_LANGUAGE = "cpp";
 
 type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor", CodeWritingGradingResult>;
 type CodeWritingSubmission = GradingAssignmentSubmission<"code_editor", CodeWritingGradingResult>;
-
-async function writeFile(fileHandle: FileSystemFileHandle, contents: string) {
-  // Create a FileSystemWritableFileStream to write to.
-  const writable = await fileHandle.createWritable();
-  // Write the contents of the file to the stream.
-  await writable.write(contents);
-  // Close the file and write the contents to disk.
-  await writable.close();
-}
 
 
 $(() => {
@@ -62,6 +53,7 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-right-panel">
+      <button class="btn btn-primary" id="examma-ray-grading-autograde-button">Autograde!</button>
       <div class="examma-ray-grading-rubric-buttons">
       </div>
     </div>`
@@ -69,39 +61,12 @@ $(() => {
 
   // let fileInput = $("#load-grading-assignment-input");
   let loadButton = $("#load-grading-assignment-button");
+  let autogradeButton = $("#examma-ray-grading-autograde-button");
 
-  loadButton.on("click", async () => {
-    let [fileHandle] = await window.showOpenFilePicker();
-    const file = await fileHandle.getFile();
-    const contents = await file.text();
-    let assn = <CodeWritingGradingAssignment>JSON.parse(contents);
-    console.log(assn);
+  loadButton.on("click", async () => GRADING_APP.loadGradingAssignment());
 
-    GRADING_APP.loadGradingAssignment(assn);
-    // await writeFile(fileHandle, JSON.stringify(assn, null, 8));
+  autogradeButton.on("click", () => GRADING_APP.autograde());
 
-    
-    // await writeFile(fileHandle, JSON.stringify(assn, null, 2));
-
-    // let files = (<HTMLInputElement>fileInput[0]).files;
-
-    // // only do something if there was a file selected
-    // // note - there is logic elsewhere to disable the button if there
-    // // is no file selected, so this is just here for completeness
-    // if (files && files.length > 0) {
-    //   try {
-    //     let answers = <GradingAssignmentSpecification>JSON.parse(await files[0].text());
-    //     alert(`This grading assignment is for ${answers.staff_uniqname}...is that you?`);
-    //     console.log(answers.)
-    //   }
-    //   catch(err) {
-    //     alert("Sorry, an error occurred while processing that file. Is it a properly formatted grading assignment JSON file?");
-    //     // TODO add a more rigorous check if the file is not properly formatted than just checking for exceptions
-    //   }
-    // }
-    // fileInput.val("");
-    // loadButton.prop("disabled", true).addClass("disabled");
-  })
 });
 
 
@@ -111,42 +76,56 @@ export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
   rubric: readonly CodeWritingRubricItem[],
   testHarness: string,
-  autograders: {[index: string]: Checkpoint}
+  checkpoints: Checkpoint[],
+  item_autograders?: {
+    [index: string]: (ex: Exercise) => CodeWritingRubricItemStatus
+  },
+  overall_autograder?: (ex: Exercise) => boolean
 };
 
 class CodeWritingManualGraderApp {
 
   public readonly question: QuestionSpecification;
   public readonly rubric: readonly CodeWritingRubricItem[];
+  private item_autograders: {
+    [index: string]: (ex: Exercise) => CodeWritingRubricItemStatus
+  };
+  private overall_autograder?: (ex: Exercise) => boolean;
   
   public readonly assn?: CodeWritingGradingAssignment;
   public readonly currentSubmission?: CodeWritingSubmission;
+
+  private fileHandle?: FileSystemFileHandle;
 
   public lobster: SimpleExerciseLobsterOutlet;
 
   private testHarness: string;
 
-  private submissionGraders: CodeWritingManualGrader[] = [];
-
+  private thumbnailElems: {[index: string]: JQuery} = {};
   private rubricButtonElems: JQuery[] = [];
 
   public constructor(spec: CodeWritingManualGraderAppSpecification) {
     this.question = spec.question;
     this.rubric = spec.rubric;
     this.testHarness = spec.testHarness;
+    this.item_autograders = spec.item_autograders ?? {};
+    this.overall_autograder = spec.overall_autograder;
+
     this.lobster = this.createLobster(spec);
 
     this.createRubricBar();
+
+    setInterval(() => this.saveGradingAssignment(), 10000);
   }
 
   private createRubricBar() {
     let buttons = $(".examma-ray-grading-rubric-buttons");
-    buttons.addClass("list-group")
+    buttons.addClass("list-group");
 
     this.rubric.forEach((ri, i) => {
         let button = $(
           `<button type="button" class="list-group-item">
-            <div><b>${ri.title}</b> ${renderPointsWorthBadge(ri.points)}</div>
+            <div><b>${ri.title}</b> ${renderShortPointsWorthBadge(ri.points)}</div>
             <p>${ri.description}</p>
           </button>`
         ).on("click", () => {
@@ -164,11 +143,11 @@ class CodeWritingManualGraderApp {
     lobsterElem.append(createRunestoneExerciseOutlet("1"));
   
     let ex = new Exercise({
-      checkpoints: spec.rubric.filter(ri => spec.autograders[ri.id]).map(ri => spec.autograders[ri.id]),
+      checkpoints: spec.checkpoints,
       completionCriteria: COMPLETION_ALL_CHECKPOINTS,
       starterCode: "",
       completionMessage: "Code passes all checkpoints."
-    })
+    });
   
     let project = new Project("test", undefined, [{ name: "file.cpp", isTranslationUnit: true, code: "" }], ex).turnOnAutoCompile(500);
     // new ProjectEditor($("#lobster-project-editor"), project);
@@ -176,14 +155,65 @@ class CodeWritingManualGraderApp {
   
   }
 
-  private clearGradingAssignment() {
+  private closeGradingAssignment() {
 
   }
 
-  public loadGradingAssignment(assn: CodeWritingGradingAssignment) {
+  public async loadGradingAssignment() {
+
+    let [fileHandle] = await window.showOpenFilePicker();
+    this.fileHandle = fileHandle;
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    let assn = <CodeWritingGradingAssignment>JSON.parse(contents);
+
     asMutable(this).assn = assn;
-    this.submissionGraders = assn.submissions.map(sub => new CodeWritingManualGrader(this, sub));
-    this.submissionGraders.forEach(sg => $(".examma-ray-submissions-column").append(sg.thumbnailElem));
+    this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
+
+    this.clearThumbnails();
+    this.createThumbnails();
+  }
+
+  private clearThumbnails() {
+    $(".examma-ray-submissions-column").empty();
+    this.thumbnailElems = {};
+  }
+
+  private createThumbnails() {
+    if (!this.assn) { return; }
+    this.assn.submissions.forEach(sub => $(".examma-ray-submissions-column").append(this.createThumbnail(sub)));
+  }
+
+  private createThumbnail(sub: CodeWritingSubmission) {
+    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    let jq = $(`
+      <div class="panel panel-default examma-ray-code-submission-thumbnail">
+        <div class="panel-heading">
+          ${sub.student.uniqname}
+          ${sub.grading_result ? renderScoreBadge(this.pointsEarned(sub.grading_result), this.question.points) : renderUngradedBadge(this.question.points)}
+        </div>
+        <div class="panel-body">
+          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
+        </div>
+      </div>
+    `);
+    jq.on("click", () => {
+      this.openSubmission(sub)
+    });
+    this.thumbnailElems[sub.question_uuid] = jq;
+    return jq;
+  }
+
+  public async saveGradingAssignment() {
+    if (!this.assn || !this.fileHandle) {
+      return;
+    }
+
+    const writable = await this.fileHandle.createWritable();
+    // Write the contents of the file to the stream.
+    await writable.write(JSON.stringify(this.assn, null, 2));
+    // Close the file and write the contents to disk.
+    await writable.close();
   }
 
   public openSubmission(sub: CodeWritingSubmission) {
@@ -193,36 +223,36 @@ class CodeWritingManualGraderApp {
     let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 2));
     this.lobster.project.setFileContents(new SourceFile("file.cpp", code));
 
+    $(".examma-ray-submissions-column").find(".panel-primary").removeClass("panel-primary");
+    this.thumbnailElems[sub.question_uuid].addClass("panel-primary");
+
     if (!sub.grading_result) {
       sub.grading_result = {
         wasBlankSubmission: sub.response === BLANK_SUBMISSION,
-        pointsEarned: 0,
         itemResults: this.rubric.map(ri => ({
-          status: "unknown",
-          pointsEarned: 0
+          status: "unknown"
         })),
         verified: false
       }
     }
 
-    sub.grading_result.itemResults.forEach((res, i) => {
-      this.setRubricItemButtonStatus(i, res.status)
-    })
+    this.updatedGradingResult();
   }
 
-  public setRubricItemButtonStatus(i: number, status: CodeWritingRubricItemStatus) {
-    let elem = this.rubricButtonElems[i];
-    elem.removeClass("active").removeClass("grayed");
-    if (status === "on") {
-      elem.addClass("active");
+  public setRubricItemStatus(i: number, status: CodeWritingRubricItemStatus) {
+    if (!this.currentSubmission?.grading_result) {
+      return;
     }
-    else if (status === "off") {
-      elem.addClass("grayed");
-    }
+    let gr = this.currentSubmission.grading_result;
+    gr.itemResults[i].status = status;
+
+    this.updatedGradingResult();
   }
 
   public toggleRubricItem(i: number) {
-    assert(this.currentSubmission?.grading_result);
+    if(!this.currentSubmission?.grading_result) {
+      return;
+    }
     let currentStatus = this.currentSubmission.grading_result.itemResults[i].status;
     if (currentStatus === "unknown") {
       currentStatus = "on";
@@ -233,8 +263,68 @@ class CodeWritingManualGraderApp {
     else if (currentStatus === "off") {
       currentStatus = "unknown";
     }
-    this.currentSubmission.grading_result.itemResults[i].status = currentStatus;
-    this.setRubricItemButtonStatus(i, currentStatus);
+    this.setRubricItemStatus(i, currentStatus);
+  }
+
+  
+
+  private updateRubricItemButtons() {
+    if (!this.currentSubmission) {
+      return;
+    }
+
+    this.currentSubmission.grading_result?.itemResults.forEach((res, i) => {
+      this.updateRubricItemButton(i, res.status);
+    })
+  }
+
+  private updateRubricItemButton(i: number, status: CodeWritingRubricItemStatus) {
+    let elem = this.rubricButtonElems[i];
+    elem.removeClass("active").removeClass("list-group-item-danger");
+    if (status === "on") {
+      elem.addClass("active");
+    }
+    else if (status === "off") {
+      elem.addClass("list-group-item-danger");
+    }
+  }
+
+  private updatedGradingResult() {
+    if (!this.currentSubmission?.grading_result) {
+      return;
+    }
+
+    let thumbElem = this.thumbnailElems[this.currentSubmission.question_uuid];
+    thumbElem.find(".badge").replaceWith(renderScoreBadge(this.pointsEarned(this.currentSubmission.grading_result), this.question.points))
+    
+    this.updateRubricItemButtons();
+  }
+
+  private pointsEarned(gr: CodeWritingGradingResult) {
+    return Math.max(0, Math.min(this.question.points,
+      gr.itemResults.reduce((p, res, i) => p + (res.status === "on" ? this.rubric[i].points : 0), 0)
+    ));
+  }
+
+  public autograde() {
+    if (!this.currentSubmission?.grading_result) {
+      return;
+    }
+    let gr = this.currentSubmission.grading_result;
+
+    if (this.overall_autograder && this.overall_autograder(this.lobster.project.exercise)) {
+      gr.itemResults = this.rubric.map(ri => ({ status: "on" }));
+    }
+    else {
+      gr.itemResults = this.rubric.map(
+        ri => ({
+          status: this.item_autograders[ri.id] ? this.item_autograders[ri.id](this.lobster.project.exercise) : "unknown"
+        })
+      );
+    }
+
+
+    this.updatedGradingResult();
   }
 
 };
@@ -244,46 +334,6 @@ export function configureGradingApp(spec: CodeWritingManualGraderAppSpecificatio
   GRADING_APP = new CodeWritingManualGraderApp(spec);
 }
 
-class CodeWritingManualGrader {
-  
-  public readonly app: CodeWritingManualGraderApp;
-  public readonly submission: CodeWritingSubmission;
-
-  public readonly thumbnailElem: JQuery;
-
-  public constructor(app: CodeWritingManualGraderApp, submission: CodeWritingSubmission) {
-    this.app = app;
-    this.submission = submission;
-
-    this.thumbnailElem = this.createSubmissionCard(this.submission);
-  }
-
-  private createSubmissionCard(sub: CodeWritingSubmission) {
-    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
-    let jq = $(`
-      <div class="panel panel-default examma-ray-code-submission-thumbnail">
-        <div class="panel-heading">
-          <button class="btn btn-primary">Load</button>
-          ${sub.student.uniqname}
-          ${sub.grading_result ? renderScoreBadge(sub.grading_result.pointsEarned, this.app.question.points) : renderUngradedBadge(this.app.question.points)}
-        </div>
-        <div class="panel-body">
-          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
-        </div>
-      </div>
-    `);
-    jq.find("button").on("click", () => {
-      this.app.openSubmission(this.submission)
-    })
-    return jq;
-  }
-
-  public updateGradingResult(result: CodeWritingGradingResult) {
-    this.submission.grading_result = result;
-    this.thumbnailElem.find("badge").replaceWith(renderScoreBadge(result.pointsEarned, this.app.question.points))
-  }
-
-}
 
 
 

@@ -100,8 +100,8 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     (<Mutable<this>>this).exception = exception;
   }
 
-  public get pointsEarned() {
-    return this.exception?.adjustedScore ?? this.gradingResult?.pointsEarned;
+  public get pointsEarned() : number | undefined {
+    return this.exception?.adjustedScore ?? (this.isGraded() ? this.gradedBy?.pointsEarned(this) : undefined);
   }
 
   public render(mode: RenderMode) {

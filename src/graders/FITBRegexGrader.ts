@@ -5,12 +5,12 @@ import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
-import { Grader, GradingResult } from "./common";
+import { Grader, ImmutableGradingResult } from "./common";
 import { renderNumBadge, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
 
 
-export type FITBRegexGradingResult = GradingResult & {
+export type FITBRegexGradingResult = ImmutableGradingResult & {
   readonly itemResults: readonly {
     matched: boolean,
     pointsEarned: number,
@@ -103,6 +103,10 @@ export class FITBRegexGrader implements Grader<"fitb"> {
       pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
       itemResults: itemResults
     };
+  }
+
+  public pointsEarned(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {
+    return aq.gradingResult.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {

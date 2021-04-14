@@ -3,13 +3,13 @@ import { renderScoreBadge } from "../ui_components";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
-import { Grader, GradingResult } from "./common";
+import { Grader, GradingResult, ImmutableGradingResult } from "./common";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
 import { assert } from "../util";
 
 
-export type StandardSASGradingResult = GradingResult & {
+export type StandardSASGradingResult = ImmutableGradingResult & {
   readonly itemResults: readonly {
     applied: boolean,
     pointsEarned: number,
@@ -59,6 +59,10 @@ export class StandardSASGrader implements Grader<"select_a_statement"> {
       pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
       itemResults: itemResults
     }
+  }
+
+  public pointsEarned(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {
+    return aq.gradingResult.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {
