@@ -105,7 +105,7 @@ function isFullyGraded(sub: CodeWritingSubmission) {
     return false;
   }
 
-  return !!sub.grading_result.itemResults.every(res => res.status !== "unknown");
+  return !!Object.values(sub.grading_result.itemResults).every(res => res!.status !== "unknown");
 }
 
 const SUBMISSION_FILTERS : {
@@ -121,19 +121,14 @@ export type CodeWritingManualGraderAppSpecification = {
   rubric: readonly CodeWritingRubricItem[],
   testHarness: string,
   checkpoints: Checkpoint[],
-  item_autograders?: {
-    [index: string]: (ex: Exercise) => CodeWritingRubricItemStatus
-  },
-  overall_autograder?: (ex: Exercise) => boolean
+  autograder: (ex: Exercise) => CodeWritingGradingResult
 };
 
 class CodeWritingManualGraderApp {
 
   public readonly question: QuestionSpecification;
   public readonly rubric: readonly CodeWritingRubricItem[];
-  private item_autograders: {
-    [index: string]: (ex: Exercise) => CodeWritingRubricItemStatus
-  };
+  private autograder: (ex: Exercise) => CodeWritingGradingResult;
   private overall_autograder?: (ex: Exercise) => boolean;
   
   public readonly assn?: CodeWritingGradingAssignment;
@@ -165,8 +160,7 @@ class CodeWritingManualGraderApp {
     this.question = spec.question;
     this.rubric = spec.rubric;
     this.testHarness = spec.testHarness;
-    this.item_autograders = spec.item_autograders ?? {};
-    this.overall_autograder = spec.overall_autograder;
+    this.autograder = spec.autograder;
 
     this.lobster = this.createLobster(spec);
 
@@ -183,7 +177,7 @@ class CodeWritingManualGraderApp {
         let button = $(
           `<button type="button" class="list-group-item">
             ${renderShortPointsWorthBadge(ri.points)}
-            <div><b>${mk2html(ri.title)}</b></div>
+            <div class="examma-ray-rubric-item-title"><b>${mk2html(ri.title)}</b></div>
             ${mk2html(ri.description)}
           </button>`
         ).on("click", () => {
@@ -302,9 +296,7 @@ class CodeWritingManualGraderApp {
     if (!sub.grading_result) {
       sub.grading_result = {
         wasBlankSubmission: sub.response === BLANK_SUBMISSION,
-        itemResults: this.rubric.map(ri => ({
-          status: "unknown"
-        })),
+        itemResults: {},
         verified: false
       }
     }
@@ -317,7 +309,9 @@ class CodeWritingManualGraderApp {
       return;
     }
     let gr = this.currentSubmission.grading_result;
-    gr.itemResults[i].status = status;
+    gr.itemResults[this.rubric[i].id] = {
+      status: status
+    };
 
     this.updatedGradingResult();
   }
@@ -326,15 +320,15 @@ class CodeWritingManualGraderApp {
     if(!this.currentSubmission?.grading_result) {
       return;
     }
-    let currentStatus = this.currentSubmission.grading_result.itemResults[i].status;
-    if (currentStatus === "unknown") {
+    let currentStatus = this.currentSubmission.grading_result.itemResults[this.rubric[i].id]?.status || "off";
+    if (currentStatus === "off") {
       currentStatus = "on";
     }
     else if (currentStatus === "on") {
-      currentStatus = "off";
-    }
-    else if (currentStatus === "off") {
       currentStatus = "unknown";
+    }
+    else if (currentStatus === "unknown") {
+      currentStatus = "off";
     }
     this.setRubricItemStatus(i, currentStatus);
   }
@@ -342,23 +336,32 @@ class CodeWritingManualGraderApp {
   
 
   private updateRubricItemButtons() {
-    if (!this.currentSubmission) {
+    if (!this.currentSubmission?.grading_result) {
       return;
     }
 
-    this.currentSubmission.grading_result?.itemResults.forEach((res, i) => {
-      this.updateRubricItemButton(i, res.status);
+    let gr = this.currentSubmission.grading_result;
+
+    this.rubric.forEach((ri, i) => {
+      this.updateRubricItemButton(i, gr.itemResults[ri.id]?.status || "off");
     })
   }
 
   private updateRubricItemButton(i: number, status: CodeWritingRubricItemStatus) {
     let elem = this.rubricButtonElems[i];
-    elem.removeClass("active").removeClass("list-group-item-danger");
+    elem.removeClass("list-group-item-success").removeClass("list-group-item-danger").removeClass("list-group-item-warning");
+    elem.find(".examma-ray-unknown-rubric-item-icon").remove();
     if (status === "on") {
-      elem.addClass("active");
+      if (this.rubric[i].points >= 0) {
+        elem.addClass("list-group-item-success");
+      }
+      else {
+        elem.addClass("list-group-item-danger");
+      }
     }
-    else if (status === "off") {
-      elem.addClass("list-group-item-danger");
+    else if (status === "unknown") {
+      elem.addClass("list-group-item-warning");
+      elem.append($(`<span class="examma-ray-unknown-rubric-item-icon"><i class="bi bi-question-diamond-fill"></i><span>`));
     }
   }
 
@@ -378,27 +381,18 @@ class CodeWritingManualGraderApp {
       return 0;
     }
     return Math.max(0, Math.min(this.question.points,
-      gr.itemResults.reduce((p, res, i) => p + (res.status === "on" ? this.rubric[i].points : 0), 0)
+      this.rubric.reduce((p, ri) => p + (gr.itemResults[ri.id]?.status === "on" ? ri.points : 0), 0)
     ));
   }
 
   public autograde() {
-    if (!this.currentSubmission?.grading_result) {
+    if (!this.currentSubmission) {
       return;
     }
-    let gr = this.currentSubmission.grading_result;
 
-    if (this.overall_autograder && this.overall_autograder(this.lobster.project.exercise)) {
-      gr.itemResults = this.rubric.map(ri => ({ status: "on" }));
+    if (this.autograder) {
+      this.currentSubmission.grading_result = this.autograder(this.lobster.project.exercise);
     }
-    else {
-      gr.itemResults = this.rubric.map(
-        ri => ({
-          status: this.item_autograders[ri.id] ? this.item_autograders[ri.id](this.lobster.project.exercise) : "unknown"
-        })
-      );
-    }
-
 
     this.updatedGradingResult();
   }

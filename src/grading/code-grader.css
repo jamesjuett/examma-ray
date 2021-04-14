@@ -45,6 +45,13 @@
   top: -0.5em;
 }
 
+.examma-ray-unknown-rubric-item-icon {
+  position: absolute;
+  left: -0.3em;
+  top: -0.5em;
+  font-size: 1.5em;
+}
+
 /* Bootstrap 3 doesn't have colored badges, so we add them manually */
 .badge-primary {
   color: #fff !important;

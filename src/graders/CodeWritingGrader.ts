@@ -20,7 +20,10 @@ export type CodeWritingRubricItemGradingResult = {
 };
 
 export type CodeWritingGradingResult = GradingResult & {
-  itemResults: CodeWritingRubricItemGradingResult[],
+  /** Maps rubric item ID to result*/
+  itemResults: {
+    [index: string]: CodeWritingRubricItemGradingResult | undefined
+  },
   verified?: boolean
 };
 
@@ -41,7 +44,7 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
         wasBlankSubmission: false,
-        itemResults: []
+        itemResults: {}
       };
     }
 
@@ -61,7 +64,7 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
 
   public pointsEarned(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {
     return Math.max(0, Math.min(aq.question.pointsPossible,
-      aq.gradingResult.itemResults.reduce((p, res, i) => p + (res.status === "on" ? this.rubric[i].points : 0), 0)
+      Object.values(aq.gradingResult.itemResults).reduce((p, res, i) => p + (res?.status === "on" ? this.rubric[i].points : 0), 0)
     ));
   }
 
@@ -74,7 +77,7 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
 
     return `
       <div>
-      ${gr.itemResults.map(itemResult => JSON.stringify(itemResult)).join("<br />")}
+      ${this.rubric.map(ri => JSON.stringify(gr.itemResults[ri.id])).join("<br />")}
       </div>
     `;
   }
