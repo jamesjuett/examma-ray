@@ -36,6 +36,13 @@
 
 .examma-ray-grading-rubric-buttons .list-group-item {
   border: solid 1px #bbb;
+  margin-bottom: 0.6em;
+}
+
+.examma-ray-grading-rubric-buttons .badge {
+  position: absolute;
+  right: -0.5em;
+  top: -0.5em;
 }
 
 /* Bootstrap 3 doesn't have colored badges, so we add them manually */

@@ -7,7 +7,7 @@ import { Program, SourceFile } from "lobster/dist/js/core/Program"
 import { SimpleExerciseLobsterOutlet } from "lobster/dist/js/view/SimpleExerciseLobsterOutlet"
 import { createRunestoneExerciseOutlet } from "lobster/dist/js/view/embeddedExerciseOutlet"
 
-import { highlightCode } from "../render";
+import { highlightCode, mk2html } from "../render";
 import "highlight.js/styles/github.css";
 
 import "./code-grader.css";
@@ -39,12 +39,31 @@ type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor"
 type CodeWritingSubmission = GradingAssignmentSubmission<"code_editor", CodeWritingGradingResult>;
 
 
+type SubmissionsFilterCriterion = "all" | "graded" | "ungraded";
+type SubmissionsSortOrdering = "name" | "score_asc" | "score_desc";
+
 $(() => {
   $("body").html(`
     <div class="examma-ray-grading-sidebar">
       <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
+      <div>
+        <b>Filter</b>
+        <div class="btn-group" role="group">
+          <button data-filter-criterion="all" type="button" class="examma-ray-submissions-filter-button btn btn-primary">All</button>
+          <button data-filter-criterion="ungraded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Ungraded</button>
+          <button data-filter-criterion="graded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Graded</button>
+        </div>
+      </div>
+      <div>
+        <b>Sort</b>
+        <div class="btn-group" role="group">
+          <button data-sort-ordering="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
+          <button data-sort-ordering="score_asc" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score Asc</button>
+          <button data-sort-ordering="score_desc" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score Desc</button>
+        </div>
+      </div>
       <div class="examma-ray-submissions-column">
-
+      
       </div>
     </div>
     <div class="examma-ray-grading-main-panel">
@@ -67,10 +86,35 @@ $(() => {
 
   autogradeButton.on("click", () => GRADING_APP.autograde());
 
+  $(".examma-ray-submissions-filter-button").on("click", function() {
+      $(".examma-ray-submissions-filter-button").removeClass("btn-primary").addClass("btn-default");
+      $(this).removeClass("btn-default").addClass("btn-primary");
+      GRADING_APP.setSubmissionsFilterCriterion($(this).data("filter-criterion"))
+  })
+
+  $(".examma-ray-submissions-sort-button").on("click", function() {
+      $(".examma-ray-submissions-sort-button").removeClass("btn-primary").addClass("btn-default");
+      $(this).removeClass("btn-default").addClass("btn-primary");
+      GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"))
+  })
+
 });
 
+function isFullyGraded(sub: CodeWritingSubmission) {
+  if (!sub.grading_result) {
+    return false;
+  }
 
+  return !!sub.grading_result.itemResults.every(res => res.status !== "unknown");
+}
 
+const SUBMISSION_FILTERS : {
+  [k in SubmissionsFilterCriterion]: (sub: CodeWritingSubmission) => boolean
+} = {
+  "all": (sub: CodeWritingSubmission) => true,
+  "graded": (sub: CodeWritingSubmission) => isFullyGraded(sub),
+  "ungraded": (sub: CodeWritingSubmission) => !isFullyGraded(sub),
+}
 
 export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
@@ -103,6 +147,19 @@ class CodeWritingManualGraderApp {
 
   private thumbnailElems: {[index: string]: JQuery} = {};
   private rubricButtonElems: JQuery[] = [];
+  
+  private submissionsFilterCriterion : SubmissionsFilterCriterion = "all";
+  private submissionsSortOrdering : SubmissionsSortOrdering = "name";
+
+  
+
+  private SUBMISSION_SORTS : {
+    [k in SubmissionsSortOrdering]: (a: CodeWritingSubmission, b: CodeWritingSubmission) => number
+  } = {
+    "name": (a: CodeWritingSubmission, b: CodeWritingSubmission) => a.student.uniqname.localeCompare(b.student.uniqname),
+    "score_asc": (a: CodeWritingSubmission, b: CodeWritingSubmission) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
+    "score_desc": (a: CodeWritingSubmission, b: CodeWritingSubmission) => this.pointsEarned(b.grading_result) - this.pointsEarned(a.grading_result),
+  }
 
   public constructor(spec: CodeWritingManualGraderAppSpecification) {
     this.question = spec.question;
@@ -125,8 +182,9 @@ class CodeWritingManualGraderApp {
     this.rubric.forEach((ri, i) => {
         let button = $(
           `<button type="button" class="list-group-item">
-            <div><b>${ri.title}</b> ${renderShortPointsWorthBadge(ri.points)}</div>
-            <p>${ri.description}</p>
+            ${renderShortPointsWorthBadge(ri.points)}
+            <div><b>${mk2html(ri.title)}</b></div>
+            ${mk2html(ri.description)}
           </button>`
         ).on("click", () => {
           this.toggleRubricItem(i);
@@ -181,7 +239,10 @@ class CodeWritingManualGraderApp {
 
   private createThumbnails() {
     if (!this.assn) { return; }
-    this.assn.submissions.forEach(sub => $(".examma-ray-submissions-column").append(this.createThumbnail(sub)));
+    this.assn.submissions
+      .filter(SUBMISSION_FILTERS[this.submissionsFilterCriterion])
+      .sort(this.SUBMISSION_SORTS[this.submissionsSortOrdering])
+      .forEach(sub => $(".examma-ray-submissions-column").append(this.createThumbnail(sub)));
   }
 
   private createThumbnail(sub: CodeWritingSubmission) {
@@ -202,6 +263,18 @@ class CodeWritingManualGraderApp {
     });
     this.thumbnailElems[sub.question_uuid] = jq;
     return jq;
+  }
+
+  public setSubmissionsFilterCriterion(criterion: SubmissionsFilterCriterion) {
+    this.submissionsFilterCriterion = criterion;
+    this.clearThumbnails();
+    this.createThumbnails();
+  }
+
+  public setSubmissionsSortOrdering(ordering: SubmissionsSortOrdering) {
+    this.submissionsSortOrdering = ordering;
+    this.clearThumbnails();
+    this.createThumbnails();
   }
 
   public async saveGradingAssignment() {
@@ -300,7 +373,10 @@ class CodeWritingManualGraderApp {
     this.updateRubricItemButtons();
   }
 
-  private pointsEarned(gr: CodeWritingGradingResult) {
+  private pointsEarned(gr?: CodeWritingGradingResult) {
+    if (!gr) {
+      return 0;
+    }
     return Math.max(0, Math.min(this.question.points,
       gr.itemResults.reduce((p, res, i) => p + (res.status === "on" ? this.rubric[i].points : 0), 0)
     ));
