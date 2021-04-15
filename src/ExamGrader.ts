@@ -1,3 +1,71 @@
+/**
+ * To start, you'll want to define some graders and a mapping from question IDs
+ * for the questions you're using to those graders. You might put these in their own
+ * files, or in the same file as the question definitions, or somewhere else.
+ * Whatever organization you like is fine, as long as you can eventually import
+ * the graders you define into your grading script.
+ * 
+ * The association between a question ID and the grader that handles that
+ * question is done with a [[GraderMap]].
+ * 
+ * ### `src/rubric/tf.ts`
+ * ```typescript
+ * import { GraderMap, SimpleMCGrader } from "examma-ray";
+ * export const TF_Graders : GraderMap = {
+ *  "sp20_mc_time_complexity_1" : new SimpleMCGrader(0),
+ *  "sp20_mc_time_complexity_2" : new SimpleMCGrader(0)
+ * };
+ * ```
+ * 
+ * ### `src/rubric/s7_3.ts`
+ * ```typescript
+ * import { GraderMap, SimpleMCGrader } from "examma-ray";
+ * export const S7_3_Grader = {
+ *   "sp20_7_3_assn_op": new StandardSASGrader([
+ *     {
+ *       title: "Function Header",
+ *       description: `Function header has correct name, parameter, and return ...`,
+ *       points: 1,
+ *       required: [1],
+ *       prohibited: [0]
+ *     },
+ *     {
+ *       title: "Self-Assignment Check",
+ *       description: "The function should compare the \`this\` pointer, which ...",
+ *       points: 0.5,
+ *       required: [3],
+ *       prohibited: [2]
+ *     },
+ *     ...
+ * ```
+ * 
+ * and so on...
+ * 
+ * Then, set up a top-level grading script to create an [[ExamGrader]], register
+ * your graders with it, load exams, grade the exams, and write out reports:
+ * 
+ * ### `src/grade.ts`
+ * ```typescript
+ * import { ExamGrader } from "examma-ray";
+ * import { exam } from "./exam-spec"
+ * import { TF_Graders } from "./rubric/tf";
+ * import { S7_3_Grader } from "./rubric/s7_3";
+ * 
+ * let grader = new ExamGrader(exam, [
+ *   TF_Graders,
+ *   S7_3_Grader
+ * ]);
+ * 
+ * grader.loadAllSubmissions();
+ * grader.gradeAll();
+ * grader.writeAll();
+ * ```
+ * 
+ * Note the import of `exam` in the example above. TODO
+ * 
+ * @module
+ */
+
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
@@ -14,6 +82,11 @@ import { chunk } from 'simple-statistics';
 import { GradingAssignmentSpecification } from "./grading/common";
 import { stringify_response } from './response/responses';
 
+
+
+/**
+ * A mapping of question ID to grader.
+ */
 export interface GraderMap {
   [index: string]: Grader | undefined;
 }

@@ -6,11 +6,17 @@ import { Grader, GradingResult, ImmutableGradingResult } from "./common";
 
 export type FreebieGradingResult = ImmutableGradingResult;
 
-export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
+/**
+ * A grader that gives points to all submissions. Whether or not blank
+ * submissions earn points can be configured.
+ * @template QT May be any response type
+ */
+export class FreebieGrader<QT extends ResponseKind> implements Grader<ResponseKind> {
 
   /**
-   *
-   * @param pointValue How many points are awarded for answering the question.
+   * @param pointValue How many points are awarded to submissions.
+   * @param questionType The type of response this grader will be used with.
+   * @param blankAllowed Whether or not blank submissions earn points.
    */
   public constructor(
     public readonly pointValue: number,

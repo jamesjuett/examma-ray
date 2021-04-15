@@ -16,6 +16,11 @@ export type ImmutableGradingResult = GradingResult & {
 
 export interface Grader<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> {
   readonly questionType: QT;
+  /**
+   * Grades the given assigned question and returns the grading result. This function
+   * does not itself modify the assigned question to contain the result (just returns it). 
+   * @param aq The assigned question to grade
+   */
   grade(aq: AssignedQuestion<QT>): GR;
   pointsEarned(aq: GradedQuestion<QT, GR>): number;
   renderReport(aq: GradedQuestion<QT, GR>): string;
