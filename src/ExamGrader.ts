@@ -63,19 +63,25 @@
  * grader.writeAll();
  * ```
  * 
- * Note the import of `exam` in the example above. TODO
+ * Note the import of `exam` in the example above. This comes from your exam
+ * specification that you've created in a separate file. TODO link to that documentation.
+ * 
+ * You might also have some questions (e.g. open-ended code writing) that require
+ * people to manually grade. Calling `gradeAll()` won't fully grade those, but
+ * it will trigger the appropriate graders to create grading assignment files.
+ * Once those are filled in, just run the grading script again and it will pick
+ * up the human-generated results in those files.
  * 
  * @module
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
 import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./randomization";
-import { Grader } from './graders/common';
-import { ResponseKind } from './response/common';
+import { QuestionGrader } from './QuestionGrader';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
-import { assert, assertFalse } from './util';
+import { asMutable, assert, assertFalse } from './util';
 import { unparse } from 'papaparse';
 import { ExamUtils } from './ExamUtils';
 import { createCompositeSkin } from './skins';
@@ -85,25 +91,6 @@ import { GradingAssignmentSpecification } from "./grading/common";
 import { stringify_response } from './response/responses';
 
 
-
-/**
- * A mapping of question ID to grader.
- */
-export interface GraderMap {
-  [index: string]: Grader | undefined;
-}
-
-export interface Exception {
-  adjustedScore: number,
-  explanation: string
-}
-
-export interface ExceptionMap {
-  [index: string]: { // uniqname
-    [index: string]: // question id
-    Exception
-  };
-}
 
 export class ExamGrader {
 
@@ -115,6 +102,11 @@ export class ExamGrader {
   public readonly allQuestions: readonly Question[];
   public readonly sectionsMap: { [index: string]: Section | undefined } = {};
   public readonly questionsMap: { [index: string]: Question | undefined } = {};
+
+  public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
+  public readonly assignedQuestionsMap: {
+    [index: string]: readonly AssignedQuestion[];
+  } = {};
 
   public readonly graderMap: GraderMap = {};
   public readonly exceptionMap: ExceptionMap = {};
@@ -133,7 +125,17 @@ export class ExamGrader {
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
-    this.submittedExams.push(this.createExamFromSubmission(answers));
+    let ex = this.createExamFromSubmission(answers);
+    this.submittedExams.push(ex);
+    ex.assignedSections.forEach(s => s.assignedQuestions.forEach(aq => {
+      asMutable(this.allAssignedQuestions).push(aq);
+      if (!this.assignedQuestionsMap[aq.question.question_id]) {
+        this.assignedQuestionsMap[aq.question.question_id] = [aq];
+      }
+      else {
+        asMutable(this.assignedQuestionsMap[aq.question.question_id]).push(aq)
+      }
+    }));
   }
 
   public addSubmissions(answers: readonly TrustedExamSubmission[]) {
@@ -206,6 +208,9 @@ export class ExamGrader {
   }
 
   public gradeAll() {
+
+    this.prepareGraders();
+
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
     // Apply any exceptions to individual questions
@@ -216,6 +221,13 @@ export class ExamGrader {
         )
       )
     );
+  }
+
+  private prepareGraders() {
+    for (let qid in this.graderMap) {
+      let grader = this.graderMap[qid];
+      grader?.prepare && grader.prepare(this.assignedQuestionsMap[qid]);
+    }
   }
 
   private addAppropriateExceptions(aq: AssignedQuestion, student: StudentInfo) {
@@ -300,36 +312,6 @@ export class ExamGrader {
       ${header}
       ${statsReport}
     `);
-  }
-
-  public createGradingAssignments(question_id: string, staff: readonly string[]) : GradingAssignmentSpecification[] {
-    let allAqs = this.getAssignedQuestions(question_id);
-    let chunks = chunk(allAqs, Math.ceil(allAqs.length / staff.length))
-    assert(chunks.length === staff.length, "Not enough exams to split between that many staff");
-    return chunks.map((c, i) => ({
-      staff_uniqname: staff[i],
-      question_id: question_id,
-      submissions: c.map(aq => ({
-        question_uuid: aq.uuid,
-        student: aq.student,
-        response: stringify_response(aq.submission)
-      }))
-    }));
-  }
-
-  public writeGradingAssignments(question_id: string, staff: readonly string[]) {
-
-    const dir = `data/${this.exam.exam_id}/manual_grading`;
-
-    // Create output directories and clear previous contents
-    mkdirSync(dir, { recursive: true });
-    del.sync(`${dir}/*`);
-
-    let assns = this.createGradingAssignments(question_id, staff);
-    assns.forEach(assn => writeFileSync(
-      `${dir}/${assn.staff_uniqname}-${assn.question_id}.json`,
-      JSON.stringify(assn, null, 2)
-    ));
   }
 }
 
@@ -448,3 +430,33 @@ export function writeStatsFile(exam: Exam, filename: string, body: string) {
 
 //   writeAGFile(out_filename, overview);
 // }
+
+
+
+/**
+ * A mapping of question ID to grader.
+ */
+ export type GraderMap = {
+  [index: string]: QuestionGrader | undefined;
+}
+
+/**
+ * An exception including an adjusted score and an explanation
+ * of why the exception was applied.
+ */
+export type Exception = {
+  adjustedScore: number,
+  explanation: string
+}
+
+/**
+ * A mapping from (uniqname, question id) to any exceptions applied
+ * for that student for that question. Only one exception may be
+ * specified per student/question pair.
+ */
+export type ExceptionMap = {
+  [index: string]: { // uniqname
+    [index: string]: // question id
+    Exception | undefined
+  };
+}

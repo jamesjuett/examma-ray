@@ -1,11 +1,11 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
-import { BLANK_SUBMISSION } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { SubmissionType } from "../response/responses";
 import { assert } from "../util";
-import { Grader, ImmutableGradingResult, wasGradedBy } from "./common";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
 
@@ -17,9 +17,7 @@ export type SimpleMCGradingResult = ImmutableGradingResult & {
   indexCorrect: number
 }
 
-export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGradingResult> {
-
-  public readonly questionType = "multiple_choice";
+export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleMCGradingResult> {
 
   /**
    *
@@ -28,6 +26,10 @@ export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGrading
   public constructor(
     public readonly correctIndex: number
   ) { }
+
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "multiple_choice";
+  };
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;
@@ -51,8 +53,8 @@ export class SimpleMCGrader implements Grader<"multiple_choice", SimpleMCGrading
     };
   }
 
-  public pointsEarned(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>) {
-    return aq.gradingResult.pointsEarned;
+  public pointsEarned(gr: SimpleMCGradingResult) {
+    return gr.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>) {

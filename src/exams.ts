@@ -7,7 +7,7 @@ import { ResponseKind } from './response/common';
 import { mk2html } from './render';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
-import { Grader, GradingResult, isGrader } from './graders/common';
+import { QuestionGrader, GradingResult } from './QuestionGrader';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { writeFileSync } from 'fs';
@@ -64,7 +64,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly nonExceptionPoints?: number;
-  public readonly gradedBy?: Grader<QT>
+  public readonly gradedBy?: QuestionGrader<QT>
   public readonly gradingResult?: GradingResult;
   public readonly exception?: Exception;
 
@@ -90,7 +90,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     this.html_description = question.renderDescription(this.skin);
   }
 
-  public grade(grader: Grader<QT>) {
+  public grade(grader: QuestionGrader<QT>) {
     console.log("here");
     (<Mutable<this>>this).gradingResult = grader.grade(this);
     (<Mutable<this>>this).gradedBy = grader;
@@ -101,7 +101,11 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   }
 
   public get pointsEarned() : number | undefined {
-    return this.exception?.adjustedScore ?? (this.isGraded() ? this.gradedBy?.pointsEarned(this) : undefined);
+    return this.exception?.adjustedScore ?? (
+      this.isGraded()
+        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
+        : undefined
+    );
   }
 
   public render(mode: RenderMode) {
@@ -193,11 +197,15 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     return !!this.gradedBy;
   }
   
+  public wasGradedBy<GR extends GradingResult>(grader: QuestionGrader<QT, GR>) : this is GradedQuestion<QT,GR> {
+    return this.gradedBy === grader;
+  };
+
 }
 
 export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResult = GradingResult> extends AssignedQuestion<QT> {
   readonly pointsEarned: number;
-  readonly gradedBy: Grader<QT>;
+  readonly gradedBy: QuestionGrader<QT>;
   readonly gradingResult: GR;
 }
 
@@ -286,7 +294,7 @@ export class AssignedSection {
       let grader = graders[aq.question.question_id];
       if (grader) {
         console.log(`Grading ${aq.question.question_id}`);
-        assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
+        assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
       }
       else {

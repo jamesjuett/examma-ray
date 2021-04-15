@@ -2,10 +2,10 @@ import { encode } from "he";
 import { min } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
-import { BLANK_SUBMISSION } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
-import { Grader, ImmutableGradingResult } from "./common";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { renderNumBadge, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
 
@@ -43,9 +43,8 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
   return submission.map(blankStr => blankStr.replace(word, replacement));
 }
 
-export class FITBRegexGrader implements Grader<"fitb"> {
+export class FITBRegexGrader implements QuestionGrader<"fitb"> {
 
-  public readonly questionType = "fitb";
   private solutionWords: ReadonlySet<string>;
   private minRubricItemPoints: number;
 
@@ -56,6 +55,10 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     this.solutionWords = identifyCodeWords(rubric.map(ri => ri.solution));
     this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
   }
+
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "fitb";
+  };
 
   public grade(aq: AssignedQuestion<"fitb">) : FITBRegexGradingResult {
     let submission = aq.submission;
@@ -105,8 +108,8 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     };
   }
 
-  public pointsEarned(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {
-    return aq.gradingResult.pointsEarned;
+  public pointsEarned(gr: FITBRegexGradingResult) {
+    return gr.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {

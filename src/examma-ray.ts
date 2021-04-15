@@ -79,8 +79,8 @@ export {
 } from "./ExamGrader";
 
 export {
-  Grader
-} from "./graders/common";
+  QuestionGrader as Grader
+} from "./QuestionGrader";
 
 export {
   FITBRegexGrader,

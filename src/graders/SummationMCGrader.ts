@@ -1,9 +1,9 @@
 import { mk2html } from "../render";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
-import { BLANK_SUBMISSION } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
-import { Grader, GradingResult, ImmutableGradingResult } from "./common";
+import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
 import { QuestionSkin } from "../skins";
 import { assert } from "../util";
 
@@ -15,7 +15,7 @@ export type SummationMCGradingResult = ImmutableGradingResult & {
   }[]
 };
 
-export class SummationMCGrader implements Grader<"multiple_choice"> {
+export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
 
   public readonly questionType = "multiple_choice";
 
@@ -26,6 +26,10 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
   public constructor(
     public readonly pointValues: readonly number[]
   ) { }
+
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "multiple_choice";
+  };
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
@@ -51,8 +55,8 @@ export class SummationMCGrader implements Grader<"multiple_choice"> {
     }
   }
 
-  public pointsEarned(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {
-    return aq.gradingResult.pointsEarned;
+  public pointsEarned(gr: SummationMCGradingResult) {
+    return gr.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {

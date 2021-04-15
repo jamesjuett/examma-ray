@@ -1,6 +1,6 @@
 import { QuestionAnswer } from "../submissions";
 import { AssignedQuestion, StudentInfo } from "../exams";
-import { GradingResult } from "../graders/common";
+import { GradingResult } from "../QuestionGrader";
 import { SubmissionType } from "../response/responses";
 import { ResponseKind } from "../response/common";
 

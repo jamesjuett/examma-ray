@@ -2,7 +2,7 @@ import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { QuestionSkin } from "../skins";
-import { Grader, GradingResult, ImmutableGradingResult } from "./common";
+import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;
 
@@ -11,31 +11,33 @@ export type FreebieGradingResult = ImmutableGradingResult;
  * submissions earn points can be configured.
  * @template QT May be any response type
  */
-export class FreebieGrader<QT extends ResponseKind> implements Grader<ResponseKind> {
+export class FreebieGrader implements QuestionGrader<ResponseKind> {
 
   /**
    * @param pointValue How many points are awarded to submissions.
-   * @param questionType The type of response this grader will be used with.
    * @param blankAllowed Whether or not blank submissions earn points.
    */
   public constructor(
     public readonly pointValue: number,
-    public readonly questionType: QT,
     public readonly blankAllowed = false
   ) { }
 
-  public grade(aq: AssignedQuestion<QT>) : FreebieGradingResult {
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return true;
+  };
+
+  public grade(aq: AssignedQuestion) : FreebieGradingResult {
     return {
       wasBlankSubmission: aq.submission === BLANK_SUBMISSION,
       pointsEarned: this.blankAllowed || aq.submission !== BLANK_SUBMISSION ? this.pointValue : 0
     };
   }
 
-  public pointsEarned(aq: GradedQuestion<QT, FreebieGradingResult>) {
-    return aq.gradingResult.pointsEarned;
+  public pointsEarned(gr: FreebieGradingResult) {
+    return gr.pointsEarned;
   }
 
-  public renderReport(aq: GradedQuestion<QT, FreebieGradingResult>) {
+  public renderReport(aq: GradedQuestion<ResponseKind, FreebieGradingResult>) {
     if (!this.blankAllowed && aq.gradingResult.wasBlankSubmission) {
       return "You did not select an answer for this question.";
     }
@@ -44,11 +46,11 @@ export class FreebieGrader<QT extends ResponseKind> implements Grader<ResponseKi
     }
   }
 
-  public renderStats(aqs: readonly AssignedQuestion<QT>[]) {
+  public renderStats(aqs: readonly AssignedQuestion[]) {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview(aqs: readonly AssignedQuestion<QT>[]) {
+  public renderOverview(aqs: readonly AssignedQuestion[]) {
     let submissions = aqs.map(aq => aq.submission);
     if (this.blankAllowed) {
       return `Assigned ${this.pointValue} freebie points to all ${submissions.length} submissions.`;

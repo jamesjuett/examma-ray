@@ -1,7 +1,11 @@
 import { AssignedQuestion, GradedQuestion } from "../exams";
-import { QuestionGradingRecords } from "../grading/common";
-import { BLANK_SUBMISSION } from "../response/common";
-import { Grader, GradingResult } from "./common";
+import { GradingAssignmentSpecification, QuestionGradingRecords } from "../grading/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { QuestionGrader, GradingResult } from "../QuestionGrader";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { asMutable, assert } from "../util";
+import { stringify_response } from "../response/responses";
+import { chunk } from "simple-statistics";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -27,15 +31,25 @@ export type CodeWritingGradingResult = GradingResult & {
   verified?: boolean
 };
 
-export class CodeWritingGrader implements Grader<"code_editor"> {
+export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
 
-  public readonly questionType = "code_editor";
   public readonly rubric: readonly CodeWritingRubricItem[];
-  public readonly results: QuestionGradingRecords<CodeWritingGradingResult>;
+  // public readonly results: QuestionGradingRecords<CodeWritingGradingResult>;
+  public readonly staff: readonly string[];
 
-  public constructor(rubric: readonly CodeWritingRubricItem[], results: QuestionGradingRecords<CodeWritingGradingResult>) {
+  public constructor(rubric: readonly CodeWritingRubricItem[], staff: string[]) {
     this.rubric = rubric;
-    this.results = results;
+    this.staff = staff;
+    // this.results = results;
+  }
+
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "code_editor";
+  };
+  
+  public prepare(aqs: readonly AssignedQuestion<"code_editor">[]) {
+    // nothing needed
+    let assns = this.createGradingAssignments(aqs);
   }
 
   public grade(aq: AssignedQuestion<"code_editor">) : CodeWritingGradingResult {
@@ -59,13 +73,16 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
     //   };
     // });
 
-    return this.results.getGradingRecord(aq.uuid).grading_result;
+    return {
+      wasBlankSubmission: false,
+      itemResults: {
+        // TODO PLACEHOLDER
+      }
+    };//this.results.getGradingRecord(aq.uuid).grading_result;
   }
 
-  public pointsEarned(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {
-    return Math.max(0, Math.min(aq.question.pointsPossible,
-      Object.values(aq.gradingResult.itemResults).reduce((p, res, i) => p + (res?.status === "on" ? this.rubric[i].points : 0), 0)
-    ));
+  public pointsEarned(gr: CodeWritingGradingResult) {
+    return Object.values(gr.itemResults).reduce((p, res, i) => p + (res?.status === "on" ? this.rubric[i].points : 0), 0);
   }
 
   public renderReport(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {
@@ -89,6 +106,47 @@ export class CodeWritingGrader implements Grader<"code_editor"> {
 
   public renderOverview() {
     return "Overview is not implemented for this question/grader type yet.";
+  }
+
+
+
+  private createGradingAssignments(aqs: readonly AssignedQuestion<"code_editor">[]) : GradingAssignmentSpecification[] {
+    let aq = aqs[0];
+    let chunks = chunk(asMutable(aqs), Math.ceil(aqs.length / this.staff.length))
+    assert(chunks.length === this.staff.length, "Not enough exams to split between that many staff");
+    return chunks.map((c, i) => ({
+      staff_uniqname: this.staff[i],
+      question_id: aq.question.question_id,
+      submissions: c.map(aq => ({
+        question_uuid: aq.uuid,
+        student: aq.student,
+        response: stringify_response(aq.submission)
+      }))
+    }));
+  }
+
+  private writeGradingAssignments(aq: AssignedQuestion<"code_editor">, assns: GradingAssignmentSpecification[]) {
+
+    const dir = `data/${aq.exam.exam_id}/manual_grading`;
+
+    // Create output directories
+    // (DO NOT CLEAR THEM OUT - we don't want to accidentally overwrite previous grading results)
+    mkdirSync(dir, { recursive: true });
+
+    // Is it safe to write grading assignments, or would we overwrite something?
+    let wouldOverwrite = assns.some(assn => existsSync(`${dir}/${assn.staff_uniqname}-${assn.question_id}.json`));
+
+    if (!wouldOverwrite) {
+      assns.forEach(assn => writeFileSync(
+        `${dir}/${assn.staff_uniqname}-${assn.question_id}.json`,
+        JSON.stringify(assn, null, 2),
+        { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
+      ));
+    }
+    else {
+      console.log(`Note: manual grading files for exam ${aq.exam.exam_id} and question ${aq.question.question_id} already exist. Not generating new ones.`);
+    }
+
   }
 
 }

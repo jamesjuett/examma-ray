@@ -1,9 +1,9 @@
 import { applySkin, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
-import { BLANK_SUBMISSION } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
-import { Grader, GradingResult, ImmutableGradingResult } from "./common";
+import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
 import { QuestionSkin } from "../skins";
 import { assert } from "../util";
@@ -34,13 +34,15 @@ function gradeSASRubricItem(rubricItem: SASRubricItem, submission: Exclude<SASSu
 }
 
 
-export class StandardSASGrader implements Grader<"select_a_statement"> {
-
-  public readonly questionType = "select_a_statement";
+export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
 
   public constructor(
     public readonly rubric: readonly SASRubricItem[]
   ) { }
+
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "select_a_statement";
+  };
 
   public grade(aq: AssignedQuestion<"select_a_statement">) : StandardSASGradingResult {
     let orig_submission = aq.submission;
@@ -61,8 +63,8 @@ export class StandardSASGrader implements Grader<"select_a_statement"> {
     }
   }
 
-  public pointsEarned(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {
-    return aq.gradingResult.pointsEarned;
+  public pointsEarned(gr: StandardSASGradingResult) {
+    return gr.pointsEarned;
   }
 
   public renderReport(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {

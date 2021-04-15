@@ -6,7 +6,8 @@
   "types": "dist/examma-ray.d.ts",
   "scripts": {
     "build-frontend": "webpack --config webpack.config.js",
-    "test": "TS_NODE_FILES=true mocha -r ts-node/register 'test/**/*.spec.ts'"
+    "test": "TS_NODE_FILES=true mocha -r ts-node/register 'test/**/*.spec.ts'",
+    "docs": "typedoc --out docs src"
   },
   "repository": {
     "type": "git",
