@@ -25,7 +25,7 @@ export function applySkin(text: string, skin: QuestionSkin | undefined) {
     return text;
   }
 
-  let template = Handlebars.compile(text, { strict: true });
+  let template = Handlebars.compile(text, { strict: true, noEscape: true });
   try {
     return template(skin.replacements);
   }
