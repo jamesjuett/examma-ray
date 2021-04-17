@@ -317,6 +317,8 @@ function setupCodeEditors() {
   });
 
   $(".examma-ray-theme-button").on("click", function() {
+    $(".examma-ray-theme-button").removeClass("active");
+    $(`.examma-ray-theme-button[data-codemirror-theme="${$(this).data("codemirror-theme")}"]`).addClass("active");
     codeMirrors.forEach(cm => cm.setOption("theme", $(this).data("codemirror-theme")));
   })
 }
