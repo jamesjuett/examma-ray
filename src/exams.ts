@@ -385,7 +385,7 @@ export class AssignedExam {
       <ul class = "nav" style="display: unset; font-weight: 500">
         ${this.assignedSections.map(s => {
           let scoreBadge = 
-            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary") :
+            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary", true) :
             s.isFullyGraded ? renderScoreBadge(s.pointsEarned!, s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
           return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`

@@ -22,7 +22,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    */
   isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T>;
 
-  prepare?: (aqs: readonly AssignedQuestion<RK>[]) => void;
+  prepareManualGrading?: (aqs: readonly AssignedQuestion<RK>[]) => void;
 
   /**
    * Grades the given assigned question and returns the grading result. This function

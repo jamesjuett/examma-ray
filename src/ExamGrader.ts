@@ -105,7 +105,7 @@ export class ExamGrader {
 
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
   public readonly assignedQuestionsMap: {
-    [index: string]: readonly AssignedQuestion[];
+    [index: string]: readonly AssignedQuestion[] | undefined;
   } = {};
 
   public readonly graderMap: GraderMap = {};
@@ -133,7 +133,7 @@ export class ExamGrader {
         this.assignedQuestionsMap[aq.question.question_id] = [aq];
       }
       else {
-        asMutable(this.assignedQuestionsMap[aq.question.question_id]).push(aq)
+        asMutable(this.assignedQuestionsMap[aq.question.question_id]!).push(aq)
       }
     }));
   }
@@ -209,8 +209,6 @@ export class ExamGrader {
 
   public gradeAll() {
 
-    this.prepareGraders();
-
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
     // Apply any exceptions to individual questions
@@ -223,10 +221,13 @@ export class ExamGrader {
     );
   }
 
-  private prepareGraders() {
+  public prepareManualGrading() {
     for (let qid in this.graderMap) {
+      let question = this.questionsMap[qid];
+      let aqs = this.getAssignedQuestions(qid);
+      assert(question && aqs);
       let grader = this.graderMap[qid];
-      grader?.prepare && grader.prepare(this.assignedQuestionsMap[qid]);
+      grader?.prepareManualGrading && grader.isGrader(question.kind) && grader.prepareManualGrading(aqs);
     }
   }
 
@@ -278,11 +279,7 @@ export class ExamGrader {
   }
 
   private getAssignedQuestions(question_id: string) {
-    return this.submittedExams.flatMap(
-      ex => ex.assignedSections.flatMap(
-        s => s.assignedQuestions.filter(aq => aq.question.question_id === question_id)
-      )
-    );
+    return this.assignedQuestionsMap[question_id] ?? [];
   }
 
   private renderStatsToFile(question: Question) {
@@ -297,11 +294,12 @@ export class ExamGrader {
     let out_filename = `data/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
-    if (!grader) {
+    if (!grader || !grader.isGrader(question.kind)) {
       return;
     }
 
-    let statsReport = grader.renderStats(this.getAssignedQuestions(question.question_id));
+    let aqs = this.getAssignedQuestions(question.question_id);
+    let statsReport = grader.renderStats(aqs);
 
     let header = `
       <div style="margin: 2em">
@@ -437,7 +435,7 @@ export function writeStatsFile(exam: Exam, filename: string, body: string) {
  * A mapping of question ID to grader.
  */
  export type GraderMap = {
-  [index: string]: QuestionGrader | undefined;
+  [index: string]: QuestionGrader<any> | undefined;
 }
 
 /**

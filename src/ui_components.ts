@@ -20,8 +20,9 @@ export function renderNumBadge(num: number | string) {
   return `<span class="badge badge-secondary" style="width: 2.5em">${num}</span>`;
 }
 
-export function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
-  return `<span class="badge ${cssClass}">${num} ${num === 1 ? "point" : "points"}</span>`;
+export function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary", short = false) {
+  let prefix = short ? "pt" : "point";
+  return `<span class="badge ${cssClass}">${num} ${num === 1 ? prefix : prefix+"s"}</span>`;
 }
 
 export function renderShortPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {

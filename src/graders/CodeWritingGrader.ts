@@ -47,9 +47,12 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
     return responseKind === "code_editor";
   };
   
-  public prepare(aqs: readonly AssignedQuestion<"code_editor">[]) {
-    // nothing needed
+  public prepareManualGrading(aqs: readonly AssignedQuestion<"code_editor">[]) {
+    if (aqs.length === 0) {
+      return;
+    }
     let assns = this.createGradingAssignments(aqs);
+    this.writeGradingAssignments(aqs[0].exam.exam_id, aqs[0].question.question_id, assns);
   }
 
   public grade(aq: AssignedQuestion<"code_editor">) : CodeWritingGradingResult {
@@ -125,9 +128,9 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
     }));
   }
 
-  private writeGradingAssignments(aq: AssignedQuestion<"code_editor">, assns: GradingAssignmentSpecification[]) {
+  private writeGradingAssignments(exam_id: string, question_id: string, assns: GradingAssignmentSpecification[]) {
 
-    const dir = `data/${aq.exam.exam_id}/manual_grading`;
+    const dir = `data/${exam_id}/manual_grading`;
 
     // Create output directories
     // (DO NOT CLEAR THEM OUT - we don't want to accidentally overwrite previous grading results)
@@ -144,7 +147,7 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
       ));
     }
     else {
-      console.log(`Note: manual grading files for exam ${aq.exam.exam_id} and question ${aq.question.question_id} already exist. Not generating new ones.`);
+      console.log(`Note: manual grading files for exam ${exam_id} and question ${question_id} already exist. Not generating new ones.`);
     }
 
   }
