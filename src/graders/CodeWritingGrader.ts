@@ -120,10 +120,14 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
     return chunks.map((c, i) => ({
       staff_uniqname: this.staff[i],
       question_id: aq.question.question_id,
-      submissions: c.map(aq => ({
-        question_uuid: aq.uuid,
-        student: aq.student,
-        response: stringify_response(aq.submission)
+      groups: c.map((aq,i) => ({
+        submissions: [{
+          question_uuid: aq.uuid,
+          student: aq.student,
+          response: stringify_response(aq.submission)
+        }],
+        name: "group_" + i,
+        representative_index: 0
       }))
     }));
   }

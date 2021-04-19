@@ -7,6 +7,17 @@
   overflow-y: auto;
 }
 
+.examma-ray-grading-controls {
+  position: -webkit-sticky;
+  position: sticky;
+  background: white;
+  top: 0;
+}
+
+.examma-ray-grading-title {
+  font-weight: bold;
+}
+
 .examma-ray-grading-main-panel {
   vertical-align: top;
   padding: 1em;
@@ -51,6 +62,17 @@
   top: -0.5em;
   font-size: 1.5em;
 }
+
+
+
+
+.examma-ray-group-member-thumbnails {
+  padding: 1em;
+}
+
+
+
+
 
 /* Bootstrap 3 doesn't have colored badges, so we add them manually */
 .badge-primary {

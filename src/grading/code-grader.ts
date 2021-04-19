@@ -1,9 +1,9 @@
-import { GradingAssignmentSpecification, GradingAssignmentSubmission } from "./common";
+import { GradingGroup, GradingAssignmentSpecification, GradingSubmission } from "./common";
 import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemGradingResult, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
 import { BLANK_SUBMISSION } from "../response/common";
 import indentString from "indent-string";
-import { Program, SourceFile } from "lobster/dist/js/core/Program"
+import { Program, SimpleProgram, SourceFile } from "lobster/dist/js/core/Program"
 import { SimpleExerciseLobsterOutlet } from "lobster/dist/js/view/SimpleExerciseLobsterOutlet"
 import { createRunestoneExerciseOutlet } from "lobster/dist/js/view/embeddedExerciseOutlet"
 
@@ -36,7 +36,8 @@ import { QuestionSpecification } from "../specification";
 const CODE_LANGUAGE = "cpp";
 
 type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor", CodeWritingGradingResult>;
-type CodeWritingSubmission = GradingAssignmentSubmission<"code_editor", CodeWritingGradingResult>;
+type CodeWritingGradingGroup = GradingGroup<"code_editor", CodeWritingGradingResult>;
+type CodeWritingSubmission = GradingSubmission<"code_editor", CodeWritingGradingResult>;
 
 
 type SubmissionsFilterCriterion = "all" | "graded" | "ungraded";
@@ -45,13 +46,16 @@ type SubmissionsSortOrdering = "name" | "score_asc" | "score_desc";
 $(() => {
   $("body").html(`
     <div class="examma-ray-grading-sidebar">
-      <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
-      <div>
-        <b>Filter</b>
-        <div class="btn-group" role="group">
-          <button data-filter-criterion="all" type="button" class="examma-ray-submissions-filter-button btn btn-primary">All</button>
-          <button data-filter-criterion="ungraded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Ungraded</button>
-          <button data-filter-criterion="graded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Graded</button>
+      <div class="examma-ray-grading-controls">
+        <span class="examma-ray-grading-title"></span>
+        <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
+        <div>
+          <b>Filter</b>
+          <div class="btn-group" role="group">
+            <button data-filter-criterion="all" type="button" class="examma-ray-submissions-filter-button btn btn-primary">All</button>
+            <button data-filter-criterion="ungraded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Ungraded</button>
+            <button data-filter-criterion="graded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Graded</button>
+          </div>
         </div>
       </div>
       <div>
@@ -67,6 +71,8 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-main-panel">
+      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#groups-modal">Review Group Members</button>
+      <button type="button" class="btn btn-primary examma-ray-auto-group-button">Auto-Group</button>
       <div id="lobster-exercise">
 
       </div>
@@ -75,6 +81,34 @@ $(() => {
       <button class="btn btn-primary" id="examma-ray-grading-autograde-button">Autograde!</button>
       <div class="examma-ray-grading-rubric-buttons">
       </div>
+    </div>
+    
+    <div class="modal fade" id="groups-modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" style="width: 95vw" role="document">
+        <div class="modal-content">
+          <div class="examma-ray-group-member-thumbnails">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="examma-ray-grouping-progress-modal" tabindex="-1" role="dialog" data-backdrop="static">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">Auto-Grouping...</h4>
+        </div>
+        <div class="modal-content">
+          <div class="examma-ray-grouping-progress">
+            Processing...
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: 2%;">
+                0%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>`
   );
 
@@ -82,7 +116,7 @@ $(() => {
   let loadButton = $("#load-grading-assignment-button");
   let autogradeButton = $("#examma-ray-grading-autograde-button");
 
-  loadButton.on("click", async () => GRADING_APP.loadGradingAssignment());
+  loadButton.on("click", async () => GRADING_APP.loadGradingAssignmentFile());
 
   autogradeButton.on("click", () => GRADING_APP.autograde());
 
@@ -90,17 +124,21 @@ $(() => {
       $(".examma-ray-submissions-filter-button").removeClass("btn-primary").addClass("btn-default");
       $(this).removeClass("btn-default").addClass("btn-primary");
       GRADING_APP.setSubmissionsFilterCriterion($(this).data("filter-criterion"))
-  })
+  });
 
   $(".examma-ray-submissions-sort-button").on("click", function() {
       $(".examma-ray-submissions-sort-button").removeClass("btn-primary").addClass("btn-default");
       $(this).removeClass("btn-default").addClass("btn-primary");
       GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"))
-  })
+  });
+
+  $(".examma-ray-auto-group-button").on("click", function() {
+      GRADING_APP.autoGroup()
+  });
 
 });
 
-function isFullyGraded(sub: CodeWritingSubmission) {
+function isFullyGraded(sub: CodeWritingGradingGroup) {
   if (!sub.grading_result) {
     return false;
   }
@@ -109,19 +147,21 @@ function isFullyGraded(sub: CodeWritingSubmission) {
 }
 
 const SUBMISSION_FILTERS : {
-  [k in SubmissionsFilterCriterion]: (sub: CodeWritingSubmission) => boolean
+  [k in SubmissionsFilterCriterion]: (sub: CodeWritingGradingGroup) => boolean
 } = {
-  "all": (sub: CodeWritingSubmission) => true,
-  "graded": (sub: CodeWritingSubmission) => isFullyGraded(sub),
-  "ungraded": (sub: CodeWritingSubmission) => !isFullyGraded(sub),
+  "all": (sub: CodeWritingGradingGroup) => true,
+  "graded": (sub: CodeWritingGradingGroup) => isFullyGraded(sub),
+  "ungraded": (sub: CodeWritingGradingGroup) => !isFullyGraded(sub),
 }
 
 export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
   rubric: readonly CodeWritingRubricItem[],
   testHarness: string,
+  preprocess?: (submission: string) => string,
   checkpoints: Checkpoint[],
-  autograder: (ex: Exercise) => CodeWritingGradingResult
+  autograder: (ex: Exercise) => CodeWritingGradingResult,
+  groupingFunctionName: string
 };
 
 class CodeWritingManualGraderApp {
@@ -132,13 +172,17 @@ class CodeWritingManualGraderApp {
   private overall_autograder?: (ex: Exercise) => boolean;
   
   public readonly assn?: CodeWritingGradingAssignment;
-  public readonly currentSubmission?: CodeWritingSubmission;
+  public readonly currentGroup?: CodeWritingGradingGroup;
 
   private fileHandle?: FileSystemFileHandle;
 
   public lobster: SimpleExerciseLobsterOutlet;
 
+  private preprocess?: (submission: string) => string;
   private testHarness: string;
+  private groupingFunctionName: string;
+
+  private groupMemberThumbnailsElem: JQuery;
 
   private thumbnailElems: {[index: string]: JQuery} = {};
   private rubricButtonElems: JQuery[] = [];
@@ -149,11 +193,11 @@ class CodeWritingManualGraderApp {
   
 
   private SUBMISSION_SORTS : {
-    [k in SubmissionsSortOrdering]: (a: CodeWritingSubmission, b: CodeWritingSubmission) => number
+    [k in SubmissionsSortOrdering]: (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => number
   } = {
-    "name": (a: CodeWritingSubmission, b: CodeWritingSubmission) => a.student.uniqname.localeCompare(b.student.uniqname),
-    "score_asc": (a: CodeWritingSubmission, b: CodeWritingSubmission) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
-    "score_desc": (a: CodeWritingSubmission, b: CodeWritingSubmission) => this.pointsEarned(b.grading_result) - this.pointsEarned(a.grading_result),
+    "name": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => a.name.localeCompare(b.name),
+    "score_asc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
+    "score_desc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(b.grading_result) - this.pointsEarned(a.grading_result),
   }
 
   public constructor(spec: CodeWritingManualGraderAppSpecification) {
@@ -161,12 +205,22 @@ class CodeWritingManualGraderApp {
     this.rubric = spec.rubric;
     this.testHarness = spec.testHarness;
     this.autograder = spec.autograder;
+    this.preprocess = spec.preprocess;
+    this.groupingFunctionName = spec.groupingFunctionName;
+
+    this.groupMemberThumbnailsElem = $(".examma-ray-group-member-thumbnails");
 
     this.lobster = this.createLobster(spec);
+
+    this.createControls();
 
     this.createRubricBar();
 
     setInterval(() => this.saveGradingAssignment(), 10000);
+  }
+
+  private createControls() {
+    $(".examma-ray-grading-title").html(this.question.id);
   }
 
   private createRubricBar() {
@@ -208,10 +262,13 @@ class CodeWritingManualGraderApp {
   }
 
   private closeGradingAssignment() {
+    
+    this.clearThumbnails();
+    this.clearGroup();
 
   }
 
-  public async loadGradingAssignment() {
+  public async loadGradingAssignmentFile() {
 
     let [fileHandle] = await window.showOpenFilePicker();
     this.fileHandle = fileHandle;
@@ -219,10 +276,21 @@ class CodeWritingManualGraderApp {
     const contents = await file.text();
     let assn = <CodeWritingGradingAssignment>JSON.parse(contents);
 
-    asMutable(this).assn = assn;
-    this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
+    if (assn.question_id !== this.question.id) {
+      alert("The question ID for that grading assignment does not match the question ID for this rubric.");
+      return;
+    }
 
-    this.clearThumbnails();
+    this.setGradingAssignment(assn);
+
+    this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
+  }
+
+  private setGradingAssignment(assn: CodeWritingGradingAssignment) {
+    asMutable(this).assn = assn;
+    
+    this.closeGradingAssignment();
+
     this.createThumbnails();
   }
 
@@ -233,19 +301,21 @@ class CodeWritingManualGraderApp {
 
   private createThumbnails() {
     if (!this.assn) { return; }
-    this.assn.submissions
+    this.assn.groups
       .filter(SUBMISSION_FILTERS[this.submissionsFilterCriterion])
       .sort(this.SUBMISSION_SORTS[this.submissionsSortOrdering])
-      .forEach(sub => $(".examma-ray-submissions-column").append(this.createThumbnail(sub)));
+      .forEach(group => $(".examma-ray-submissions-column").append(this.createGroupThumbnail(group)));
   }
 
-  private createThumbnail(sub: CodeWritingSubmission) {
-    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+  private createGroupThumbnail(group: CodeWritingGradingGroup) {
+    assert(group.submissions.length > 0);
+    let firstSub = group.submissions[group.representative_index];
+    let code = firstSub.response === BLANK_SUBMISSION ? "" : firstSub.response;
     let jq = $(`
       <div class="panel panel-default examma-ray-code-submission-thumbnail">
         <div class="panel-heading">
-          ${sub.student.uniqname}
-          ${sub.grading_result ? renderScoreBadge(this.pointsEarned(sub.grading_result), this.question.points) : renderUngradedBadge(this.question.points)}
+          ${group.name}
+          ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points) : renderUngradedBadge(this.question.points)}
         </div>
         <div class="panel-body">
           <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
@@ -253,9 +323,9 @@ class CodeWritingManualGraderApp {
       </div>
     `);
     jq.on("click", () => {
-      this.openSubmission(sub)
+      this.openGroup(group)
     });
-    this.thumbnailElems[sub.question_uuid] = jq;
+    this.thumbnailElems[group.name] = jq;
     return jq;
   }
 
@@ -283,19 +353,25 @@ class CodeWritingManualGraderApp {
     await writable.close();
   }
 
-  public openSubmission(sub: CodeWritingSubmission) {
-    asMutable(this).currentSubmission = sub;
+  public openGroup(group: CodeWritingGradingGroup) {
+    asMutable(this).currentGroup = group;
 
-    let submittedCode = sub.response === BLANK_SUBMISSION ? "" : sub.response;
-    let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 2));
+    this.groupMemberThumbnailsElem.empty();
+    group.submissions.forEach(sub => {
+      this.groupMemberThumbnailsElem.append(this.createMemberThumbnail(sub));
+    })
+
+    let rep = group.submissions[group.representative_index];
+
+    let code = this.applyHarness(rep);
     this.lobster.project.setFileContents(new SourceFile("file.cpp", code));
 
     $(".examma-ray-submissions-column").find(".panel-primary").removeClass("panel-primary");
-    this.thumbnailElems[sub.question_uuid].addClass("panel-primary");
+    this.thumbnailElems[group.name].addClass("panel-primary");
 
-    if (!sub.grading_result) {
-      sub.grading_result = {
-        wasBlankSubmission: sub.response === BLANK_SUBMISSION,
+    if (!group.grading_result) {
+      group.grading_result = {
+        wasBlankSubmission: rep.response === BLANK_SUBMISSION,
         itemResults: {},
         verified: false
       }
@@ -304,11 +380,115 @@ class CodeWritingManualGraderApp {
     this.updatedGradingResult();
   }
 
-  public setRubricItemStatus(i: number, status: CodeWritingRubricItemStatus) {
-    if (!this.currentSubmission?.grading_result) {
+  private applyHarness(rep: GradingSubmission<"code_editor", CodeWritingGradingResult>) {
+    let submittedCode = rep.response === BLANK_SUBMISSION ? "" : rep.response;
+
+    if (this.preprocess) {
+      submittedCode = this.preprocess(submittedCode);
+    }
+
+    let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 4));
+    return code;
+  }
+
+  private clearGroup() {
+    this.groupMemberThumbnailsElem.empty();
+    this.lobster.project.setFileContents(new SourceFile("file.cpp", "No submissions opened"));
+  }
+
+  private createMemberThumbnail(sub: CodeWritingSubmission) {
+    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    let jq = $(`
+      <div class="panel panel-default examma-ray-code-submission-thumbnail">
+        <div class="panel-heading">
+          ${sub.student.name}
+        </div>
+        <div class="panel-body">
+          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
+        </div>
+      </div>
+    `);
+    return jq;
+  }
+
+  public autoGroup() {
+    if (!this.assn) {
       return;
     }
-    let gr = this.currentSubmission.grading_result;
+
+    $("#examma-ray-grouping-progress-modal").modal("show");
+
+    // let equivalenceGroups : {
+    //   submission: CodeWritingSubmission,
+    //   program: Program
+    // }[][] = [];
+
+    setTimeout(async () => {
+
+      let equivalenceGroups : (CodeWritingGradingGroup & { repProgram: Program })[] = [];
+
+      let allSubs = this.assn!.groups.flatMap(g => g.submissions);
+      for(let i = 0; i < allSubs.length; ++i) {
+        let sub = allSubs[i];
+        $(".examma-ray-grouping-progress .progress-bar").css("width", (100*i/allSubs.length) + "%");
+        console.log(i);
+        await this.autoGroupHelper(equivalenceGroups, sub);
+      }
+
+      // Remove program property
+      equivalenceGroups.forEach(g => delete (<any>g).repProgram);
+
+      let newAssn : CodeWritingGradingAssignment = {
+        question_id: this.assn!.question_id,
+        staff_uniqname: this.assn!.staff_uniqname,
+        groups: equivalenceGroups
+      };
+
+      this.setGradingAssignment(newAssn);
+    })
+  }
+
+  private async autoGroupHelper(equivalenceGroups: (CodeWritingGradingGroup & { repProgram: Program })[], sub: CodeWritingSubmission) {
+
+    let code = this.applyHarness(sub);
+    let p = new SimpleProgram(code);
+
+    let fn = getFunc(p, this.groupingFunctionName);
+    if (!fn) {
+      // Didn't parse or can't find function, make a new group
+      equivalenceGroups.push({
+        name: "group_" + equivalenceGroups.length,
+        representative_index: 0,
+        repProgram: p,
+        submissions: [sub]
+      });
+      return;
+    }
+
+    let matchingGroup = equivalenceGroups.find(group => {
+      let rep = group.repProgram;
+      let repFunc = getFunc(rep, this.groupingFunctionName);
+      return repFunc && getFunc(p, this.groupingFunctionName)!.isSemanticallyEquivalent(repFunc, {});
+    });
+
+    if (matchingGroup) {
+      matchingGroup.submissions.push(sub);
+    }
+    else {
+      equivalenceGroups.push({
+        name: "group_" + equivalenceGroups.length,
+        representative_index: 0,
+        repProgram: p,
+        submissions: [sub]
+      });
+    }
+  }
+
+  public setRubricItemStatus(i: number, status: CodeWritingRubricItemStatus) {
+    if (!this.currentGroup?.grading_result) {
+      return;
+    }
+    let gr = this.currentGroup.grading_result;
     gr.itemResults[this.rubric[i].id] = {
       status: status
     };
@@ -317,10 +497,10 @@ class CodeWritingManualGraderApp {
   }
 
   public toggleRubricItem(i: number) {
-    if(!this.currentSubmission?.grading_result) {
+    if(!this.currentGroup?.grading_result) {
       return;
     }
-    let currentStatus = this.currentSubmission.grading_result.itemResults[this.rubric[i].id]?.status || "off";
+    let currentStatus = this.currentGroup.grading_result.itemResults[this.rubric[i].id]?.status || "off";
     if (currentStatus === "off") {
       currentStatus = "on";
     }
@@ -336,11 +516,11 @@ class CodeWritingManualGraderApp {
   
 
   private updateRubricItemButtons() {
-    if (!this.currentSubmission?.grading_result) {
+    if (!this.currentGroup?.grading_result) {
       return;
     }
 
-    let gr = this.currentSubmission.grading_result;
+    let gr = this.currentGroup.grading_result;
 
     this.rubric.forEach((ri, i) => {
       this.updateRubricItemButton(i, gr.itemResults[ri.id]?.status || "off");
@@ -366,12 +546,12 @@ class CodeWritingManualGraderApp {
   }
 
   private updatedGradingResult() {
-    if (!this.currentSubmission?.grading_result) {
+    if (!this.currentGroup?.grading_result) {
       return;
     }
 
-    let thumbElem = this.thumbnailElems[this.currentSubmission.question_uuid];
-    thumbElem.find(".badge").replaceWith(renderScoreBadge(this.pointsEarned(this.currentSubmission.grading_result), this.question.points))
+    let thumbElem = this.thumbnailElems[this.currentGroup.name];
+    thumbElem.find(".badge").replaceWith(renderScoreBadge(this.pointsEarned(this.currentGroup.grading_result), this.question.points))
     
     this.updateRubricItemButtons();
   }
@@ -386,12 +566,12 @@ class CodeWritingManualGraderApp {
   }
 
   public autograde() {
-    if (!this.currentSubmission) {
+    if (!this.currentGroup) {
       return;
     }
 
     if (this.autograder) {
-      this.currentSubmission.grading_result = this.autograder(this.lobster.project.exercise);
+      this.currentGroup.grading_result = this.autograder(this.lobster.project.exercise);
     }
 
     this.updatedGradingResult();
@@ -406,7 +586,6 @@ export function configureGradingApp(spec: CodeWritingManualGraderAppSpecificatio
 
 
 
-
-
-
-
+function getFunc(program: Program, name: string) {
+  return program.linkedFunctionDefinitions[name]?.definitions[0];
+}
