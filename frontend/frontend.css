@@ -30,6 +30,7 @@ html {
 
 .examma-ray-fitb-diff tr>*:first-child,
 .examma-ray-sas-diff tr>*:first-child {
+  position: -webkit-sticky;
   position: sticky;
   left: 0;
   background-color: white;
@@ -122,6 +123,7 @@ code {
 
 .examma-ray-section-heading {
   margin-bottom: 10px;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -140,6 +142,10 @@ code {
   width: 100%;
   table-layout: fixed;
   margin-left: 7px;
+  
+  /*needed for inline-block examma-ray-section-reference-container height*/
+  position: relative;
+  height: 100%;
 }
 
 .examma-ray-section-contents td {
@@ -178,7 +184,15 @@ code {
   font-size: 90%;
 }
 
+
+.examma-ray-section-reference-container {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
 .examma-ray-section-reference {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   max-height: 100vh;

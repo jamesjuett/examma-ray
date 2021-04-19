@@ -333,9 +333,11 @@ export class AssignedSection {
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
             <td style="width: ${this.section.reference_width}%;">
-              <div class="examma-ray-section-reference">
-                <h6>Reference Material (Section ${this.displayIndex})</h6>
-                ${this.html_reference ?? NO_REFERNECE_MATERIAL}
+              <div class="examma-ray-section-reference-container">
+                <div class="examma-ray-section-reference">
+                  <h6>Reference Material (Section ${this.displayIndex})</h6>
+                  ${this.html_reference ?? NO_REFERNECE_MATERIAL}
+                </div>
               </div>
             </td>
           </tr>
