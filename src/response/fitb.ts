@@ -129,7 +129,7 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
     let boxWidth = boxWidths[i];
     let rcAttrs = `rows="${lines}"${boxWidth !== 0 ? ` cols="${boxWidth}"` : ""}`;
     let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`
-    let style = `style="resize: none; overflow: hidden;${boxWidth === 0 ? " width: 100%;" : ""}"`
+    let style = `style="resize: none; overflow: auto;${boxWidth === 0 ? " width: 100%;" : ""}"`
     content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`)
   });
 
