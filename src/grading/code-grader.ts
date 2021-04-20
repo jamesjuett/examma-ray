@@ -41,7 +41,8 @@ type CodeWritingSubmission = GradingSubmission<"code_editor", CodeWritingGrading
 
 
 type SubmissionsFilterCriterion = "all" | "graded" | "ungraded";
-type SubmissionsSortOrdering = "name" | "score_asc" | "score_desc";
+type SubmissionsSortCriterion = "name" | "size" | "score";
+type SubmissionsSortOrdering = "asc" | "dsc";
 
 $(() => {
   $("body").html(`
@@ -61,9 +62,16 @@ $(() => {
       <div>
         <b>Sort</b>
         <div class="btn-group" role="group">
-          <button data-sort-ordering="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
-          <button data-sort-ordering="score_asc" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score Asc</button>
-          <button data-sort-ordering="score_desc" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score Desc</button>
+          <button data-sort-criterion="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
+          <button data-sort-criterion="size" type="button" class="examma-ray-submissions-sort-button btn btn-default">Size</button>
+          <button data-sort-criterion="score" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score</button>
+        </div>
+      </div>
+      <div>
+        <b>Sort Ordering</b>
+        <div class="btn-group" role="group">
+          <button data-sort-ordering="asc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-primary">Asc</button>
+          <button data-sort-ordering="dsc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-default">Dsc</button>
         </div>
       </div>
       <div class="examma-ray-submissions-column">
@@ -128,6 +136,12 @@ $(() => {
   $(".examma-ray-submissions-sort-button").on("click", function() {
       $(".examma-ray-submissions-sort-button").removeClass("btn-primary").addClass("btn-default");
       $(this).removeClass("btn-default").addClass("btn-primary");
+      GRADING_APP.setSubmissionsSortCriterion($(this).data("sort-criterion"))
+  });
+
+  $(".examma-ray-submissions-sort-ordering-button").on("click", function() {
+      $(".examma-ray-submissions-sort-ordering-button").removeClass("btn-primary").addClass("btn-default");
+      $(this).removeClass("btn-default").addClass("btn-primary");
       GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"))
   });
 
@@ -187,16 +201,18 @@ class CodeWritingManualGraderApp {
   private rubricButtonElems: JQuery[] = [];
   
   private submissionsFilterCriterion : SubmissionsFilterCriterion = "all";
-  private submissionsSortOrdering : SubmissionsSortOrdering = "name";
+  private submissionsSortCriteria : SubmissionsSortCriterion = "name";
+  private submissionsSortOrdering : SubmissionsSortOrdering = "asc";
+  // private submissions
 
   
 
   private SUBMISSION_SORTS : {
-    [k in SubmissionsSortOrdering]: (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => number
+    [k in SubmissionsSortCriterion]: (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => number
   } = {
     "name": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => a.name.localeCompare(b.name, undefined, {numeric: true}),
-    "score_asc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
-    "score_desc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(b.grading_result) - this.pointsEarned(a.grading_result),
+    "size": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => a.submissions.length - b.submissions.length,
+    "score": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
   }
 
   public constructor(spec: CodeWritingManualGraderAppSpecification) {
@@ -215,7 +231,7 @@ class CodeWritingManualGraderApp {
 
     this.createRubricBar();
 
-    // setInterval(() => this.saveGradingAssignment(), 10000);
+    setInterval(() => this.saveGradingAssignment(), 10000);
   }
 
   private createControls() {
@@ -286,11 +302,11 @@ class CodeWritingManualGraderApp {
   }
 
   private setGradingAssignment(assn: CodeWritingGradingAssignment) {
-    // this.closeGradingAssignment();
+    this.closeGradingAssignment();
 
     asMutable(this).assn = assn;
 
-    // this.createThumbnails();
+    this.createThumbnails();
   }
 
   private clearThumbnails() {
@@ -300,10 +316,15 @@ class CodeWritingManualGraderApp {
 
   private createThumbnails() {
     if (!this.assn) { return; }
-    this.assn.groups
+    let groups = this.assn.groups
       .filter(SUBMISSION_FILTERS[this.submissionsFilterCriterion])
-      .sort(this.SUBMISSION_SORTS[this.submissionsSortOrdering])
-      .forEach(group => $(".examma-ray-submissions-column").append(this.createGroupThumbnail(group)));
+      .sort(this.SUBMISSION_SORTS[this.submissionsSortCriteria]);
+
+    if (this.submissionsSortOrdering === "dsc") {
+      groups = groups.reverse();
+    }
+
+    groups.forEach(group => $(".examma-ray-submissions-column").append(this.createGroupThumbnail(group)));
   }
 
   private createGroupThumbnail(group: CodeWritingGradingGroup) {
@@ -314,6 +335,7 @@ class CodeWritingManualGraderApp {
       <div class="panel panel-default examma-ray-code-submission-thumbnail">
         <div class="panel-heading">
           ${group.name}
+          (${group.submissions.length} submissions)
           ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points) : renderUngradedBadge(this.question.points)}
         </div>
         <div class="panel-body">
@@ -330,6 +352,12 @@ class CodeWritingManualGraderApp {
 
   public setSubmissionsFilterCriterion(criterion: SubmissionsFilterCriterion) {
     this.submissionsFilterCriterion = criterion;
+    this.clearThumbnails();
+    this.createThumbnails();
+  }
+
+  public setSubmissionsSortCriterion(criterion: SubmissionsSortCriterion) {
+    this.submissionsSortCriteria = criterion;
     this.clearThumbnails();
     this.createThumbnails();
   }
@@ -461,6 +489,7 @@ class CodeWritingManualGraderApp {
               repProgram: p,
               submissions: [sub]
             });
+            resolve();
             return;
           }
     
