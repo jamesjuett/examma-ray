@@ -33,11 +33,11 @@
   overflow-y: auto;
 }
 
-.examma-ray-code-submission-thumbnail {
+.examma-ray-grading-group-thumbnail {
   cursor: pointer;
 }
 
-.examma-ray-code-submission-thumbnail .panel-body pre {
+.examma-ray-grading-group-thumbnail .panel-body pre {
   font-size: 0.5em;
 }
 
@@ -70,6 +70,17 @@
   padding: 1em;
 }
 
+.examma-ray-group-member-thumbnail {
+  display: inline-block;
+  width: 45%;
+  margin-left: 3.33%;
+  vertical-align: top;
+}
+
+.examma-ray-group-member-remove-button {
+  float: right;
+  margin-top: -0.4em;
+}
 
 
 

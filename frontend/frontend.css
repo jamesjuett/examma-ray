@@ -201,6 +201,10 @@ code {
   padding-bottom: 2em;
 }
 
+.examma-ray-section-reference pre code {
+  max-height: 80vh;
+}
+
 
 .examma-ray-section-contents .h1,
 .examma-ray-section-contents .h2,

@@ -50,6 +50,7 @@ $(() => {
       <div class="examma-ray-grading-controls">
         <span class="examma-ray-grading-title"></span>
         <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
+        <button type="button" class="btn btn-primary examma-ray-auto-group-button">Auto-Group</button>
         <div>
           <b>Filter</b>
           <div class="btn-group" role="group">
@@ -79,14 +80,16 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-main-panel">
-      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#groups-modal">Review Group Members</button>
-      <button type="button" class="btn btn-primary examma-ray-auto-group-button">Auto-Group</button>
+      <div>
+        <h3 style="margin-top: 0;">You are grading: <code class="examma-ray-grading-group-name">[No group selected]</code></h3>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#groups-modal"><span class="badge examma-ray-grading-group-num-members">N/A</span> Review Group Members</button>
+        <button class="btn btn-primary" id="examma-ray-grading-autograde-button">Autograde!</button>
+      </div>
       <div id="lobster-exercise">
 
       </div>
     </div>
     <div class="examma-ray-grading-right-panel">
-      <button class="btn btn-primary" id="examma-ray-grading-autograde-button">Autograde!</button>
       <div class="examma-ray-grading-rubric-buttons">
       </div>
     </div>
@@ -94,7 +97,10 @@ $(() => {
     <div class="modal fade" id="groups-modal" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-lg" style="width: 95vw" role="document">
         <div class="modal-content">
-          <div class="examma-ray-group-member-thumbnails">
+          <div class="modal-header">
+            <h4 class="modal-title">Group Members</h4>
+          </div>
+          <div class="modal-body examma-ray-group-member-thumbnails">
           </div>
         </div>
       </div>
@@ -102,11 +108,12 @@ $(() => {
     
     <div class="modal fade" id="examma-ray-grouping-progress-modal" tabindex="-1" role="dialog" data-backdrop="static">
       <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-header">
-          <h4 class="modal-title">Auto-Grouping...</h4>
-        </div>
         <div class="modal-content">
-          <div class="examma-ray-grouping-progress">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Auto-Grouping...</h4>
+          </div>
+          <div class="modal-body examma-ray-grouping-progress">
             Processing...
             <div class="progress">
               <div class="progress-bar" role="progressbar" style="width: 2%;">
@@ -278,8 +285,9 @@ class CodeWritingManualGraderApp {
 
   private closeGradingAssignment() {
     
-    this.clearThumbnails();
-    this.clearGroup();
+    delete asMutable(this).assn;
+    this.clearGroupThumbnails();
+    this.closeGroup();
 
   }
 
@@ -306,15 +314,15 @@ class CodeWritingManualGraderApp {
 
     asMutable(this).assn = assn;
 
-    this.createThumbnails();
+    this.createGroupThumbnails();
   }
 
-  private clearThumbnails() {
+  private clearGroupThumbnails() {
     $(".examma-ray-submissions-column").empty();
     this.thumbnailElems = {};
   }
 
-  private createThumbnails() {
+  private createGroupThumbnails() {
     if (!this.assn) { return; }
     let groups = this.assn.groups
       .filter(SUBMISSION_FILTERS[this.submissionsFilterCriterion])
@@ -327,12 +335,21 @@ class CodeWritingManualGraderApp {
     groups.forEach(group => $(".examma-ray-submissions-column").append(this.createGroupThumbnail(group)));
   }
 
+  private refreshGroups() {
+    this.clearGroupThumbnails();
+    this.createGroupThumbnails();
+    if (this.currentGroup) {
+      $(".examma-ray-grading-group-name").html(this.currentGroup.name);
+      $(".examma-ray-grading-group-num-members").html(""+this.currentGroup.submissions.length);
+    }
+  }
+
   private createGroupThumbnail(group: CodeWritingGradingGroup) {
     assert(group.submissions.length > 0);
     let firstSub = group.submissions[group.representative_index];
     let code = firstSub.response === BLANK_SUBMISSION ? "" : firstSub.response;
     let jq = $(`
-      <div class="panel panel-default examma-ray-code-submission-thumbnail">
+      <div class="panel panel-default examma-ray-grading-group-thumbnail">
         <div class="panel-heading">
           ${group.name}
           (${group.submissions.length} submissions)
@@ -352,20 +369,20 @@ class CodeWritingManualGraderApp {
 
   public setSubmissionsFilterCriterion(criterion: SubmissionsFilterCriterion) {
     this.submissionsFilterCriterion = criterion;
-    this.clearThumbnails();
-    this.createThumbnails();
+    this.clearGroupThumbnails();
+    this.createGroupThumbnails();
   }
 
   public setSubmissionsSortCriterion(criterion: SubmissionsSortCriterion) {
     this.submissionsSortCriteria = criterion;
-    this.clearThumbnails();
-    this.createThumbnails();
+    this.clearGroupThumbnails();
+    this.createGroupThumbnails();
   }
 
   public setSubmissionsSortOrdering(ordering: SubmissionsSortOrdering) {
     this.submissionsSortOrdering = ordering;
-    this.clearThumbnails();
-    this.createThumbnails();
+    this.clearGroupThumbnails();
+    this.createGroupThumbnails();
   }
 
   public async saveGradingAssignment() {
@@ -382,6 +399,8 @@ class CodeWritingManualGraderApp {
 
   public openGroup(group: CodeWritingGradingGroup) {
     asMutable(this).currentGroup = group;
+    $(".examma-ray-grading-group-name").html(group.name);
+    $(".examma-ray-grading-group-num-members").html(""+group.submissions.length);
 
     this.groupMemberThumbnailsElem.empty();
     group.submissions.forEach(sub => {
@@ -418,7 +437,9 @@ class CodeWritingManualGraderApp {
     return code;
   }
 
-  private clearGroup() {
+  private closeGroup() {
+    delete asMutable(this).currentGroup;
+    $(".examma-ray-grading-group-name").html("[No group selected]");
     this.groupMemberThumbnailsElem.empty();
     this.lobster.project.setFileContents(new SourceFile("file.cpp", "No submissions opened"));
   }
@@ -426,8 +447,9 @@ class CodeWritingManualGraderApp {
   private createMemberThumbnail(sub: CodeWritingSubmission) {
     let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
     let jq = $(`
-      <div class="panel panel-default examma-ray-code-submission-thumbnail">
+      <div class="panel panel-default examma-ray-group-member-thumbnail">
         <div class="panel-heading">
+          <button type="button" class="btn btn-sm btn-danger examma-ray-group-member-remove-button" aria-label="Remove"><span aria-hidden="true">Remove</span></button>
           ${sub.student.name}
         </div>
         <div class="panel-body">
@@ -435,6 +457,11 @@ class CodeWritingManualGraderApp {
         </div>
       </div>
     `);
+    let closeButton = jq.find(".examma-ray-group-member-remove-button");
+    closeButton.on("click", () => {
+      this.removeFromCurrentGroup(sub);
+      jq.fadeOut(() => jq.remove());
+    })
     return jq;
   }
 
@@ -524,9 +551,24 @@ class CodeWritingManualGraderApp {
         
         resolve();
       }, 0);
-  });
+   });
+  }
 
-    
+  private removeFromCurrentGroup(subToRemove: CodeWritingSubmission) {
+    if (!this.assn || !this.currentGroup) {
+      return;
+    }
+
+    let i = this.currentGroup.submissions.findIndex(sub => sub.question_uuid === subToRemove.question_uuid);
+    i !== -1 && this.currentGroup.submissions.splice(i, 1);
+
+    this.assn.groups.push({
+      name: "group_" + this.assn.groups.length,
+      representative_index: 0,
+      submissions: [subToRemove]
+    });
+
+    this.refreshGroups();
   }
 
   public setRubricItemStatus(i: number, status: CodeWritingRubricItemStatus) {
