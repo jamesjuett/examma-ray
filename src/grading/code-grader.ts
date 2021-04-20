@@ -95,7 +95,6 @@ $(() => {
     <div class="modal fade" id="examma-ray-grouping-progress-modal" tabindex="-1" role="dialog" data-backdrop="static">
       <div class="modal-dialog modal-sm" role="document">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title">Auto-Grouping...</h4>
         </div>
         <div class="modal-content">
@@ -116,7 +115,7 @@ $(() => {
   let loadButton = $("#load-grading-assignment-button");
   let autogradeButton = $("#examma-ray-grading-autograde-button");
 
-  loadButton.on("click", async () => GRADING_APP.loadGradingAssignmentFile());
+  loadButton.on("click", () => GRADING_APP.loadGradingAssignmentFile());
 
   autogradeButton.on("click", () => GRADING_APP.autograde());
 
@@ -132,7 +131,7 @@ $(() => {
       GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"))
   });
 
-  $(".examma-ray-auto-group-button").on("click", function() {
+  $(".examma-ray-auto-group-button").on("click", async function() {
       GRADING_APP.autoGroup()
   });
 
@@ -195,7 +194,7 @@ class CodeWritingManualGraderApp {
   private SUBMISSION_SORTS : {
     [k in SubmissionsSortOrdering]: (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => number
   } = {
-    "name": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => a.name.localeCompare(b.name),
+    "name": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => a.name.localeCompare(b.name, undefined, {numeric: true}),
     "score_asc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(a.grading_result) - this.pointsEarned(b.grading_result),
     "score_desc": (a: CodeWritingGradingGroup, b: CodeWritingGradingGroup) => this.pointsEarned(b.grading_result) - this.pointsEarned(a.grading_result),
   }
@@ -216,7 +215,7 @@ class CodeWritingManualGraderApp {
 
     this.createRubricBar();
 
-    setInterval(() => this.saveGradingAssignment(), 10000);
+    // setInterval(() => this.saveGradingAssignment(), 10000);
   }
 
   private createControls() {
@@ -283,15 +282,15 @@ class CodeWritingManualGraderApp {
 
     this.setGradingAssignment(assn);
 
-    this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
+    await this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
   }
 
   private setGradingAssignment(assn: CodeWritingGradingAssignment) {
-    asMutable(this).assn = assn;
-    
-    this.closeGradingAssignment();
+    // this.closeGradingAssignment();
 
-    this.createThumbnails();
+    asMutable(this).assn = assn;
+
+    // this.createThumbnails();
   }
 
   private clearThumbnails() {
@@ -411,77 +410,94 @@ class CodeWritingManualGraderApp {
     return jq;
   }
 
-  public autoGroup() {
+  public async autoGroup() {
     if (!this.assn) {
       return;
     }
 
     $("#examma-ray-grouping-progress-modal").modal("show");
 
-    // let equivalenceGroups : {
-    //   submission: CodeWritingSubmission,
-    //   program: Program
-    // }[][] = [];
+    let equivalenceGroups : (CodeWritingGradingGroup & { repProgram?: Program })[] = [];
 
-    setTimeout(async () => {
+    let allSubs = this.assn!.groups.flatMap(g => g.submissions);
+    for(let i = 0; i < allSubs.length; ++i) {
+      let sub = allSubs[i];
+      $(".examma-ray-grouping-progress .progress-bar").css("width", (100*i/allSubs.length) + "%");
+      console.log(i);
+      await this.autoGroupHelper(equivalenceGroups, sub);
+    }
 
-      let equivalenceGroups : (CodeWritingGradingGroup & { repProgram: Program })[] = [];
+    // Remove program property
+    equivalenceGroups.forEach(g => delete (<any>g).repProgram);
 
-      let allSubs = this.assn!.groups.flatMap(g => g.submissions);
-      for(let i = 0; i < allSubs.length; ++i) {
-        let sub = allSubs[i];
-        $(".examma-ray-grouping-progress .progress-bar").css("width", (100*i/allSubs.length) + "%");
-        console.log(i);
-        await this.autoGroupHelper(equivalenceGroups, sub);
-      }
+    let newAssn : CodeWritingGradingAssignment = {
+      question_id: this.assn!.question_id,
+      staff_uniqname: this.assn!.staff_uniqname,
+      groups: equivalenceGroups
+    };
 
-      // Remove program property
-      equivalenceGroups.forEach(g => delete (<any>g).repProgram);
+    this.setGradingAssignment(newAssn);
 
-      let newAssn : CodeWritingGradingAssignment = {
-        question_id: this.assn!.question_id,
-        staff_uniqname: this.assn!.staff_uniqname,
-        groups: equivalenceGroups
-      };
-
-      this.setGradingAssignment(newAssn);
-    })
+    $("#examma-ray-grouping-progress-modal").modal("hide");
   }
 
-  private async autoGroupHelper(equivalenceGroups: (CodeWritingGradingGroup & { repProgram: Program })[], sub: CodeWritingSubmission) {
+  private autoGroupHelper(equivalenceGroups: (CodeWritingGradingGroup & { repProgram?: Program })[], sub: CodeWritingSubmission) {
 
-    let code = this.applyHarness(sub);
-    let p = new SimpleProgram(code);
+    return new Promise<void>((resolve, reject) => {
 
-    let fn = getFunc(p, this.groupingFunctionName);
-    if (!fn) {
-      // Didn't parse or can't find function, make a new group
-      equivalenceGroups.push({
-        name: "group_" + equivalenceGroups.length,
-        representative_index: 0,
-        repProgram: p,
-        submissions: [sub]
-      });
-      return;
-    }
+      window.setTimeout(() => {
+        let code = this.applyHarness(sub);
 
-    let matchingGroup = equivalenceGroups.find(group => {
-      let rep = group.repProgram;
-      let repFunc = getFunc(rep, this.groupingFunctionName);
-      return repFunc && getFunc(p, this.groupingFunctionName)!.isSemanticallyEquivalent(repFunc, {});
-    });
+        try {
+    
+          let p = new SimpleProgram(code);
+    
+          let fn = getFunc(p, this.groupingFunctionName);
+          if (!fn) {
+            // Didn't parse or can't find function, make a new group
+            equivalenceGroups.push({
+              name: "group_" + equivalenceGroups.length,
+              representative_index: 0,
+              repProgram: p,
+              submissions: [sub]
+            });
+            return;
+          }
+    
+          let matchingGroup = equivalenceGroups.find(group => {
+            let rep = group.repProgram;
+            if (!rep) { return false; }
+            let repFunc = getFunc(rep, this.groupingFunctionName);
+            return repFunc && getFunc(p, this.groupingFunctionName)!.isSemanticallyEquivalent(repFunc, {});
+          });
+    
+          if (matchingGroup) {
+            matchingGroup.submissions.push(sub);
+          }
+          else {
+            equivalenceGroups.push({
+              name: "group_" + equivalenceGroups.length,
+              representative_index: 0,
+              repProgram: p,
+              submissions: [sub]
+            });
+          }
+        }
+        catch(e) {
+          // Lobster might randomly crash on an obscure case. Just add to
+          // a new group with no representative program.
+          equivalenceGroups.push({
+            name: "group_" + equivalenceGroups.length,
+            representative_index: 0,
+            submissions: [sub]
+          })
+        }
+        
+        resolve();
+      }, 0);
+  });
 
-    if (matchingGroup) {
-      matchingGroup.submissions.push(sub);
-    }
-    else {
-      equivalenceGroups.push({
-        name: "group_" + equivalenceGroups.length,
-        representative_index: 0,
-        repProgram: p,
-        submissions: [sub]
-      });
-    }
+    
   }
 
   public setRubricItemStatus(i: number, status: CodeWritingRubricItemStatus) {
