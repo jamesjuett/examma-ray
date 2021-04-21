@@ -7,7 +7,7 @@ import { Program, SimpleProgram, SourceFile } from "lobster/dist/js/core/Program
 import { SimpleExerciseLobsterOutlet } from "lobster/dist/js/view/SimpleExerciseLobsterOutlet"
 import { createRunestoneExerciseOutlet } from "lobster/dist/js/view/embeddedExerciseOutlet"
 
-import { highlightCode, mk2html } from "../render";
+import { applySkin, highlightCode, mk2html } from "../render";
 import "highlight.js/styles/github.css";
 
 import "./code-grader.css";
@@ -181,7 +181,7 @@ export type CodeWritingManualGraderAppSpecification = {
   preprocess?: (submission: string) => string,
   checkpoints: Checkpoint[],
   autograder: (ex: Exercise) => CodeWritingGradingResult,
-  groupingFunctionName: string | string[]
+  groupingFunctionName: string
 };
 
 class CodeWritingManualGraderApp {
@@ -200,7 +200,7 @@ class CodeWritingManualGraderApp {
 
   private preprocess?: (submission: string) => string;
   private testHarness: string;
-  private groupingFunctionName: string | string[];
+  private groupingFunctionName: string;
 
   private groupMemberThumbnailsElem: JQuery;
 
@@ -434,6 +434,7 @@ class CodeWritingManualGraderApp {
     }
 
     let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 4));
+    code = applySkin(code, {id: "[recorded]", replacements: rep.skin_replacements});
     return code;
   }
 
@@ -496,6 +497,10 @@ class CodeWritingManualGraderApp {
     $("#examma-ray-grouping-progress-modal").modal("hide");
   }
 
+  private getGroupingFunctionName(sub: CodeWritingSubmission) {
+    return applySkin(this.groupingFunctionName, {id: "[recorded]", replacements: sub.skin_replacements});
+  }
+
   private autoGroupHelper(equivalenceGroups: (CodeWritingGradingGroup & { repProgram?: Program })[], sub: CodeWritingSubmission) {
 
     return new Promise<void>((resolve, reject) => {
@@ -507,7 +512,7 @@ class CodeWritingManualGraderApp {
     
           let p = new SimpleProgram(code);
     
-          let fn = getFunc(p, this.groupingFunctionName);
+          let fn = getFunc(p, this.getGroupingFunctionName(sub));
           if (!fn) {
             // Didn't parse or can't find function, make a new group
             equivalenceGroups.push({
@@ -523,8 +528,8 @@ class CodeWritingManualGraderApp {
           let matchingGroup = equivalenceGroups.find(group => {
             let rep = group.repProgram;
             if (!rep) { return false; }
-            let repFunc = getFunc(rep, this.groupingFunctionName);
-            return repFunc && getFunc(p, this.groupingFunctionName)!.isSemanticallyEquivalent(repFunc, {});
+            let repFunc = getFunc(rep, this.getGroupingFunctionName(group.submissions[group.representative_index]));
+            return repFunc && getFunc(p, this.getGroupingFunctionName(sub))!.isSemanticallyEquivalent(repFunc, {});
           });
     
           if (matchingGroup) {

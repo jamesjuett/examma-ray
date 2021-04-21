@@ -3,9 +3,11 @@ import { AssignedQuestion, StudentInfo } from "../exams";
 import { GradingResult } from "../QuestionGrader";
 import { SubmissionType } from "../response/responses";
 import { ResponseKind } from "../response/common";
+import { SkinReplacements } from "../skins";
 
 export type GradingSubmission<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> = {
   question_uuid: string,
+  skin_replacements: SkinReplacements,
   student: StudentInfo,
   response: SubmissionType<QT>
 }

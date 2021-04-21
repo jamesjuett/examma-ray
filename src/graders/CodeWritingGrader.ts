@@ -123,6 +123,7 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
       groups: c.map((aq,i) => ({
         submissions: [{
           question_uuid: aq.uuid,
+          skin_replacements: aq.skin.replacements,
           student: aq.student,
           response: stringify_response(aq.submission)
         }],

@@ -404,6 +404,14 @@ export class AssignedExam {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.exam_id}" data-exam-uuid="${this.uuid}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+            <button id="examma-ray-time-elapsed-button" class="btn btn-primary btn-sm" style="line-height: 0.75;" data-toggle="collapse" data-target="#examma-ray-time-elapsed" aria-expanded="true" aria-controls="examma-ray-time-elapsed">Hide</button>
+            <b>Time Elapsed</b>
+            <br>
+            <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
+            <br>
+            This is not an official timer. Please submit your answers to Canvas before the deadline.
+          </div>
           <h3 class="text-center pb-1 border-bottom">
             ${mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(this.pointsPossible, "btn-secondary") : this.renderGrade()}
           </h3>

@@ -50,6 +50,19 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   }
 }
 
+let TIME_STARTED = Date.now();
+
+function updateTimeElapsed() {
+  let seconds = Math.floor((Date.now() - TIME_STARTED) / 1000);
+  let hours = Math.floor(seconds / 3600);
+  seconds = seconds - hours * 3600;
+  let minutes = Math.floor(seconds / 60);
+  seconds = seconds - minutes * 60;
+  $("#examma-ray-time-elapsed").html(
+    `${hours}h ${minutes}m ${seconds}s`
+  );
+}
+
 const saverID = Date.now();
 let saveCount = 0;
 
@@ -62,6 +75,7 @@ function extractExamAnswers() : ExamSubmission {
       uniqname: examElem.data("uniqname"),
       name: examElem.data("name")
     },
+    time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
     trusted: false,
@@ -82,7 +96,9 @@ function loadQuestionAnswer(qa: QuestionAnswer) {
 
 function loadExamAnswers(answers: ExamSubmission) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
-
+  if (answers.time_started) {
+    TIME_STARTED = answers.time_started;
+  }
   // Consider work to be saved after loading
   onSaved();
 }
@@ -353,6 +369,16 @@ function startExam() {
   // Consider work to be saved when exam is started
   onSaved();
 
+  // Interval to update time elapsed
+  setInterval(updateTimeElapsed, 1000);
+
+  // Connect show/hide event listeners on time elapsed element
+  $('#examma-ray-time-elapsed').on('hidden.bs.collapse', function () {
+    $("#examma-ray-time-elapsed-button").html("Show");
+  })
+  $('#examma-ray-time-elapsed').on('shown.bs.collapse', function () {
+    $("#examma-ray-time-elapsed-button").html("Hide");
+  })
 }
 
 
