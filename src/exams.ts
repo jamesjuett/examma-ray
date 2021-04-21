@@ -1,5 +1,3 @@
-
-import 'colors';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
@@ -10,7 +8,6 @@ import { Exception, GraderMap } from './ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
-import { writeFileSync } from 'fs';
 import { ExamManifest } from './submissions';
 
 

@@ -181,7 +181,7 @@ export type CodeWritingManualGraderAppSpecification = {
   preprocess?: (submission: string) => string,
   checkpoints: Checkpoint[],
   autograder: (ex: Exercise) => CodeWritingGradingResult,
-  groupingFunctionName: string
+  groupingFunctionName: string | string[]
 };
 
 class CodeWritingManualGraderApp {
@@ -200,7 +200,7 @@ class CodeWritingManualGraderApp {
 
   private preprocess?: (submission: string) => string;
   private testHarness: string;
-  private groupingFunctionName: string;
+  private groupingFunctionName: string | string[];
 
   private groupMemberThumbnailsElem: JQuery;
 
@@ -673,6 +673,15 @@ export function configureGradingApp(spec: CodeWritingManualGraderAppSpecificatio
 
 
 
-function getFunc(program: Program, name: string) {
-  return program.linkedFunctionDefinitions[name]?.definitions[0];
+function getFunc(program: Program, name: string | string[]) {
+  if (typeof name === "string") {
+    name = [name];
+  }
+  for(let i = 0; i < name.length; ++i) {
+    let def = program.linkedFunctionDefinitions[name[i]]?.definitions[0];
+    if (def) {
+      return def;
+    }
+  }
+  return undefined;
 }
