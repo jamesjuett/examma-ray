@@ -3,6 +3,7 @@ import { assert } from "./util";
 
 export type QuestionAnswer = {
   question_id: string,
+  skin_id: string,
   uuid: string,
   display_index: string,
   kind: ResponseKind,
@@ -13,6 +14,7 @@ export type QuestionAnswer = {
 
 export type SectionAnswers = {
   section_id: string,
+  skin_id: string,
   uuid: string,
   display_index: string,
   questions: QuestionAnswer[]

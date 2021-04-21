@@ -31,6 +31,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let response = question.find(".examma-ray-question-response");
   return {
     question_id: "",
+    skin_id: "",
     uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
@@ -42,6 +43,7 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   let section = $(this);
   return {
     section_id: "",
+    skin_id: "",
     uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
