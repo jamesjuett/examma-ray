@@ -290,8 +290,8 @@ export class ExamGrader {
     }
 
     // Create output directories
-    mkdirSync(`data/${this.exam.exam_id}/graded/questions/`, { recursive: true });
-    let out_filename = `data/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
+    mkdirSync(`out/${this.exam.exam_id}/graded/questions/`, { recursive: true });
+    let out_filename = `out/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader || !grader.isGrader(question.kind)) {
@@ -359,8 +359,8 @@ export function writeStatsFile(exam: Exam, filename: string, body: string) {
 
 
 // export function renderOverview(exam: Exam) {
-//   mkdirSync("data/", {recursive: true});
-//   let out_filename = `data/overview.html`;
+//   mkdirSync("out/", {recursive: true});
+//   let out_filename = `out/overview.html`;
 
 //   let main_overview = `<div>
 //     <div>Mean: ${mean(exam.submissions.map(s => s.pointsEarned!))}</div>
