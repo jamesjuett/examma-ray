@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "## Setup",
   "main": "dist/examma-ray.js",
   "types": "dist/examma-ray.d.ts",
@@ -37,6 +37,7 @@
     "javascript-time-ago": "^2.3.4",
     "json-stable-stringify": "^1.0.1",
     "katex": "^0.11.1",
+    "lobster-vis": "^1.0.0",
     "minimist": "^1.2.5",
     "papaparse": "^5.3.0",
     "pdf-lib": "^1.12.0",
