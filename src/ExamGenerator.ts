@@ -165,10 +165,10 @@ export class ExamGenerator {
 
   private writeStats() {
     // Create output directory
-    mkdirSync(`data/${this.exam.exam_id}/assigned/`, { recursive: true });
+    mkdirSync(`data/${this.exam.exam_id}/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`data/${this.exam.exam_id}/assigned/stats.json`, json_stable_stringify({
+    writeFileSync(`data/${this.exam.exam_id}/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
@@ -177,8 +177,8 @@ export class ExamGenerator {
 
   public writeAll() {
 
-    const examDir = `data/${this.exam.exam_id}/assigned/exams`;
-    const manifestDir = `data/${this.exam.exam_id}/assigned/manifests`;
+    const examDir = `out/${this.exam.exam_id}/exams`;
+    const manifestDir = `data/${this.exam.exam_id}/manifests`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
@@ -205,7 +205,7 @@ export class ExamGenerator {
         writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
       });
 
-    writeFileSync(`data/${this.exam.exam_id}/assigned/student-ids.csv`, unparse({
+    writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));

@@ -135,7 +135,7 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
 
   private writeGradingAssignments(exam_id: string, question_id: string, assns: GradingAssignmentSpecification[]) {
 
-    const dir = `data/${exam_id}/manual_grading`;
+    const dir = `manual_grading/${exam_id}`;
 
     // Create output directories
     // (DO NOT CLEAR THEM OUT - we don't want to accidentally overwrite previous grading results)

@@ -144,7 +144,7 @@ export class ExamGrader {
 
   public loadAllSubmissions() {
     this.addSubmissions(ExamUtils.loadTrustedSubmissions(
-      `data/${this.exam.exam_id}/assigned/manifests/`,
+      `data/${this.exam.exam_id}/manifests/`,
       `data/${this.exam.exam_id}/submissions/`))
   }
 
@@ -242,7 +242,7 @@ export class ExamGrader {
 
 
   public writeAll() {
-    const examDir = `data/${this.exam.exam_id}/graded/exams`;
+    const examDir = `out/${this.exam.exam_id}/graded/exams`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
@@ -253,7 +253,7 @@ export class ExamGrader {
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`data/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
       });
 
     console.log("Rendering question stats files...");
@@ -261,7 +261,7 @@ export class ExamGrader {
   }
 
   private writeScoresCsv() {
-    mkdirSync("data/${this.exam.id}/graded/", {recursive: true});
+    mkdirSync("out/${this.exam.id}/graded/", {recursive: true});
     let data = this.submittedExams.slice().sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map(ex => {
         let student_data : {[index:string]: any} = {};
@@ -272,7 +272,7 @@ export class ExamGrader {
       });
 
     
-    writeFileSync(`data/${this.exam.exam_id}/graded/scores.csv`, unparse({
+    writeFileSync(`out/${this.exam.exam_id}/graded/scores.csv`, unparse({
       fields: this.allQuestions.map(q => q.question_id),
       data: data
     }));

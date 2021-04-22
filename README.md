@@ -114,35 +114,43 @@ Now you're ready to generate exams!
 npx ts-node content/eecs280w21final/gen.ts
 ```
 
-This should create a bunch of folders within a `data` directory. This is where all generated content goes. It's also where you'll drop in the answers files students submit so that they can be graded. There should be a subfolder for each exam, depending on the ID you provided in your `exam-spec.ts` file.
+This should create files within two directories:
+ - `data/{{exam_id}}/`  
+This is where all information about exam assignments (e.g. who got what question) goes. It's also where you'll drop in the answers files students submit (into `data/{{exam_id}}/submissions`) so that they can be graded. There should be a subfolder for each exam, depending on the ID you provided in your `exam-spec.ts` file.
+
+ - `out/{{exam_id}}/`  
+This is where all generated content goes, e.g. the `.html` files for students' exams and grading reports.
 
 We could try to open the generated exams, but they won't work quite right yet. They need access to the `frontend.js` bundle. You can copy that out of `node_modules`, where is should have been pulled in when you installed `examma-ray`.
 
 ```console
-mkdir data/js
-cp node_modules/examma-ray/dist/frontend/frontend.min.js data/js
+mkdir out/js
+cp node_modules/examma-ray/dist/frontend/frontend.js out/js
+cp node_modules/examma-ray/dist/frontend/frontend-graded.js out/js
 ```
 
 Remember the `frontend_js_path` in `exam-spec.ts` from earlier? That's the relative path the exams need to get to the `frontend.js` file. It should be set correctly right now for local testing so that you can open the exam files in place, but you'll need to change it and re-generate the exams for distribution, depending on where `frontend.js` will live relative to your distributed `.html` files.
 
-Now, your `data` directory should look something like this:
+Now, your directories should look something like this:
 
 ```console
 data
+└── eecs280sp20test
+    ├── student-ids.csv
+    ├── manifests
+    │   ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.json
+    │   ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.json
+    │   ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.json
+    │   └── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.json
+    └── stats.json
+
+out
 ├── eecs280sp20test
-│   ├── assigned
-│   │   ├── exams
-│   │   │   ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.html
-│   │   │   ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.html
-│   │   │   ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.html
-│   │   │   ├── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.html
-│   │   ├── files.csv
-│   │   ├── manifests
-│   │   │   ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.json
-│   │   │   ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.json
-│   │   │   ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.json
-│   │   │   ├── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.json
-│   │   └── stats.json
+│   └── exams
+│       ├── awdeorio-9f682502-da18-5b27-9261-8bf2a6609629.html
+│       ├── jbbeau-8805c913-008c-5f0e-a14c-3ec566882938.html
+│       ├── jjuett-5bf68443-0f3d-57d6-8abb-00c548d1d1ef.html
+│       └── lslavice-51e8b8b5-65ec-55ba-9ba6-a723e5a3ed06.html
 └── js
     ├── frontend-graded.js
     └── frontend.js
@@ -158,15 +166,22 @@ A quick summary of the output of `gen.ts` in the `assigned` directory:
 
 ### Version Control
 
-If you're using `git`, you'll want a `.gitignore` file that includes `node_modules` and most likely also the `data` directory:
+If you're using `git`, you'll want a `.gitignore` file that includes the following:
 
 #### **`.gitignore`**
 ```
 node_modules/
 data/
+out/
 ```
 
-When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exams generated for each student. (Although this is not strictly necessary since the generation process is deterministic as long as the exam ID, content, secret v5 uuid namespace, etc. do not change, it would make me nervous not to have a copy!)
+When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exam manifests generated for each student, as well as their answer file submissions. For example, if your exam ID is `eecs280sp20test`:
+
+```console
+git add data/eecs280sp20test
+```
+
+Although this is not strictly necessary since the generation process is deterministic as long as the exam ID, content, secret v5 uuid namespace, etc. do not change, it would make me nervous not to have a copy!
 
 # Markdown Styling
 
