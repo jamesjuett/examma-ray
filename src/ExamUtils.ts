@@ -10,6 +10,8 @@ import { GradingAssignmentSpecification } from "./grading/common";
 import glob from "glob";
 import del from "del";
 
+import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
+
 export namespace ExamUtils {
 
   export function loadExamAnswers(filename: string) : ExamSubmission {
@@ -105,7 +107,7 @@ export namespace ExamUtils {
   }
 
   export function readGradingAssignments(exam_id: string, question_id: string) {
-    let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*`);
+    let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/chunk*.json`);
     return files.map(
       filename => <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"))
     );
@@ -123,11 +125,14 @@ export namespace ExamUtils {
 
     let { exam_id, question_id } = getAssnIds(assns);
 
-    assns.forEach((assn, i) => writeFileSync(
-      `${gradingAssignmentDir(exam_id, question_id)}/chunk-${i}.json`,
-      JSON.stringify(assn, null, 2),
-      { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
-    ));
+    assns.forEach(assn => {
+      let name = uniqueNamesGenerator({dictionaries: [colors, adjectives, animals], separator: "-"});
+      writeFileSync(
+        `${gradingAssignmentDir(exam_id, question_id)}/${name}.json`,
+        JSON.stringify(assn, null, 2),
+        { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
+      )
+    });
   }
 
   // export function writeGradingAssignments(assns: GradingAssignmentSpecification[]) {

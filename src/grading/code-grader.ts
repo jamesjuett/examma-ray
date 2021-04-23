@@ -390,6 +390,16 @@ class CodeWritingManualGraderApp {
       return;
     }
 
+    // Check if file is still there
+    try {
+      await this.fileHandle.getFile();
+    }
+    catch (e) {
+      delete this.fileHandle;
+      alert("Oops! The grading assignment file appears to have disappeared! Please reload the page.");
+      return;
+    }
+
     const writable = await this.fileHandle.createWritable();
     // Write the contents of the file to the stream.
     await writable.write(JSON.stringify(this.assn, null, 2));
@@ -487,7 +497,7 @@ class CodeWritingManualGraderApp {
     equivalenceGroups.forEach(g => delete (<any>g).repProgram);
 
     let newAssn : CodeWritingGradingAssignment = {
-      exam_id: this.assn!.question_id,
+      exam_id: this.assn!.exam_id,
       question_id: this.assn!.question_id,
       groups: equivalenceGroups
     };
