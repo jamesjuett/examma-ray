@@ -354,11 +354,12 @@ export class AssignedExam {
     public readonly uuid: string,
     public readonly exam: Exam,
     public readonly student: StudentInfo,
-    public readonly assignedSections: readonly AssignedSection[]
+    public readonly assignedSections: readonly AssignedSection[],
+    allowDuplicates: boolean
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
 
-    if (!exam.allow_duplicates) {
+    if (!allowDuplicates) {
       let sectionIds = assignedSections.map(s => s.section.section_id);
       assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
       let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
@@ -514,7 +515,6 @@ export class Exam {
 
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
-  public readonly allow_duplicates: boolean;
   public readonly enable_regrades: boolean;
 
   public constructor(spec: ExamSpecification) {
@@ -525,7 +525,6 @@ export class Exam {
     this.frontendJsPath = spec.frontend_js_path;
     this.frontendGradedJsPath = spec.frontend_graded_js_path;
     this.sections = spec.sections;
-    this.allow_duplicates = !!spec.allow_duplicates;
     this.enable_regrades = !!spec.enable_regrades;
   }
 

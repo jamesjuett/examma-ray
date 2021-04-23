@@ -28,13 +28,15 @@ export type ExamGeneratorOptions = {
   student_ids: "uniqname" | "uuidv4" | "uuidv5",
   uuidv5_namespace?: string,
   students: readonly StudentInfo[],
-  choose_all?: boolean
+  choose_all?: boolean,
+  allow_duplicates: boolean
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "../../js/frontend.js",
   student_ids: "uniqname",
-  students: []
+  students: [],
+  allow_duplicates: false
 };
 
 function verifyOptions(options: Partial<ExamGeneratorOptions>) {
@@ -87,7 +89,8 @@ export class ExamGenerator {
       student,
       this.exam.sections
         .flatMap(chooser => chooseSections(chooser, this.exam, student, rand))
-        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex))
+        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)),
+      this.options.allow_duplicates
     );
 
     this.checkExam(ae);
@@ -103,7 +106,7 @@ export class ExamGenerator {
     skinRand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionSkinRandomizer(student, this.exam, section))
   {
     let sectionSkins = section.skins.generate(this.exam, student, skinRand);
-    assert(this.exam.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
+    assert(this.options.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
       this.createStudentUuid(student, this.exam.exam_id + "-s-" + section.section_id),
       section,
@@ -124,7 +127,7 @@ export class ExamGenerator {
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionSkinRandomizer(student, this.exam, question)) {
 
     let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
-    assert(this.exam.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
+    assert(this.options.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
       this.createStudentUuid(student, this.exam.exam_id + "-q-" + question.question_id),
       this.exam,

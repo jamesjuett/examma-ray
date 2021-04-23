@@ -16,7 +16,6 @@ export type ExamSpecification = {
   frontend_js_path: string,
   frontend_graded_js_path: string,
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
-  allow_duplicates?: boolean,
   enable_regrades?: boolean
 };
 

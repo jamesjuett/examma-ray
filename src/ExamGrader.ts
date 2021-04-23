@@ -181,7 +181,8 @@ export class ExamGrader {
             )); 
           })
         ));
-      })
+      }),
+      false
     );
   }
 
