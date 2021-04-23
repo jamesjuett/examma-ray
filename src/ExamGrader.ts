@@ -83,7 +83,7 @@ import { QuestionGrader } from './QuestionGrader';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { asMutable, assert, assertFalse } from './util';
 import { unparse } from 'papaparse';
-import { ExamUtils } from './ExamUtils';
+import { ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin } from './skins';
 import del from 'del';
 import { chunk } from 'simple-statistics';
@@ -111,8 +111,11 @@ export class ExamGrader {
   public readonly graderMap: GraderMap = {};
   public readonly exceptionMap: ExceptionMap = {};
 
-  public constructor(exam: Exam, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
+  private frontend_js_path: string;
+
+  public constructor(exam: Exam, frontend_js_path: string, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
+    this.frontend_js_path = frontend_js_path;
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
@@ -221,15 +224,15 @@ export class ExamGrader {
     );
   }
 
-  public prepareManualGrading() {
-    for (let qid in this.graderMap) {
-      let question = this.questionsMap[qid];
-      let aqs = this.getAssignedQuestions(qid);
-      assert(question && aqs);
-      let grader = this.graderMap[qid];
-      grader?.prepareManualGrading && grader.isGrader(question.kind) && grader.prepareManualGrading(aqs);
-    }
-  }
+  // public prepareManualGrading() {
+  //   for (let qid in this.graderMap) {
+  //     let question = this.questionsMap[qid];
+  //     let aqs = this.getAssignedQuestions(qid);
+  //     assert(question && aqs);
+  //     let grader = this.graderMap[qid];
+  //     grader?.prepareManualGrading && grader.isGrader(question.kind) && grader.prepareManualGrading(aqs);
+  //   }
+  // }
 
   private addAppropriateExceptions(aq: AssignedQuestion, student: StudentInfo) {
     let studentExMap = this.exceptionMap[student.uniqname];
@@ -248,12 +251,14 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
+    writeFrontendJS("frontend-graded.js");
+
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
       });
 
     console.log("Rendering question stats files...");

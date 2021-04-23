@@ -1,5 +1,5 @@
 import 'colors';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, copyFileSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
 import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
@@ -11,6 +11,7 @@ import del from 'del';
 import { ResponseKind } from './examma-ray';
 import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
+import { writeFrontendJS } from './ExamUtils';
 
 type SectionStats = {
   section: Section,
@@ -23,6 +24,7 @@ type QuestionStats = {
 };
 
 export type ExamGeneratorOptions = {
+  frontend_js_path: string,
   student_ids: "uniqname" | "uuidv4" | "uuidv5",
   uuidv5_namespace?: string,
   students: readonly StudentInfo[],
@@ -30,6 +32,7 @@ export type ExamGeneratorOptions = {
 };
 
 const DEFAULT_OPTIONS = {
+  frontend_js_path: "../../js/frontend.js",
   student_ids: "uniqname",
   students: []
 };
@@ -186,6 +189,8 @@ export class ExamGenerator {
     mkdirSync(manifestDir, { recursive: true });
     del.sync(`${manifestDir}/*`);
 
+    writeFrontendJS("frontend.js");
+
     this.writeStats();
 
     let filenames : string[][] = [];
@@ -202,7 +207,7 @@ export class ExamGenerator {
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
         writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2), {encoding: "utf-8"});
         console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
+        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path), {encoding: "utf-8"});
       });
 
     writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
@@ -236,3 +241,4 @@ export class ExamGenerator {
     }
   }
 }
+
