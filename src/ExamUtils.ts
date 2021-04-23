@@ -58,7 +58,7 @@ export namespace ExamUtils {
   }
 
   
-  export function createGradingAssignments(aqs: readonly AssignedQuestion<"code_editor">[], numChunks: number) : GradingAssignmentSpecification[] {
+  export function createGradingAssignments(aqs: readonly AssignedQuestion[], numChunks: number) : GradingAssignmentSpecification[] {
     assert(aqs.length > 0, "Cannot create grading assignments for an empty array of assigned questions.")
     let exam_id = aqs[0].exam.exam_id;
     let question_id = aqs[0].question.question_id;
@@ -86,11 +86,7 @@ export namespace ExamUtils {
     assert(assns.length > 0, "Grading assignments to rechunk must contain at least one assignment.");
     assert(Number.isInteger(numChunks), "Number of chunks must be an integer.");
 
-    let exam_id = assns[0].exam_id;
-    assert(assns.every(assn => assn.exam_id === exam_id), "All grading assignments to rechunk must have the same exam id.");
-    
-    let question_id = assns[0].question_id;
-    assert(assns.every(assn => assn.question_id === question_id), "All grading assignments to rechunk must have the same question id.");
+    let { exam_id, question_id } = getAssnIds(assns);
     
     let groups = assns.flatMap(assn => assn.groups);
     groups.forEach((group, i) => group.name = `group_${i}`);
@@ -105,12 +101,12 @@ export namespace ExamUtils {
   }
 
   export function gradingAssignmentDir(exam_id: string, question_id: string) {
-    return `data/${exam_id}/manual_grading/${question_id}/`;
+    return `data/${exam_id}/manual_grading/${question_id}`;
   }
 
   export function readGradingAssignments(exam_id: string, question_id: string) {
     let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*`);
-    return files.forEach(
+    return files.map(
       filename => <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"))
     );
   }
@@ -119,12 +115,19 @@ export namespace ExamUtils {
     del.sync(`${gradingAssignmentDir(exam_id, question_id)}/*`);
   }
 
-  export function writeGradingAssignment(filename: string, assn: GradingAssignmentSpecification) {
-    writeFileSync(
-      filename,
+  export function writeGradingAssignments(assns: GradingAssignmentSpecification[]) {
+
+    if (assns.length === 0) {
+      return;
+    }
+
+    let { exam_id, question_id } = getAssnIds(assns);
+
+    assns.forEach((assn, i) => writeFileSync(
+      `${gradingAssignmentDir(exam_id, question_id)}/chunk-${i}.json`,
       JSON.stringify(assn, null, 2),
       { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
-    );
+    ));
   }
 
   // export function writeGradingAssignments(assns: GradingAssignmentSpecification[]) {
@@ -147,6 +150,15 @@ export namespace ExamUtils {
 
   // }
 
+}
+
+function getAssnIds(assns: GradingAssignmentSpecification[]) {
+  let exam_id = assns[0].exam_id;
+  assert(assns.every(assn => assn.exam_id === exam_id), "All grading assignments to rechunk must have the same exam id.");
+
+  let question_id = assns[0].question_id;
+  assert(assns.every(assn => assn.question_id === question_id), "All grading assignments to rechunk must have the same question id.");
+  return { exam_id, question_id };
 }
 
 export function writeFrontendJS(filename: string) {
