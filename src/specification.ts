@@ -13,8 +13,6 @@ export type ExamSpecification = {
   title: string,
   mk_intructions: string,
   mk_announcements?: string[],
-  frontend_js_path: string,
-  frontend_graded_js_path: string,
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
   enable_regrades?: boolean
 };

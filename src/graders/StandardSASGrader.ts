@@ -58,7 +58,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     let itemResults = this.rubric.map(rubricItem => gradeSASRubricItem(rubricItem, submission));
     return {
       wasBlankSubmission: false,
-      pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
+      pointsEarned: itemResults.reduce((p, r) => p + (r.applied ? r.pointsEarned : 0), 0),
       itemResults: itemResults
     }
   }

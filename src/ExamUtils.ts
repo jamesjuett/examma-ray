@@ -93,7 +93,9 @@ export namespace ExamUtils {
     let groups = assns.flatMap(assn => assn.groups);
     groups.forEach((group, i) => group.name = `group_${i}`);
 
-    let groupChunks = chunk(asMutable(groups), numChunks);
+    let chunkSize = Math.ceil(groups.length / numChunks);
+
+    let groupChunks = chunk(asMutable(groups), chunkSize);
 
     return groupChunks.map((c, i) => ({
       exam_id: exam_id,
@@ -107,7 +109,7 @@ export namespace ExamUtils {
   }
 
   export function readGradingAssignments(exam_id: string, question_id: string) {
-    let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/chunk*.json`);
+    let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*.json`);
     return files.map(
       filename => <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"))
     );
@@ -127,8 +129,10 @@ export namespace ExamUtils {
 
     assns.forEach(assn => {
       let name = uniqueNamesGenerator({dictionaries: [colors, adjectives, animals], separator: "-"});
+      let dir = gradingAssignmentDir(exam_id, question_id);
+      mkdirSync(dir, { recursive: true });
       writeFileSync(
-        `${gradingAssignmentDir(exam_id, question_id)}/${name}.json`,
+        `${dir}/${name}.json`,
         JSON.stringify(assn, null, 2),
         { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
       )

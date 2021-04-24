@@ -312,52 +312,54 @@ export class ExamGrader {
           ${question.question_id}
       </div>`;
 
-    writeStatsFile(this.exam, out_filename, `
+    this.writeStatsFile(out_filename, `
       ${header}
       ${statsReport}
     `);
+  }
+
+  private writeStatsFile(filename: string, body: string) {
+    writeFileSync(filename, `
+        <!DOCTYPE html>
+      <html>
+      <meta charset="UTF-8">
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+      <script src="${this.frontend_js_path}"></script>
+      <script>
+        $(function() {
+          $('button.examma-ray-blank-saver').on("click", function() {
+            let blank_num = $(this).data("blank-num");
+            let checked = $("input[type=checkbox]:checked").filter(function() {
+              return $(this).data("blank-num") === blank_num;
+            }).map(function() {
+              return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
+            }).get().join(",\\n");
+            $(".checked-submissions-content").html(he.encode(checked));
+            $(".checked-submissions-modal").modal("show")
+          })
+        });
+  
+      </script>
+      <style>
+        
+  
+  
+      </style>
+      <body>
+        ${body}
+  
+  
+      </body>
+      </html>`, { encoding: "utf-8" });
   }
 }
 
 
 
-export function writeStatsFile(exam: Exam, filename: string, body: string) {
-  writeFileSync(filename, `
-      <!DOCTYPE html>
-    <html>
-    <meta charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-    <script src="${exam.frontendGradedJsPath}"></script>
-    <script>
-      $(function() {
-        $('button.examma-ray-blank-saver').on("click", function() {
-          let blank_num = $(this).data("blank-num");
-          let checked = $("input[type=checkbox]:checked").filter(function() {
-            return $(this).data("blank-num") === blank_num;
-          }).map(function() {
-            return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
-          }).get().join(",\\n");
-          $(".checked-submissions-content").html(he.encode(checked));
-          $(".checked-submissions-modal").modal("show")
-        })
-      });
 
-    </script>
-    <style>
-      
-
-
-    </style>
-    <body>
-      ${body}
-
-
-    </body>
-    </html>`, { encoding: "utf-8" });
-}
 
 
 

@@ -1,4 +1,4 @@
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, FILLED_STAR } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
 import { ResponseKind } from './response/common';
@@ -510,9 +510,6 @@ export class Exam {
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
 
-  public readonly frontendJsPath: string;
-  public readonly frontendGradedJsPath: string;
-
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
   public readonly enable_regrades: boolean;
@@ -522,8 +519,6 @@ export class Exam {
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
-    this.frontendJsPath = spec.frontend_js_path;
-    this.frontendGradedJsPath = spec.frontend_graded_js_path;
     this.sections = spec.sections;
     this.enable_regrades = !!spec.enable_regrades;
   }
