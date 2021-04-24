@@ -90,6 +90,9 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-right-panel">
+      <div style="position: sticky; top: 0;">
+        <button class="btn btn-default examma-ray-grading-finished-button">Mark as Finished</button>
+      </div>
       <div class="examma-ray-grading-rubric-buttons">
       </div>
     </div>
@@ -149,11 +152,15 @@ $(() => {
   $(".examma-ray-submissions-sort-ordering-button").on("click", function() {
       $(".examma-ray-submissions-sort-ordering-button").removeClass("btn-primary").addClass("btn-default");
       $(this).removeClass("btn-default").addClass("btn-primary");
-      GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"))
+      GRADING_APP.setSubmissionsSortOrdering($(this).data("sort-ordering"));
   });
 
   $(".examma-ray-auto-group-button").on("click", async function() {
-      GRADING_APP.autoGroup()
+      GRADING_APP.autoGroup();
+  });
+
+  $(".examma-ray-grading-finished-button").on("click", async function() {
+      GRADING_APP.toggleGradingFinished();
   });
 
 });
@@ -632,8 +639,6 @@ class CodeWritingManualGraderApp {
     this.setRubricItemStatus(i, currentStatus);
   }
 
-  
-
   private updateRubricItemButtons() {
     if (!this.currentGroup?.grading_result) {
       return;
@@ -643,7 +648,9 @@ class CodeWritingManualGraderApp {
 
     this.rubric.forEach((ri, i) => {
       this.updateRubricItemButton(i, gr.itemResults[ri.id]?.status || "off");
-    })
+    });
+
+    this.updateGradingFinishedButton();
   }
 
   private updateRubricItemButton(i: number, status: CodeWritingRubricItemStatus) {
@@ -662,6 +669,30 @@ class CodeWritingManualGraderApp {
       elem.addClass("list-group-item-warning");
       elem.append($(`<span class="examma-ray-unknown-rubric-item-icon"><i class="bi bi-question-diamond-fill"></i><span>`));
     }
+  }
+
+  private updateGradingFinishedButton() {
+    let elem = $(".examma-ray-grading-finished-button");
+    elem.removeClass("btn-default").removeClass("btn-success");
+    if (this.currentGroup?.grading_result?.verified) {
+      elem.html(`<i class="bi bi-check2-circle"></i> Finished`);
+      elem.addClass("btn-success");
+    }
+    else {
+      elem.html("Mark as Finished");
+      elem.addClass("btn-default");
+    }
+  }
+
+  public toggleGradingFinished() {
+
+    if(!this.currentGroup?.grading_result) {
+      return;
+    }
+
+    this.currentGroup.grading_result.verified = !this.currentGroup.grading_result.verified;
+
+    this.updatedGradingResult();
   }
 
   private updatedGradingResult() {
