@@ -23,7 +23,7 @@ export type CodeWritingGradingResult = GradingResult & {
   itemResults: {
     [index: string]: CodeWritingRubricItemGradingResult | undefined
   },
-  verified?: boolean
+  verified: boolean
 };
 
 export class CodeWritingGrader implements QuestionGrader<"code_editor"> {

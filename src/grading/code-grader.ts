@@ -485,7 +485,10 @@ class CodeWritingManualGraderApp {
 
     let equivalenceGroups : (CodeWritingGradingGroup & { repProgram?: Program })[] = [];
 
-    let allSubs = this.assn!.groups.flatMap(g => g.submissions);
+    let allSubs = this.assn!.groups.flatMap(g => g.submissions.map(sub => ({
+      submission: sub,
+      grading_result: g.grading_result
+    })));
     for(let i = 0; i < allSubs.length; ++i) {
       let sub = allSubs[i];
       $(".examma-ray-grouping-progress .progress-bar").css("width", (100*i/allSubs.length) + "%");
@@ -511,7 +514,15 @@ class CodeWritingManualGraderApp {
     return applySkin(this.groupingFunctionName, {id: "[recorded]", replacements: sub.skin_replacements});
   }
 
-  private autoGroupHelper(equivalenceGroups: (CodeWritingGradingGroup & { repProgram?: Program })[], sub: CodeWritingSubmission) {
+  private autoGroupHelper(
+    equivalenceGroups: (CodeWritingGradingGroup & { repProgram?: Program })[],
+    sub_gr: {
+      submission: CodeWritingSubmission,
+      grading_result?: CodeWritingGradingResult
+    }) {
+
+    let sub = sub_gr.submission;
+    let gr = sub_gr.grading_result;
 
     return new Promise<void>((resolve, reject) => {
 
@@ -529,13 +540,19 @@ class CodeWritingManualGraderApp {
               name: "group_" + equivalenceGroups.length,
               representative_index: 0,
               repProgram: p,
-              submissions: [sub]
+              submissions: [sub],
+              grading_result: gr
             });
             resolve();
             return;
           }
     
           let matchingGroup = equivalenceGroups.find(group => {
+
+            if (!areEquivalentGradingResults(group.grading_result, gr)) {
+              return false;
+            }
+            
             let rep = group.repProgram;
             if (!rep) { return false; }
             let repFunc = getFunc(rep, this.getGroupingFunctionName(group.submissions[group.representative_index]));
@@ -699,4 +716,23 @@ function getFunc(program: Program, name: string | string[]) {
     }
   }
   return undefined;
+}
+
+function areEquivalentGradingResults(gr1: CodeWritingGradingResult | undefined, gr2: CodeWritingGradingResult | undefined) {
+  if (gr1 === undefined || gr2 === undefined) {
+    return gr1 === undefined && gr2 === undefined;
+  }
+
+  if (gr1.itemResults.length !== gr2.itemResults.length) {
+    return false;
+  }
+
+  if (gr1.verified !== gr2.verified) {
+    return false;
+  }
+
+  // All grading results match (and keys from one work just as well in the other)
+  return [...Object.keys(gr1.itemResults), ...Object.keys(gr2.itemResults)].every(
+    key => gr1.itemResults[key]?.status === gr1.itemResults[key]?.status
+  );
 }
