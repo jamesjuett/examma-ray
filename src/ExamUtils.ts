@@ -128,7 +128,7 @@ export namespace ExamUtils {
     let { exam_id, question_id } = getAssnIds(assns);
 
     assns.forEach(assn => {
-      let name = uniqueNamesGenerator({dictionaries: [colors, adjectives, animals], separator: "-"});
+      let name = uniqueNamesGenerator({dictionaries: [adjectives, colors, animals], separator: "-"});
       let dir = gradingAssignmentDir(exam_id, question_id);
       mkdirSync(dir, { recursive: true });
       writeFileSync(
