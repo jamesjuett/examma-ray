@@ -385,7 +385,19 @@ code {
 }
 
 
+.examma-ray-question-star {
+  cursor: pointer;
+}
 
+.examma-ray-question-star > svg {
+  color: transparent;
+  stroke: gray;
+}
+
+.examma-ray-question-star-marked > svg {
+  color: gold;
+  stroke: gray;
+}
 
 
 

@@ -11,7 +11,7 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD } from '../src/icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/icons';
 
 import 'katex/dist/katex.min.css';
 
@@ -196,6 +196,13 @@ function onSaved() {
 
 function main() {
 
+  try {
+    setupQuestionStars();
+  }
+  catch (e) {
+    // just in case
+  }
+
   setupSaverModal();
 
   setupChangeListeners();
@@ -209,6 +216,26 @@ function main() {
 }
 
 $(main);
+
+function setupQuestionStars() {
+  $(".examma-ray-question > .card > .card-header").each(function() {
+    let star = $(
+      `<span class="examma-ray-question-star">
+        ${FILLED_STAR}
+      </span>`
+    );
+    star.on("click", function() {
+      if ($(this).hasClass("examma-ray-question-star-marked")) {
+        $(this).removeClass("examma-ray-question-star-marked");
+      }
+      else {
+        $(this).addClass("examma-ray-question-star-marked");
+      }
+    });
+    $(this).append(star);
+  })
+
+}
 
 function setupSaverModal() {
 
