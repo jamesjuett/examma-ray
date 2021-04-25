@@ -52,6 +52,10 @@ body {
   font-size: 0.5em;
 }
 
+.examma-ray-grading-group-thumbnail .examma-ray-score-badge {
+  float: right;
+}
+
 .examma-ray-grading-rubric-buttons {
   margin: 0.5em;
 }

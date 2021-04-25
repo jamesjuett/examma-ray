@@ -49,10 +49,13 @@ $(() => {
   $("body").html(`
     <div class="examma-ray-grading-sidebar">
       <div class="examma-ray-grading-controls">
-        <span class="examma-ray-grading-title"></span>
-        <button id="load-grading-assignment-button" class="btn btn-primary">Load Grading Assignment</button>
-        <button type="button" class="btn btn-primary examma-ray-auto-group-button">Auto-Group</button>
-        <div>
+        <div class="examma-ray-grading-title" style="text-align: center;"></div>
+        <div class="examma-ray-grading-assignment-name" style="text-align: center;">[No Grading Assignment Loaded]</div>
+        <div style="text-align: center; margin-bottom: 0.5em;">
+          <button id="load-grading-assignment-button" class="btn btn-primary"><i class="bi bi-folder2-open"></i> Open</button>
+          <button type="button" class="btn btn-primary examma-ray-auto-group-button"><i class="bi bi-lightning"></i> Auto-Group</button>
+        </div>
+        <div style="padding-left: 1em; margin-bottom: 0.5em;">
           <b>Filter</b>
           <div class="btn-group" role="group">
             <button data-filter-criterion="all" type="button" class="examma-ray-submissions-filter-button btn btn-primary">All</button>
@@ -60,7 +63,7 @@ $(() => {
             <button data-filter-criterion="graded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Graded</button>
           </div>
         </div>
-        <div>
+        <div style="padding-left: 1em; margin-bottom: 0.5em;">
           <b>Sort</b>
           <div class="btn-group" role="group">
             <button data-sort-criterion="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
@@ -68,7 +71,7 @@ $(() => {
             <button data-sort-criterion="score" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score</button>
           </div>
         </div>
-        <div>
+        <div style="padding-left: 1em; margin-bottom: 0.5em;">
           <b>Sort Ordering</b>
           <div class="btn-group" role="group">
             <button data-sort-ordering="asc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-primary">Asc</button>
@@ -76,12 +79,12 @@ $(() => {
           </div>
         </div>
       </div>
-      <div class="examma-ray-submissions-column">
+      <div class="examma-ray-submissions-column" style="border-top: solid 1px #dedede">
       
       </div>
     </div>
     <div class="examma-ray-grading-main-panel">
-      <div>
+      <div style="margin-bottom: 3px;">
         <h3 style="margin-top: 0;">You are grading: <code class="examma-ray-grading-group-name">[No group selected]</code></h3>
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#groups-modal"><span class="badge examma-ray-grading-group-num-members">N/A</span> Review Group Members</button>
         <button class="btn btn-primary" id="examma-ray-grading-autograde-button">Autograde!</button>
@@ -310,6 +313,7 @@ class CodeWritingManualGraderApp {
     }
 
     this.setGradingAssignment(assn);
+    $(".examma-ray-grading-assignment-name").html(file.name);
 
     await this.saveGradingAssignment(); // immediate save prompts for permissions to save in the future
   }
@@ -356,9 +360,8 @@ class CodeWritingManualGraderApp {
     let jq = $(`
       <div class="panel panel-default examma-ray-grading-group-thumbnail">
         <div class="panel-heading">
-          ${group.name}
-          (${group.submissions.length} submissions)
-          ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points) : renderUngradedBadge(this.question.points)}
+          <span class="badge">${group.submissions.length}</span> ${group.name} 
+          ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points, group.grading_result.verified ? VERIFIED_ICON : "") : renderUngradedBadge(this.question.points)}
         </div>
         <div class="panel-body">
           <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
@@ -484,7 +487,7 @@ class CodeWritingManualGraderApp {
 
     let allSubs = this.assn!.groups.flatMap(g => g.submissions.map(sub => ({
       submission: sub,
-      grading_result: g.grading_result
+      grading_result: copyGradingResult(g.grading_result)
     })));
     for(let i = 0; i < allSubs.length; ++i) {
       let sub = allSubs[i];
@@ -515,7 +518,7 @@ class CodeWritingManualGraderApp {
     equivalenceGroups: (CodeWritingGradingGroup & { repProgram?: Program })[],
     sub_gr: {
       submission: CodeWritingSubmission,
-      grading_result?: CodeWritingGradingResult
+      grading_result: CodeWritingGradingResult | undefined
     }) {
 
     let sub = sub_gr.submission;
@@ -538,7 +541,7 @@ class CodeWritingManualGraderApp {
               representative_index: 0,
               repProgram: p,
               submissions: [sub],
-              grading_result: gr
+              grading_result: copyGradingResult(gr)
             });
             resolve();
             return;
@@ -571,7 +574,7 @@ class CodeWritingManualGraderApp {
               representative_index: 0,
               repProgram: p,
               submissions: [sub],
-              grading_result: gr
+              grading_result: copyGradingResult(gr)
             });
           }
         }
@@ -582,7 +585,7 @@ class CodeWritingManualGraderApp {
             name: "group_" + equivalenceGroups.length,
             representative_index: 0,
             submissions: [sub],
-            grading_result: gr
+            grading_result: copyGradingResult(gr)
           })
         }
         
@@ -603,7 +606,7 @@ class CodeWritingManualGraderApp {
       name: "group_" + this.assn.groups.length,
       representative_index: 0,
       submissions: [subToRemove],
-      grading_result: this.currentGroup.grading_result
+      grading_result: copyGradingResult(this.currentGroup.grading_result)
     });
 
     this.refreshGroups();
@@ -614,9 +617,15 @@ class CodeWritingManualGraderApp {
       return;
     }
     let gr = this.currentGroup.grading_result;
-    gr.itemResults[this.rubric[i].id] = {
-      status: status
-    };
+
+    if (status === "off") {
+      delete gr.itemResults[this.rubric[i].id];
+    }
+    else {
+      gr.itemResults[this.rubric[i].id] = {
+        status: status
+      };
+    }
 
     this.updatedGradingResult();
   }
@@ -699,9 +708,9 @@ class CodeWritingManualGraderApp {
     }
 
     let thumbElem = this.thumbnailElems[this.currentGroup.name];
-    thumbElem.find(".badge").replaceWith(
+    thumbElem.find(".examma-ray-score-badge").replaceWith(
       this.currentGroup.grading_result
-        ? renderScoreBadge(this.pointsEarned(this.currentGroup.grading_result), this.question.points)
+        ? renderScoreBadge(this.pointsEarned(this.currentGroup.grading_result), this.question.points, this.currentGroup.grading_result.verified ? VERIFIED_ICON : "")
         : renderUngradedBadge(this.question.points)
     );
     
@@ -762,3 +771,13 @@ function createEmptyGradingResult(group: CodeWritingGradingGroup) : CodeWritingG
     verified: false
   }
 }
+
+function copyGradingResult(gr: CodeWritingGradingResult | undefined) {
+  if (gr === undefined) {
+    return undefined;
+  }
+
+  return $.extend(true, {}, gr);
+}
+
+const VERIFIED_ICON = `<i class="bi bi-check2-circle" style="vertical-align: text-top;"></i> `;

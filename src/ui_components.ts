@@ -4,12 +4,12 @@ import chroma from 'chroma-js';
 
 
 
-export function renderScoreBadge(pointsEarned: number, pointsPossible: number) {
+export function renderScoreBadge(pointsEarned: number, pointsPossible: number, prefix: string = "") {
   let text = `${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}`;
   return `<span class="badge ${pointsPossible === 0 ? "badge-secondary" :
     pointsEarned === 0 ? "badge-danger" :
       pointsEarned < pointsPossible ? "badge-warning" :
-        "badge-success"} examma-ray-score-badge">${text}</span>`;
+        "badge-success"} examma-ray-score-badge">${prefix}${text}</span>`;
 }
 
 export function renderUngradedBadge(pointsPossible: number) {
