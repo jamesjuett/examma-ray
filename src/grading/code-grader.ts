@@ -27,6 +27,7 @@ import { renderPointsWorthBadge, renderScoreBadge, renderShortPointsWorthBadge, 
 import { asMutable, assert } from "../util";
 import { Question } from "../exams";
 import { QuestionSpecification } from "../specification";
+import deepEqual from "deep-equal";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and
@@ -751,22 +752,7 @@ function getFunc(program: Program, name: string | string[]) {
 }
 
 function areEquivalentGradingResults(gr1: CodeWritingGradingResult | undefined, gr2: CodeWritingGradingResult | undefined) {
-  if (gr1 === undefined || gr2 === undefined) {
-    return gr1 === undefined && gr2 === undefined;
-  }
-
-  if (gr1.itemResults.length !== gr2.itemResults.length) {
-    return false;
-  }
-
-  if (gr1.verified !== gr2.verified) {
-    return false;
-  }
-
-  // All grading results match (and keys from one work just as well in the other)
-  return [...Object.keys(gr1.itemResults), ...Object.keys(gr2.itemResults)].every(
-    key => gr1.itemResults[key]?.status === gr2.itemResults[key]?.status
-  );
+  return deepEqual(gr1, gr2);
 }
 
 function createEmptyGradingResult(group: CodeWritingGradingGroup) : CodeWritingGradingResult {

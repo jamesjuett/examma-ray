@@ -16,11 +16,13 @@ const manifest : ExamSubmission = {
     {
       "uuid": "section_uuid_1",
       "section_id": "1_true_false",
+      "skin_id": "section_skin1",
       "display_index": "1",
       "questions": [
         {
           "uuid": "question_uuid_1",
           "question_id": "sp20_mc_time_complexity_4",
+          "skin_id": "skin1",
           "display_index": "1.1",
           "kind": "multiple_choice",
           "response": ""
@@ -28,6 +30,7 @@ const manifest : ExamSubmission = {
         {
           "uuid": "question_uuid_2",
           "question_id": "sp20_mc_containers_and_templates_1",
+          "skin_id": "skin2",
           "display_index": "1.2",
           "kind": "multiple_choice",
           "response": ""
@@ -37,11 +40,13 @@ const manifest : ExamSubmission = {
     {
       "uuid": "section_uuid_2",
       "section_id": "sp20_2_2_containers",
+      "skin_id": "section_skin2",
       "display_index": "2",
       "questions": [
         {
           "uuid": "question_uuid_3",
           "question_id": "sp20_2_2_part1",
+          "skin_id": "skin3",
           "display_index": "2.1",
           "kind": "fitb",
           "response": ""
@@ -49,6 +54,7 @@ const manifest : ExamSubmission = {
         {
           "uuid": "question_uuid_4",
           "question_id": "sp20_2_2_part2",
+          "skin_id": "skin4",
           "display_index": "2.2",
           "kind": "code_editor",
           "response": ""
@@ -77,11 +83,13 @@ const submitted : ExamSubmission = {
     {
       "uuid": "section_uuid_2",
       "section_id": "sp20_2_2_containers",
+      "skin_id": "blah",
       "display_index": "1",
       "questions": [
         {
           "uuid": "question_uuid_3",
           "question_id": "sp20_2_2_part1",
+          "skin_id": "blah",
           "display_index": "2.1",
           "kind": "fitb",
           "response": "test_response_sp20_2_2_part1"
@@ -89,6 +97,7 @@ const submitted : ExamSubmission = {
         {
           "uuid": "question_uuid_4",
           "question_id": "sp20_2_2_part2",
+          "skin_id": "blah",
           "display_index": "2.2",
           "kind": "code_editor",
           "response": "test_response_sp20_2_2_part2"
@@ -98,11 +107,13 @@ const submitted : ExamSubmission = {
     {
       "uuid": "section_uuid_1",
       "section_id": "1_true_false",
+      "skin_id": "blah",
       "display_index": "523",
       "questions": [
         {
           "uuid": "question_uuid_2",
           "question_id": "sp20_mc_containers_and_templates_1",
+          "skin_id": "blah",
           "display_index": "1.2",
           "kind": "fitb",
           "response": "test_response_sp20_mc_containers_and_templates_1"
@@ -110,6 +121,7 @@ const submitted : ExamSubmission = {
         {
           "uuid": "question_uuid_1",
           "question_id": "sp20_mc_time_complexity_4",
+          "skin_id": "blah",
           "display_index": "1.1",
           "kind": "fitb",
           "response": "test_response_sp20_mc_time_complexity_4"

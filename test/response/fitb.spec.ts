@@ -91,16 +91,16 @@ int main() {
 
   it('renders blanks correctly', () => {
     expect(rendered)
-      .to.contain(`<input type="text" value="" size="8" maxlength="8" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>`)
-      .to.contain(`<input type="text" value="" size="2" maxlength="2" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>`)
-      .to.contain(`<input type="text" value="" size="3" maxlength="3" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>`)
-      .to.contain(`<input type="text" value="" size="5" maxlength="5" autocomplete="off" autocorrect="off" class="examma-ray-fitb-blank-input nohighlight"></input>`);
+      .to.contain(`<input type="text" value="" size="8" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-blank-input nohighlight"></input>`)
+      .to.contain(`<input type="text" value="" size="2" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-blank-input nohighlight"></input>`)
+      .to.contain(`<input type="text" value="" size="3" maxlength="3" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-blank-input nohighlight"></input>`)
+      .to.contain(`<input type="text" value="" size="5" maxlength="5" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-blank-input nohighlight"></input>`);
   });
 
   it('renders boxes correctly', () => {
     expect(rendered)
-      .to.contain(`<textarea rows="3" cols="7" autocapitalize="none" autocomplete="off" autocorrect="off" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: hidden;"></textarea>`)
-      .to.contain(`<textarea rows="6" autocapitalize="none" autocomplete="off" autocorrect="off" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: hidden; width: 100%;"></textarea>`);
+      .to.contain(`<textarea rows="3" cols="7" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: auto;"></textarea>`)
+      .to.contain(`<textarea rows="6" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" class="examma-ray-fitb-box-input nohighlight" style="resize: none; overflow: auto; width: 100%;"></textarea>`);
   });
 
 });
