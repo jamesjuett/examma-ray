@@ -59,20 +59,20 @@ $(() => {
             <button data-filter-criterion="graded" type="button" class="examma-ray-submissions-filter-button btn btn-default">Graded</button>
           </div>
         </div>
-      </div>
-      <div>
-        <b>Sort</b>
-        <div class="btn-group" role="group">
-          <button data-sort-criterion="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
-          <button data-sort-criterion="size" type="button" class="examma-ray-submissions-sort-button btn btn-default">Size</button>
-          <button data-sort-criterion="score" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score</button>
+        <div>
+          <b>Sort</b>
+          <div class="btn-group" role="group">
+            <button data-sort-criterion="name" type="button" class="examma-ray-submissions-sort-button btn btn-primary">Name</button>
+            <button data-sort-criterion="size" type="button" class="examma-ray-submissions-sort-button btn btn-default">Size</button>
+            <button data-sort-criterion="score" type="button" class="examma-ray-submissions-sort-button btn btn-default">Score</button>
+          </div>
         </div>
-      </div>
-      <div>
-        <b>Sort Ordering</b>
-        <div class="btn-group" role="group">
-          <button data-sort-ordering="asc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-primary">Asc</button>
-          <button data-sort-ordering="dsc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-default">Dsc</button>
+        <div>
+          <b>Sort Ordering</b>
+          <div class="btn-group" role="group">
+            <button data-sort-ordering="asc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-primary">Asc</button>
+            <button data-sort-ordering="dsc" type="button" class="examma-ray-submissions-sort-ordering-button btn btn-default">Dsc</button>
+          </div>
         </div>
       </div>
       <div class="examma-ray-submissions-column">
@@ -90,8 +90,9 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-right-panel">
-      <div style="position: sticky; top: 0;">
+      <div style="position: sticky; top: 0; text-align: center; background: white; z-index: 10">
         <button class="btn btn-default examma-ray-grading-finished-button">Mark as Finished</button>
+        <hr />
       </div>
       <div class="examma-ray-grading-rubric-buttons">
       </div>
@@ -166,11 +167,7 @@ $(() => {
 });
 
 function isFullyGraded(sub: CodeWritingGradingGroup) {
-  if (!sub.grading_result) {
-    return false;
-  }
-
-  return !!Object.values(sub.grading_result.itemResults).every(res => res!.status !== "unknown");
+  return !!sub.grading_result?.verified;
 }
 
 const SUBMISSION_FILTERS : {
@@ -432,14 +429,6 @@ class CodeWritingManualGraderApp {
     $(".examma-ray-submissions-column").find(".panel-primary").removeClass("panel-primary");
     this.thumbnailElems[group.name].addClass("panel-primary");
 
-    if (!group.grading_result) {
-      group.grading_result = {
-        wasBlankSubmission: rep.response === BLANK_SUBMISSION,
-        itemResults: {},
-        verified: false
-      }
-    }
-
     this.updatedGradingResult();
   }
 
@@ -559,6 +548,12 @@ class CodeWritingManualGraderApp {
             if (!areEquivalentGradingResults(group.grading_result, gr)) {
               return false;
             }
+
+            // Only group blank submissions with other blank submissions
+            if ( (group.submissions[group.representative_index].response === BLANK_SUBMISSION )
+              !== (sub.response === BLANK_SUBMISSION)) {
+              return false;
+            }
             
             let rep = group.repProgram;
             if (!rep) { return false; }
@@ -574,7 +569,8 @@ class CodeWritingManualGraderApp {
               name: "group_" + equivalenceGroups.length,
               representative_index: 0,
               repProgram: p,
-              submissions: [sub]
+              submissions: [sub],
+              grading_result: gr
             });
           }
         }
@@ -584,7 +580,8 @@ class CodeWritingManualGraderApp {
           equivalenceGroups.push({
             name: "group_" + equivalenceGroups.length,
             representative_index: 0,
-            submissions: [sub]
+            submissions: [sub],
+            grading_result: gr
           })
         }
         
@@ -604,7 +601,8 @@ class CodeWritingManualGraderApp {
     this.assn.groups.push({
       name: "group_" + this.assn.groups.length,
       representative_index: 0,
-      submissions: [subToRemove]
+      submissions: [subToRemove],
+      grading_result: this.currentGroup.grading_result
     });
 
     this.refreshGroups();
@@ -623,9 +621,12 @@ class CodeWritingManualGraderApp {
   }
 
   public toggleRubricItem(i: number) {
-    if(!this.currentGroup?.grading_result) {
+    if(!this.currentGroup) {
       return;
     }
+
+    this.currentGroup.grading_result ??= createEmptyGradingResult(this.currentGroup);
+
     let currentStatus = this.currentGroup.grading_result.itemResults[this.rubric[i].id]?.status || "off";
     if (currentStatus === "off") {
       currentStatus = "on";
@@ -639,18 +640,13 @@ class CodeWritingManualGraderApp {
     this.setRubricItemStatus(i, currentStatus);
   }
 
-  private updateRubricItemButtons() {
-    if (!this.currentGroup?.grading_result) {
-      return;
-    }
-
-    let gr = this.currentGroup.grading_result;
+  private updateRubricItemButtons(gr: CodeWritingGradingResult | undefined) {
 
     this.rubric.forEach((ri, i) => {
-      this.updateRubricItemButton(i, gr.itemResults[ri.id]?.status || "off");
+      this.updateRubricItemButton(i, gr?.itemResults[ri.id]?.status || "off");
     });
 
-    this.updateGradingFinishedButton();
+    this.updateGradingFinishedButton(gr);
   }
 
   private updateRubricItemButton(i: number, status: CodeWritingRubricItemStatus) {
@@ -671,10 +667,10 @@ class CodeWritingManualGraderApp {
     }
   }
 
-  private updateGradingFinishedButton() {
+  private updateGradingFinishedButton(gr: CodeWritingGradingResult | undefined) {
     let elem = $(".examma-ray-grading-finished-button");
     elem.removeClass("btn-default").removeClass("btn-success");
-    if (this.currentGroup?.grading_result?.verified) {
+    if (gr?.verified) {
       elem.html(`<i class="bi bi-check2-circle"></i> Finished`);
       elem.addClass("btn-success");
     }
@@ -685,10 +681,11 @@ class CodeWritingManualGraderApp {
   }
 
   public toggleGradingFinished() {
-
-    if(!this.currentGroup?.grading_result) {
+    if(!this.currentGroup) {
       return;
     }
+
+    this.currentGroup.grading_result ??= createEmptyGradingResult(this.currentGroup);
 
     this.currentGroup.grading_result.verified = !this.currentGroup.grading_result.verified;
 
@@ -696,14 +693,18 @@ class CodeWritingManualGraderApp {
   }
 
   private updatedGradingResult() {
-    if (!this.currentGroup?.grading_result) {
+    if (!this.currentGroup) {
       return;
     }
 
     let thumbElem = this.thumbnailElems[this.currentGroup.name];
-    thumbElem.find(".badge").replaceWith(renderScoreBadge(this.pointsEarned(this.currentGroup.grading_result), this.question.points))
+    thumbElem.find(".badge").replaceWith(
+      this.currentGroup.grading_result
+        ? renderScoreBadge(this.pointsEarned(this.currentGroup.grading_result), this.question.points)
+        : renderUngradedBadge(this.question.points)
+    );
     
-    this.updateRubricItemButtons();
+    this.updateRubricItemButtons(this.currentGroup.grading_result);
   }
 
   private pointsEarned(gr?: CodeWritingGradingResult) {
@@ -764,6 +765,14 @@ function areEquivalentGradingResults(gr1: CodeWritingGradingResult | undefined, 
 
   // All grading results match (and keys from one work just as well in the other)
   return [...Object.keys(gr1.itemResults), ...Object.keys(gr2.itemResults)].every(
-    key => gr1.itemResults[key]?.status === gr1.itemResults[key]?.status
+    key => gr1.itemResults[key]?.status === gr2.itemResults[key]?.status
   );
+}
+
+function createEmptyGradingResult(group: CodeWritingGradingGroup) : CodeWritingGradingResult {
+  return {
+    wasBlankSubmission: group.submissions[group.representative_index].response === BLANK_SUBMISSION,
+    itemResults: {},
+    verified: false
+  }
 }

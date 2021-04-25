@@ -1,3 +1,7 @@
+body {
+  overflow: hidden;
+}
+
 .examma-ray-grading-sidebar {
   position: absolute;
   left: 0;
@@ -32,6 +36,12 @@
   width: 200px;
   overflow-y: auto;
   padding-top: 1em;
+  height: 100%;
+  border-left: #dedede;
+}
+
+.examma-ray-grading-right-panel hr {
+  border-color: #dedede;
 }
 
 .examma-ray-grading-group-thumbnail {

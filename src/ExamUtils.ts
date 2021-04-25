@@ -76,7 +76,8 @@ export namespace ExamUtils {
           response: stringify_response(aq.submission)
         }],
         name: "group_" + i,
-        representative_index: 0
+        representative_index: 0,
+        grading_result: undefined
       }))
     };
 

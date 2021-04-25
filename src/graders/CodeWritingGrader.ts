@@ -56,7 +56,8 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
         wasBlankSubmission: false,
-        itemResults: {}
+        itemResults: {},
+        verified: true
       };
     }
 
@@ -75,7 +76,8 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
       wasBlankSubmission: false,
       itemResults: {
         // TODO PLACEHOLDER
-      }
+      },
+      verified: true
     };//this.results.getGradingRecord(aq.uuid).grading_result;
   }
 

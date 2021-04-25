@@ -16,7 +16,7 @@ export type GradingGroup<QT extends ResponseKind = ResponseKind, GR extends Grad
   name: string,
   submissions: GradingSubmission<QT,GR>[],
   representative_index: number,
-  grading_result?: GR
+  grading_result: GR | undefined
 }
 
 export type GradingAssignmentSpecification<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> = {
