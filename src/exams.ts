@@ -396,6 +396,10 @@ export class AssignedExam {
   public renderSaverButton() {
     return `
       <div class="examma-ray-exam-saver-status">
+        <div>
+          ${this.exam.html_questions_message}
+        </div>
+        <br />
         <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
         <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
       </div>`
@@ -509,6 +513,7 @@ export class Exam {
 
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
+  public readonly html_questions_message: string;
 
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
@@ -519,6 +524,7 @@ export class Exam {
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
+    this.html_questions_message = spec.html_questions_message ?? "";
     this.sections = spec.sections;
     this.enable_regrades = !!spec.enable_regrades;
   }
