@@ -79,21 +79,24 @@ export {
 } from "./ExamGrader";
 
 export {
-  Grader
-} from "./graders/common";
+  QuestionGrader as Grader
+} from "./QuestionGrader";
 
 export {
   FITBRegexGrader,
   FITBRegexMatcher,
-  FITBRegexRubricItem
+  FITBRegexRubricItem,
+  FITBRegexGradingResult
 } from "./graders/FITBRegexGrader";
 
 export {
-  FreebieGrader
+  FreebieGrader,
+  FreebieGradingResult
 } from "./graders/FreebieGrader";
 
 export {
-  SimpleMCGrader
+  SimpleMCGrader,
+  SimpleMCGradingResult
 } from "./graders/SimpleMCGrader";
 
 export {
@@ -101,5 +104,18 @@ export {
 } from "./graders/StandardSASGrader";
 
 export {
-  SummationMCGrader
+  SummationMCGrader,
+  SummationMCGradingResult
 } from "./graders/SummationMCGrader";
+
+export {
+  CodeWritingGrader,
+  CodeWritingRubricItem,
+  CodeWritingGradingResult
+} from "./graders/CodeWritingGrader";
+
+export {
+  GradingAssignmentSpecification,
+  QuestionGradingRecords,
+  QuestionGradingRecord
+} from "./grading/common";

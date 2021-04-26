@@ -3,14 +3,18 @@ import { assert } from "./util";
 
 export type QuestionAnswer = {
   question_id: string,
+  skin_id: string,
   uuid: string,
   display_index: string,
   kind: ResponseKind,
   response: string,
+  marked_for_regrade?: boolean,
+  regrade_request?: string
 };
 
 export type SectionAnswers = {
   section_id: string,
+  skin_id: string,
   uuid: string,
   display_index: string,
   questions: QuestionAnswer[]
@@ -23,6 +27,7 @@ export type ExamSubmission<V extends boolean = boolean> = {
     uniqname: string,
     name: string
   },
+  time_started?: number,
   timestamp: number,
   saverId: number,
   trusted: V,
@@ -39,7 +44,7 @@ export type ExamManifest = TrustedExamSubmission;
  * This should always be used with manifests loaded from the saved manifest files
  * created on exam generation, since otherwise students could just e.g. change
  * the question IDs, point values, etc. in their submitted answers file.
- * This changes the provided manifest object and returns it (casted to a `TrustedExamAnswers`)
+ * This changes the provided manifest object and returns it (casted to a `TrustedExamSubmission`)
  */
 export function fillManifest(manifest: ExamSubmission, submitted: ExamSubmission) : TrustedExamSubmission {
 

@@ -1,15 +1,22 @@
 import { encode } from "he";
 import { min } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
-import { Question } from "../exams";
-import { BLANK_SUBMISSION } from "../response/common";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
-import { Grader } from "./common";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { renderNumBadge, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
 
 
+export type FITBRegexGradingResult = ImmutableGradingResult & {
+  readonly itemResults: readonly {
+    matched: boolean,
+    pointsEarned: number,
+    explanation?: string
+  }[]
+};
 
 export type FITBRegexMatcher = {
   pattern: RegExp | readonly string[];
@@ -36,9 +43,8 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
   return submission.map(blankStr => blankStr.replace(word, replacement));
 }
 
-export class FITBRegexGrader implements Grader<"fitb"> {
+export class FITBRegexGrader implements QuestionGrader<"fitb"> {
 
-  public readonly questionType = "fitb";
   private solutionWords: ReadonlySet<string>;
   private minRubricItemPoints: number;
 
@@ -50,66 +56,95 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
   }
 
-  public grade(question: Question<"fitb">, orig_submission: FITBSubmission) {
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
-      return 0;
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return responseKind === "fitb";
+  };
+
+  public grade(aq: AssignedQuestion<"fitb">) : FITBRegexGradingResult {
+    let submission = aq.submission;
+    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+      return {
+        wasBlankSubmission: true,
+        pointsEarned: 0,
+        itemResults: []
+      };
     }
-    let submission = orig_submission.slice();
 
-    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${question.question_id}`.red);
+    
+    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
+    
+    let result = this.grade_helper(submission);
 
-    let score = this.grade_helper(submission);
+    let mutableSubmission = submission.slice();
 
-    let submissionWords = identifyCodeWords(submission);
+    let submissionWords = identifyCodeWords(mutableSubmission);
     submissionWords.forEach(subWord => this.solutionWords.forEach(solWord => {
-      let newScore = this.grade_helper(replaceWordInSubmission(submission, subWord, solWord));
-      if (newScore > score + this.minRubricItemPoints) {
-        console.log(`HEYYYYY, might be double jeopardy here. ${question.question_id} Replace ${subWord} with ${solWord}! ${score} --> ${newScore}`);
+      let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
+      if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
+        console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
       }
     }));
 
-    return score;
+    return result;
   }
 
-  private grade_helper(submission: string[]) {
-    return this.rubric.reduce((prev, rubricItem, i) => {
+  private grade_helper(submission: readonly string[]) : FITBRegexGradingResult {
+
+    let itemResults = this.rubric.map((rubricItem, i) => {
       assert(rubricItem.blankIndex === i + 1, "Mismatched blank index on FITB rubric.");
 
-      let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
+      let match = FITBRubricItemMatch(rubricItem, submission[i]);
+      return {
+        matched: !!match,
+        pointsEarned: match?.points ?? 0,
+        explanation: match?.explanation
+      };
+    });
 
-      return prev + (riMatch?.points ?? 0);
-    }, 0);
+    return {
+      wasBlankSubmission: false,
+      pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
+      itemResults: itemResults
+    };
   }
 
-  public renderReport(question: Question<"fitb">, submission: FITBSubmission, skin: QuestionSkin | undefined) {
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+  public pointsEarned(gr: FITBRegexGradingResult) {
+    return gr.pointsEarned;
+  }
+
+  public renderReport(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {
+    let gr = aq.gradingResult;
+    let question = aq.question;
+    let orig_submission = aq.submission;
+    let skin = aq.skin;
+    let submission: readonly string[];
+    if (gr.wasBlankSubmission) {
       return "Your answer for this question was blank.";
     }
-
-    let overallScore = this.grade(question, submission);
-    let scores = this.rubric.map((rubricItem, i) => {
-      let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
-      return riMatch?.points ?? 0;
-    });
+    else {
+      assert(orig_submission !== BLANK_SUBMISSION);
+      submission = orig_submission;
+    }
 
     let content = question.response.content;
 
     let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
     let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => ri.solution)); //, content, undefined);
 
-    let rubricItemsHtml = `<table style="position: sticky; top: 0;">${this.rubric.map((rubricItem, i) => {
+    let itemResults = gr.itemResults;
+    assert(itemResults.length === this.rubric.length);
 
-      let riMatch = FITBRubricItemMatch(rubricItem, submission[i]);
-      let riScore = riMatch?.points ?? 0;
+    let rubricItemsHtml = `<table style="position: sticky; top: 0;">${itemResults.map((itemResult, i) => {
+      let rubricItem = this.rubric[i];
 
-      let explanation: string = riMatch?.explanation ?? "Your response for this blank was incomplete or incorrect.";
+      let explanation: string = itemResult.explanation ?? "Your response for this blank was incomplete or incorrect.";
 
       let elem_id = `question-${question.question_id}-item-${i}`;
 
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
           <div class="card-header">
-            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} Blank ${i + 1}<br />${rubricItem.title}</a>
+            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${rubricItem.title}</a>
           </div>
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">
@@ -132,7 +167,9 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     </table>`;
   }
 
-  public renderStats(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
+  public renderStats(aqs: readonly AssignedQuestion<"fitb">[]) {
+    let question = aqs[0].question;
+    let submissions = aqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
     let solutionFilled = createFilledFITB(question.response.content, this.rubric.map(ri => ri.solution));
@@ -185,7 +222,7 @@ export class FITBRegexGrader implements Grader<"fitb"> {
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(question: Question<"fitb">, submissions: readonly FITBSubmission[]) {
+  public renderOverview(aqs: readonly AssignedQuestion<"fitb">[]) {
     return assertFalse();
     // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
     // let blankAverages = gradedBlankSubmissions.map(

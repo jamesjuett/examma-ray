@@ -1,7 +1,12 @@
 {
   "include": [
-    "./src/*.ts"
-, "src/frontend/frontend.ts", "src/test/lib.d.ts", "lib.d.ts"  ],
+    "./src/examma-ray.ts",
+    "./src/lib.d.ts",
+    "./src/grading/code-grader.ts",
+    "src/frontend/frontend.ts",
+    "src/test/lib.d.ts",
+    "lib.d.ts"
+  ],
   "exclude": [
     "./tests/",
     "./node_modules/",

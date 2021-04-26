@@ -1,41 +1,57 @@
-import { Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { SubmissionType } from "../response/responses";
 import { QuestionSkin } from "../skins";
-import { Grader } from "./common";
+import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
 
+export type FreebieGradingResult = ImmutableGradingResult;
 
-
-export class FreebieGrader<QT extends ResponseKind> implements Grader<QT> {
+/**
+ * A grader that gives points to all submissions. Whether or not blank
+ * submissions earn points can be configured.
+ * @template QT May be any response type
+ */
+export class FreebieGrader implements QuestionGrader<ResponseKind> {
 
   /**
-   *
-   * @param pointValue How many points are awarded for answering the question.
+   * @param pointValue How many points are awarded to submissions.
+   * @param blankAllowed Whether or not blank submissions earn points.
    */
   public constructor(
     public readonly pointValue: number,
-    public readonly questionType: QT,
     public readonly blankAllowed = false
   ) { }
 
-  public grade(question: Question<QT>, submission: SubmissionType<QT>) {
-    return this.blankAllowed || submission !== BLANK_SUBMISSION ? this.pointValue : 0;
+  public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
+    return true;
+  };
+
+  public grade(aq: AssignedQuestion) : FreebieGradingResult {
+    return {
+      wasBlankSubmission: aq.submission === BLANK_SUBMISSION,
+      pointsEarned: this.blankAllowed || aq.submission !== BLANK_SUBMISSION ? this.pointValue : 0
+    };
   }
 
-  public renderReport(question: Question<QT>, submission: SubmissionType<QT>, skin: QuestionSkin | undefined) {
-    if (!this.blankAllowed && submission === BLANK_SUBMISSION) {
+  public pointsEarned(gr: FreebieGradingResult) {
+    return gr.pointsEarned;
+  }
+
+  public renderReport(aq: GradedQuestion<ResponseKind, FreebieGradingResult>) {
+    if (!this.blankAllowed && aq.gradingResult.wasBlankSubmission) {
       return "You did not select an answer for this question.";
     }
     else {
-      return `<span class="examma-ray-grading-annotation">You earned ${this.pointValue}/${question.pointsPossible} points for answering this question.</span>`;
+      return `<span class="examma-ray-grading-annotation">You earned ${this.pointValue}/${aq.question.pointsPossible} points for answering this question.</span>`;
     }
   }
 
-  public renderStats(question: Question<QT>, submissions: readonly SubmissionType<QT>[]) {
+  public renderStats(aqs: readonly AssignedQuestion[]) {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview(question: Question<QT>, submissions: readonly SubmissionType<QT>[]) {
+  public renderOverview(aqs: readonly AssignedQuestion[]) {
+    let submissions = aqs.map(aq => aq.submission);
     if (this.blankAllowed) {
       return `Assigned ${this.pointValue} freebie points to all ${submissions.length} submissions.`;
     }

@@ -1,16 +1,13 @@
-
-import 'colors';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, FILLED_STAR } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
 import { ResponseKind } from './response/common';
 import { mk2html } from './render';
 import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
-import { Grader, isGrader } from './graders/common';
+import { QuestionGrader, GradingResult } from './QuestionGrader';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
-import { writeFileSync } from 'fs';
 import { ExamManifest } from './submissions';
 
 
@@ -63,9 +60,9 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
-  public readonly pointsEarned?: number;
   public readonly nonExceptionPoints?: number;
-  public readonly gradedBy?: Grader<QT>
+  public readonly gradedBy?: QuestionGrader<QT>
+  public readonly gradingResult?: GradingResult;
   public readonly exception?: Exception;
 
   public readonly submission: SubmissionType<QT>;
@@ -90,30 +87,28 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     this.html_description = question.renderDescription(this.skin);
   }
 
-  public grade(grader: Grader<QT>) {
+  public grade(grader: QuestionGrader<QT>) {
     console.log("here");
-    this.setPointsEarned(grader.grade(
-      this.question,
-      this.submission
-    ));
+    (<Mutable<this>>this).gradingResult = grader.grade(this);
     (<Mutable<this>>this).gradedBy = grader;
-  }
-
-  private setPointsEarned(points: number) {
-    (<Mutable<this>>this).pointsEarned = Math.min(this.question.pointsPossible, Math.max(points, 0));
   }
 
   public addException(exception: Exception) {
     (<Mutable<this>>this).exception = exception;
-    (<Mutable<this>>this).nonExceptionPoints = this.pointsEarned;
-    this.setPointsEarned(exception.adjustedScore);
+  }
+
+  public get pointsEarned() : number | undefined {
+    return this.exception?.adjustedScore ?? (
+      this.isGraded()
+        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
+        : undefined
+    );
   }
 
   public render(mode: RenderMode) {
 
-    let question_header_html = `<b>${this.displayIndex}</b>`;
     if (mode === RenderMode.ORIGINAL) {
-      question_header_html += ` ${renderPointsWorthBadge(this.question.pointsPossible)}`;
+      let question_header_html = `<b>${this.displayIndex}</b> ${renderPointsWorthBadge(this.question.pointsPossible)}`;
       return `
         <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
           <div class="card">
@@ -131,13 +126,13 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
       `;
     }
     else {
-      question_header_html += ` ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
-    
+      let question_header_html = `<b>${this.displayIndex}</b> ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
+
       let graded_html: string;
       let exception_html = "";
       
       if (this.isGraded()) {
-        graded_html = this.gradedBy.renderReport(this.question, this.submission, this.skin);
+        graded_html = this.gradedBy.renderReport(this);
         exception_html = this.renderExceptionIfPresent();
       }
       else {
@@ -147,7 +142,39 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         </div>`; 
       }
 
-      return renderQuestion(this.uuid, this.displayIndex, this.html_description, question_header_html, exception_html, graded_html);
+      let regrades = `
+        <div style="text-align: right">
+          <input type="checkbox" id="regrade-${this.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${this.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${this.uuid}"></input>
+          <label for="regrade-${this.uuid}-checkbox">Mark for Regrade</label>
+        </div>
+        <div class="collapse examma-ray-question-regrade" id="regrade-${this.uuid}">
+          <p>Please describe your regrade request for this question in the box below. After
+          marking <b>all</b> questions for which you would like to request a regrade,
+          click "Submit Regrade Request" at the bottom of the page.</p>
+          <textarea class="examma-ray-regrade-entry"></textarea>
+        </div>
+      `;
+
+      return `
+      <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
+        <div class="card">
+          <div class="card-header">
+            ${question_header_html}
+          </div>
+          <div class="card-body" style="margin-bottom: 1em">
+            <div class="examma-ray-question-description">
+              ${this.html_description}
+            </div>
+            <div class="examma-ray-question-exception">
+              ${exception_html}
+            </div>
+            <div class="examma-ray-grading-report">
+              ${graded_html}
+            </div>
+            ${this.exam.enable_regrades ? regrades : ""}
+          </div>
+        </div>
+      </div>`;
     }
   }
 
@@ -167,38 +194,20 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     return !!this.gradedBy;
   }
   
+  public wasGradedBy<GR extends GradingResult>(grader: QuestionGrader<QT, GR>) : this is GradedQuestion<QT,GR> {
+    return this.gradedBy === grader;
+  };
+
 }
 
-interface GradedQuestion<QT extends ResponseKind> extends AssignedQuestion<QT> {
+export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResult = GradingResult> extends AssignedQuestion<QT> {
   readonly pointsEarned: number;
-  readonly gradedBy: Grader<QT>
+  readonly gradedBy: QuestionGrader<QT>;
+  readonly gradingResult: GR;
 }
 
 
 
-
-// TODO rework this function ew
-export function renderQuestion(uuid: string, displayIndex: string, description: string, header: string, exception: string, gradingReport: string) {
-  return `
-  <div id="question-${uuid}" data-question-uuid="${uuid}" data-question-display-index="${displayIndex}" class="examma-ray-question card-group">
-    <div class="card">
-      <div class="card-header">
-        ${header}
-      </div>
-      <div class="card-body">
-        <div class="examma-ray-question-description">
-          ${description}
-        </div>
-        <div class="examma-ray-question-exception">
-          ${exception}
-        </div>
-        <div class="examma-ray-grading-report">
-          ${gradingReport}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
 
 
 const DEFAULT_REFERENCE_WIDTH = 40;
@@ -282,7 +291,7 @@ export class AssignedSection {
       let grader = graders[aq.question.question_id];
       if (grader) {
         console.log(`Grading ${aq.question.question_id}`);
-        assert(isGrader(grader, aq.question.kind), `Grader for type "${grader.questionType}" cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
+        assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
       }
       else {
@@ -321,9 +330,11 @@ export class AssignedSection {
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
             <td style="width: ${this.section.reference_width}%;">
-              <div class="examma-ray-section-reference">
-                <h6>Reference Material (Section ${this.displayIndex})</h6>
-                ${this.html_reference ?? NO_REFERNECE_MATERIAL}
+              <div class="examma-ray-section-reference-container">
+                <div class="examma-ray-section-reference">
+                  <h6>Reference Material (Section ${this.displayIndex})</h6>
+                  ${this.html_reference ?? NO_REFERNECE_MATERIAL}
+                </div>
               </div>
             </td>
           </tr>
@@ -343,11 +354,12 @@ export class AssignedExam {
     public readonly uuid: string,
     public readonly exam: Exam,
     public readonly student: StudentInfo,
-    public readonly assignedSections: readonly AssignedSection[]
+    public readonly assignedSections: readonly AssignedSection[],
+    allowDuplicates: boolean
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
 
-    if (!exam.allow_duplicates) {
+    if (!allowDuplicates) {
       let sectionIds = assignedSections.map(s => s.section.section_id);
       assert(new Set(sectionIds).size === sectionIds.length, `This exam contains a duplicate section. Section IDs are:\n  ${sectionIds.sort().join("\n  ")}`);
       let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
@@ -373,7 +385,7 @@ export class AssignedExam {
       <ul class = "nav" style="display: unset; font-weight: 500">
         ${this.assignedSections.map(s => {
           let scoreBadge = 
-            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary") :
+            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary", true) :
             s.isFullyGraded ? renderScoreBadge(s.pointsEarned!, s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
           return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
@@ -393,6 +405,14 @@ export class AssignedExam {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.exam_id}" data-exam-uuid="${this.uuid}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+            <button id="examma-ray-time-elapsed-button" class="btn btn-primary btn-sm" style="line-height: 0.75;" data-toggle="collapse" data-target="#examma-ray-time-elapsed" aria-expanded="true" aria-controls="examma-ray-time-elapsed">Hide</button>
+            <b>Time Elapsed</b>
+            <br>
+            <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
+            <br>
+            This is not an official timer. Please submit your answers to Canvas before the deadline.
+          </div>
           <h3 class="text-center pb-1 border-bottom">
             ${mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(this.pointsPossible, "btn-secondary") : this.renderGrade()}
           </h3>
@@ -412,17 +432,18 @@ export class AssignedExam {
     </div>`;
   }
 
-  public renderAll(mode: RenderMode) {
+  public renderAll(mode: RenderMode, frontendPath: string) {
     return `
       <!DOCTYPE html>
       <html>
-      <meta charset="UTF-8">
-      <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-      <script src="${mode === RenderMode.ORIGINAL ? this.exam.frontendJsPath : this.exam.frontendGradedJsPath}"></script>
-      
+      <head>
+        <meta charset="UTF-8">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+        <script src="${frontendPath}"></script>
+      </head>
       <body>
         ${this.renderBody(mode)}
         ${renderModals(this)}
@@ -441,10 +462,12 @@ export class AssignedExam {
       saverId: 0,
       sections: this.assignedSections.map(s => ({
         section_id: s.section.section_id,
+        skin_id: s.skin.id,
         uuid: s.uuid,
         display_index: s.displayIndex,
         questions: s.assignedQuestions.map(q => ({
           question_id: q.question.question_id,
+          skin_id: q.skin.id,
           uuid: q.uuid,
           display_index: q.displayIndex,
           kind: q.question.kind,
@@ -469,7 +492,14 @@ export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
 export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
   You've reached the bottom of the exam! If you're done, make sure to
   click the **"Answers File"** button, download a **\`.json\`
-  answers file**, and submit to **Canvas** before the end of the exam!`
+  answers file**, and submit to **Canvas** before the end of the exam!`;
+
+
+export const MK_DEFAULT_REGRADE_MESSAGE = 
+`Please note that you should only submit a regrade request
+if you belive a grading **mistake** was made. Do not submit
+regrade requests based on a disagreement with the rubric or
+point values/weighting for rubric items.`;
 
 
 export class Exam {
@@ -480,22 +510,17 @@ export class Exam {
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
 
-  public readonly frontendJsPath: string;
-  public readonly frontendGradedJsPath: string;
-
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
-  public readonly allow_duplicates: boolean;
+  public readonly enable_regrades: boolean;
 
   public constructor(spec: ExamSpecification) {
     this.exam_id = spec.id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
-    this.frontendJsPath = spec.frontend_js_path;
-    this.frontendGradedJsPath = spec.frontend_graded_js_path;
     this.sections = spec.sections;
-    this.allow_duplicates = !!spec.allow_duplicates;
+    this.enable_regrades = !!spec.enable_regrades;
   }
 
   public addAnnouncement(announcement_mk: string) {
@@ -593,7 +618,7 @@ function renderModals(ex: AssignedExam) {
           <div class="modal-body">
             <div class="alert alert-info">This exam is for <b>${ex.student.uniqname}</b>. If this is not you, please close this page.</div>
             <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
-            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, of if you have certain privacy extensions/add-ons enabled, this won't work.</div>
+            <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, or if you have certain privacy extensions/add-ons enabled, this won't work.</div>
 
             <p style="margin-left: 2em; margin-right: 2em;">
               By taking this exam and submitting an answers file, you attest to the CoE Honor Pledge:

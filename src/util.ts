@@ -3,7 +3,7 @@ export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function assert(condition: any, message: string = "") : asserts condition {
   if (!condition) {
-    message && console.log(message.red);
+    message && console.log(message);
     throw new Error(message);
   }
 };

@@ -1,0 +1,135 @@
+body {
+  overflow: hidden;
+}
+
+.examma-ray-grading-sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.examma-ray-grading-controls {
+  position: -webkit-sticky;
+  position: sticky;
+  background: white;
+  top: 0;
+}
+
+.examma-ray-grading-title {
+  font-weight: bold;
+}
+
+.examma-ray-grading-main-panel {
+  vertical-align: top;
+  padding: 1em;
+  margin-left: 300px;
+  margin-right: 200px;
+}
+
+.examma-ray-grading-right-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 200px;
+  overflow-y: auto;
+  padding-top: 1em;
+  height: 100%;
+  border-left: #dedede;
+}
+
+.examma-ray-grading-right-panel hr {
+  border-color: #dedede;
+}
+
+.examma-ray-grading-group-thumbnail {
+  cursor: pointer;
+}
+
+.examma-ray-grading-group-thumbnail .panel-body pre {
+  font-size: 0.5em;
+}
+
+.examma-ray-grading-group-thumbnail .examma-ray-score-badge {
+  float: right;
+}
+
+.examma-ray-grading-rubric-buttons {
+  margin: 0.5em;
+}
+
+.examma-ray-grading-rubric-buttons .list-group-item {
+  border: solid 1px #bbb;
+  margin-bottom: 0.6em;
+}
+
+.examma-ray-grading-rubric-buttons .badge {
+  position: absolute;
+  right: -0.5em;
+  top: -0.5em;
+}
+
+.examma-ray-unknown-rubric-item-icon {
+  position: absolute;
+  left: -0.3em;
+  top: -0.5em;
+  font-size: 1.5em;
+}
+
+
+
+
+.examma-ray-group-member-thumbnails {
+  padding: 1em;
+}
+
+.examma-ray-group-member-thumbnail {
+  display: inline-block;
+  width: 45%;
+  margin-left: 3.33%;
+  vertical-align: top;
+}
+
+.examma-ray-group-member-remove-button {
+  float: right;
+  margin-top: -0.4em;
+}
+
+
+
+
+/* Bootstrap 3 doesn't have colored badges, so we add them manually */
+.badge-primary {
+  color: #fff !important;
+  background-color: #007bff !important;
+}
+.badge-warning {
+  color: #212529 !important;
+  background-color: #ffc107 !important;
+}
+.badge-danger {
+  color: #fff !important;
+  background-color: #dc3545 !important;
+}
+.badge-success {
+  color: #fff !important;
+  background-color: #28a745 !important;
+}
+.badge-light {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+}
+.badge-info {
+  color: #fff !important;
+  background-color: #17a2b8 !important;
+}
+.badge-secondary {
+  color: #fff !important;
+  background-color: #6c757d !important;
+}
+.badge-dark {
+  color: #fff !important;
+  background-color: #343a40 !important;
+}

@@ -11,7 +11,7 @@ import 'codemirror/mode/clike/clike.js';
 import 'codemirror/addon/comment/comment.js'
 import 'codemirror/keymap/sublime.js'
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD } from '../src/icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/icons';
 
 import 'katex/dist/katex.min.css';
 
@@ -31,6 +31,7 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let response = question.find(".examma-ray-question-response");
   return {
     question_id: "",
+    skin_id: "",
     uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
@@ -42,10 +43,24 @@ function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
   let section = $(this);
   return {
     section_id: "",
+    skin_id: "",
     uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
   }
+}
+
+let TIME_STARTED = Date.now();
+
+function updateTimeElapsed() {
+  let seconds = Math.floor((Date.now() - TIME_STARTED) / 1000);
+  let hours = Math.floor(seconds / 3600);
+  seconds = seconds - hours * 3600;
+  let minutes = Math.floor(seconds / 60);
+  seconds = seconds - minutes * 60;
+  $("#examma-ray-time-elapsed").html(
+    `${hours}h ${minutes}m ${seconds}s`
+  );
 }
 
 const saverID = Date.now();
@@ -60,6 +75,7 @@ function extractExamAnswers() : ExamSubmission {
       uniqname: examElem.data("uniqname"),
       name: examElem.data("name")
     },
+    time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
     trusted: false,
@@ -80,7 +96,9 @@ function loadQuestionAnswer(qa: QuestionAnswer) {
 
 function loadExamAnswers(answers: ExamSubmission) {
   answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
-
+  if (answers.time_started) {
+    TIME_STARTED = answers.time_started;
+  }
   // Consider work to be saved after loading
   onSaved();
 }
@@ -178,6 +196,13 @@ function onSaved() {
 
 function main() {
 
+  try {
+    setupQuestionStars();
+  }
+  catch (e) {
+    // just in case
+  }
+
   setupSaverModal();
 
   setupChangeListeners();
@@ -191,6 +216,26 @@ function main() {
 }
 
 $(main);
+
+function setupQuestionStars() {
+  $(".examma-ray-question > .card > .card-header").each(function() {
+    let star = $(
+      `<span class="examma-ray-question-star">
+        ${FILLED_STAR}
+      </span>`
+    );
+    star.on("click", function() {
+      if ($(this).hasClass("examma-ray-question-star-marked")) {
+        $(this).removeClass("examma-ray-question-star-marked");
+      }
+      else {
+        $(this).addClass("examma-ray-question-star-marked");
+      }
+    });
+    $(this).append(star);
+  })
+
+}
 
 function setupSaverModal() {
 
@@ -241,7 +286,7 @@ function setupSaverModal() {
     }
     fileInput.val("");
     loadButton.prop("disabled", true).addClass("disabled");
-  })
+  });
 
   // When the exam saver modal is shown, generate the data a potential
   // download of all current answers
@@ -317,6 +362,8 @@ function setupCodeEditors() {
   });
 
   $(".examma-ray-theme-button").on("click", function() {
+    $(".examma-ray-theme-button").removeClass("active");
+    $(`.examma-ray-theme-button[data-codemirror-theme="${$(this).data("codemirror-theme")}"]`).addClass("active");
     codeMirrors.forEach(cm => cm.setOption("theme", $(this).data("codemirror-theme")));
   })
 }
@@ -349,6 +396,16 @@ function startExam() {
   // Consider work to be saved when exam is started
   onSaved();
 
+  // Interval to update time elapsed
+  setInterval(updateTimeElapsed, 1000);
+
+  // Connect show/hide event listeners on time elapsed element
+  $('#examma-ray-time-elapsed').on('hidden.bs.collapse', function () {
+    $("#examma-ray-time-elapsed-button").html("Show");
+  })
+  $('#examma-ray-time-elapsed').on('shown.bs.collapse', function () {
+    $("#examma-ray-time-elapsed-button").html("Hide");
+  })
 }
 
 

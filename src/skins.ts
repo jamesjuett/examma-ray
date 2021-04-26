@@ -1,3 +1,6 @@
+export type SkinReplacements = {
+  [index: string]: string
+};
 
 export type QuestionSkin = {
   readonly id: string,

@@ -1,3 +1,4 @@
+import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
@@ -10,6 +11,7 @@ import del from 'del';
 import { ResponseKind } from './examma-ray';
 import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
+import { writeFrontendJS } from './ExamUtils';
 
 type SectionStats = {
   section: Section,
@@ -22,15 +24,19 @@ type QuestionStats = {
 };
 
 export type ExamGeneratorOptions = {
+  frontend_js_path: string,
   student_ids: "uniqname" | "uuidv4" | "uuidv5",
   uuidv5_namespace?: string,
   students: readonly StudentInfo[],
-  choose_all?: boolean
+  choose_all?: boolean,
+  allow_duplicates: boolean
 };
 
 const DEFAULT_OPTIONS = {
+  frontend_js_path: "../../js/frontend.js",
   student_ids: "uniqname",
-  students: []
+  students: [],
+  allow_duplicates: false
 };
 
 function verifyOptions(options: Partial<ExamGeneratorOptions>) {
@@ -83,7 +89,8 @@ export class ExamGenerator {
       student,
       this.exam.sections
         .flatMap(chooser => chooseSections(chooser, this.exam, student, rand))
-        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex))
+        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)),
+      this.options.allow_duplicates
     );
 
     this.checkExam(ae);
@@ -99,7 +106,7 @@ export class ExamGenerator {
     skinRand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionSkinRandomizer(student, this.exam, section))
   {
     let sectionSkins = section.skins.generate(this.exam, student, skinRand);
-    assert(this.exam.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
+    assert(this.options.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
       this.createStudentUuid(student, this.exam.exam_id + "-s-" + section.section_id),
       section,
@@ -120,7 +127,7 @@ export class ExamGenerator {
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionSkinRandomizer(student, this.exam, question)) {
 
     let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
-    assert(this.exam.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
+    assert(this.options.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
       this.createStudentUuid(student, this.exam.exam_id + "-q-" + question.question_id),
       this.exam,
@@ -164,10 +171,10 @@ export class ExamGenerator {
 
   private writeStats() {
     // Create output directory
-    mkdirSync(`data/${this.exam.exam_id}/assigned/`, { recursive: true });
+    mkdirSync(`data/${this.exam.exam_id}/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`data/${this.exam.exam_id}/assigned/stats.json`, json_stable_stringify({
+    writeFileSync(`data/${this.exam.exam_id}/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
@@ -176,14 +183,16 @@ export class ExamGenerator {
 
   public writeAll() {
 
-    const examDir = `data/${this.exam.exam_id}/assigned/exams`;
-    const manifestDir = `data/${this.exam.exam_id}/assigned/manifests`;
+    const examDir = `out/${this.exam.exam_id}/exams`;
+    const manifestDir = `data/${this.exam.exam_id}/manifests`;
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
     mkdirSync(manifestDir, { recursive: true });
     del.sync(`${manifestDir}/*`);
+
+    writeFrontendJS("frontend.js");
 
     this.writeStats();
 
@@ -201,10 +210,10 @@ export class ExamGenerator {
         console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
         writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2), {encoding: "utf-8"});
         console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL), {encoding: "utf-8"});
+        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path), {encoding: "utf-8"});
       });
 
-    writeFileSync(`data/${this.exam.exam_id}/assigned/student-ids.csv`, unparse({
+    writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));
@@ -235,3 +244,4 @@ export class ExamGenerator {
     }
   }
 }
+

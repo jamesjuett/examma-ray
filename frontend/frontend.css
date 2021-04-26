@@ -30,6 +30,7 @@ html {
 
 .examma-ray-fitb-diff tr>*:first-child,
 .examma-ray-sas-diff tr>*:first-child {
+  position: -webkit-sticky;
   position: sticky;
   left: 0;
   background-color: white;
@@ -122,6 +123,7 @@ code {
 
 .examma-ray-section-heading {
   margin-bottom: 10px;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -140,6 +142,10 @@ code {
   width: 100%;
   table-layout: fixed;
   margin-left: 7px;
+  
+  /*needed for inline-block examma-ray-section-reference-container height*/
+  position: relative;
+  height: 100%;
 }
 
 .examma-ray-section-contents td {
@@ -174,13 +180,29 @@ code {
   font-size: 90%;
 }
 
+.examma-ray-question-regrade {
+  font-size: 90%;
+}
+
+
+.examma-ray-section-reference-container {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
 .examma-ray-section-reference {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   max-height: 100vh;
   overflow-y: auto;
   padding: 5px;
   padding-bottom: 2em;
+}
+
+.examma-ray-section-reference pre code {
+  max-height: 80vh;
 }
 
 
@@ -214,39 +236,7 @@ code {
   margin-bottom: 1em;
 }
 
-.examma-ray-grading-report {
-  overflow-x: auto;
-  max-height: 70vh;
-}
 
-.examma-ray-grading-report form {
-  margin-bottom: 0;
-}
-
-.examma-ray-grading-report .btn-link {
-  font-size: 0.8rem;
-}
-
-.nav .examma-ray-score-badge {
-  width: 5em;
-}
-
-.rubric-item-card {
-  width: 17em;
-}
-
-.rubric-item-card .card-header {
-  padding: 0.25rem;
-}
-
-.rubric-item-card .card-body {
-  overflow-x: auto;
-}
-
-.rubric-item-card a.nav-link {
-  font-weight: 500;
-  padding: 0;
-}
 
 
 
@@ -392,4 +382,61 @@ code {
 .examma-ray-codemirror {
   margin-left: 1ch;
   border: solid 1px #333;
+}
+
+
+.examma-ray-question-star {
+  cursor: pointer;
+}
+
+.examma-ray-question-star > svg {
+  color: transparent;
+  stroke: gray;
+}
+
+.examma-ray-question-star-marked > svg {
+  color: gold;
+  stroke: gray;
+}
+
+
+
+/* GRADING */
+
+.examma-ray-grading-report {
+  overflow-x: auto;
+  max-height: 70vh;
+}
+
+.examma-ray-grading-report form {
+  margin-bottom: 0;
+}
+
+.examma-ray-grading-report .btn-link {
+  font-size: 0.8rem;
+}
+
+.nav .badge {
+  width: 5em;
+}
+
+.rubric-item-card {
+  width: 17em;
+}
+
+.rubric-item-card .card-header {
+  padding: 0.25rem;
+}
+
+.rubric-item-card .card-body {
+  overflow-x: auto;
+}
+
+.rubric-item-card a.nav-link {
+  font-weight: 500;
+  padding: 0;
+}
+
+.examm-ray-regrade-entry {
+  width: 100%;
 }
