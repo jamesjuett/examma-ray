@@ -88,7 +88,6 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   }
 
   public grade(grader: QuestionGrader<QT>) {
-    console.log("here");
     (<Mutable<this>>this).gradingResult = grader.grade(this);
     (<Mutable<this>>this).gradedBy = grader;
   }
@@ -290,12 +289,12 @@ export class AssignedSection {
     this.assignedQuestions.forEach(aq => {
       let grader = graders[aq.question.question_id];
       if (grader) {
-        console.log(`Grading ${aq.question.question_id}`);
+        // console.log(`Grading ${aq.question.question_id}`);
         assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
       }
       else {
-        console.log(`No grader found for ${aq.question.question_id}`);
+        // console.log(`No grader found for ${aq.question.question_id}`);
       }
     });
     asMutable(this).pointsEarned = <number>this.assignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0);

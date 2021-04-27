@@ -129,7 +129,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let content = question.response.content;
 
     let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
-    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => ri.solution)); //, content, undefined);
+    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => applySkin(ri.solution, skin))); //, content, undefined);
 
     let itemResults = gr.itemResults;
     assert(itemResults.length === this.rubric.length);
@@ -144,7 +144,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
           <div class="card-header">
-            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${rubricItem.title}</a>
+            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${applySkin(rubricItem.title, skin)}</a>
           </div>
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">

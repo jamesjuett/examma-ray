@@ -125,6 +125,12 @@ export class ExamGrader {
 
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    this.allQuestions.forEach(question => {
+      if (!this.graderMap[question.question_id]) {
+        console.log(`WARNING: No grader registered for question: ${question.question_id}`);
+      }
+    })
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
@@ -327,30 +333,24 @@ export class ExamGrader {
       <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-      <script src="${this.frontend_js_path}"></script>
-      <script>
-        $(function() {
-          $('button.examma-ray-blank-saver').on("click", function() {
-            let blank_num = $(this).data("blank-num");
-            let checked = $("input[type=checkbox]:checked").filter(function() {
-              return $(this).data("blank-num") === blank_num;
-            }).map(function() {
-              return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
-            }).get().join(",\\n");
-            $(".checked-submissions-content").html(he.encode(checked));
-            $(".checked-submissions-modal").modal("show")
-          })
-        });
-  
-      </script>
-      <style>
-        
-  
-  
-      </style>
+      <script src="../../../js/stats-fitb.js"></script>
       <body>
         ${body}
-  
+        <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Selected Answers</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <pre><code class="checked-submissions-content"></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
   
       </body>
       </html>`, { encoding: "utf-8" });

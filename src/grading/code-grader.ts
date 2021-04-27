@@ -1,5 +1,5 @@
 import { GradingGroup, GradingAssignmentSpecification, GradingSubmission } from "./common";
-import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemGradingResult, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
+import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
 import { BLANK_SUBMISSION } from "../response/common";
 import indentString from "indent-string";
@@ -36,9 +36,9 @@ import deepEqual from "deep-equal";
 // TODO: replace with dependence on question specification
 const CODE_LANGUAGE = "cpp";
 
-type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor", CodeWritingGradingResult>;
-type CodeWritingGradingGroup = GradingGroup<"code_editor", CodeWritingGradingResult>;
-type CodeWritingSubmission = GradingSubmission<"code_editor", CodeWritingGradingResult>;
+export type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor", CodeWritingGradingResult>;
+export type CodeWritingGradingGroup = GradingGroup<"code_editor", CodeWritingGradingResult>;
+export type CodeWritingSubmission = GradingSubmission<"code_editor", CodeWritingGradingResult>;
 
 
 type SubmissionsFilterCriterion = "all" | "graded" | "ungraded";

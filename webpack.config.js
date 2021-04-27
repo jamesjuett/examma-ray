@@ -5,7 +5,8 @@ module.exports = {
   mode: "production",
   entry: {
     'frontend': './frontend/frontend',
-    'frontend-graded': './frontend/frontend-graded'
+    'frontend-graded': './frontend/frontend-graded',
+    'stats-fitb': './frontend/stats-fitb',
   },
   output: {
     path: path.join(__dirname, '/dist/frontend/'),

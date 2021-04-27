@@ -1,6 +1,8 @@
 import { AssignedQuestion, GradedQuestion } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, GradingResult } from "../QuestionGrader";
+import { ExamUtils } from "../ExamUtils";
+import { CodeWritingGradingAssignment } from "../grading/code-grader";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -26,16 +28,27 @@ export type CodeWritingGradingResult = GradingResult & {
   verified: boolean
 };
 
+
+
+
+
 export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
-  // public readonly results: QuestionGradingRecords<CodeWritingGradingResult>;
-  public readonly staff: readonly string[];
+  public readonly manualGrading: readonly CodeWritingGradingAssignment[];
+  private readonly manualGradingMap: {[index: string]: CodeWritingGradingResult | undefined} = {};
 
-  public constructor(rubric: readonly CodeWritingRubricItem[], staff: string[]) {
+  public constructor(rubric: readonly CodeWritingRubricItem[], manualGrading: readonly CodeWritingGradingAssignment[]) {
     this.rubric = rubric;
-    this.staff = staff;
-    // this.results = results;
+    this.manualGrading = manualGrading;
+
+    manualGrading.forEach(
+      assn => assn.groups.forEach(
+        group => group.submissions.forEach(
+          sub => this.manualGradingMap[sub.question_uuid] = group.grading_result
+        )
+      )
+    );
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
@@ -52,33 +65,19 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
 
   public grade(aq: AssignedQuestion<"code_editor">) : CodeWritingGradingResult {
     let submission = aq.submission;
-    let code: string;
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
-        wasBlankSubmission: false,
+        wasBlankSubmission: true,
         itemResults: {},
         verified: true
       };
     }
 
-    code = submission;
-
-    // let rubricItemResults : CodeWritingRubricItemGradingResult[] = this.rubric.map(rubricItem => {
-    //   let ag_status = rubricItem.autograder?.evaluate(code);
-    //   return {
-    //     auto_graded_status: ag_status,
-    //     pointsEarned: rubricItem.points,
-    //     verified: false
-    //   };
-    // });
-
-    return {
+    return this.manualGradingMap[aq.uuid] ?? {
       wasBlankSubmission: false,
-      itemResults: {
-        // TODO PLACEHOLDER
-      },
-      verified: true
-    };//this.results.getGradingRecord(aq.uuid).grading_result;
+      itemResults: {},
+      verified: false
+    };
   }
 
   public pointsEarned(gr: CodeWritingGradingResult) {
@@ -93,7 +92,7 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
     }
 
     return `
-      <div>
+      <div>PLACEHOLDER
       ${this.rubric.map(ri => JSON.stringify(gr.itemResults[ri.id])).join("<br />")}
       </div>
     `;
