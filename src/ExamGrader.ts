@@ -251,6 +251,13 @@ export class ExamGrader {
 
 
 
+  public writeStats() {
+    writeFrontendJS("stats-fitb.js");
+
+    console.log("Rendering question stats files...");
+    this.allQuestions.forEach(q => this.renderStatsToFile(q));
+  }
+
   public writeAll() {
     const examDir = `out/${this.exam.exam_id}/graded/exams`;
 

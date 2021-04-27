@@ -470,8 +470,10 @@ class CodeWritingManualGraderApp {
     `);
     let closeButton = jq.find(".examma-ray-group-member-remove-button");
     closeButton.on("click", () => {
-      this.removeFromCurrentGroup(sub);
-      jq.fadeOut(() => jq.remove());
+      if (this.currentGroup && this.currentGroup.submissions.length > 1) {
+        this.removeFromCurrentGroup(sub);
+        jq.fadeOut(() => jq.remove());
+      }
     })
     return jq;
   }
@@ -595,7 +597,7 @@ class CodeWritingManualGraderApp {
   }
 
   private removeFromCurrentGroup(subToRemove: CodeWritingSubmission) {
-    if (!this.assn || !this.currentGroup) {
+    if (!this.assn || !this.currentGroup || this.currentGroup.submissions.length <= 1) {
       return;
     }
 

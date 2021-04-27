@@ -172,10 +172,10 @@ function getAssnIds(assns: GradingAssignmentSpecification[]) {
 }
 
 export function writeFrontendJS(filename: string) {
-  // const jsDir = `out/js`;
-  // mkdirSync(jsDir, { recursive: true });
-  // copyFileSync(
-  //   require.resolve(`examma-ray/dist/frontend/${filename}`),
-  //   `${jsDir}/${filename}`
-  // );
+  const jsDir = `out/js`;
+  mkdirSync(jsDir, { recursive: true });
+  copyFileSync(
+    require.resolve(`examma-ray/dist/frontend/${filename}`),
+    `${jsDir}/${filename}`
+  );
 }
