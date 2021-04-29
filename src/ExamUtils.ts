@@ -27,18 +27,36 @@ export namespace ExamUtils {
     );
   }
 
-  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string) {
+  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string, trustedCacheDirectory?: string) {
+    if (trustedCacheDirectory) {
+      mkdirSync(trustedCacheDirectory, {recursive: true});
+    }
+    
     let trustedAnswers : TrustedExamSubmission[] = [];
     readdirSync(submittedDirectory).forEach(
       filename => {
         try {
-          trustedAnswers.push(loadTrustedSubmission(
-            manifestDirectory,
-            path.join(submittedDirectory, filename)
-          ));
+          if (trustedCacheDirectory && existsSync(path.join(trustedCacheDirectory, filename))) {
+            trustedAnswers.push(<TrustedExamSubmission>loadExamAnswers(
+              path.join(trustedCacheDirectory, filename)
+            ));
+          }
+          else {
+            let trustedSub = loadTrustedSubmission(
+              manifestDirectory,
+              path.join(submittedDirectory, filename)
+            );
+            trustedAnswers.push(trustedSub);
+            if (trustedCacheDirectory) {
+              writeFileSync(
+                path.join(trustedCacheDirectory, filename),
+                JSON.stringify(trustedSub, null, 2), {encoding: "utf-8"}
+              );
+            }
+          }
         }
         catch(e) {
-          // do nothing
+          console.log("WARNING - unable to oepn submission file: " + filename);
         }
       }
     );
@@ -172,10 +190,10 @@ function getAssnIds(assns: GradingAssignmentSpecification[]) {
 }
 
 export function writeFrontendJS(filename: string) {
-  const jsDir = `out/js`;
-  mkdirSync(jsDir, { recursive: true });
-  copyFileSync(
-    require.resolve(`examma-ray/dist/frontend/${filename}`),
-    `${jsDir}/${filename}`
-  );
+  // const jsDir = `out/js`;
+  // mkdirSync(jsDir, { recursive: true });
+  // copyFileSync(
+  //   require.resolve(`examma-ray/dist/frontend/${filename}`),
+  //   `${jsDir}/${filename}`
+  // );
 }

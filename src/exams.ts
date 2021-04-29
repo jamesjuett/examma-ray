@@ -205,6 +205,9 @@ export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResul
   readonly gradingResult: GR;
 }
 
+export function isGraded<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq is GradedQuestion<QT> {
+  return aq.isGraded();
+} 
 
 
 

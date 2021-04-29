@@ -1,12 +1,12 @@
 import { encode } from "he";
-import { min } from "simple-statistics";
+import { min, sum } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
-import { renderNumBadge, renderScoreBadge } from "../ui_components";
+import { renderMultilinePointsProgressBar, renderNumBadge, renderPointsProgressBar, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
 
 
@@ -185,7 +185,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${s.sub}</code>"</li>`).join("")}
+            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${s.sub}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
@@ -223,16 +223,17 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
   }
 
   public renderOverview(aqs: readonly AssignedQuestion<"fitb">[]) {
-    return assertFalse();
-    // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
-    // let blankAverages = gradedBlankSubmissions.map(
-    //   gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
-    // let blankPoints = this.rubric.map(ri => ri.points);
-    // let blankSolutions = this.rubric.map(ri => encode(ri.solution));
-    // let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
-    // let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
-    // let solutionFilled = this.createFilledFITB(blankBars, question.response.text, undefined);
-    // return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
+    let question = aqs[0].question;
+    let submissions = aqs.map(aq => aq.submission);
+    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+    let blankAverages = gradedBlankSubmissions.map(
+      gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
+    let blankPoints = this.rubric.map(ri => ri.points);
+    let blankSolutions = this.rubric.map(ri => encode(ri.solution));
+    let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
+    let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
+    let solutionFilled = createFilledFITB(question.response.content, blankBars, s=>s, s=>s, s=>s);
+    return solutionFilled;
   }
 
 }

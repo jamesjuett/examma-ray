@@ -5,16 +5,16 @@ import { SubmissionType } from "../response/responses";
 import { ResponseKind } from "../response/common";
 import { SkinReplacements } from "../skins";
 
-export type GradingSubmission<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> = {
+export type GradingSubmission<QT extends ResponseKind = ResponseKind> = {
   question_uuid: string,
   skin_replacements: SkinReplacements,
   student: StudentInfo,
-  response: SubmissionType<QT>
+  response: string
 }
 
 export type GradingGroup<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> = {
   name: string,
-  submissions: GradingSubmission<QT,GR>[],
+  submissions: GradingSubmission<QT>[],
   representative_index: number,
   grading_result: GR | undefined
 }

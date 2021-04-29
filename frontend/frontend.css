@@ -284,7 +284,7 @@ code {
 }
 
 .examma-ray-question-overview pre code .progress {
-  width: 35em;
+  width: unset;
   background-color: #c8c8c8;
 }
 

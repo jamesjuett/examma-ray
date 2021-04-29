@@ -20,6 +20,10 @@ export function renderNumBadge(num: number | string) {
   return `<span class="badge badge-secondary" style="width: 2.5em">${num}</span>`;
 }
 
+export function renderWideNumBadge(num: number | string) {
+  return `<span class="badge badge-secondary" style="width: 6em">${num}</span>`;
+}
+
 export function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary", short = false) {
   let prefix = short ? "pt" : "point";
   return `<span class="badge ${cssClass}">${num} ${num === 1 ? prefix : prefix+"s"}</span>`;
@@ -47,12 +51,38 @@ export function renderPointsProgressBar(pointsEarned: number, pointsPossible: nu
   let progressPercent = pointsPossible === 0 ? 100 : Math.max(1, Math.floor(100 * (pointsEarned / pointsPossible)));
   let color = progressPercent < 50 ? "white" : "white";
   text = text ?? `${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}`;
-  return `<div style="display: inline-block; vertical-align: middle;"><div class="progress">
+  return `<div style="display: inline-block; vertical-align: middle; margin: 2px;"><div class="progress">
     <div class="progress-bar" role="progressbar"
       style="width: ${progressPercent}%; background-color: ${percentCorrectScale(pointsEarned / pointsPossible).hex()}; color: ${color};
       overflow: visible;"
       aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100">
         ${text}
+    </div>
+  </div></div>`;
+}
+
+export function renderMultilinePointsProgressBar(pointsEarned: number, pointsPossible: number, text?: string) {
+  // Note the unary + below drops extra .00 from the number because it implicitly converts
+  // the string from .toFixed() back into a number
+  let progressPercent = pointsPossible === 0 ? 100 : Math.max(1, Math.floor(100 * (pointsEarned / pointsPossible)));
+  let color = progressPercent < 50 ? "white" : "white";
+  text = text ?? `${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}`;
+  return `<div style="display: inline-block; vertical-align: middle;"><div class="progress" style="height: unset; line-height: unset">
+    <div class="progress-bar" role="progressbar"
+      style="width: ${progressPercent}%; background-color: ${percentCorrectScale(pointsEarned / pointsPossible).hex()}; color: ${color};
+      overflow: visible; white-space: pre;"
+      aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100">${text}</div>
+  </div></div>`;
+}
+
+export function renderGradingProgressBar(numGraded: number, numAssigned: number) {
+  let progressPercent = numAssigned === 0 ? 100 : Math.max(1, Math.floor(100 * (numGraded / numAssigned)));
+  return `<div style="display: inline-block; vertical-align: middle;"><div class="progress">
+    <div class="progress-bar" role="progressbar"
+      style="width: ${progressPercent}%; color: white;
+      overflow: visible;"
+      aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100">
+      ${numGraded}/${numAssigned}
     </div>
   </div></div>`;
 }
