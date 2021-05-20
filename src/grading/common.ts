@@ -20,6 +20,7 @@ export type GradingGroup<QT extends ResponseKind = ResponseKind, GR extends Grad
 }
 
 export type GradingAssignmentSpecification<QT extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> = {
+  name?: string,
   exam_id: string,
   question_id: string,
   groups: GradingGroup<QT,GR>[]

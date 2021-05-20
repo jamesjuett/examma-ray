@@ -2,7 +2,17 @@ import chroma from 'chroma-js';
 
 
 
+export function maxPrecisionString(points: number, precision: number) {
+  // Note the unary + below drops extra .00 from the number because it implicitly converts
+  // the string from .toFixed() back into a number
+  return `${+points.toFixed(precision)}`;
+}
 
+export function renderFixedPrecisionBadge(points: number, precision: number, cssClass = "badge-primary") {
+  // Note the unary + below drops extra .00 from the number because it implicitly converts
+  // the string from .toFixed() back into a number
+  return `<span class="badge ${cssClass}">${maxPrecisionString(points, precision)}</span>`;
+}
 
 export function renderScoreBadge(pointsEarned: number, pointsPossible: number, prefix: string = "") {
   let text = `${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}`;
@@ -30,7 +40,7 @@ export function renderPointsWorthBadge(num: number, cssClass: string = "badge-se
 }
 
 export function renderShortPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
-  return `<span class="badge ${cssClass} style="width: 3.5em">${num} ${num === 1 ? "pt" : "pts"}</span>`;
+  return `<span class="badge ${cssClass}" style="min-width: 4em">${num} ${num === 1 ? "pt" : "pts"}</span>`;
 }
 
 let percentCorrectScale = chroma.scale(["#dc3545", "#ffc107", "#28a745"]).mode("lab");

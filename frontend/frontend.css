@@ -164,6 +164,10 @@ code {
   max-width: 850px;
 }
 
+.examma-ray-grading-summary {
+  max-width: 850px;
+}
+
 .examma-ray-bottom-message {
   max-width: 850px;
 }
@@ -374,6 +378,13 @@ code {
   margin-left: 0ch;
 }
 
+.examma-ray-code-editor-graded-submission {
+  margin-left: 1ch;
+  margin-right: 1ch;
+  border: solid 1px #777;
+  padding: 1ch;
+}
+
 .examma-ray-code-editor-header pre,
 .examma-ray-code-editor-footer pre {
   margin-bottom: 0;
@@ -439,4 +450,29 @@ code {
 
 .examm-ray-regrade-entry {
   width: 100%;
+}
+
+.examma-ray-manual-graded-rubric {
+  max-height: 65vh;
+  min-width: 200px;
+  max-width: 300px;
+  padding-top: 1em;
+  padding-right: 1em;
+  overflow-y: auto;
+}
+
+.examma-ray-manual-graded-rubric-item.list-group-item {
+  border: solid 1px #bbb;
+  margin-bottom: 0.6em;
+  font-size: 80%;
+}
+
+.examma-ray-manual-graded-rubric-item p {
+  margin-bottom: 0.2em;
+}
+
+.examma-ray-manual-graded-rubric-item .badge {
+  position: absolute;
+  right: -0.5em;
+  top: -0.5em;
 }

@@ -86,10 +86,11 @@ import { unparse } from 'papaparse';
 import { ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin } from './skins';
 import del from 'del';
-import { average, chunk, mean, standardDeviation } from 'simple-statistics';
+import { average, chunk, mean, sampleCovariance, standardDeviation, sum } from 'simple-statistics';
 import { GradingAssignmentSpecification } from "./grading/common";
 import { stringify_response } from './response/responses';
-import { renderNumBadge, renderPointsProgressBar, renderWideNumBadge } from './ui_components';
+import { renderGradingProgressBar, renderNumBadge, renderPointsProgressBar, renderWideNumBadge } from './ui_components';
+import { v4 } from 'uuid';
 
 
 
@@ -107,6 +108,14 @@ export class ExamGrader {
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
   public readonly assignedQuestionsMap: {
     [index: string]: readonly AssignedQuestion[] | undefined;
+  } = {};
+  public readonly gradedQuestionsMeans: {
+    [index: string]: number;
+  } = {};
+  public readonly gradedQuestionCovarianceMatrix: {
+    [index: string]: {
+      [index: string]: number;
+    };
   } = {};
 
   public readonly graderMap: GraderMap = {};
@@ -221,8 +230,6 @@ export class ExamGrader {
 
   public gradeAll() {
 
-    this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
-
     // Apply any exceptions to individual questions
     this.submittedExams.forEach(
       ex => ex.assignedSections.forEach(
@@ -231,6 +238,62 @@ export class ExamGrader {
         )
       )
     );
+
+    this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
+
+    this.allQuestions.forEach(question => {
+      let assignedQuestions = this.getAssignedQuestions(question.question_id);
+      let gradedQuestions = assignedQuestions.filter(isGraded);
+      if (gradedQuestions.length > 0) {
+        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarned));
+      }
+    });
+
+    // Find covariance matrix for all questions
+
+    console.log("computing covariance matrix");
+    this.allQuestions.forEach(q1 => {
+      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+      this.allQuestions.forEach(q2 => {
+        console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+        // Only calculate covariance based on cases where the questions appeared together and are graded
+        let containsBoth = this.submittedExams.filter(
+          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+        );
+
+        let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
+          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarned!),
+          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarned!)
+        );
+
+        if (isNaN(cov)) {
+          
+        assertFalse(q1.question_id + " " + q2.question_id);
+      
+        }
+
+        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+      });
+    });
+
+    // Set hypothetical mean/stddev curving parameters for each exam
+    this.submittedExams.forEach(ex => {
+      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+      
+      let indExamVar = 0;
+      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+      assignedQuestionIds.forEach(q1Id =>
+        assignedQuestionIds.forEach(q2Id =>
+          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+        )
+      );
+      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    });
+
+  }
+
+  public applyCurve(targetMean: number, targetStddev: number) {
+    this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
   }
 
   // public prepareManualGrading() {
@@ -273,8 +336,9 @@ export class ExamGrader {
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
+        let filenameBase = ex.student.uniqname + "-" + v4();
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
       });
 
     this.writeStats();
@@ -282,7 +346,7 @@ export class ExamGrader {
     this.writeScoresCsv();
   }
 
-  private writeScoresCsv() {
+  public writeScoresCsv() {
     mkdirSync("out/${this.exam.id}/graded/", {recursive: true});
     let data = this.submittedExams.slice().sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map(ex => {
@@ -290,12 +354,16 @@ export class ExamGrader {
         student_data["uniqname"] = ex.student.uniqname;
         student_data["total"] = ex.pointsEarned;
         ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.question_id] = q.pointsEarned));
+
+        student_data["individual_exam_mean"] = ex.hypotheticalMean;
+        student_data["individual_exam_stddev"] = ex.hypotheticalStddev;
+
         return student_data;
       });
 
     
     writeFileSync(`out/${this.exam.exam_id}/graded/scores.csv`, unparse({
-      fields: this.allQuestions.map(q => q.question_id),
+      fields: ["uniqname", "total", "individual_exam_mean", "individual_exam_stddev", ...this.allQuestions.map(q => q.question_id)],
       data: data
     }));
   }
@@ -376,9 +444,12 @@ export class ExamGrader {
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;
 
+    let fullyGradedExams = this.submittedExams.filter(ex => ex.isFullyGraded);
+
     let main_overview = `<div>
-      <div>Mean: ${mean(this.submittedExams.map(ex => ex.pointsEarned!))}</div>
-      <div>Std Dev: ${standardDeviation(this.submittedExams.map(ex => ex.pointsEarned!))}</div>
+      Out of ${fullyGradedExams.length} fully graded exams:
+      <div>Mean: ${mean(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
+      <div>Std Dev: ${standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
     </div>`
 
     let students_overview = this.submittedExams.slice().sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {
@@ -406,7 +477,7 @@ export class ExamGrader {
         question_overview = "No grader for this question.";
       }
       else {
-        avg = average(assignedQuestions.map(aq => aq.pointsEarned!));
+        avg = average(gradedQuestions.map(aq => aq.pointsEarned));
         header = `<b>${question.question_id}</b> Details`;
         question_overview = `<div>
           ${grader?.renderOverview(gradedQuestions)}
@@ -418,7 +489,7 @@ export class ExamGrader {
       return `<div class="examma-ray-question-overview">
         <div id="${overview_id}" class="card">
           <div class="card-header">
-            ${renderWideNumBadge(`${gradedQuestions.length}/${assignedQuestions.length}`)}
+            ${renderGradingProgressBar(gradedQuestions.length, assignedQuestions.length)}
             ${renderPointsProgressBar(avg ?? 0, question.pointsPossible)}
             <a class="nav-link" data-toggle="collapse" data-target="#${overview_id}-details" role="button" aria-expanded="false" aria-controls="${overview_id}-details">${header}</a>
           </div>

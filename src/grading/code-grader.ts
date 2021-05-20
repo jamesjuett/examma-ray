@@ -514,6 +514,7 @@ class CodeWritingManualGraderApp {
     equivalenceGroups.forEach(g => delete (<any>g).repProgram);
 
     let newAssn : CodeWritingGradingAssignment = {
+      name: this.assn!.name,
       exam_id: this.assn!.exam_id,
       question_id: this.assn!.question_id,
       groups: equivalenceGroups

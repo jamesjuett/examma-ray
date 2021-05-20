@@ -3,6 +3,11 @@ import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, GradingResult } from "../QuestionGrader";
 import { ExamUtils } from "../ExamUtils";
 import { CodeWritingGradingAssignment } from "../grading/code-grader";
+import { renderGradingProgressBar, renderNumBadge, renderShortPointsWorthBadge, renderWideNumBadge } from "../ui_components";
+import { sum } from "simple-statistics";
+import { applySkin, highlightCode, mk2html } from "../render";
+import { assert, assertFalse } from "../util";
+import { createFilledFITB, FITBSubmission } from "../response/fitb";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -32,7 +37,7 @@ export type CodeWritingGradingResult = GradingResult & {
 
 
 
-export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
+export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
   public readonly manualGrading: readonly CodeWritingGradingAssignment[];
@@ -52,10 +57,10 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
-    return responseKind === "code_editor";
-  };
+    return true;
+  }
   
-  // public prepareManualGrading(aqs: readonly AssignedQuestion<"code_editor">[]) {
+  // public prepareManualGrading(aqs: readonly AssignedQuestion[]) {
   //   if (aqs.length === 0) {
   //     return;
   //   }
@@ -63,7 +68,7 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
   //   this.writeGradingAssignments(aqs[0].exam.exam_id, aqs[0].question.question_id, assns);
   // }
 
-  public grade(aq: AssignedQuestion<"code_editor">) : CodeWritingGradingResult {
+  public grade(aq: AssignedQuestion) : CodeWritingGradingResult | undefined {
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
@@ -73,28 +78,88 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
       };
     }
 
-    return this.manualGradingMap[aq.uuid] ?? {
-      wasBlankSubmission: false,
-      itemResults: {},
-      verified: false
-    };
+    return this.manualGradingMap[aq.uuid];
   }
 
   public pointsEarned(gr: CodeWritingGradingResult) {
-    return Object.values(gr.itemResults).reduce((p, res, i) => p + (res?.status === "on" ? this.rubric[i].points : 0), 0);
+    return Object.values(this.rubric).reduce((p, ri) => p + (gr.itemResults[ri.id]?.status === "on" ? ri.points : 0), 0);
   }
 
-  public renderReport(aq: GradedQuestion<"code_editor", CodeWritingGradingResult>) {
+  public renderReport(aq: GradedQuestion<ResponseKind, CodeWritingGradingResult>) {
     let gr = aq.gradingResult;
 
-    if (gr.wasBlankSubmission) {
+    if (aq.submission === BLANK_SUBMISSION || gr.wasBlankSubmission) {
       return "Your answer for this question was blank.";
     }
 
+    let skin = aq.skin;
+    let question = aq.question;
+    let studentSubmission = "";
+    let res = aq.gradingResult;
+    if (question.isKind("code_editor")) {
+      let response = question.response;
+      studentSubmission = `
+        <div class="examma-ray-code-editor-header">
+          ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+        </div>
+        <div class="examma-ray-code-editor-graded-submission">
+          ${`<pre><code>${highlightCode(""+aq.submission, "cpp")}</code></pre>`}
+        </div>
+        <div class="examma-ray-code-editor-footer">
+          ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+        </div>
+      `
+    }
+    else if (question.isKind("fitb")) {
+      let content = question.response.content;
+      let submission = <FITBSubmission>aq.submission;
+      assert(submission !== BLANK_SUBMISSION);
+
+      studentSubmission = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
+      
+    }
+    else {
+      return assertFalse();
+    }
+
+    
     return `
-      <div>PLACEHOLDER
-      ${this.rubric.map(ri => JSON.stringify(gr.itemResults[ri.id])).join("<br />")}
-      </div>
+      <table>
+        <tr style="text-align: center;">
+          <th>Rubric</th>
+          <th>Your Submission</th>
+        </tr>
+        <tr>
+          <td>
+            <ul class="list-group examma-ray-manual-graded-rubric">
+              ${this.rubric.map(ri => {
+                let itemResult = res.itemResults[ri.id];
+                let statusClass = "";
+                if (itemResult?.status === "on") {
+                  if (ri.points > 0) {
+                    statusClass = "list-group-item-success"
+                  }
+                  else if (ri.points === 0) {
+                    statusClass = "list-group-item-secondary"
+                  }
+                  else {
+                    statusClass = "list-group-item-danger"
+                  }
+                }
+                return `
+                <li class="list-group-item examma-ray-manual-graded-rubric-item ${statusClass}">
+                  ${renderShortPointsWorthBadge(ri.points)}
+                  <b>${mk2html(ri.title, skin)}</b>
+                  ${mk2html(ri.description, skin)}
+                </li>
+              `}).join("")}
+            </ul>
+          </td>
+          <td style="padding: 1em;">
+            ${studentSubmission}
+          </td>
+        </tr>
+      </table>
     `;
   }
 
@@ -104,7 +169,16 @@ export class CodeWritingGrader implements QuestionGrader<"code_editor"> {
   }
 
   public renderOverview() {
-    return "Overview is not implemented for this question/grader type yet.";
+
+    return `
+      ${this.manualGrading.map(assn => {
+        let name = assn.name ?? "unnamed_grading_assignemnt";
+        let numGroups = assn.groups.length;
+        let numSubmissions = sum(assn.groups.map(g => g.submissions.length));
+        let numGraded = sum(assn.groups.filter(g => g.grading_result).map(g => g.submissions.length));
+        return `<div>${renderGradingProgressBar(numGraded, numSubmissions)} ${renderWideNumBadge(`${numGroups} groups`)} ${name}</div>`;
+      }).join("")}
+    `;
   }
 
 
