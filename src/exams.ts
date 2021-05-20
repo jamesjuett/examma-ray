@@ -3,12 +3,13 @@ import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
 import { ResponseKind } from './response/common';
 import { mk2html } from './render';
-import { renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
+import { maxPrecisionString, renderFixedPrecisionBadge, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
 import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { ExamManifest } from './submissions';
+import { sum } from 'simple-statistics';
 
 
 export enum RenderMode {
@@ -56,6 +57,9 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     return mk2html(this.mk_description, skin);
   }
 
+  public isKind<RK extends QT>(kind: RK) : this is Question<RK> {
+    return this.kind === kind;
+  }
 };
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
@@ -88,9 +92,10 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   }
 
   public grade(grader: QuestionGrader<QT>) {
-    console.log("here");
     (<Mutable<this>>this).gradingResult = grader.grade(this);
-    (<Mutable<this>>this).gradedBy = grader;
+    if (this.gradingResult) {
+      (<Mutable<this>>this).gradedBy = grader;
+    }
   }
 
   public addException(exception: Exception) {
@@ -191,7 +196,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   }
 
   public isGraded() : this is GradedQuestion<QT> {
-    return !!this.gradedBy;
+    return !!this.gradingResult;
   }
   
   public wasGradedBy<GR extends GradingResult>(grader: QuestionGrader<QT, GR>) : this is GradedQuestion<QT,GR> {
@@ -206,11 +211,14 @@ export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResul
   readonly gradingResult: GR;
 }
 
+export function isGraded<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq is GradedQuestion<QT> {
+  return aq.isGraded();
+} 
 
 
 
 
-const DEFAULT_REFERENCE_WIDTH = 40;
+const DEFAULT_REFERENCE_WIDTH = 20;
 
 export class Section {
 
@@ -290,16 +298,21 @@ export class AssignedSection {
     this.assignedQuestions.forEach(aq => {
       let grader = graders[aq.question.question_id];
       if (grader) {
-        console.log(`Grading ${aq.question.question_id}`);
+        // console.log(`Grading ${aq.question.question_id}`);
         assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);
       }
       else {
-        console.log(`No grader found for ${aq.question.question_id}`);
+        // console.log(`No grader found for ${aq.question.question_id}`);
       }
     });
-    asMutable(this).pointsEarned = <number>this.assignedQuestions.reduce((prev, aq) => prev + aq.pointsEarned!, 0);
-    asMutable(this).isFullyGraded =this.assignedQuestions.every(aq => aq.isGraded());
+    
+    asMutable(this).isFullyGraded = this.assignedQuestions.every(aq => aq.isGraded());
+    
+    // Only assign a total points earned if all questions have been graded
+    if (this.isFullyGraded) {
+      asMutable(this).pointsEarned = sum(<number[]>this.assignedQuestions.map(aq => aq.pointsEarned));
+    }
   }
 
   private renderHeader(mode: RenderMode) {
@@ -350,6 +363,19 @@ export class AssignedExam {
   public readonly pointsEarned?: number;
   public readonly isFullyGraded: boolean = false;
 
+  public readonly hypotheticalMean?: number;
+  public readonly hypotheticalStddev?: number;
+
+  public readonly targetMean?: number;
+  public readonly targedStddev?: number;
+  public readonly zScore?: number;
+  public readonly curvedScore?: number;
+  public readonly adjustedScore?: number;
+
+  public assignedQuestionsMap: {
+    [index: string]: AssignedQuestion | undefined;
+  } = {};
+
   public constructor(
     public readonly uuid: string,
     public readonly exam: Exam,
@@ -358,6 +384,8 @@ export class AssignedExam {
     allowDuplicates: boolean
   ) {
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
+
+    this.assignedSections.forEach(s => s.assignedQuestions.forEach(q => this.assignedQuestionsMap[q.question.question_id] = q));
 
     if (!allowDuplicates) {
       let sectionIds = assignedSections.map(s => s.section.section_id);
@@ -374,9 +402,25 @@ export class AssignedExam {
     asMutable(this).isFullyGraded = this.assignedSections.every(s => s.isFullyGraded);
   }
 
+  public setExamCurveParameters(mean: number, stddev: number) {
+    (<Mutable<this>>this).hypotheticalMean = mean;
+    (<Mutable<this>>this).hypotheticalStddev = stddev;
+  }
+
+  public applyCurve(targetMean: number, targetStddev: number) {
+    assert(this.pointsEarned);
+    assert(this.hypotheticalMean && this.hypotheticalStddev);
+    
+    (<Mutable<this>>this).targetMean = targetMean;
+    (<Mutable<this>>this).targedStddev = targetStddev;
+    (<Mutable<this>>this).zScore = (this.pointsEarned - this.hypotheticalMean) / this.hypotheticalStddev;
+    (<Mutable<this>>this).curvedScore = this.zScore! * targetStddev + targetMean;
+    (<Mutable<this>>this).adjustedScore = Math.max(this.pointsEarned!, this.curvedScore!);
+  }
+
   public renderGrade() {
     return this.isFullyGraded ?
-      +(this.pointsEarned!.toFixed(2)) + "/" + this.pointsPossible :
+      maxPrecisionString(this.adjustedScore ? this.adjustedScore : this.pointsEarned!, 2) + "/" + this.pointsPossible :
       "?/" + this.pointsPossible;
   }
 
@@ -396,23 +440,62 @@ export class AssignedExam {
   public renderSaverButton() {
     return `
       <div class="examma-ray-exam-saver-status">
+        <div>
+          ${this.exam.html_questions_message}
+        </div>
+        <br />
         <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
         <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
       </div>`
+  }
+
+  public renderTimer(mode: RenderMode) {
+    if (mode === RenderMode.ORIGINAL) {
+      return `
+        <div class="text-center pb-1 border-bottom">
+          <button id="examma-ray-time-elapsed-button" class="btn btn-primary btn-sm" style="line-height: 0.75;" data-toggle="collapse" data-target="#examma-ray-time-elapsed" aria-expanded="true" aria-controls="examma-ray-time-elapsed">Hide</button>
+          <b>Time Elapsed</b>
+          <br>
+          <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
+          <br>
+          This is not an official timer. Please submit your answers to Canvas before the deadline.
+        </div>
+      `;
+    }
+    else {
+      return "";
+    }
+  }
+
+  public renderGradingSummary() {
+    // TODO: remove ! assertions and use logic to produce partial summaries instead
+    // TODO: remove hardcoded curving targets
+    return `<div class="container examma-ray-grading-summary">
+      <div class="text-center mb-3 border-bottom">
+        <h2>Grading Summary</h2>
+      </div>
+      <div>
+        <p>Due to randomization, your exam was different from everyone else's. However, because each individual question was still taken by a large number of students, we are able to statistically compute what the overall score distribution would have been if everyone had taken your exam. Then, we curve all exams individually to the same target distribution. Students who took more difficult exams will have a more generous curve.</p>
+
+        <p>Please note that this curving mechanism does not guarantee a boost to every students' score. In fact, the literal adjustment may bring most high scores down, given a smaller target standard deviation. In this case, we use the raw score rather than the curved score.</p>
+
+        <p>If everyone had taken your version of the exam, the mean would have been <b>${maxPrecisionString(this.hypotheticalMean!, 5)}</b> with a standard deviation of <b>${maxPrecisionString(this.hypotheticalStddev!, 5)}</b>.</p>
+
+        <p>Your raw score on this exam was <b>${maxPrecisionString(this.pointsEarned!, 5)}</b>, which corresponds to a z-score of <b>${maxPrecisionString(this.zScore!, 5)}</b> given this distribution.</p>
+        
+        <p>We curved the exam to a target mean of <b>${maxPrecisionString(this.targetMean!, 5)}</b> and standard deviation of <b>${maxPrecisionString(this.targedStddev!, 5)}</b>. Applying your z-score yields a curved score of <b>${maxPrecisionString(this.curvedScore!, 5)}</b> (${`${this.targetMean} + ${maxPrecisionString(this.zScore!, 5)} * ${this.targedStddev}`}).</p>
+
+        <p>Your final score is the higher of your raw/curved score: <b>${maxPrecisionString(this.adjustedScore!, 5)}</b></p>
+
+      </div>
+    </div>`;
   }
 
   public renderBody(mode: RenderMode) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.exam_id}" data-exam-uuid="${this.uuid}">
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
-          <div class="text-center pb-1 border-bottom">
-            <button id="examma-ray-time-elapsed-button" class="btn btn-primary btn-sm" style="line-height: 0.75;" data-toggle="collapse" data-target="#examma-ray-time-elapsed" aria-expanded="true" aria-controls="examma-ray-time-elapsed">Hide</button>
-            <b>Time Elapsed</b>
-            <br>
-            <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
-            <br>
-            This is not an official timer. Please submit your answers to Canvas before the deadline.
-          </div>
+          ${this.renderTimer(mode)}
           <h3 class="text-center pb-1 border-bottom">
             ${mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(this.pointsPossible, "btn-secondary") : this.renderGrade()}
           </h3>
@@ -420,6 +503,7 @@ export class AssignedExam {
           ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
+          ${this.renderGradingSummary()}
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
           <div class="container examma-ray-bottom-message">
@@ -509,6 +593,7 @@ export class Exam {
 
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
+  public readonly html_questions_message: string;
 
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
@@ -519,6 +604,7 @@ export class Exam {
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
+    this.html_questions_message = spec.html_questions_message ?? "";
     this.sections = spec.sections;
     this.enable_regrades = !!spec.enable_regrades;
   }

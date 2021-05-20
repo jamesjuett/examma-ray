@@ -91,7 +91,11 @@ function count_char(str: string, c: string) {
   return count;
 }
 
-export function createFilledFITB(content: string, submission?: FITBSubmission) {
+export function createFilledFITB(
+  content: string, submission?: FITBSubmission,
+  blankRenderer = DEFAULT_BLANK_RENDERER,
+  boxRenderer = DEFAULT_BOX_RENDERER,
+  encoder: (s:string)=>string = encode) {
 
   // count the number of underscores in each blank pattern
   let blankLengths = content.match(BLANK_PATTERN)?.map(m => count_char(m, "_")) ?? [];
@@ -118,25 +122,20 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
   // a corresponding input element of the right size based on the
   // number of underscores that were originally in the "__BLANK__"
   blankLengths.forEach((length) => {
-    let autoAttrs = `autocomplete="off" autocorrect="off" spellcheck="false"`
-    content = content.replace(blank_id, `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>`)
+    content = content.replace(blank_id, blankRenderer(submission_placeholder, length))
   });
 
   // Replace each of the "box ids" in the rendered html with
   // a corresponding textarea element with the right # of lines based on the
   // number of newlines that were originally in the "[[BOX\n\n\n]]"
   boxLines.forEach((lines, i) => {
-    let boxWidth = boxWidths[i];
-    let rcAttrs = `rows="${lines}"${boxWidth !== 0 ? ` cols="${boxWidth}"` : ""}`;
-    let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`
-    let style = `style="resize: none; overflow: auto;${boxWidth === 0 ? " width: 100%;" : ""}"`
-    content = content.replace(box_id, `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`)
+    content = content.replace(box_id, boxRenderer(submission_placeholder, lines, boxWidths[i]));
   });
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
     submission.forEach(
-      sub => content = content.replace(submission_placeholder, encode(sub))
+      sub => content = content.replace(submission_placeholder, encoder(sub))
     );
   }
 
@@ -144,4 +143,16 @@ export function createFilledFITB(content: string, submission?: FITBSubmission) {
   content = content.replace(new RegExp(submission_placeholder, "g"), "");
 
   return content;
+}
+
+function DEFAULT_BLANK_RENDERER(submission_placeholder: string, length: number) {
+  let autoAttrs = `autocomplete="off" autocorrect="off" spellcheck="false"`;
+  return `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>`;
+}
+
+function DEFAULT_BOX_RENDERER(submission_placeholder: string, lines: number, width: number) {
+  let rcAttrs = `rows="${lines}"${width !== 0 ? ` cols="${width}"` : ""}`;
+  let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`;
+  let style = `style="resize: none; overflow: auto;${width === 0 ? " width: 100%;" : ""}"`;
+  return `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`;
 }

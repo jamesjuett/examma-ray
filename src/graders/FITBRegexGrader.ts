@@ -1,12 +1,12 @@
 import { encode } from "he";
-import { min } from "simple-statistics";
+import { min, sum } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert, assertFalse } from "../util";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
-import { renderNumBadge, renderScoreBadge } from "../ui_components";
+import { renderMultilinePointsProgressBar, renderNumBadge, renderPointsProgressBar, renderScoreBadge } from "../ui_components";
 import { QuestionSkin } from "../skins";
 
 
@@ -129,7 +129,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let content = question.response.content;
 
     let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
-    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => ri.solution)); //, content, undefined);
+    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => applySkin(ri.solution, skin))); //, content, undefined);
 
     let itemResults = gr.itemResults;
     assert(itemResults.length === this.rubric.length);
@@ -137,20 +137,20 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let rubricItemsHtml = `<table style="position: sticky; top: 0;">${itemResults.map((itemResult, i) => {
       let rubricItem = this.rubric[i];
 
-      let explanation: string = itemResult.explanation ?? "Your response for this blank was incomplete or incorrect.";
+      let explanation: string = mk2html(itemResult.explanation ?? "Your response for this blank was incomplete or incorrect.", skin);
 
       let elem_id = `question-${question.question_id}-item-${i}`;
 
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
           <div class="card-header">
-            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${rubricItem.title}</a>
+            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${mk2html(rubricItem.title, skin)}</a>
           </div>
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">
               ${mk2html(rubricItem.description, skin)}
               <p>Your response for this blank was: <code style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
-              ${mk2html(explanation, skin)}
+              ${explanation}
             </div>
           </div>
         </div></td></tr>`;
@@ -185,7 +185,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${s.sub}</code>"</li>`).join("")}
+            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${s.sub}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
@@ -223,16 +223,17 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
   }
 
   public renderOverview(aqs: readonly AssignedQuestion<"fitb">[]) {
-    return assertFalse();
-    // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
-    // let blankAverages = gradedBlankSubmissions.map(
-    //   gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
-    // let blankPoints = this.rubric.map(ri => ri.points);
-    // let blankSolutions = this.rubric.map(ri => encode(ri.solution));
-    // let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
-    // let blankBars = blankAverages.map((avg, i) => renderPointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
-    // let solutionFilled = this.createFilledFITB(blankBars, question.response.text, undefined);
-    // return `<pre><code class="language-${question.response.code_language}">${solutionFilled}</code></pre>`;
+    let question = aqs[0].question;
+    let submissions = aqs.map(aq => aq.submission);
+    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+    let blankAverages = gradedBlankSubmissions.map(
+      gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
+    let blankPoints = this.rubric.map(ri => ri.points);
+    let blankSolutions = this.rubric.map(ri => encode(ri.solution));
+    let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
+    let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
+    let solutionFilled = createFilledFITB(question.response.content, blankBars, s=>s, s=>s, s=>s);
+    return solutionFilled;
   }
 
 }

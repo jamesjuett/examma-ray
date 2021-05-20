@@ -77,7 +77,7 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
+import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, isGraded } from './exams';
 import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./randomization";
 import { QuestionGrader } from './QuestionGrader';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
@@ -86,9 +86,11 @@ import { unparse } from 'papaparse';
 import { ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin } from './skins';
 import del from 'del';
-import { chunk } from 'simple-statistics';
+import { average, chunk, mean, sampleCovariance, standardDeviation, sum } from 'simple-statistics';
 import { GradingAssignmentSpecification } from "./grading/common";
 import { stringify_response } from './response/responses';
+import { renderGradingProgressBar, renderNumBadge, renderPointsProgressBar, renderWideNumBadge } from './ui_components';
+import { v4 } from 'uuid';
 
 
 
@@ -106,6 +108,14 @@ export class ExamGrader {
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
   public readonly assignedQuestionsMap: {
     [index: string]: readonly AssignedQuestion[] | undefined;
+  } = {};
+  public readonly gradedQuestionsMeans: {
+    [index: string]: number;
+  } = {};
+  public readonly gradedQuestionCovarianceMatrix: {
+    [index: string]: {
+      [index: string]: number;
+    };
   } = {};
 
   public readonly graderMap: GraderMap = {};
@@ -125,6 +135,12 @@ export class ExamGrader {
 
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    this.allQuestions.forEach(question => {
+      if (!this.graderMap[question.question_id]) {
+        console.log(`WARNING: No grader registered for question: ${question.question_id}`);
+      }
+    })
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
@@ -148,7 +164,8 @@ export class ExamGrader {
   public loadAllSubmissions() {
     this.addSubmissions(ExamUtils.loadTrustedSubmissions(
       `data/${this.exam.exam_id}/manifests/`,
-      `data/${this.exam.exam_id}/submissions/`))
+      `data/${this.exam.exam_id}/submissions/`,
+      `data/${this.exam.exam_id}/trusted-submissions/`));
   }
 
   private createExamFromSubmission(submission: TrustedExamSubmission) {
@@ -213,8 +230,6 @@ export class ExamGrader {
 
   public gradeAll() {
 
-    this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
-
     // Apply any exceptions to individual questions
     this.submittedExams.forEach(
       ex => ex.assignedSections.forEach(
@@ -223,6 +238,62 @@ export class ExamGrader {
         )
       )
     );
+
+    this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
+
+    this.allQuestions.forEach(question => {
+      let assignedQuestions = this.getAssignedQuestions(question.question_id);
+      let gradedQuestions = assignedQuestions.filter(isGraded);
+      if (gradedQuestions.length > 0) {
+        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarned));
+      }
+    });
+
+    // Find covariance matrix for all questions
+
+    console.log("computing covariance matrix");
+    this.allQuestions.forEach(q1 => {
+      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+      this.allQuestions.forEach(q2 => {
+        console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+        // Only calculate covariance based on cases where the questions appeared together and are graded
+        let containsBoth = this.submittedExams.filter(
+          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+        );
+
+        let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
+          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarned!),
+          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarned!)
+        );
+
+        if (isNaN(cov)) {
+          
+        assertFalse(q1.question_id + " " + q2.question_id);
+      
+        }
+
+        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+      });
+    });
+
+    // Set hypothetical mean/stddev curving parameters for each exam
+    this.submittedExams.forEach(ex => {
+      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+      
+      let indExamVar = 0;
+      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+      assignedQuestionIds.forEach(q1Id =>
+        assignedQuestionIds.forEach(q2Id =>
+          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+        )
+      );
+      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    });
+
+  }
+
+  public applyCurve(targetMean: number, targetStddev: number) {
+    this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
   }
 
   // public prepareManualGrading() {
@@ -245,6 +316,13 @@ export class ExamGrader {
 
 
 
+  public writeStats() {
+    writeFrontendJS("stats-fitb.js");
+
+    console.log("Rendering question stats files...");
+    this.allQuestions.forEach(q => this.renderStatsToFile(q));
+  }
+
   public writeAll() {
     const examDir = `out/${this.exam.exam_id}/graded/exams`;
 
@@ -258,15 +336,17 @@ export class ExamGrader {
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
+        let filenameBase = ex.student.uniqname + "-" + v4();
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${ex.student.uniqname}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
       });
 
-    console.log("Rendering question stats files...");
-    this.allQuestions.forEach(q => this.renderStatsToFile(q));
+    this.writeStats();
+    this.writeOverview();
+    this.writeScoresCsv();
   }
 
-  private writeScoresCsv() {
+  public writeScoresCsv() {
     mkdirSync("out/${this.exam.id}/graded/", {recursive: true});
     let data = this.submittedExams.slice().sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map(ex => {
@@ -274,12 +354,16 @@ export class ExamGrader {
         student_data["uniqname"] = ex.student.uniqname;
         student_data["total"] = ex.pointsEarned;
         ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.question_id] = q.pointsEarned));
+
+        student_data["individual_exam_mean"] = ex.hypotheticalMean;
+        student_data["individual_exam_stddev"] = ex.hypotheticalStddev;
+
         return student_data;
       });
 
     
     writeFileSync(`out/${this.exam.exam_id}/graded/scores.csv`, unparse({
-      fields: this.allQuestions.map(q => q.question_id),
+      fields: ["uniqname", "total", "individual_exam_mean", "individual_exam_stddev", ...this.allQuestions.map(q => q.question_id)],
       data: data
     }));
   }
@@ -320,40 +404,129 @@ export class ExamGrader {
 
   private writeStatsFile(filename: string, body: string) {
     writeFileSync(filename, `
-        <!DOCTYPE html>
+      <!DOCTYPE html>
       <html>
       <meta charset="UTF-8">
       <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
       <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-      <script src="${this.frontend_js_path}"></script>
-      <script>
-        $(function() {
-          $('button.examma-ray-blank-saver').on("click", function() {
-            let blank_num = $(this).data("blank-num");
-            let checked = $("input[type=checkbox]:checked").filter(function() {
-              return $(this).data("blank-num") === blank_num;
-            }).map(function() {
-              return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
-            }).get().join(",\\n");
-            $(".checked-submissions-content").html(he.encode(checked));
-            $(".checked-submissions-modal").modal("show")
-          })
-        });
-  
-      </script>
-      <style>
-        
-  
-  
-      </style>
+      <script src="../../../js/stats-fitb.js"></script>
       <body>
         ${body}
-  
+        <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Selected Answers</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <pre><code class="checked-submissions-content"></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
   
       </body>
-      </html>`, { encoding: "utf-8" });
+      </html>`,
+      { encoding: "utf-8" }
+    );
+  }
+
+  
+  public writeOverview() {
+
+    writeFrontendJS("overview.js");
+
+    mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
+    let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;
+
+    let fullyGradedExams = this.submittedExams.filter(ex => ex.isFullyGraded);
+
+    let main_overview = `<div>
+      Out of ${fullyGradedExams.length} fully graded exams:
+      <div>Mean: ${mean(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
+      <div>Std Dev: ${standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
+    </div>`
+
+    let students_overview = this.submittedExams.slice().sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {
+      let score = ex.pointsEarned ?? 0;
+      return `<div>${renderPointsProgressBar(score, ex.pointsPossible)} <a href="exams/${ex.student.uniqname}.html">${ex.student.uniqname}</a></div>`
+    }).join("");
+
+    let questions_overview = this.allQuestions.map(question => {
+
+      let grader = this.graderMap[question.question_id];
+      let assignedQuestions = this.getAssignedQuestions(question.question_id);
+
+      if (assignedQuestions.length === 0) {
+        return "";
+      }
+
+
+      let gradedQuestions = assignedQuestions.filter(isGraded);
+
+      let header: string;
+      let question_overview: string;
+      let avg: number | undefined;
+      if (!grader) {
+        header = `<h4>${question.question_id}</h4>`;
+        question_overview = "No grader for this question.";
+      }
+      else {
+        avg = average(gradedQuestions.map(aq => aq.pointsEarned));
+        header = `<b>${question.question_id}</b> Details`;
+        question_overview = `<div>
+          ${grader?.renderOverview(gradedQuestions)}
+        </div>`;
+      }
+
+
+      let overview_id = `question-overview-${question.question_id}`;
+      return `<div class="examma-ray-question-overview">
+        <div id="${overview_id}" class="card">
+          <div class="card-header">
+            ${renderGradingProgressBar(gradedQuestions.length, assignedQuestions.length)}
+            ${renderPointsProgressBar(avg ?? 0, question.pointsPossible)}
+            <a class="nav-link" data-toggle="collapse" data-target="#${overview_id}-details" role="button" aria-expanded="false" aria-controls="${overview_id}-details">${header}</a>
+          </div>
+          <div class="collapse" id="${overview_id}-details">
+            <div class="card-body">
+              <div><a href="questions/${question.question_id}.html">Question Analysis Page</a></div>
+              ${question.renderDescription(assignedQuestions[0].skin)}
+              ${question_overview}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    let overview = `
+      ${main_overview}
+      <div class="examma-ray-students-overview">
+        ${students_overview}
+      <div>
+      ${questions_overview}
+    `;
+
+    writeFileSync(out_filename, `
+      <!DOCTYPE html>
+      <html>
+      <meta charset="UTF-8">
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+      <script src="../../js/overview.js"></script>
+      <body>
+        ${overview}
+      </body>
+      </html>`,
+      { encoding: "utf-8" }
+    );
   }
 }
 
@@ -366,76 +539,6 @@ export class ExamGrader {
 
 
 
-// export function renderOverview(exam: Exam) {
-//   mkdirSync("out/", {recursive: true});
-//   let out_filename = `out/overview.html`;
-
-//   let main_overview = `<div>
-//     <div>Mean: ${mean(exam.submissions.map(s => s.pointsEarned!))}</div>
-//     <div>Std Dev: ${standardDeviation(exam.submissions.map(s => s.pointsEarned!))}</div>
-//   </div>`
-
-//   let students_overview = exam.submissions.sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {
-//     let score = ex.pointsEarned ?? 0;
-//     return `<div>${renderPointsProgressBar(score, exam.pointsPossible)} <a href="students/${ex.student.uniqname}.html">${ex.student.uniqname}</a></div>`
-//   }).join("");
-
-//   let questions_overview = exam.questionBank.map(question => {
-//     let grader = exam.graderMap[question.unifiedIndex];
-
-//     let header: string;
-//     let question_overview: string;
-//     let avg: number | undefined;
-//     let count: number | undefined;
-//     if (!grader) {
-//       header = `<h4>${question.unifiedIndex}</h4>`;
-//       question_overview = "No grader for this question.";
-//     }
-//     else {
-//       let assignedQuestions = exam.submissions.map(
-//         s => s.assignedQuestions.find(aq => aq.unifiedIndex === question.unifiedIndex)! // ! is confirmed by filter below
-//       ).filter(aq => aq);
-//       count = assignedQuestions.length;
-
-//       avg = average(assignedQuestions.map(aq => aq.pointsEarned!));
-//       header = `<b>${question.unifiedIndex}</b> Details`;
-
-//       let submissions = assignedQuestions.map(aq => aq.submission);
-//       question_overview = `<div>
-//         ${grader?.renderOverview(question, submissions)}
-//       </div>`;
-//     }
-
-
-//     let overview_id = `question-overview-${question.sectionIndex}-${question.partIndex}`;
-//     return `<div class="examma-ray-question-overview">
-//       <div id="${overview_id}" class="card">
-//         <div class="card-header">
-//           ${renderNumBadge(count ?? "n/a")}
-//           ${renderPointsProgressBar(avg ?? 0, question.pointsPossible)}
-//           <a class="nav-link" data-toggle="collapse" data-target="#${overview_id}-details" role="button" aria-expanded="false" aria-controls="${overview_id}-details">${header}</a>
-//         </div>
-//         <div class="collapse" id="${overview_id}-details">
-//           <div class="card-body">
-//             <div><a href="questions/${question.unifiedIndex}.html">Question Analysis Page</a></div>
-//             ${question.html_description}
-//             ${question_overview}
-//           </div>
-//         </div>
-//       </div>
-//     </div>`;
-//   }).join("");
-
-//   let overview = `
-//     ${main_overview}
-//     <div class="examma-ray-students-overview">
-//       ${students_overview}
-//     <div>
-//     ${questions_overview}
-//   `;
-
-//   writeAGFile(out_filename, overview);
-// }
 
 
 

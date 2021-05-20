@@ -1,7 +1,7 @@
 import { GradingGroup, GradingAssignmentSpecification, GradingSubmission } from "./common";
-import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemGradingResult, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
+import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
-import { BLANK_SUBMISSION } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import indentString from "indent-string";
 import { Program, SimpleProgram, SourceFile } from "lobster-vis/dist/js/core/Program"
 import { SimpleExerciseLobsterOutlet } from "lobster-vis/dist/js/view/SimpleExerciseLobsterOutlet"
@@ -28,6 +28,7 @@ import { asMutable, assert } from "../util";
 import { Question } from "../exams";
 import { QuestionSpecification } from "../specification";
 import deepEqual from "deep-equal";
+import { SubmissionType } from "../response/responses";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and
@@ -36,9 +37,9 @@ import deepEqual from "deep-equal";
 // TODO: replace with dependence on question specification
 const CODE_LANGUAGE = "cpp";
 
-type CodeWritingGradingAssignment = GradingAssignmentSpecification<"code_editor", CodeWritingGradingResult>;
-type CodeWritingGradingGroup = GradingGroup<"code_editor", CodeWritingGradingResult>;
-type CodeWritingSubmission = GradingSubmission<"code_editor", CodeWritingGradingResult>;
+export type CodeWritingGradingAssignment = GradingAssignmentSpecification<ResponseKind, CodeWritingGradingResult>;
+export type CodeWritingGradingGroup = GradingGroup<ResponseKind, CodeWritingGradingResult>;
+export type CodeWritingSubmission = GradingSubmission<ResponseKind>;
 
 
 type SubmissionsFilterCriterion = "all" | "graded" | "ungraded";
@@ -186,10 +187,16 @@ export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
   rubric: readonly CodeWritingRubricItem[],
   testHarness: string,
+  extract_code?: (raw_submission: string) => string,
   preprocess?: (submission: string) => string,
   checkpoints: Checkpoint[],
   autograder: (ex: Exercise) => CodeWritingGradingResult,
   groupingFunctionName: string
+};
+
+export const DEFAULT_EXTRACT_CODE = (raw_submission: string) => {
+  assert(typeof raw_submission === "string");
+  return raw_submission;
 };
 
 class CodeWritingManualGraderApp {
@@ -206,6 +213,7 @@ class CodeWritingManualGraderApp {
 
   public lobster: SimpleExerciseLobsterOutlet;
 
+  private extract_code: (raw_submission: string) => string;
   private preprocess?: (submission: string) => string;
   private testHarness: string;
   private groupingFunctionName: string;
@@ -235,6 +243,7 @@ class CodeWritingManualGraderApp {
     this.rubric = spec.rubric;
     this.testHarness = spec.testHarness;
     this.autograder = spec.autograder;
+    this.extract_code = spec.extract_code ?? DEFAULT_EXTRACT_CODE;
     this.preprocess = spec.preprocess;
     this.groupingFunctionName = spec.groupingFunctionName;
 
@@ -312,6 +321,8 @@ class CodeWritingManualGraderApp {
       return;
     }
 
+    if (assn.groups[0].submissions)
+    
     this.setGradingAssignment(assn);
     $(".examma-ray-grading-assignment-name").html(file.name);
 
@@ -356,7 +367,7 @@ class CodeWritingManualGraderApp {
   private createGroupThumbnail(group: CodeWritingGradingGroup) {
     assert(group.submissions.length > 0);
     let firstSub = group.submissions[group.representative_index];
-    let code = firstSub.response === BLANK_SUBMISSION ? "" : firstSub.response;
+    let response = firstSub.response;
     let jq = $(`
       <div class="panel panel-default examma-ray-grading-group-thumbnail">
         <div class="panel-heading">
@@ -364,7 +375,7 @@ class CodeWritingManualGraderApp {
           ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points, group.grading_result.verified ? VERIFIED_ICON : "") : renderUngradedBadge(this.question.points)}
         </div>
         <div class="panel-body">
-          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
+          <pre><code>${highlightCode(this.extract_code(response), CODE_LANGUAGE)}</code></pre>
         </div>
       </div>
     `);
@@ -436,8 +447,9 @@ class CodeWritingManualGraderApp {
     this.updatedGradingResult();
   }
 
-  private applyHarness(rep: GradingSubmission<"code_editor", CodeWritingGradingResult>) {
-    let submittedCode = rep.response === BLANK_SUBMISSION ? "" : rep.response;
+  private applyHarness(rep: GradingSubmission<ResponseKind>) {
+    let response = rep.response;
+    let submittedCode = this.extract_code(response);
 
     if (this.preprocess) {
       submittedCode = this.preprocess(submittedCode);
@@ -456,7 +468,7 @@ class CodeWritingManualGraderApp {
   }
 
   private createMemberThumbnail(sub: CodeWritingSubmission) {
-    let code = sub.response === BLANK_SUBMISSION ? "" : sub.response;
+    let response = sub.response;
     let jq = $(`
       <div class="panel panel-default examma-ray-group-member-thumbnail">
         <div class="panel-heading">
@@ -464,14 +476,16 @@ class CodeWritingManualGraderApp {
           ${sub.student.name}
         </div>
         <div class="panel-body">
-          <pre><code>${highlightCode(code, CODE_LANGUAGE)}</code></pre>
+          <pre><code>${highlightCode(this.extract_code(response), CODE_LANGUAGE)}</code></pre>
         </div>
       </div>
     `);
     let closeButton = jq.find(".examma-ray-group-member-remove-button");
     closeButton.on("click", () => {
-      this.removeFromCurrentGroup(sub);
-      jq.fadeOut(() => jq.remove());
+      if (this.currentGroup && this.currentGroup.submissions.length > 1) {
+        this.removeFromCurrentGroup(sub);
+        jq.fadeOut(() => jq.remove());
+      }
     })
     return jq;
   }
@@ -500,6 +514,7 @@ class CodeWritingManualGraderApp {
     equivalenceGroups.forEach(g => delete (<any>g).repProgram);
 
     let newAssn : CodeWritingGradingAssignment = {
+      name: this.assn!.name,
       exam_id: this.assn!.exam_id,
       question_id: this.assn!.question_id,
       groups: equivalenceGroups
@@ -554,8 +569,8 @@ class CodeWritingManualGraderApp {
             }
 
             // Only group blank submissions with other blank submissions
-            if ( (group.submissions[group.representative_index].response === BLANK_SUBMISSION )
-              !== (sub.response === BLANK_SUBMISSION)) {
+            if ( (group.submissions[group.representative_index].response === "" )
+              !== (sub.response === "")) {
               return false;
             }
             
@@ -595,7 +610,7 @@ class CodeWritingManualGraderApp {
   }
 
   private removeFromCurrentGroup(subToRemove: CodeWritingSubmission) {
-    if (!this.assn || !this.currentGroup) {
+    if (!this.assn || !this.currentGroup || this.currentGroup.submissions.length <= 1) {
       return;
     }
 
@@ -766,7 +781,7 @@ function areEquivalentGradingResults(gr1: CodeWritingGradingResult | undefined, 
 
 function createEmptyGradingResult(group: CodeWritingGradingGroup) : CodeWritingGradingResult {
   return {
-    wasBlankSubmission: group.submissions[group.representative_index].response === BLANK_SUBMISSION,
+    wasBlankSubmission: group.submissions[group.representative_index].response === "",
     itemResults: {},
     verified: false
   }

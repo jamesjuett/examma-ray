@@ -27,18 +27,36 @@ export namespace ExamUtils {
     );
   }
 
-  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string) {
+  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string, trustedCacheDirectory?: string) {
+    if (trustedCacheDirectory) {
+      mkdirSync(trustedCacheDirectory, {recursive: true});
+    }
+    
     let trustedAnswers : TrustedExamSubmission[] = [];
     readdirSync(submittedDirectory).forEach(
       filename => {
         try {
-          trustedAnswers.push(loadTrustedSubmission(
-            manifestDirectory,
-            path.join(submittedDirectory, filename)
-          ));
+          if (trustedCacheDirectory && existsSync(path.join(trustedCacheDirectory, filename))) {
+            trustedAnswers.push(<TrustedExamSubmission>loadExamAnswers(
+              path.join(trustedCacheDirectory, filename)
+            ));
+          }
+          else {
+            let trustedSub = loadTrustedSubmission(
+              manifestDirectory,
+              path.join(submittedDirectory, filename)
+            );
+            trustedAnswers.push(trustedSub);
+            if (trustedCacheDirectory) {
+              writeFileSync(
+                path.join(trustedCacheDirectory, filename),
+                JSON.stringify(trustedSub, null, 2), {encoding: "utf-8"}
+              );
+            }
+          }
         }
         catch(e) {
-          // do nothing
+          console.log("WARNING - unable to open submission file: " + filename);
         }
       }
     );
@@ -111,9 +129,13 @@ export namespace ExamUtils {
 
   export function readGradingAssignments(exam_id: string, question_id: string) {
     let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*.json`);
-    return files.map(
-      filename => <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"))
-    );
+    return files.map(filename => {
+      let assn = <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"));
+      if (!assn.name) {
+        assn.name = path.basename(filename).replace(".json", "");
+      }
+      return assn;
+    });
   }
 
   export function clearGradingAssignments(exam_id: string, question_id: string) {
@@ -134,32 +156,11 @@ export namespace ExamUtils {
       mkdirSync(dir, { recursive: true });
       writeFileSync(
         `${dir}/${name}.json`,
-        JSON.stringify(assn, null, 2),
+        JSON.stringify(Object.assign({}, assn, {name: name}), null, 2),
         { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
       )
     });
   }
-
-  // export function writeGradingAssignments(assns: GradingAssignmentSpecification[]) {
-
-  //   const dir = `data/${exam_id}/manual_grading/${question_id}`;
-
-  //   // Create output directories
-  //   // (DO NOT CLEAR THEM OUT - we don't want to accidentally overwrite previous grading results)
-  //   mkdirSync(dir, { recursive: true });
-
-  //   // Is it safe to write grading assignments, or would we overwrite something?
-  //   let wouldOverwrite = assns.some(assn => existsSync(`${dir}/${assn.staff_uniqname}.json`));
-
-  //   if (!wouldOverwrite) {
-  //     assns.forEach(assn => );
-  //   }
-  //   else {
-  //     console.log(`Note: manual grading files for exam ${exam_id} and question ${question_id} already exist. Not generating new ones.`);
-  //   }
-
-  // }
-
 }
 
 function getAssnIds(assns: GradingAssignmentSpecification[]) {
@@ -172,10 +173,10 @@ function getAssnIds(assns: GradingAssignmentSpecification[]) {
 }
 
 export function writeFrontendJS(filename: string) {
-  // const jsDir = `out/js`;
-  // mkdirSync(jsDir, { recursive: true });
-  // copyFileSync(
-  //   require.resolve(`examma-ray/dist/frontend/${filename}`),
-  //   `${jsDir}/${filename}`
-  // );
+  const jsDir = `out/js`;
+  mkdirSync(jsDir, { recursive: true });
+  copyFileSync(
+    require.resolve(`examma-ray/dist/frontend/${filename}`),
+    `${jsDir}/${filename}`
+  );
 }

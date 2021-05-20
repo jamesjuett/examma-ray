@@ -12,7 +12,6 @@ import { assert } from "../util";
 export type StandardSASGradingResult = ImmutableGradingResult & {
   readonly itemResults: readonly {
     applied: boolean,
-    pointsEarned: number,
     submittedLines: number[]
   }[]
 };
@@ -27,8 +26,7 @@ type SASRubricItem = {
 
 function gradeSASRubricItem(rubricItem: SASRubricItem, submission: Exclude<SASSubmission, typeof BLANK_SUBMISSION>) {
   return {
-    applied: true,
-    pointsEarned: rubricItem.points,
+    applied: rubricItem.required.every(line => submission.indexOf(line) !== -1) && !rubricItem.prohibited.some(line => submission.indexOf(line) !== -1),
     submittedLines: rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1)
   };
 }
@@ -58,7 +56,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     let itemResults = this.rubric.map(rubricItem => gradeSASRubricItem(rubricItem, submission));
     return {
       wasBlankSubmission: false,
-      pointsEarned: itemResults.reduce((p, r) => p + (r.applied ? r.pointsEarned : 0), 0),
+      pointsEarned: itemResults.reduce((p, r, i) => p + (r.applied ? this.rubric[i].points : 0), 0),
       itemResults: itemResults
     }
   }
@@ -91,7 +89,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
       ${itemResults.map((itemResult, i) => {
         let rubricItem = this.rubric[i];
         let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
-        let riScore = itemResult.pointsEarned;
+        let riScore = itemResult.applied ? rubricItem.points : 0;
 
         // let details: string;
         // if (missing.length === 0 && extra.length === 0) {

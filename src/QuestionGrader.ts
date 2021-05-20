@@ -30,7 +30,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param aq The assigned question to grade
    * @returns The result of 
    */
-  grade(aq: AssignedQuestion<RK>): GR;
+  grade(aq: AssignedQuestion<RK>): GR | undefined;
 
   /**
    * Computes the number of points earned for the given graded question.
