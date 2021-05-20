@@ -347,7 +347,7 @@ export class ExamGrader {
   }
 
   public writeScoresCsv() {
-    mkdirSync("out/${this.exam.id}/graded/", {recursive: true});
+    mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let data = this.submittedExams.slice().sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map(ex => {
         let student_data : {[index:string]: any} = {};
