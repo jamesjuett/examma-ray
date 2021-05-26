@@ -7,6 +7,8 @@ import { assert, assertFalse } from './util';
 import * as Handlebars from "handlebars";
 
 const converter = new showdown.Converter({
+  tables: true,
+  emoji: true,
   extensions: [
     showdownKatex(),
     showdownHighlight()
