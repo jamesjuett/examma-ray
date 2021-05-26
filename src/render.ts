@@ -11,7 +11,15 @@ const converter = new showdown.Converter({
   emoji: true,
   extensions: [
     showdownKatex(),
-    showdownHighlight()
+    showdownHighlight(),
+    {
+      // https://github.com/showdownjs/showdown/issues/310#issuecomment-539821063
+      type: 'output',
+      filter: (html) => {
+        const regex = /<table>/g;
+        return html.replace(regex, '<table class="table table-bordered w-auto">');
+      },
+    }
   ]
 });
 
