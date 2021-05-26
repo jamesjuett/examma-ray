@@ -31,6 +31,8 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     return responseKind === "multiple_choice";
   };
 
+  public prepare() { }
+
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
     let orig_submission = aq.submission;

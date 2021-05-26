@@ -38,6 +38,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly response : ResponseSpecification<QT>;
   public readonly skins: SkinGenerator;
 
+  private readonly descriptionCache: {
+    [index:string] : string | undefined
+  } = {}
+
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
     this.question_id = spec.id;
@@ -53,8 +57,8 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, uuid, skin)}</div>`;
   }
 
-  public renderDescription(skin?: QuestionSkin) {
-    return mk2html(this.mk_description, skin);
+  public renderDescription(skin: QuestionSkin) {
+    return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
   }
 
   public isKind<RK extends QT>(kind: RK) : this is Question<RK> {
@@ -218,7 +222,7 @@ export function isGraded<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq
 
 
 
-const DEFAULT_REFERENCE_WIDTH = 20;
+const DEFAULT_REFERENCE_WIDTH = 40;
 
 export class Section {
 
@@ -503,7 +507,7 @@ export class AssignedExam {
           ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
-          ${this.renderGradingSummary()}
+          ${mode === RenderMode.GRADED ? this.renderGradingSummary() : ""}
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
           <div class="container examma-ray-bottom-message">

@@ -42,6 +42,8 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     return responseKind === "select_a_statement";
   };
 
+  public prepare() { }
+
   public grade(aq: AssignedQuestion<"select_a_statement">) : StandardSASGradingResult {
     let orig_submission = aq.submission;
     if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {

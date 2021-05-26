@@ -60,6 +60,8 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     return responseKind === "fitb";
   };
 
+  public prepare() { }
+
   public grade(aq: AssignedQuestion<"fitb">) : FITBRegexGradingResult {
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {

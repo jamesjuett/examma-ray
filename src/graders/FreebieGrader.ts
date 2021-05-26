@@ -26,6 +26,8 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
     return true;
   };
 
+  public prepare() { }
+
   public grade(aq: AssignedQuestion) : FreebieGradingResult {
     return {
       wasBlankSubmission: aq.submission === BLANK_SUBMISSION,

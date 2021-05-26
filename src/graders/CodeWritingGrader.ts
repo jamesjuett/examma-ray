@@ -6,8 +6,9 @@ import { CodeWritingGradingAssignment } from "../grading/code-grader";
 import { renderGradingProgressBar, renderNumBadge, renderShortPointsWorthBadge, renderWideNumBadge } from "../ui_components";
 import { sum } from "simple-statistics";
 import { applySkin, highlightCode, mk2html } from "../render";
-import { assert, assertFalse } from "../util";
+import { asMutable, assert, assertFalse } from "../util";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
+import { QuestionSpecification } from "../specification";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -40,24 +41,29 @@ export type CodeWritingGradingResult = GradingResult & {
 export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
-  public readonly manualGrading: readonly CodeWritingGradingAssignment[];
-  private readonly manualGradingMap: {[index: string]: CodeWritingGradingResult | undefined} = {};
+  private manualGrading?: readonly CodeWritingGradingAssignment[];
+  private manualGradingMap?: {[index: string]: CodeWritingGradingResult | undefined};
 
-  public constructor(rubric: readonly CodeWritingRubricItem[], manualGrading: readonly CodeWritingGradingAssignment[]) {
+  public constructor(rubric: readonly CodeWritingRubricItem[]) {
     this.rubric = rubric;
-    this.manualGrading = manualGrading;
-
-    manualGrading.forEach(
-      assn => assn.groups.forEach(
-        group => group.submissions.forEach(
-          sub => this.manualGradingMap[sub.question_uuid] = group.grading_result
-        )
-      )
-    );
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return true;
+  }
+
+  public prepare(exam_id: string, question_id: string) {
+
+    this.manualGrading = <CodeWritingGradingAssignment[]>ExamUtils.readGradingAssignments(exam_id, question_id); 
+
+    this.manualGradingMap = {};
+    this.manualGrading.forEach(
+      assn => assn.groups.forEach(
+        group => group.submissions.forEach(
+          sub => this.manualGradingMap![sub.question_uuid] = group.grading_result
+        )
+      )
+    );
   }
   
   // public prepareManualGrading(aqs: readonly AssignedQuestion[]) {
@@ -69,6 +75,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
   // }
 
   public grade(aq: AssignedQuestion) : CodeWritingGradingResult | undefined {
+    assert(this.manualGradingMap, "Grader prepare() function must be called before attempting grading.");
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
@@ -169,7 +176,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
   }
 
   public renderOverview() {
-
+    assert(this.manualGrading, "Grader prepare() function must be called before attempting grading.");
     return `
       ${this.manualGrading.map(assn => {
         let name = assn.name ?? "unnamed_grading_assignemnt";

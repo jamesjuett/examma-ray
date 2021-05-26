@@ -31,6 +31,8 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     return responseKind === "multiple_choice";
   };
 
+  public prepare() { }
+
   public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;
     let submission = aq.submission;

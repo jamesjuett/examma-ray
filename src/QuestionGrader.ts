@@ -22,7 +22,14 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    */
   isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T>;
 
-  // prepareManualGrading?: (aqs: readonly AssignedQuestion<RK>[]) => void;
+  /**
+   * Gives the grader a chance to do any one-time preparation depending on
+   * the exam and question it is being used for. For example, a manually graded
+   * question may prepare by loading its grading result data from files.
+   * @param exam_id 
+   * @param question_id 
+   */
+  prepare(exam_id: string, question_id: string): void;
 
   /**
    * Grades the given assigned question and returns the grading result. This function

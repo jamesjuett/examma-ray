@@ -208,6 +208,9 @@ export class ExamGrader {
       (<readonly GraderMap[]>graderMap).forEach(gm => this.registerGraders(gm));
     }
     else {
+      for(let question_id in <GraderMap>graderMap) {
+        (<GraderMap>graderMap)[question_id]!.prepare(this.exam.exam_id, question_id);
+      }
       Object.assign(this.graderMap, <GraderMap>graderMap);
     }
   }
