@@ -107,13 +107,15 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
 
 
 export type SkinGenerator = {
-  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[]
+  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[],
+  getById: (id: string) => QuestionSkin | undefined
 };
 
 export const DEFAULT_SKIN_GENERATOR : SkinGenerator = {
   generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     return [DEFAULT_SKIN];
-  }
+  },
+  getById: (id: string) => DEFAULT_SKIN
 }
 
 export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {

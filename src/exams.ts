@@ -40,7 +40,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
-  } = {}
+  } = {};
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
@@ -243,6 +243,14 @@ export class Section {
    */
   public readonly reference_width: number;
 
+  private readonly descriptionCache: {
+    [index:string] : string | undefined
+  } = {};
+
+  private readonly referenceCache: {
+    [index:string] : string | undefined
+  } = {};
+
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
     this.section_id = spec.id;
@@ -260,12 +268,12 @@ export class Section {
     );
   }
 
-  public renderDescription(skin?: QuestionSkin) {
-    return mk2html(this.mk_description, skin);
+  public renderDescription(skin: QuestionSkin) {
+    return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
   }
 
-  public renderReference(skin?: QuestionSkin) {
-    return this.mk_reference && mk2html(this.mk_reference, skin);
+  public renderReference(skin: QuestionSkin) {
+    return this.mk_reference && (this.referenceCache[skin.id] ??= mk2html(this.mk_reference, skin));
   }
 
 }
@@ -400,7 +408,7 @@ export class AssignedExam {
   }
 
   public gradeAll(graders: GraderMap) {
-    console.log(`Grading exam for: ${this.student.uniqname}...`);
+    // console.log(`Grading exam for: ${this.student.uniqname}...`);
     this.assignedSections.forEach(s => s.gradeAllQuestions(this, graders));
     asMutable(this).pointsEarned = <number>this.assignedSections.reduce((prev, s) => prev + s.pointsEarned!, 0);
     asMutable(this).isFullyGraded = this.assignedSections.every(s => s.isFullyGraded);
@@ -555,7 +563,7 @@ export class AssignedExam {
         display_index: s.displayIndex,
         questions: s.assignedQuestions.map(q => ({
           question_id: q.question.question_id,
-          skin_id: q.skin.id,
+          skin_id: q.skin.non_composite_id ?? q.skin.id,
           uuid: q.uuid,
           display_index: q.displayIndex,
           kind: q.question.kind,

@@ -24,6 +24,7 @@ const converter = new showdown.Converter({
 });
 
 export function mk2html(mk: string, skin?: QuestionSkin) {
+  console.log("rendering mk"); // useful for debugging repeated (i.e. non-cached) mk renders
   if (skin) {
     mk = applySkin(mk, skin);
   }

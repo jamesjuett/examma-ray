@@ -84,7 +84,7 @@ import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { asMutable, assert, assertFalse } from './util';
 import { unparse } from 'papaparse';
 import { ExamUtils, writeFrontendJS } from './ExamUtils';
-import { createCompositeSkin } from './skins';
+import { createCompositeSkin, DEFAULT_SKIN } from './skins';
 import del from 'del';
 import { average, chunk, mean, sampleCovariance, standardDeviation, sum } from 'simple-statistics';
 import { GradingAssignmentSpecification } from "./grading/common";
@@ -176,7 +176,7 @@ export class ExamGrader {
       student,
       submission.sections.flatMap((s, s_i) => {
         let section = this.sectionsMap[s.section_id] ?? assertFalse();
-        let sectionSkins = section.skins.generate(this.exam, student, createSectionSkinRandomizer(student, this.exam, section));
+        let sectionSkins = [section.skins.getById(s.skin_id) ?? DEFAULT_SKIN];
         return sectionSkins.map(sectionSkin => new AssignedSection(
           s.uuid,
           section,
@@ -184,7 +184,7 @@ export class ExamGrader {
           sectionSkin,
           s.questions.flatMap((q, q_i) => {
             let question = this.questionsMap[q.question_id] ?? assertFalse();
-            let questionSkins = question.skins.generate(this.exam, student, createQuestionSkinRandomizer(student, this.exam, question))
+            let questionSkins = [question.skins.getById(q.skin_id) ?? DEFAULT_SKIN]
               .map(qSkin => createCompositeSkin(sectionSkin, qSkin));
             return questionSkins.map(questionSkin => new AssignedQuestion(
               q.uuid,
@@ -254,11 +254,11 @@ export class ExamGrader {
 
     // Find covariance matrix for all questions
 
-    console.log("computing covariance matrix");
+    // console.log("computing covariance matrix");
     this.allQuestions.forEach(q1 => {
       this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
       this.allQuestions.forEach(q2 => {
-        console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+        // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
         // Only calculate covariance based on cases where the questions appeared together and are graded
         let containsBoth = this.submittedExams.filter(
           ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
