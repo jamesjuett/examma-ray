@@ -515,7 +515,7 @@ export class AssignedExam {
           ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
-          ${mode === RenderMode.GRADED ? this.renderGradingSummary() : ""}
+          ${mode === RenderMode.GRADED && false ? this.renderGradingSummary() : ""}
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
           <div class="container examma-ray-bottom-message">

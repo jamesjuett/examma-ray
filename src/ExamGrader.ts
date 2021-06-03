@@ -255,43 +255,43 @@ export class ExamGrader {
     // Find covariance matrix for all questions
 
     // console.log("computing covariance matrix");
-    this.allQuestions.forEach(q1 => {
-      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
-      this.allQuestions.forEach(q2 => {
-        // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
-        // Only calculate covariance based on cases where the questions appeared together and are graded
-        let containsBoth = this.submittedExams.filter(
-          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
-        );
+    // this.allQuestions.forEach(q1 => {
+    //   this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+    //   this.allQuestions.forEach(q2 => {
+    //     // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+    //     // Only calculate covariance based on cases where the questions appeared together and are graded
+    //     let containsBoth = this.submittedExams.filter(
+    //       ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+    //     );
 
-        let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
-          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarned!),
-          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarned!)
-        );
+    //     let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
+    //       containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarned!),
+    //       containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarned!)
+    //     );
 
-        if (isNaN(cov)) {
+    //     if (isNaN(cov)) {
           
-        assertFalse(q1.question_id + " " + q2.question_id);
+    //     assertFalse(q1.question_id + " " + q2.question_id);
       
-        }
+    //     }
 
-        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
-      });
-    });
+    //     this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+    //   });
+    // });
 
-    // Set hypothetical mean/stddev curving parameters for each exam
-    this.submittedExams.forEach(ex => {
-      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+    // // Set hypothetical mean/stddev curving parameters for each exam
+    // this.submittedExams.forEach(ex => {
+    //   let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
       
-      let indExamVar = 0;
-      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
-      assignedQuestionIds.forEach(q1Id =>
-        assignedQuestionIds.forEach(q2Id =>
-          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
-        )
-      );
-      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
-    });
+    //   let indExamVar = 0;
+    //   let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+    //   assignedQuestionIds.forEach(q1Id =>
+    //     assignedQuestionIds.forEach(q2Id =>
+    //       indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+    //     )
+    //   );
+    //   ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    // });
 
   }
 
@@ -451,8 +451,8 @@ export class ExamGrader {
 
     let main_overview = `<div>
       Out of ${fullyGradedExams.length} fully graded exams:
-      <div>Mean: ${mean(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
-      <div>Std Dev: ${standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!))}</div>
+      <div>Mean: ${fullyGradedExams.length > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : ""}</div>
+      <div>Std Dev: ${fullyGradedExams.length > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : ""}</div>
     </div>`
 
     let students_overview = this.submittedExams.slice().sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {

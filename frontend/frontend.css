@@ -184,6 +184,11 @@ code {
   font-size: 90%;
 }
 
+.examma-ray-question-response-code_editor pre,
+.examma-ray-question-response-code_editor .CodeMirror {
+  font-size: 87.5%;
+}
+
 .examma-ray-question-regrade {
   font-size: 90%;
 }

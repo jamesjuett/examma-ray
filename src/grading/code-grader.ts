@@ -767,6 +767,15 @@ function getFunc(program: Program, name: string | string[]) {
     name = [name];
   }
   for(let i = 0; i < name.length; ++i) {
+    if (name[0].indexOf("::[[constructor]]") !== -1) {
+      let className = name[0].slice(0, name[0].indexOf("::[[constructor]]"));
+      let ctor = program.linkedClassDefinitions[className]?.constructors[0].definition;
+      if (ctor) {
+        return ctor;
+      }
+      continue;
+    }
+
     let def = program.linkedFunctionDefinitions[name[i]]?.definitions[0];
     if (def) {
       return def;
