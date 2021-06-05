@@ -19,7 +19,7 @@ export type FITBRegexGradingResult = ImmutableGradingResult & {
 };
 
 export type FITBRegexMatcher = {
-  pattern: RegExp | readonly string[];
+  pattern: RegExp | readonly string[] | ((s:string)=>boolean);
   points: number;
   explanation: string;
 };
@@ -241,6 +241,9 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
 }
 function FITBRubricItemMatch(rubricItem: FITBRegexRubricItem, submission: string) {
   return rubricItem.patterns.find(p => {
+    if (typeof p.pattern === "function") {
+      return p.pattern(submission);
+    }
     if (p.pattern instanceof RegExp) {
       return p.pattern.test(submission);
     }
