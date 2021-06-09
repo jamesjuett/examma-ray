@@ -6,9 +6,6 @@ import 'katex/dist/katex.min.css';
 
 import "./frontend.css";
 
-// hljs.registerLanguage('cpp', cpp);
-// hljs.highlightAll();
-
 
 $(function() {
   $('button.examma-ray-blank-saver').on("click", function() {
