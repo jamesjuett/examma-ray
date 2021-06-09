@@ -133,7 +133,6 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     </table>`;
   }
   // TODO ^^^ make this handle groups as well
-  // TODO ^^^ take out hardcoded cpp
   public renderStats() {
     return "Stats are not implemented for this question/grader type yet.";
   }
