@@ -1,4 +1,4 @@
-import { applySkin, mk2html } from "../render";
+import { applySkin, highlightCode, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
 import { AssignedQuestion, GradedQuestion, Question } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
@@ -125,9 +125,9 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
             </td>
             <td>${included.length === 0
               ? `<pre style="font-style: italic">${rubricItem.required.length === 0 ? CHECK_ICON : RED_X_ICON} (no selection)</pre>`
-              : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code class="language-cpp">${applySkin((<SASItem>question.response.choices[line]).text, skin)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
+              : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${highlightCode(applySkin((<SASItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
             </td>
-            <td>${rubricItem.required.map(line => `<pre><code class="language-cpp">${applySkin((<SASItem>question.response.choices[line]).text, skin)}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
+            <td>${rubricItem.required.map(line => `<pre><code>${highlightCode(applySkin((<SASItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
           </tr>`;
     }).join("")}
     </table>`;
