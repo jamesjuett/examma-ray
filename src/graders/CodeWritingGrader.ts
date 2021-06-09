@@ -9,6 +9,7 @@ import { applySkin, highlightCode, mk2html } from "../render";
 import { asMutable, assert, assertFalse } from "../util";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { QuestionSpecification } from "../specification";
+import { SubmissionType } from "../response/responses";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -41,11 +42,13 @@ export type CodeWritingGradingResult = GradingResult & {
 export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
+  public readonly sampleSolution?: Exclude<SubmissionType<ResponseKind>, typeof BLANK_SUBMISSION>;
   private manualGrading?: readonly CodeWritingGradingAssignment[];
   private manualGradingMap?: {[index: string]: CodeWritingGradingResult | undefined};
 
-  public constructor(rubric: readonly CodeWritingRubricItem[]) {
+  public constructor(rubric: readonly CodeWritingRubricItem[], sampleSolution?: Exclude<SubmissionType<ResponseKind>, typeof BLANK_SUBMISSION>) {
     this.rubric = rubric;
+    this.sampleSolution = sampleSolution;
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
@@ -101,11 +104,12 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
 
     let skin = aq.skin;
     let question = aq.question;
-    let studentSubmission = "";
+    let studentSubmission_html = "";
+    let sampleSolution_html = "";
     let res = aq.gradingResult;
     if (question.isKind("code_editor")) {
       let response = question.response;
-      studentSubmission = `
+      studentSubmission_html = `
         <div class="examma-ray-code-editor-header">
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
@@ -115,14 +119,31 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
         <div class="examma-ray-code-editor-footer">
           ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
         </div>
-      `
+      `;
+      // TODO: eliminate code duplication
+      if (this.sampleSolution) {
+        sampleSolution_html = `
+          <div class="examma-ray-code-editor-header">
+            ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+          </div>
+          <div class="examma-ray-code-editor-graded-submission">
+            ${`<pre><code>${highlightCode(""+applySkin(this.sampleSolution as string, skin), "cpp")}</code></pre>`}
+          </div>
+          <div class="examma-ray-code-editor-footer">
+            ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+          </div>
+        `;
+      }
     }
     else if (question.isKind("fitb")) {
       let content = question.response.content;
       let submission = <FITBSubmission>aq.submission;
       assert(submission !== BLANK_SUBMISSION);
 
-      studentSubmission = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
+      studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
+      if (this.sampleSolution) {
+        sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>this.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
+      }
       
     }
     else {
@@ -135,6 +156,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
         <tr style="text-align: center;">
           <th>Rubric</th>
           <th>Your Submission</th>
+          ${this.sampleSolution ? `<th>Sample Solution</th>` : ""}
         </tr>
         <tr>
           <td>
@@ -163,8 +185,12 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
             </ul>
           </td>
           <td style="padding: 1em;">
-            ${studentSubmission}
+            ${studentSubmission_html}
           </td>
+          ${sampleSolution_html ? `
+          <td style="padding: 1em;">
+            ${sampleSolution_html}
+          </td>` : ""}
         </tr>
       </table>
     `;

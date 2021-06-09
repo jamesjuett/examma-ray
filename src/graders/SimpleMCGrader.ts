@@ -116,8 +116,3 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     `;
   }
 }
-export function renderPointAdjustmentBadge(pointAdjustment: number) {
-  return `<span class="badge ${pointAdjustment === 0 ? "badge-secondary" :
-      pointAdjustment < 0 ? "badge-danger" :
-        "badge-success"} examma-ray-point-adjustment-badge">${pointAdjustment > 0 ? "+" + pointAdjustment : pointAdjustment === 0 ? "n/a" : pointAdjustment}</span>`;
-}

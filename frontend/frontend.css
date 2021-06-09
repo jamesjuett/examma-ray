@@ -255,7 +255,7 @@ code {
 }
 
 .examma-ray-summation-grader .examma-ray-point-adjustment-badge {
-  width: 3em;
+  min-width: 3em;
   margin-left: 0.5em;
   margin-right: 0.5em;
   vertical-align: text-top;
@@ -458,6 +458,8 @@ code {
 }
 
 .examma-ray-manual-graded-rubric {
+  position: sticky;
+  top: 0;
   max-height: 65vh;
   min-width: 200px;
   max-width: 300px;

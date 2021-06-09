@@ -1,16 +1,17 @@
 import { mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion, Question, wereGradedBy } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
-import { renderPointAdjustmentBadge } from "./SimpleMCGrader";
 import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
 import { QuestionSkin } from "../skins";
 import { assert } from "../util";
+import { renderNumBadge, renderPercentChosenProgressBar } from "../ui_components";
+import { RED_X_ICON } from "../icons";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {
   readonly selections: readonly {
-    optionIndex: number,
+    selected: boolean,
     pointsEarned: number
   }[]
 };
@@ -21,10 +22,12 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
 
   /**
    *
-   * @param pointValues For each answer option, points to add (or subtract if negative) if that option was selected
+   * @param pointValues For each answer option, define whether the grader is looking
+   * for the option to be selected or not (true/false) and the number of points to add 
+   * (or subtract if negative) in that case
    */
   public constructor(
-    public readonly pointValues: readonly number[]
+    public readonly pointValues: readonly {selected: boolean, points: number}[]
   ) { }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
@@ -35,42 +38,41 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
+    assert(this.pointValues.length === question.response.choices.length, "Summation MC grader submissions must have the same number of response choices as the grader configuration.")
     let orig_submission = aq.submission;
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
-      return {
-        wasBlankSubmission: true,
-        pointsEarned: 0,
-        selections: []
-      }
+    if (orig_submission === BLANK_SUBMISSION) {
+      orig_submission = [];
     }
-
+    
+    
     let submission = orig_submission;
-    let selections = submission.map(selection => ({
-      optionIndex: selection,
-      pointsEarned: this.pointValues[selection]
-    }));
+    // let selections = submission.map(selection => ({
+    //   optionIndex: selection,
+    //   pointsEarned: this.pointValues[selection]
+    // }));
+    let selections = this.pointValues.map((pv,i) => {
+      let isSelected = submission.indexOf(i) !== -1;
+      return {
+        selected: isSelected,
+        pointsEarned: isSelected === pv.selected ? pv.points : 0
+      };
+    });
 
     return {
-      wasBlankSubmission: false,
+      wasBlankSubmission: submission.length === 0,
       pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsEarned, 0))),
       selections: selections
-    }
+    };
   }
 
   public pointsEarned(gr: SummationMCGradingResult) {
     return gr.pointsEarned;
   }
 
-  public renderReport(aq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {
-    let question = aq.question;
-    let skin = aq.skin;
-    let orig_submission = aq.submission;
-    let gr = aq.gradingResult;
-    if (gr.wasBlankSubmission) {
-      return "You did not select an answer for this question.";
-    }
-
-    assert(orig_submission !== BLANK_SUBMISSION);
+  public renderReport(gq: GradedQuestion<"multiple_choice", SummationMCGradingResult>) {
+    let question = gq.question;
+    let skin = gq.skin;
+    let gr = gq.gradingResult;
     
     let selections = gr.selections;
     let choices = question.response.choices;
@@ -78,10 +80,9 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
 
     return `
       <form class="examma-ray-summation-grader">
-      ${question.response.choices.map((item, i) => {
-        let chosen = selections.map(s => s.optionIndex).indexOf(i) !== -1;
+      ${choices.map((item, i) => {
         return `
-          <div><span ${!chosen ? 'style="visibility: hidden"' : ""}>${renderPointAdjustmentBadge(this.pointValues[i])}</span><input type="checkbox" ${chosen ? "checked" : ""} style="pointer-events: none;" />
+          <div><span>${renderPointAdjustmentBadge(gr.selections[i].pointsEarned)}</span><input type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
           <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>
         `;
       }).join("")}
@@ -93,7 +94,21 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview() {
-    return "Overview is not implemented for this question/grader type yet.";
+  
+  public renderOverview(aqs: readonly GradedQuestion<"multiple_choice">[]) : string {
+    let question = aqs[0].question;
+    assert(wereGradedBy(aqs, this));
+    let results = aqs.map(aq => aq.gradingResult);
+
+    let hist: number[] = this.pointValues.map((pv, i) => results.filter(r => r.selections[i].selected).length);
+
+    return hist.map((count, i) =>
+      `<div class="examma-ray-mc-option">${renderPercentChosenProgressBar(count, aqs.length)} ${renderPointAdjustmentBadge(this.pointValues[i].points)} (if ${this.pointValues[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}</div>`).join("");
   }
+}
+
+function renderPointAdjustmentBadge(pointAdjustment: number) {
+  return `<span class="badge ${pointAdjustment === 0 ? "badge-secondary" :
+      pointAdjustment < 0 ? "badge-danger" :
+        "badge-success"} examma-ray-point-adjustment-badge">${pointAdjustment > 0 ? "+" + pointAdjustment : pointAdjustment === 0 ? "n/a" : pointAdjustment}</span>`;
 }

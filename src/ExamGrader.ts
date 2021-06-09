@@ -83,7 +83,7 @@ import { QuestionGrader } from './QuestionGrader';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { asMutable, assert, assertFalse } from './util';
 import { unparse } from 'papaparse';
-import { ExamUtils, writeFrontendJS } from './ExamUtils';
+import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin, DEFAULT_SKIN } from './skins';
 import del from 'del';
 import { average, chunk, mean, sampleCovariance, standardDeviation, sum } from 'simple-statistics';
@@ -93,6 +93,22 @@ import { renderGradingProgressBar, renderNumBadge, renderPointsProgressBar, rend
 import { v4 } from 'uuid';
 
 
+
+export type ExamGraderOptions = {
+  frontend_js_path: string,
+  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  uuidv5_namespace?: string,
+};
+
+const DEFAULT_OPTIONS = {
+  frontend_js_path: "../../js/frontend.js",
+  student_ids: "uniqname",
+};
+
+function verifyOptions(options: Partial<ExamGraderOptions>) {
+  assert(options.student_ids !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
+  assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+}
 
 export class ExamGrader {
 
@@ -121,11 +137,13 @@ export class ExamGrader {
   public readonly graderMap: GraderMap = {};
   public readonly exceptionMap: ExceptionMap = {};
 
-  private frontend_js_path: string;
+  private options: ExamGraderOptions;
 
-  public constructor(exam: Exam, frontend_js_path: string, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
+  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
-    this.frontend_js_path = frontend_js_path;
+    verifyOptions(options);
+    this.options = Object.assign(DEFAULT_OPTIONS, options);
+
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
@@ -248,50 +266,50 @@ export class ExamGrader {
       let assignedQuestions = this.getAssignedQuestions(question.question_id);
       let gradedQuestions = assignedQuestions.filter(isGraded);
       if (gradedQuestions.length > 0) {
-        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarned));
+        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarnedWithoutExceptions));
       }
     });
 
     // Find covariance matrix for all questions
 
-    // console.log("computing covariance matrix");
-    // this.allQuestions.forEach(q1 => {
-    //   this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
-    //   this.allQuestions.forEach(q2 => {
-    //     // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
-    //     // Only calculate covariance based on cases where the questions appeared together and are graded
-    //     let containsBoth = this.submittedExams.filter(
-    //       ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
-    //     );
+    console.log("computing covariance matrix");
+    this.allQuestions.forEach(q1 => {
+      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+      this.allQuestions.forEach(q2 => {
+        // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+        // Only calculate covariance based on cases where the questions appeared together and are graded
+        let containsBoth = this.submittedExams.filter(
+          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+        );
 
-    //     let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
-    //       containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarned!),
-    //       containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarned!)
-    //     );
+        let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
+          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarnedWithoutExceptions!),
+          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarnedWithoutExceptions!)
+        );
 
-    //     if (isNaN(cov)) {
+        if (isNaN(cov)) {
           
-    //     assertFalse(q1.question_id + " " + q2.question_id);
+        assertFalse(q1.question_id + " " + q2.question_id);
       
-    //     }
+        }
 
-    //     this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
-    //   });
-    // });
+        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+      });
+    });
 
-    // // Set hypothetical mean/stddev curving parameters for each exam
-    // this.submittedExams.forEach(ex => {
-    //   let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+    // Set hypothetical mean/stddev curving parameters for each exam
+    this.submittedExams.forEach(ex => {
+      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
       
-    //   let indExamVar = 0;
-    //   let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
-    //   assignedQuestionIds.forEach(q1Id =>
-    //     assignedQuestionIds.forEach(q2Id =>
-    //       indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
-    //     )
-    //   );
-    //   ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
-    // });
+      let indExamVar = 0;
+      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+      assignedQuestionIds.forEach(q1Id =>
+        assignedQuestionIds.forEach(q2Id =>
+          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+        )
+      );
+      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    });
 
   }
 
@@ -339,14 +357,18 @@ export class ExamGrader {
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
-        let filenameBase = ex.student.uniqname + "-" + v4();
+        let filenameBase = this.createGradedFilenameBase(ex);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.options.frontend_js_path), {encoding: "utf-8"});
       });
 
     this.writeStats();
     this.writeOverview();
     this.writeScoresCsv();
+  }
+
+  private createGradedFilenameBase(ex: AssignedExam) {
+    return ex.student.uniqname + "-" + createStudentUuid(this.options, ex.student, this.exam.exam_id + "-graded");
   }
 
   public writeScoresCsv() {
@@ -457,7 +479,7 @@ export class ExamGrader {
 
     let students_overview = this.submittedExams.slice().sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {
       let score = ex.pointsEarned ?? 0;
-      return `<div>${renderPointsProgressBar(score, ex.pointsPossible)} <a href="exams/${ex.student.uniqname}.html">${ex.student.uniqname}</a></div>`
+      return `<div>${renderPointsProgressBar(score, ex.pointsPossible)} <a href="exams/${this.createGradedFilenameBase(ex)}.html">${ex.student.uniqname}</a></div>`
     }).join("");
 
     let questions_overview = this.allQuestions.map(question => {

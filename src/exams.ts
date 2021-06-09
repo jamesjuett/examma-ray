@@ -68,7 +68,6 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
-  public readonly nonExceptionPoints?: number;
   public readonly gradedBy?: QuestionGrader<QT>
   public readonly gradingResult?: GradingResult;
   public readonly exception?: Exception;
@@ -112,6 +111,12 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
         ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
         : undefined
     );
+  }
+
+  public get pointsEarnedWithoutExceptions() : number | undefined {
+    return this.isGraded()
+        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
+        : undefined;
   }
 
   public render(mode: RenderMode) {
@@ -194,7 +199,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
     return `<div class="alert alert-warning">
       <p><strong>An exception was applied when grading this question.</strong></p>
-      <p>Your score on this question was adjusted from <strong>${this.nonExceptionPoints}</strong> to <strong>${this.pointsEarned}</strong>.</p>
+      <p>Your score on this question was adjusted from <strong>${this.pointsEarnedWithoutExceptions}</strong> to <strong>${this.pointsEarned}</strong>.</p>
       ${mk2html(this.exception.explanation)}
     </div>`;
   }
@@ -209,8 +214,16 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
 }
 
+export function wereGradedBy<QT extends ResponseKind, GR extends GradingResult>(
+  questions: readonly AssignedQuestion<QT>[],
+  grader: QuestionGrader<QT, GR>) : questions is readonly GradedQuestion<QT, GR>[]
+{
+  return questions.every(q => q.wasGradedBy(grader));
+}
+
 export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResult = GradingResult> extends AssignedQuestion<QT> {
   readonly pointsEarned: number;
+  readonly pointsEarnedWithoutExceptions: number;
   readonly gradedBy: QuestionGrader<QT>;
   readonly gradingResult: GR;
 }
@@ -481,7 +494,6 @@ export class AssignedExam {
 
   public renderGradingSummary() {
     // TODO: remove ! assertions and use logic to produce partial summaries instead
-    // TODO: remove hardcoded curving targets
     return `<div class="container examma-ray-grading-summary">
       <div class="text-center mb-3 border-bottom">
         <h2>Grading Summary</h2>
@@ -491,7 +503,7 @@ export class AssignedExam {
 
         <p>Please note that this curving mechanism does not guarantee a boost to every students' score. In fact, the literal adjustment may bring most high scores down, given a smaller target standard deviation. In this case, we use the raw score rather than the curved score.</p>
 
-        <p>If everyone had taken your version of the exam, the mean would have been <b>${maxPrecisionString(this.hypotheticalMean!, 5)}</b> with a standard deviation of <b>${maxPrecisionString(this.hypotheticalStddev!, 5)}</b>.</p>
+        <p>If everyone had taken your version of the exam, the mean raw score would have been <b>${maxPrecisionString(this.hypotheticalMean!, 5)}</b> with a standard deviation of <b>${maxPrecisionString(this.hypotheticalStddev!, 5)}</b>.</p>
 
         <p>Your raw score on this exam was <b>${maxPrecisionString(this.pointsEarned!, 5)}</b>, which corresponds to a z-score of <b>${maxPrecisionString(this.zScore!, 5)}</b> given this distribution.</p>
         
@@ -515,7 +527,7 @@ export class AssignedExam {
           ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
         </div>
         <div style="margin-left: 210px; width: calc(100% - 220px);">
-          ${mode === RenderMode.GRADED && false ? this.renderGradingSummary() : ""}
+          ${mode === RenderMode.GRADED ? this.renderGradingSummary() : ""}
           ${this.exam.renderHeader(this.student)}
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
           <div class="container examma-ray-bottom-message">

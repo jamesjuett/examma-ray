@@ -96,3 +96,15 @@ export function renderGradingProgressBar(numGraded: number, numAssigned: number)
     </div>
   </div></div>`;
 }
+
+export function renderPercentChosenProgressBar(numGraded: number, numAssigned: number) {
+  let progressPercent = numAssigned === 0 ? 100 : Math.max(1, Math.floor(100 * (numGraded / numAssigned)));
+  return `<div style="display: inline-block; vertical-align: middle;"><div class="progress">
+    <div class="progress-bar" role="progressbar"
+      style="width: ${progressPercent}%; color: white;
+      overflow: visible;"
+      aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100">
+      ${numGraded}/${numAssigned}
+    </div>
+  </div></div>`;
+}

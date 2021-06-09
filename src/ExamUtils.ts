@@ -3,10 +3,12 @@ import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissio
 import Papa from "papaparse";
 import { AssignedQuestion, StudentInfo } from "./exams";
 import path from "path";
-import { asMutable, assert } from "./util";
+import { asMutable, assert, assertNever } from "./util";
 import { chunk } from "simple-statistics";
 import { stringify_response } from "./response/responses";
 import { GradingAssignmentSpecification } from "./grading/common";
+import { v4 as uuidv4, v5 as uuidv5} from 'uuid';
+
 import glob from "glob";
 import del from "del";
 
@@ -179,4 +181,32 @@ export function writeFrontendJS(filename: string) {
     require.resolve(`examma-ray/dist/frontend/${filename}`),
     `${jsDir}/${filename}`
   );
+}
+
+/**
+ * Takes an ID for an exam, section, or question and creates a uuid
+ * for a particular student's instance of that entity. The uuid is
+ * created based on the policy specified in the `ExamGenerator`'s
+ * options when it is created.
+ * @param student 
+ * @param id 
+ * @returns 
+ */
+export function createStudentUuid(options: {
+  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  uuidv5_namespace?: string,
+}, student: StudentInfo, id: string) {
+  if(options.student_ids === "uniqname") {
+    return student.uniqname + "-" + id;
+  }
+  else if (options.student_ids === "uuidv4") {
+    return uuidv4();
+  }
+  else if (options.student_ids === "uuidv5") {
+    assert(options.uuidv5_namespace);
+    return uuidv5(student.uniqname + "-" + id, options.uuidv5_namespace!);
+  }
+  else {
+    assertNever(options.student_ids);
+  }
 }
