@@ -6,9 +6,6 @@ import { ExamRegradeRequest, QuestionRegradeRequest, SectionRegradeRequest } fro
 
 import "./frontend.css";
 
-// hljs.registerLanguage('cpp', cpp);
-// hljs.highlightAll();
-
 
 
 function extractQuestionRegradeRequest(this: HTMLElement) : QuestionRegradeRequest {

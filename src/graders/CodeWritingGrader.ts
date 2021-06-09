@@ -114,7 +114,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
         <div class="examma-ray-code-editor-graded-submission">
-          ${`<pre><code>${highlightCode(""+aq.submission, "cpp")}</code></pre>`}
+          ${`<pre><code>${highlightCode(aq.submission as string, response.code_language)}</code></pre>`}
         </div>
         <div class="examma-ray-code-editor-footer">
           ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
@@ -127,7 +127,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
           <div class="examma-ray-code-editor-graded-submission">
-            ${`<pre><code>${highlightCode(""+applySkin(this.sampleSolution as string, skin), "cpp")}</code></pre>`}
+            ${`<pre><code>${highlightCode(""+applySkin(this.sampleSolution as string, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">
             ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}

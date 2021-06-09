@@ -34,7 +34,10 @@ import { SubmissionType } from "../response/responses";
 // system is based on the File System Access API tutorial and
 // documentation at https://web.dev/file-system-access/
 
-// TODO: replace with dependence on question specification
+// Because this grader is based on Lobster, it only works for C++ code
+// Perhaps in the future it will be generalized to other languages and
+// have the option to just use a regular codemirror instance rather than
+// lobster.
 const CODE_LANGUAGE = "cpp";
 
 export type CodeWritingGradingAssignment = GradingAssignmentSpecification<ResponseKind, CodeWritingGradingResult>;
