@@ -7,9 +7,9 @@ import { Blob } from 'blob-polyfill';
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/monokai.css';
-import 'codemirror/mode/clike/clike.js';
-import 'codemirror/addon/comment/comment.js'
-import 'codemirror/keymap/sublime.js'
+import './codemirror-modes';
+import 'codemirror/addon/comment/comment.js';
+import 'codemirror/keymap/sublime.js';
 import { decode } from "he";
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/icons';
 
@@ -343,9 +343,10 @@ function setupCodeEditors() {
 
     let cmElem = $(this).find(".examma-ray-codemirror");
     let starterCode = decode(cmElem.html());
+    let mime_type = cmElem.data("codemirror-mime-type");
     cmElem.html("");
     let cm = CodeMirror(cmElem[0], {
-      mode: "text/x-c++src",
+      mode: mime_type,
       theme: "default",
       lineNumbers: false,
       tabSize: 2,
