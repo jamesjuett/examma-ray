@@ -31,7 +31,7 @@ export type ExamGeneratorOptions = {
 };
 
 const DEFAULT_OPTIONS = {
-  frontend_js_path: "../../js/frontend.js",
+  frontend_js_path: "js/frontend.js",
   student_ids: "uniqname",
   students: [],
   allow_duplicates: false
@@ -190,7 +190,7 @@ export class ExamGenerator {
     mkdirSync(manifestDir, { recursive: true });
     del.sync(`${manifestDir}/*`);
 
-    writeFrontendJS("frontend.js");
+    writeFrontendJS(`${examDir}/js`, "frontend.js");
 
     this.writeStats();
 

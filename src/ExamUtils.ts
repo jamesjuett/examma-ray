@@ -174,13 +174,23 @@ function getAssnIds(assns: GradingAssignmentSpecification[]) {
   return { exam_id, question_id };
 }
 
-export function writeFrontendJS(filename: string) {
-  const jsDir = `out/js`;
-  mkdirSync(jsDir, { recursive: true });
-  copyFileSync(
-    require.resolve(`examma-ray/dist/frontend/${filename}`),
-    `${jsDir}/${filename}`
-  );
+export function writeFrontendJS(outDir: string, filename: string) {
+  mkdirSync(outDir, { recursive: true });
+  try {
+    let path = require.resolve(`examma-ray/dist/frontend/${filename}`);
+    copyFileSync(
+      path,
+      `${outDir}/${filename}`
+    );
+  }
+  catch(e) {
+    if (e.code === "MODULE_NOT_FOUND") {
+      console.log("Error resolving and copying frontend JS... are you using npm link?".yellow);
+    }
+    else {
+      throw e;
+    }
+  }
 }
 
 /**

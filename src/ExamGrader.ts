@@ -101,7 +101,7 @@ export type ExamGraderOptions = {
 };
 
 const DEFAULT_OPTIONS = {
-  frontend_js_path: "../../js/frontend.js",
+  frontend_js_path: "js/frontend.js",
   student_ids: "uniqname",
 };
 
@@ -338,7 +338,7 @@ export class ExamGrader {
 
 
   public writeStats() {
-    writeFrontendJS("stats-fitb.js");
+    writeFrontendJS("out/js", "stats-fitb.js");
 
     console.log("Rendering question stats files...");
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
@@ -351,7 +351,7 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
-    writeFrontendJS("frontend-graded.js");
+    writeFrontendJS(`${examDir}/js`, "frontend-graded.js");
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -464,7 +464,7 @@ export class ExamGrader {
   
   public writeOverview() {
 
-    writeFrontendJS("overview.js");
+    writeFrontendJS("out/js", "overview.js");
 
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;
