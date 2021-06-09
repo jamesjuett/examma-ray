@@ -6,6 +6,7 @@ import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 export type CodeEditorSpecification = {
   kind: "code_editor",
   code_language: string,
+  codemirror_mime_type: string,
   starter: string,
   header?: string,
   footer?: string
@@ -42,7 +43,7 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
       <div class="examma-ray-code-editor-header">
         ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
       </div>
-      <div class="examma-ray-codemirror">${encode(applySkin(response.starter, skin))}</div>
+      <div class="examma-ray-codemirror" data-codemirror-mime-type="${response.codemirror_mime_type}">${encode(applySkin(response.starter, skin))}</div>
       <div class="examma-ray-code-editor-footer">
         ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
       </div>
