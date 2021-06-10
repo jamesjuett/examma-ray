@@ -1,8 +1,8 @@
 import { Exam, Question, Section, StudentInfo } from "./exams";
 import { Randomizer, SeededRandomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
-import { ResponseKind } from "./response/common";
-import { ResponseSpecification } from "./response/responses";
+import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
+import { ResponseSpecification, SubmissionType } from "./response/responses";
 import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
 
@@ -101,7 +101,8 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   mk_description: string,
   response: ResponseSpecification<QT>,
   tags?: readonly string[],
-  skins?: SkinGenerator
+  skins?: SkinGenerator,
+  sample_solution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>
 };
 
 

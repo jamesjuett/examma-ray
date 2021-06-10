@@ -1,7 +1,7 @@
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, FILLED_STAR } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
-import { ResponseKind } from './response/common';
+import { BLANK_SUBMISSION, ResponseKind } from './response/common';
 import { mk2html } from './render';
 import { maxPrecisionString, renderFixedPrecisionBadge, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
@@ -37,6 +37,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
   public readonly skins: SkinGenerator;
+  public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -51,6 +52,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
     this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
+    this.sampleSolution = spec.sample_solution;
   }
 
   public renderResponse(uuid: string, skin?: QuestionSkin) {

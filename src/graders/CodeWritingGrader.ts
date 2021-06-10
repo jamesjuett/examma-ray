@@ -42,13 +42,11 @@ export type CodeWritingGradingResult = GradingResult & {
 export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
-  public readonly sampleSolution?: Exclude<SubmissionType<ResponseKind>, typeof BLANK_SUBMISSION>;
   private manualGrading?: readonly CodeWritingGradingAssignment[];
   private manualGradingMap?: {[index: string]: CodeWritingGradingResult | undefined};
 
-  public constructor(rubric: readonly CodeWritingRubricItem[], sampleSolution?: Exclude<SubmissionType<ResponseKind>, typeof BLANK_SUBMISSION>) {
+  public constructor(rubric: readonly CodeWritingRubricItem[]) {
     this.rubric = rubric;
-    this.sampleSolution = sampleSolution;
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
@@ -121,13 +119,13 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
         </div>
       `;
       // TODO: eliminate code duplication
-      if (this.sampleSolution) {
+      if (question.sampleSolution) {
         sampleSolution_html = `
           <div class="examma-ray-code-editor-header">
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
           <div class="examma-ray-code-editor-graded-submission">
-            ${`<pre><code>${highlightCode(""+applySkin(this.sampleSolution as string, skin), response.code_language)}</code></pre>`}
+            ${`<pre><code>${highlightCode(""+applySkin(question.sampleSolution as string, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">
             ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
@@ -141,8 +139,8 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
       assert(submission !== BLANK_SUBMISSION);
 
       studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
-      if (this.sampleSolution) {
-        sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>this.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
+      if (question.sampleSolution) {
+        sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>question.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
       }
       
     }
@@ -156,7 +154,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
         <tr style="text-align: center;">
           <th>Rubric</th>
           <th>Your Submission</th>
-          ${this.sampleSolution ? `<th>Sample Solution</th>` : ""}
+          ${question.sampleSolution ? `<th>Sample Solution</th>` : ""}
         </tr>
         <tr>
           <td>

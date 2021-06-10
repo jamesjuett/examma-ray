@@ -29,11 +29,10 @@ export type FITBRegexRubricItem = {
   points: number;
   title: string;
   description: string;
-  solution: string;
   patterns: FITBRegexMatcher[];
 };
 
-function identifyCodeWords(blanks: string[]) {
+function identifyCodeWords(blanks: readonly string[]) {
   let result = new Set<string>();
   blanks.forEach(code => code.split(/[^a-zA-Z0-9_]/).forEach(w => result.add(w)));
   return result;
@@ -45,14 +44,12 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
 
 export class FITBRegexGrader implements QuestionGrader<"fitb"> {
 
-  private solutionWords: ReadonlySet<string>;
   private minRubricItemPoints: number;
 
   public constructor(
     public readonly rubric: readonly FITBRegexRubricItem[]
   ) {
 
-    this.solutionWords = identifyCodeWords(rubric.map(ri => ri.solution));
     this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
   }
 
@@ -77,15 +74,21 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     
     let result = this.grade_helper(submission);
 
-    let mutableSubmission = submission.slice();
+    if (aq.question.sampleSolution) {
+      let sampleSolution = aq.question.sampleSolution;
+      assert(sampleSolution.length === this.rubric.length, `Error: Mismatched number of answers in FITB sample solution vs. rubric for ${aq.question.question_id}`.red)
+      let mutableSubmission = submission.slice();
+      let solutionWords = identifyCodeWords(sampleSolution);
+  
+      let submissionWords = identifyCodeWords(mutableSubmission);
+      submissionWords.forEach(subWord => solutionWords.forEach(solWord => {
+        let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
+        if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
+          // console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
+        }
+      }));
+    }
 
-    let submissionWords = identifyCodeWords(mutableSubmission);
-    submissionWords.forEach(subWord => this.solutionWords.forEach(solWord => {
-      let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
-      if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
-        // console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
-      }
-    }));
 
     return result;
   }
@@ -131,8 +134,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let content = question.response.content;
 
     let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
-    let solutionFilled = createFilledFITB(applySkin(content, skin), this.rubric.map(ri => applySkin(ri.solution, skin))); //, content, undefined);
-
+    
     let itemResults = gr.itemResults;
     assert(itemResults.length === this.rubric.length);
 
@@ -158,13 +160,17 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
         </div></td></tr>`;
     }).join("")}</table>`;
 
+
+    let sampleSolution = aq.question.sampleSolution;
+    let solutionFilled = sampleSolution && createFilledFITB(applySkin(content, skin), sampleSolution.map(s => applySkin(s, skin)));
+
     return `
     <table class="table table-sm examma-ray-fitb-diff">
       <tr><th>Rubric</th><th>Your Submission</th><th>Sample Solution</th></tr>
       <tr>
         <td>${rubricItemsHtml}</td>
         <td>${studentFilled}</td>
-        <td>${solutionFilled}</td>
+        ${sampleSolution ? `<td>${solutionFilled}</td>` : ""}
       </tr>
     </table>`;
   }
@@ -174,7 +180,8 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let submissions = aqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
-    let solutionFilled = createFilledFITB(question.response.content, this.rubric.map(ri => ri.solution));
+    let sampleSolution = question.sampleSolution;
+    let solutionFilled = createFilledFITB(question.response.content, sampleSolution);
 
 
     return `<table class="table" style="border-collapse: separate; border-spacing: 0;">
@@ -231,9 +238,9 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     let blankAverages = gradedBlankSubmissions.map(
       gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
     let blankPoints = this.rubric.map(ri => ri.points);
-    let blankSolutions = this.rubric.map(ri => encode(ri.solution));
+    let blankSolutions : string[] = question.sampleSolution?.map(s => encode(s)) ?? [];
     let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
-    let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i]}`));
+    let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i] ?? ""}`));
     let solutionFilled = createFilledFITB(question.response.content, blankBars, s=>s, s=>s, s=>s);
     return solutionFilled;
   }
