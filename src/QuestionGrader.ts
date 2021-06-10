@@ -57,7 +57,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
 
 
   renderStats(aqs: readonly AssignedQuestion<RK>[]): string;
-  renderOverview(aqs: readonly GradedQuestion<RK>[]): string;
+  renderOverview(gqs: readonly GradedQuestion<RK>[]): string;
 
 };
 

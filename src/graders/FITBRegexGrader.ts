@@ -83,7 +83,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     submissionWords.forEach(subWord => this.solutionWords.forEach(solWord => {
       let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
       if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
-        console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
+        // console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
       }
     }));
 
@@ -224,9 +224,9 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(aqs: readonly AssignedQuestion<"fitb">[]) {
-    let question = aqs[0].question;
-    let submissions = aqs.map(aq => aq.submission);
+  public renderOverview(gqs: readonly GradedQuestion<"fitb">[]) {
+    let question = gqs[0].question;
+    let submissions = gqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
     let blankAverages = gradedBlankSubmissions.map(
       gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));

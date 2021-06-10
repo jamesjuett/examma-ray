@@ -95,15 +95,15 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
   }
 
   
-  public renderOverview(aqs: readonly GradedQuestion<"multiple_choice">[]) : string {
-    let question = aqs[0].question;
-    assert(wereGradedBy(aqs, this));
-    let results = aqs.map(aq => aq.gradingResult);
+  public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) : string {
+    let question = gqs[0].question;
+    assert(wereGradedBy(gqs, this));
+    let results = gqs.map(gq => gq.gradingResult);
 
     let hist: number[] = this.pointValues.map((pv, i) => results.filter(r => r.selections[i].selected).length);
 
     return hist.map((count, i) =>
-      `<div class="examma-ray-mc-option">${renderPercentChosenProgressBar(count, aqs.length)} ${renderPointAdjustmentBadge(this.pointValues[i].points)} (if ${this.pointValues[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}</div>`).join("");
+      `<div class="examma-ray-mc-option">${renderPercentChosenProgressBar(count, gqs.length)} ${renderPointAdjustmentBadge(this.pointValues[i].points)} (if ${this.pointValues[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}</div>`).join("");
   }
 }
 

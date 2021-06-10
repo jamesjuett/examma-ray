@@ -52,8 +52,8 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview(aqs: readonly AssignedQuestion[]) {
-    let submissions = aqs.map(aq => aq.submission);
+  public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) {
+    let submissions = gqs.map(gq => gq.submission);
     if (this.blankAllowed) {
       return `Assigned ${this.pointValue} freebie points to all ${submissions.length} submissions.`;
     }

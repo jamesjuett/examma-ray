@@ -344,7 +344,7 @@ export class ExamGrader {
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
-  public writeAll() {
+  public writeReports() {
     const examDir = `out/${this.exam.exam_id}/graded/exams`;
 
     // Create output directories and clear previous contents
@@ -361,6 +361,9 @@ export class ExamGrader {
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
         writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.options.frontend_js_path), {encoding: "utf-8"});
       });
+  }
+
+  public writeAll() {
 
     this.writeStats();
     this.writeOverview();

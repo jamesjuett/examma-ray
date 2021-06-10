@@ -87,9 +87,9 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview(aqs: readonly AssignedQuestion<"multiple_choice">[]) {
-    let question = aqs[0].question;
-    let submissions = aqs.map(aq => aq.submission);
+  public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) {
+    let question = gqs[0].question;
+    let submissions = gqs.map(gq => gq.submission);
     let f = function (sub: MCSubmission): sub is number[] {
       return sub !== BLANK_SUBMISSION && sub.length > 0;
     };

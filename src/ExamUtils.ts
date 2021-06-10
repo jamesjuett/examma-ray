@@ -185,13 +185,13 @@ export function writeFrontendJS(outDir: string, filename: string) {
   }
   catch(e) {
     if (e.code === "MODULE_NOT_FOUND") {
-      console.log("Error resolving and copying frontend JS, attempting local copy...".yellow);
 
       try {
         copyFileSync(
-          `node_modules/examma-ray/dist/frontend/${filename}`,
+          `../node_modules/examma-ray/dist/frontend/${filename}`,
           `${outDir}/${filename}`
         );
+        console.log("Cannot resolve and copy frontend JS, using local copy instead.");
       }
       catch(e) {
         console.log("Failed to find and copy frontend JS".red);
