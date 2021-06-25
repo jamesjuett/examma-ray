@@ -1,4 +1,5 @@
 import { encode } from "he";
+import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, mk2html } from "../render";
 import { QuestionSkin } from "../skins";
 import { assert, assertFalse } from "../util";
@@ -8,6 +9,8 @@ import { isStringArray } from "./util";
 export type FITBSpecification = {
   kind: "fitb";
   content: string;
+  sample_solution?: Exclude<FITBSubmission, typeof BLANK_SUBMISSION>;
+  default_grader?: QuestionGrader<"fitb", any>;
 };
 
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;

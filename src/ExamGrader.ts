@@ -78,7 +78,6 @@
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
 import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, isGraded } from './exams';
-import { createQuestionSkinRandomizer, createSectionSkinRandomizer } from "./randomization";
 import { QuestionGrader } from './QuestionGrader';
 import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { asMutable, assert, assertFalse } from './util';
@@ -155,10 +154,14 @@ export class ExamGrader {
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
     this.allQuestions.forEach(question => {
-      if (!this.graderMap[question.question_id]) {
+      if (!this.getGrader(question)) {
         console.log(`WARNING: No grader registered for question: ${question.question_id}`);
       }
     })
+  }
+
+  private getGrader(question: Question) {
+    return this.graderMap[question.question_id] ?? question.defaultGrader;
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
@@ -262,59 +265,59 @@ export class ExamGrader {
 
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
-    this.allQuestions.forEach(question => {
-      let assignedQuestions = this.getAssignedQuestions(question.question_id);
-      let gradedQuestions = assignedQuestions.filter(isGraded);
-      if (gradedQuestions.length > 0) {
-        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarnedWithoutExceptions));
-      }
-    });
+    // this.allQuestions.forEach(question => {
+    //   let assignedQuestions = this.getAssignedQuestions(question.question_id);
+    //   let gradedQuestions = assignedQuestions.filter(isGraded);
+    //   if (gradedQuestions.length > 0) {
+    //     this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarnedWithoutExceptions));
+    //   }
+    // });
 
-    // Find covariance matrix for all questions
+    // // Find covariance matrix for all questions
 
-    console.log("computing covariance matrix");
-    this.allQuestions.forEach(q1 => {
-      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
-      this.allQuestions.forEach(q2 => {
-        // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
-        // Only calculate covariance based on cases where the questions appeared together and are graded
-        let containsBoth = this.submittedExams.filter(
-          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
-        );
+    // console.log("computing covariance matrix");
+    // this.allQuestions.forEach(q1 => {
+    //   this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+    //   this.allQuestions.forEach(q2 => {
+    //     // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+    //     // Only calculate covariance based on cases where the questions appeared together and are graded
+    //     let containsBoth = this.submittedExams.filter(
+    //       ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+    //     );
 
-        let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
-          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarnedWithoutExceptions!),
-          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarnedWithoutExceptions!)
-        );
+    //     let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
+    //       containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarnedWithoutExceptions!),
+    //       containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarnedWithoutExceptions!)
+    //     );
 
-        if (isNaN(cov)) {
+    //     if (isNaN(cov)) {
           
-        assertFalse(q1.question_id + " " + q2.question_id);
+    //     assertFalse(q1.question_id + " " + q2.question_id);
       
-        }
+    //     }
 
-        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
-      });
-    });
+    //     this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+    //   });
+    // });
 
-    // Set hypothetical mean/stddev curving parameters for each exam
-    this.submittedExams.forEach(ex => {
-      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+    // // Set hypothetical mean/stddev curving parameters for each exam
+    // this.submittedExams.forEach(ex => {
+    //   let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
       
-      let indExamVar = 0;
-      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
-      assignedQuestionIds.forEach(q1Id =>
-        assignedQuestionIds.forEach(q2Id =>
-          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
-        )
-      );
-      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
-    });
+    //   let indExamVar = 0;
+    //   let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+    //   assignedQuestionIds.forEach(q1Id =>
+    //     assignedQuestionIds.forEach(q2Id =>
+    //       indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+    //     )
+    //   );
+    //   ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    // });
 
   }
 
   public applyCurve(targetMean: number, targetStddev: number) {
-    this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
+    // this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
   }
 
   // public prepareManualGrading() {
@@ -402,7 +405,7 @@ export class ExamGrader {
 
   private renderStatsToFile(question: Question) {
 
-    let grader = this.graderMap[question.question_id];
+    let grader = this.getGrader(question);
     if (!grader) {
       return;
     }
@@ -487,7 +490,7 @@ export class ExamGrader {
 
     let questions_overview = this.allQuestions.map(question => {
 
-      let grader = this.graderMap[question.question_id];
+      let grader = this.getGrader(question);
       let assignedQuestions = this.getAssignedQuestions(question.question_id);
 
       if (assignedQuestions.length === 0) {

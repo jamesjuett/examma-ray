@@ -265,23 +265,29 @@ class CodeWritingManualGraderApp {
     $(".examma-ray-grading-title").html(this.question.id);
   }
 
-  private createRubricBar() {
+  private createRubricBar(sub?: GradingSubmission) {
     let buttons = $(".examma-ray-grading-rubric-buttons");
     buttons.addClass("list-group");
+    this.rubricButtonElems.length = 0;
 
+
+    buttons.empty();
+    
     this.rubric.forEach((ri, i) => {
-        let button = $(
-          `<button type="button" class="list-group-item">
-            ${renderShortPointsWorthBadge(ri.points)}
-            <div class="examma-ray-rubric-item-title"><b>${mk2html(ri.title)}</b></div>
-            ${mk2html(ri.description)}
-          </button>`
-        ).on("click", () => {
-          this.toggleRubricItem(i);
-        });
-          
-        buttons.append(button);
-        this.rubricButtonElems.push(button);
+      let skinnedTitle = sub ? applySkin(ri.title, {id: "[recorded]", replacements: sub.skin_replacements}) : ri.title;
+      let skinnedDesc = sub ? applySkin(ri.description, {id: "[recorded]", replacements: sub.skin_replacements}) : ri.description;
+      let button = $(
+        `<button type="button" class="list-group-item">
+          ${renderShortPointsWorthBadge(ri.points)}
+          <div class="examma-ray-rubric-item-title"><b>${mk2html(skinnedTitle)}</b></div>
+          ${mk2html(skinnedDesc)}
+        </button>`
+      ).on("click", () => {
+        this.toggleRubricItem(i);
+      });
+      
+      buttons.append(button);
+      this.rubricButtonElems.push(button);
     });
   }
 
@@ -440,6 +446,9 @@ class CodeWritingManualGraderApp {
     })
 
     let rep = group.submissions[group.representative_index];
+
+    // Update rubric buttons
+    this.createRubricBar(rep);
 
     let code = this.applyHarness(rep);
     this.lobster.project.setFileContents(new SourceFile("file.cpp", code));

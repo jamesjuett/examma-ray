@@ -79,7 +79,7 @@ export {
 } from "./ExamGrader";
 
 export {
-  QuestionGrader as Grader
+  QuestionGrader
 } from "./QuestionGrader";
 
 export {

@@ -1,4 +1,5 @@
 import Mustache from "mustache";
+import { QuestionGrader } from "../QuestionGrader";
 import { mk2html } from "../render";
 import { QuestionSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -8,6 +9,8 @@ export type MCSpecification = {
   kind: "multiple_choice";
   multiple: boolean;
   choices: string[];
+  sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION>;
+  default_grader?: QuestionGrader<"multiple_choice", any>
 };
 
 export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;

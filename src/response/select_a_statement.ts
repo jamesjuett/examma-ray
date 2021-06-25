@@ -1,4 +1,5 @@
 import { encode } from "he";
+import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, highlightCode } from "../render";
 import { QuestionSkin } from "../skins";
 import { assertFalse } from "../util";
@@ -22,7 +23,9 @@ export type SASSpecification = {
   code_language: string,
   choices: (SASGroup | SASItem)[],
   header?: string,
-  footer?: string
+  footer?: string,
+  sample_solution?: Exclude<SASSubmission, typeof BLANK_SUBMISSION>,
+  default_grader?: QuestionGrader<"select_a_statement", any>
 };
 
 export type SASSubmission = readonly number[] | typeof BLANK_SUBMISSION;

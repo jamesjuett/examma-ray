@@ -1,4 +1,5 @@
 import { encode } from "he";
+import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, highlightCode } from "../render";
 import { QuestionSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -9,7 +10,9 @@ export type CodeEditorSpecification = {
   codemirror_mime_type: string,
   starter: string,
   header?: string,
-  footer?: string
+  footer?: string,
+  sample_solution?: Exclude<CodeEditorSubmission, typeof BLANK_SUBMISSION>,
+  default_grader?: QuestionGrader<"code_editor", any>
 };
 
 export type CodeEditorSubmission = string | typeof BLANK_SUBMISSION;

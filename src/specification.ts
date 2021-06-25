@@ -1,5 +1,5 @@
 import { Exam, Question, Section, StudentInfo } from "./exams";
-import { Randomizer, SeededRandomizer } from "./randomization";
+import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
 import { ResponseSpecification, SubmissionType } from "./response/responses";
@@ -93,16 +93,13 @@ export function RANDOM_ANY(n: number, questionBank: QuestionBank | readonly (Que
 
 
 
-
-
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   id: string,
   points: number,
   mk_description: string,
   response: ResponseSpecification<QT>,
   tags?: readonly string[],
-  skins?: SkinGenerator,
-  sample_solution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>
+  skins?: SkinGenerator
 };
 
 
@@ -129,4 +126,12 @@ export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
     },
     getById: (id: string) => skinMap[id]
   };
+}
+
+
+
+export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Exclude<QuestionSpecification, "response">>) : QuestionSpecification;
+export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Exclude<SectionSpecification, "response">>) : SectionSpecification;
+export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification, "response">>) : QuestionSpecification | SectionSpecification {
+  return Object.assign({}, spec, customizations);
 }

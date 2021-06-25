@@ -38,6 +38,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly response : ResponseSpecification<QT>;
   public readonly skins: SkinGenerator;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
+  public readonly defaultGrader?: QuestionGrader<QT>;
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -52,7 +53,8 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
     this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
-    this.sampleSolution = spec.sample_solution;
+    this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
+    this.defaultGrader = <QuestionGrader<QT>>spec.response.default_grader;
   }
 
   public renderResponse(uuid: string, skin?: QuestionSkin) {
@@ -323,8 +325,9 @@ export class AssignedSection {
 
   public gradeAllQuestions(ex: AssignedExam, graders: GraderMap) {
     this.assignedQuestions.forEach(aq => {
-      let grader = graders[aq.question.question_id];
+      let grader = graders[aq.question.question_id] ?? aq.question.defaultGrader;
       if (grader) {
+        grader.prepare(ex.exam.exam_id, aq.question.question_id);
         // console.log(`Grading ${aq.question.question_id}`);
         assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);

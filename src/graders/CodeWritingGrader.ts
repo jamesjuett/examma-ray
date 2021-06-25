@@ -3,13 +3,11 @@ import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, GradingResult } from "../QuestionGrader";
 import { ExamUtils } from "../ExamUtils";
 import { CodeWritingGradingAssignment } from "../grading/code-grader";
-import { renderGradingProgressBar, renderNumBadge, renderShortPointsWorthBadge, renderWideNumBadge } from "../ui_components";
+import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../ui_components";
 import { sum } from "simple-statistics";
 import { applySkin, highlightCode, mk2html } from "../render";
-import { asMutable, assert, assertFalse } from "../util";
+import { assert, assertFalse } from "../util";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
-import { QuestionSpecification } from "../specification";
-import { SubmissionType } from "../response/responses";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -54,6 +52,9 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
   }
 
   public prepare(exam_id: string, question_id: string) {
+    if (this.manualGrading) {
+      return;
+    }
 
     this.manualGrading = <CodeWritingGradingAssignment[]>ExamUtils.readGradingAssignments(exam_id, question_id); 
 
