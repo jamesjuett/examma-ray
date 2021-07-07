@@ -13,7 +13,11 @@ $(function() {
     let checked = $("input[type=checkbox]:checked").filter(function() {
       return $(this).data("blank-num") === blank_num;
     }).map(function() {
-      return '"'+$(this).data("blank-submission").replace(/\"/g,'\\"')+'"';
+      return '"'+
+        $(this).data("blank-submission")
+          .replace(/\"/g,'\\"')
+          .replace(/\n/g,'\\n')
+        +'"';
     }).get().join(",\n");
     $(".checked-submissions-content").html(encode(checked));
     $(".checked-submissions-modal").modal("show")

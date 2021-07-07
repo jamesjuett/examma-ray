@@ -265,59 +265,64 @@ export class ExamGrader {
 
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
-    // this.allQuestions.forEach(question => {
-    //   let assignedQuestions = this.getAssignedQuestions(question.question_id);
-    //   let gradedQuestions = assignedQuestions.filter(isGraded);
-    //   if (gradedQuestions.length > 0) {
-    //     this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarnedWithoutExceptions));
-    //   }
-    // });
+    this.allQuestions.forEach(question => {
+      let assignedQuestions = this.getAssignedQuestions(question.question_id);
+      let gradedQuestions = assignedQuestions.filter(isGraded);
+      if (gradedQuestions.length > 0) {
+        this.gradedQuestionsMeans[question.question_id] = mean(gradedQuestions.map(aq => aq.pointsEarnedWithoutExceptions));
+      }
+    });
 
-    // // Find covariance matrix for all questions
+    // Find covariance matrix for all questions
 
-    // console.log("computing covariance matrix");
-    // this.allQuestions.forEach(q1 => {
-    //   this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
-    //   this.allQuestions.forEach(q2 => {
-    //     // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
-    //     // Only calculate covariance based on cases where the questions appeared together and are graded
-    //     let containsBoth = this.submittedExams.filter(
-    //       ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
-    //     );
+    console.log("computing covariance matrix");
+    this.allQuestions.forEach(q1 => {
+      this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
+      this.allQuestions.forEach(q2 => {
+        // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
+        // Only calculate covariance based on cases where the questions appeared together and are graded
+        let containsBoth = this.submittedExams.filter(
+          ex => ex.assignedQuestionsMap[q1.question_id]?.isGraded && ex.assignedQuestionsMap[q2.question_id]?.isGraded
+        );
 
-    //     let cov = containsBoth.length === 0 ? 0 : sampleCovariance(
-    //       containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarnedWithoutExceptions!),
-    //       containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarnedWithoutExceptions!)
-    //     );
+        // Note: if containsBoth.length is 0, the questions never appeared together (probably mutually exclusive).
+        //       Assuming that's the case, it's safe to give them a covariance of whatever, because that covariance
+        //       would never be used in a computation. But 0 seems like a reasonable value.
+        // Note: if containsBoth.length is 1, the questions appeared together once, but you need two data points
+        //       to compute a covariance. The "best" we can do in this case is to assume a covariance of 0.
+        let cov = containsBoth.length <= 1 ? 0 : sampleCovariance(
+          containsBoth.map(ex => ex.assignedQuestionsMap[q1.question_id]!.pointsEarnedWithoutExceptions!),
+          containsBoth.map(ex => ex.assignedQuestionsMap[q2.question_id]!.pointsEarnedWithoutExceptions!)
+        );
 
-    //     if (isNaN(cov)) {
+        if (isNaN(cov)) {
           
-    //     assertFalse(q1.question_id + " " + q2.question_id);
+        assertFalse(q1.question_id + " " + q2.question_id);
       
-    //     }
+        }
 
-    //     this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
-    //   });
-    // });
+        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+      });
+    });
 
-    // // Set hypothetical mean/stddev curving parameters for each exam
-    // this.submittedExams.forEach(ex => {
-    //   let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
+    // Set hypothetical mean/stddev curving parameters for each exam
+    this.submittedExams.forEach(ex => {
+      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.gradedQuestionsMeans[q.question.question_id] ?? 0)));
       
-    //   let indExamVar = 0;
-    //   let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
-    //   assignedQuestionIds.forEach(q1Id =>
-    //     assignedQuestionIds.forEach(q2Id =>
-    //       indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
-    //     )
-    //   );
-    //   ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
-    // });
+      let indExamVar = 0;
+      let assignedQuestionIds = Object.keys(ex.assignedQuestionsMap);
+      assignedQuestionIds.forEach(q1Id =>
+        assignedQuestionIds.forEach(q2Id =>
+          indExamVar += this.gradedQuestionCovarianceMatrix[q1Id][q2Id]
+        )
+      );
+      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
+    });
 
   }
 
   public applyCurve(targetMean: number, targetStddev: number) {
-    // this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
+    this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
   }
 
   // public prepareManualGrading() {
@@ -508,7 +513,7 @@ export class ExamGrader {
         question_overview = "No grader for this question.";
       }
       else {
-        avg = average(gradedQuestions.map(aq => aq.pointsEarned));
+        avg = gradedQuestions.length === 0 ? 0 : average(gradedQuestions.map(aq => aq.pointsEarned));
         header = `<b>${question.question_id}</b> Details`;
         question_overview = `<div>
           ${grader?.renderOverview(gradedQuestions)}

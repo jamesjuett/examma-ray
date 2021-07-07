@@ -194,7 +194,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${s.sub}</code>"</li>`).join("")}
+            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
