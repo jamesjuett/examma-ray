@@ -232,7 +232,7 @@ export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResul
   readonly gradingResult: GR;
 }
 
-export function isGraded<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq is GradedQuestion<QT> {
+export function isGradedQuestion<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq is GradedQuestion<QT> {
   return aq.isGraded();
 } 
 
@@ -402,20 +402,25 @@ export class AssignedExam {
   public readonly curvedScore?: number;
   public readonly adjustedScore?: number;
 
-  public assignedQuestionsMap: {
+  private assignedQuestionById: {
     [index: string]: AssignedQuestion | undefined;
   } = {};
+
+  public readonly assignedSections: readonly AssignedSection[];
+  public readonly assignedQuestions: readonly AssignedQuestion[];
 
   public constructor(
     public readonly uuid: string,
     public readonly exam: Exam,
     public readonly student: StudentInfo,
-    public readonly assignedSections: readonly AssignedSection[],
+    assignedSections: readonly AssignedSection[],
     allowDuplicates: boolean
   ) {
+    this.assignedSections = assignedSections;
+    this.assignedQuestions = assignedSections.flatMap(s => s.assignedQuestions);
+    this.assignedQuestions.forEach(q => this.assignedQuestionById[q.question.question_id] = q);
+    
     this.pointsPossible = assignedSections.reduce((p, s) => p + s.pointsPossible, 0);
-
-    this.assignedSections.forEach(s => s.assignedQuestions.forEach(q => this.assignedQuestionsMap[q.question.question_id] = q));
 
     if (!allowDuplicates) {
       let sectionIds = assignedSections.map(s => s.section.section_id);
@@ -423,6 +428,10 @@ export class AssignedExam {
       let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
       assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${questionIds.sort().join("\n  ")}`);
     }
+  }
+
+  public getAssignedQuestionById(question_id: string) {
+    return this.assignedQuestionById[question_id];
   }
 
   public gradeAll(graders: GraderMap) {
