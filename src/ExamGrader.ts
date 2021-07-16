@@ -90,6 +90,7 @@ import { GradingAssignmentSpecification } from "./grading/common";
 import { stringify_response } from './response/responses';
 import { renderGradingProgressBar, renderNumBadge, renderPointsProgressBar, renderWideNumBadge } from './ui_components';
 import { GradedStats } from "./GradedStats";
+import { ExamCurve } from "./ExamCurve";
 import { v4 } from 'uuid';
 
 
@@ -121,6 +122,7 @@ export class ExamGrader {
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
 
   public readonly stats: GradedStats;
+  public readonly curve?: ExamCurve;
   
   private readonly sectionsMap: { [index: string]: Section | undefined } = {};
   private readonly questionsMap: { [index: string]: Question | undefined } = {};
@@ -261,25 +263,10 @@ export class ExamGrader {
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
     (<Mutable<this>>this).stats = new GradedStats(this);
-
-    // Set hypothetical mean/stddev curving parameters for each exam
-    // Note that below if question means or covariances are not available, we assume 0.
-    this.submittedExams.forEach(ex => {
-      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.stats.questionMean(q.question.question_id) ?? 0)));
-      
-      let indExamVar = 0;
-      let assignedQuestionIds = ex.assignedQuestions.map(q => q.question.question_id);
-      assignedQuestionIds.forEach(q1Id =>
-        assignedQuestionIds.forEach(q2Id =>
-          indExamVar += this.stats.questionCovariance(q1Id, q2Id) ?? 0
-        )
-      );
-      ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));
-    });
   }
 
-  public applyCurve(targetMean: number, targetStddev: number) {
-    this.submittedExams.forEach(ex => ex.applyCurve(targetMean, targetStddev));
+  public applyCurve(curve: ExamCurve) {
+    this.submittedExams.forEach(ex => ex.isGraded() && ex.applyCurve(curve));
   }
 
   // public prepareManualGrading() {
@@ -348,8 +335,9 @@ export class ExamGrader {
         student_data["total"] = ex.pointsEarned;
         ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.question_id] = q.pointsEarned));
 
-        student_data["individual_exam_mean"] = ex.hypotheticalMean;
-        student_data["individual_exam_stddev"] = ex.hypotheticalStddev;
+        if (ex.curve) {
+          Object.assign(student_data, ex.curve.parameters);
+        }
 
         return student_data;
       });
