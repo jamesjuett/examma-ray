@@ -10,6 +10,7 @@ import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionCho
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { ExamManifest } from './submissions';
 import { sum } from 'simple-statistics';
+import { AppliedCurve, ExamCurve } from './ExamCurve';
 
 
 export enum RenderMode {
@@ -112,14 +113,14 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   public get pointsEarned() : number | undefined {
     return this.exception?.adjustedScore ?? (
       this.isGraded()
-        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
+        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy.pointsEarned(this.gradingResult)))
         : undefined
     );
   }
 
   public get pointsEarnedWithoutExceptions() : number | undefined {
     return this.isGraded()
-        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy?.pointsEarned(this.gradingResult)))
+        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy.pointsEarned(this.gradingResult)))
         : undefined;
   }
 
@@ -232,6 +233,13 @@ export interface GradedQuestion<QT extends ResponseKind, GR extends GradingResul
   readonly gradingResult: GR;
 }
 
+
+export function areAllGradedQuestions<QT extends ResponseKind>(exams: AssignedQuestion[]) : exams is GradedQuestion<QT>[];
+export function areAllGradedQuestions<QT extends ResponseKind>(exams: readonly AssignedQuestion[]) : exams is readonly GradedQuestion<QT>[];
+export function areAllGradedQuestions<QT extends ResponseKind>(exams: readonly AssignedQuestion[]) : exams is readonly GradedQuestion<QT>[] {
+  return exams.every(ex => ex.isGraded());
+}
+
 export function isGradedQuestion<QT extends ResponseKind>(aq: AssignedQuestion<QT>) : aq is GradedQuestion<QT> {
   return aq.isGraded();
 } 
@@ -304,7 +312,8 @@ export class AssignedSection {
 
   public readonly pointsPossible: number;
   public readonly pointsEarned?: number;
-  public readonly isFullyGraded: boolean = false;
+
+  private _isFullyGraded: boolean = false;
   
   private readonly html_description: string;
   private readonly html_reference?: string;
@@ -337,19 +346,18 @@ export class AssignedSection {
       }
     });
     
-    asMutable(this).isFullyGraded = this.assignedQuestions.every(aq => aq.isGraded());
-    
     // Only assign a total points earned if all questions have been graded
-    if (this.isFullyGraded) {
-      asMutable(this).pointsEarned = sum(<number[]>this.assignedQuestions.map(aq => aq.pointsEarned));
+    if (areAllGradedQuestions(this.assignedQuestions)) {
+      this._isFullyGraded = true;
+      asMutable(this).pointsEarned = sum(this.assignedQuestions.map(aq => aq.pointsEarned));
     }
   }
 
   private renderHeader(mode: RenderMode) {
     let badge = mode === RenderMode.ORIGINAL
       ? renderPointsWorthBadge(this.pointsPossible, "badge-light")
-      : this.isFullyGraded
-        ? renderScoreBadge(this.pointsEarned!, this.pointsPossible)
+      : this.isGraded()
+        ? renderScoreBadge(this.pointsEarned, this.pointsPossible)
         : renderUngradedBadge(this.pointsPossible);
     let heading = mode === RenderMode.ORIGINAL
       ? `${this.displayIndex}: ${this.section.title} ${badge}`
@@ -385,22 +393,33 @@ export class AssignedSection {
       </div>
     `;
   }
+  
+  public isGraded() : this is GradedSection {
+    return this._isFullyGraded;
+  }
+}
+
+export interface GradedSection extends AssignedSection {
+  readonly pointsEarned: number;
+}
+
+export function areAllGradedSections(sections: AssignedSection[]) : sections is GradedSection[];
+export function areAllGradedSections(sections: readonly AssignedSection[]) : sections is readonly GradedSection[];
+export function areAllGradedSections(sections: readonly AssignedSection[]) : sections is readonly GradedSection[] {
+  return sections.every(s => s.isGraded());
 }
 
 export class AssignedExam {
 
+  public readonly uuid: string;
+  public readonly exam: Exam;
+  public readonly student: StudentInfo;
+
   public readonly pointsPossible: number;
   public readonly pointsEarned?: number;
-  public readonly isFullyGraded: boolean = false;
+  private _isFullyGraded: boolean = false;
 
-  public readonly hypotheticalMean?: number;
-  public readonly hypotheticalStddev?: number;
-
-  public readonly targetMean?: number;
-  public readonly targedStddev?: number;
-  public readonly zScore?: number;
-  public readonly curvedScore?: number;
-  public readonly adjustedScore?: number;
+  public readonly curve?: AppliedCurve;
 
   private assignedQuestionById: {
     [index: string]: AssignedQuestion | undefined;
@@ -410,12 +429,15 @@ export class AssignedExam {
   public readonly assignedQuestions: readonly AssignedQuestion[];
 
   public constructor(
-    public readonly uuid: string,
-    public readonly exam: Exam,
-    public readonly student: StudentInfo,
+    uuid: string,
+    exam: Exam,
+    student: StudentInfo,
     assignedSections: readonly AssignedSection[],
     allowDuplicates: boolean
   ) {
+    this.uuid = uuid;
+    this.exam = exam;
+    this.student = student;
     this.assignedSections = assignedSections;
     this.assignedQuestions = assignedSections.flatMap(s => s.assignedQuestions);
     this.assignedQuestions.forEach(q => this.assignedQuestionById[q.question.question_id] = q);
@@ -438,28 +460,20 @@ export class AssignedExam {
     // console.log(`Grading exam for: ${this.student.uniqname}...`);
     this.assignedSections.forEach(s => s.gradeAllQuestions(this, graders));
     asMutable(this).pointsEarned = <number>this.assignedSections.reduce((prev, s) => prev + s.pointsEarned!, 0);
-    asMutable(this).isFullyGraded = this.assignedSections.every(s => s.isFullyGraded);
+    this._isFullyGraded = areAllGradedSections(this.assignedSections);
+  }
+  
+  public isGraded() : this is GradedExam {
+    return this._isFullyGraded;
   }
 
-  public setExamCurveParameters(mean: number, stddev: number) {
-    (<Mutable<this>>this).hypotheticalMean = mean;
-    (<Mutable<this>>this).hypotheticalStddev = stddev;
-  }
-
-  public applyCurve(targetMean: number, targetStddev: number) {
-    assert(this.pointsEarned);
-    assert(this.hypotheticalMean && this.hypotheticalStddev);
-    
-    (<Mutable<this>>this).targetMean = targetMean;
-    (<Mutable<this>>this).targedStddev = targetStddev;
-    (<Mutable<this>>this).zScore = (this.pointsEarned - this.hypotheticalMean) / this.hypotheticalStddev;
-    (<Mutable<this>>this).curvedScore = this.zScore! * targetStddev + targetMean;
-    (<Mutable<this>>this).adjustedScore = Math.max(this.pointsEarned!, this.curvedScore!);
+  public applyCurve(this: GradedExam, curve: ExamCurve) {
+    (<Mutable<GradedExam>>this).curve = curve.applyTo(this);
   }
 
   public renderGrade() {
-    return this.isFullyGraded ?
-      maxPrecisionString(this.adjustedScore ? this.adjustedScore : this.pointsEarned!, 2) + "/" + this.pointsPossible :
+    return this.isGraded() ?
+      maxPrecisionString(this.curve?.adjustedScore ?? this.pointsEarned, 2) + "/" + this.pointsPossible :
       "?/" + this.pointsPossible;
   }
 
@@ -469,7 +483,7 @@ export class AssignedExam {
         ${this.assignedSections.map(s => {
           let scoreBadge = 
             mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary", true) :
-            s.isFullyGraded ? renderScoreBadge(s.pointsEarned!, s.pointsPossible) :
+            s.isGraded() ? renderScoreBadge(s.pointsEarned, s.pointsPossible) :
             renderUngradedBadge(s.pointsPossible);
           return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
         }).join("")}
@@ -510,22 +524,13 @@ export class AssignedExam {
     // TODO: remove ! assertions and use logic to produce partial summaries instead
     return `<div class="container examma-ray-grading-summary">
       <div class="text-center mb-3 border-bottom">
-        <h2>Grading Summary</h2>
+        <h2>Grading Information</h2>
       </div>
-      <div>
-        <p>Due to randomization, your exam was different from everyone else's. However, because each individual question was still taken by a large number of students, we are able to statistically compute what the overall score distribution would have been if everyone had taken your exam. Then, we curve all exams individually to the same target distribution. Students who took more difficult exams will have a more generous curve.</p>
-
-        <p>Please note that this curving mechanism does not guarantee a boost to every students' score. In fact, the literal adjustment may bring most high scores down, given a smaller target standard deviation. In this case, we use the raw score rather than the curved score.</p>
-
-        <p>If everyone had taken your version of the exam, the mean raw score would have been <b>${maxPrecisionString(this.hypotheticalMean!, 5)}</b> with a standard deviation of <b>${maxPrecisionString(this.hypotheticalStddev!, 5)}</b>.</p>
-
-        <p>Your raw score on this exam was <b>${maxPrecisionString(this.pointsEarned!, 5)}</b>, which corresponds to a z-score of <b>${maxPrecisionString(this.zScore!, 5)}</b> given this distribution.</p>
-        
-        <p>We curved the exam to a target mean of <b>${maxPrecisionString(this.targetMean!, 5)}</b> and standard deviation of <b>${maxPrecisionString(this.targedStddev!, 5)}</b>. Applying your z-score yields a curved score of <b>${maxPrecisionString(this.curvedScore!, 5)}</b> (${`${this.targetMean} + ${maxPrecisionString(this.zScore!, 5)} * ${this.targedStddev}`}).</p>
-
-        <p>Your final score is the higher of your raw/curved score: <b>${maxPrecisionString(this.adjustedScore!, 5)}</b></p>
-
-      </div>
+      ${this.curve ? `
+        <div>
+          ${this.curve.report_html}
+        </div>
+      ` : ""}
     </div>`;
   }
 
@@ -598,6 +603,16 @@ export class AssignedExam {
       }))
     };
   }
+}
+
+export function areAllGradedExams(exams: AssignedExam[]) : exams is GradedExam[];
+export function areAllGradedExams(exams: readonly AssignedExam[]) : exams is readonly GradedExam[];
+export function areAllGradedExams(exams: readonly AssignedExam[]) : exams is readonly GradedExam[] {
+  return exams.every(ex => ex.isGraded());
+}
+
+export interface GradedExam extends AssignedExam {
+  readonly pointsEarned: number;
 }
 
 export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `

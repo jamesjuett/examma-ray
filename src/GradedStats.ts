@@ -29,7 +29,7 @@ export class GradedStats {
 
   public constructor(examGrader: ExamGrader) {
 
-    let fullyGradedExams = examGrader.submittedExams.filter(ex => ex.isFullyGraded);
+    let fullyGradedExams = examGrader.submittedExams.filter(ex => ex.isGraded());
     this.numFullyGraded = fullyGradedExams.length;
     this.mean = this.numFullyGraded > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
     this.stddev = this.numFullyGraded > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
