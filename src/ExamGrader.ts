@@ -120,7 +120,7 @@ export class ExamGrader {
   public readonly allQuestions: readonly Question[];
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
 
-  public readonly stats: GradedStats = new GradedStats(this);
+  public readonly stats: GradedStats;
   
   private readonly sectionsMap: { [index: string]: Section | undefined } = {};
   private readonly questionsMap: { [index: string]: Question | undefined } = {};
@@ -150,7 +150,9 @@ export class ExamGrader {
       if (!this.getGrader(question)) {
         console.log(`WARNING: No grader registered for question: ${question.question_id}`);
       }
-    })
+    });
+
+    this.stats = new GradedStats(this);
   }
 
   public getGrader(question: Question) {
@@ -261,14 +263,15 @@ export class ExamGrader {
     (<Mutable<this>>this).stats = new GradedStats(this);
 
     // Set hypothetical mean/stddev curving parameters for each exam
+    // Note that below if question means or covariances are not available, we assume 0.
     this.submittedExams.forEach(ex => {
-      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.stats.questionMean(q.question.question_id))));
+      let indExamMean = sum(ex.assignedSections.flatMap(s => s.assignedQuestions.map(q => this.stats.questionMean(q.question.question_id) ?? 0)));
       
       let indExamVar = 0;
       let assignedQuestionIds = ex.assignedQuestions.map(q => q.question.question_id);
       assignedQuestionIds.forEach(q1Id =>
         assignedQuestionIds.forEach(q2Id =>
-          indExamVar += this.stats.questionCovariance(q1Id, q2Id)
+          indExamVar += this.stats.questionCovariance(q1Id, q2Id) ?? 0
         )
       );
       ex.setExamCurveParameters(indExamMean, Math.sqrt(indExamVar));

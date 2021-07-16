@@ -13,7 +13,7 @@ export class GradedStats {
    * Maps from question-id to mean grade on that question
    */
   private readonly gradedQuestionsMeans: {
-    [index: string]: number;
+    [index: string]: number | undefined;
   } = {};
 
   /**
@@ -23,7 +23,7 @@ export class GradedStats {
    */
   private readonly gradedQuestionCovarianceMatrix: {
     [index: string]: {
-      [index: string]: number;
+      [index: string]: number | undefined;
     };
   } = {};
 
@@ -31,8 +31,8 @@ export class GradedStats {
 
     let fullyGradedExams = examGrader.submittedExams.filter(ex => ex.isFullyGraded);
     this.numFullyGraded = fullyGradedExams.length;
-    this.mean = mean(fullyGradedExams.map(ex => ex.pointsEarned!))
-    this.stddev = standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!));
+    this.mean = this.numFullyGraded > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
+    this.stddev = this.numFullyGraded > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
 
     examGrader.allQuestions.forEach(question => {
       let assignedQuestions = examGrader.getAllAssignedQuestionsById(question.question_id);
@@ -62,16 +62,13 @@ export class GradedStats {
           }
         });
 
-        // Note: if containsBoth.length is 0, the questions never appeared together (probably mutually exclusive).
-        //       Assuming that's the case, it's safe to give them a covariance of whatever, because that covariance
-        //       would never be used in a computation. But 0 seems like a reasonable value.
-        // Note: if containsBoth.length is 1, the questions appeared together once, but you need two data points
-        //       to compute a covariance. The "best" we can do in this case is to assume a covariance of 0.
-        let cov = q1Scores.length >= 2 ? sampleCovariance(q1Scores, q2Scores) : 0;
+        // Covariance can only be computed if there are at least 2 data points
+        if (q1Scores.length >= 2) {
+          let cov = sampleCovariance(q1Scores, q2Scores);
+          assert(!isNaN(cov), q1.question_id + " " + q2.question_id + " has a NaN covariance");
+          this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
+        }
 
-        assert(!isNaN(cov), q1.question_id + " " + q2.question_id + " has a NaN covariance");
-
-        this.gradedQuestionCovarianceMatrix[q1.question_id][q2.question_id] = cov;
       });
     });
   }
@@ -81,10 +78,11 @@ export class GradedStats {
   }
 
   public questionStddev(question_id: string) {
-    return Math.sqrt(this.gradedQuestionCovarianceMatrix[question_id][question_id]);
+    let variance = this.gradedQuestionCovarianceMatrix[question_id][question_id];
+    return variance && Math.sqrt(variance);
   }
 
   public questionCovariance(question_id_1: string, question_id_2: string) {
-    return Math.sqrt(this.gradedQuestionCovarianceMatrix[question_id_1][question_id_2]);
+    return this.gradedQuestionCovarianceMatrix[question_id_1][question_id_2];
   }
 }
