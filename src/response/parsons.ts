@@ -59,22 +59,55 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
 }
 
 function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
-  return createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid);
+  return `
+    <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
+      ${Object.keys(response.bank).map(id => createFilledParsons(response.bank[id], response.bank, question_uuid)).join("")}
+    </div>
+    ${createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid)}
+  `;
 }
 
 function PARSONS_ACTIVATE(responseElem: JQuery) {
+
   responseElem.find(".examma-ray-fitb-drop-location").each(function() {
     let self = $(this);
     Sortable.create(this, {
       swapThreshold: 0.2,
       group: {
-        name: `group-${self.data("examma-ray-drop-group-id")}`,
+        name: `group-${self.data("examma-ray-fitb-drop-group-id")}`,
         put: () => {return self.closest("#bank").length === 0;},
         pull: () => { return true; }
       },
       removeOnSpill: true
     });
   });
+
+  // Fill each bank element with copies of the hidden originals.
+  // This comes after activating sortablejs on the individual elements,
+  // since we don't want that to happen for nested drop locations within a bank.
+  let originals = responseElem.find(".examma-ray-fitb-drop-originals").first();
+  let group_id = originals.data("examma-ray-fitb-drop-group-id");
+  $(`.examma-ray-fitb-drop-bank[data-examma-ray-fitb-drop-group-id='${group_id}']`).each(function() {
+    let bank = $(this);
+    originals.children().each(function() {
+      bank.append($(this).clone());
+    });
+
+    // Activate sortablejs for the bank overall
+    Sortable.create(bank[0], {
+      swapThreshold: 0.2,
+      group: {
+        name: `group-${group_id}`,
+        pull: "clone",
+        put: () => { return false; }
+      },
+      sort: false,
+      animation: 150,
+      // TODO
+      // onClone: function(evt) {registerAll($(evt.item)); }
+    });
+  });
+
 }
 
 function getFirstLevelParsonsElements(responseElem: JQuery<HTMLElement>) {
@@ -150,7 +183,7 @@ function PARSONS_FILLER(responseElem: JQuery, submission: ParsonsSubmission) {
     return;
   }
 
-  fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-bank"));
+  fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-originals"));
 }
 
 export const PARSONS_HANDLER = {
@@ -183,7 +216,7 @@ const DROP_LOCATION_PATTERN = /\[\[[ _]*drop[ _]*( *\n)* *\]\]/gi;
 /**
  * Matches anything that looks like e.g. _BANK_ or _____drop_bank_____.
  */
-const BANK_PATTERN = /_+ *drop_bank *_+/gi;
+const DROP_BANK_PATTERN = /_+ *drop_bank *_+/gi;
 
 function count_char(str: string, c: string) {
   let count = 0;
@@ -201,6 +234,7 @@ export function createFilledParsons(
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,
   dropLocationRenderer = DEFAULT_DROP_LOCATION_RENDERER,
+  dropBankRenderer = DEFAULT_DROP_BANK_RENDERER,
   encoder: (s:string)=>string = encode) {
 
   // count the number of underscores in each blank pattern
@@ -216,12 +250,14 @@ export function createFilledParsons(
   
   // Replace blanks/boxes with an arbitrary string that won't mess with
   // the way the markdown is rendered
-  let blank_id = "laefiahslkefhalskdfjlksn";
-  let box_id = "ewonfeoawihlawenfawhflaw";
-  let drop_box_id = "ownerifweoinfahgknslflak";
+  let blank_id = "da3c7c73824142bba052a47165dff342";
+  let box_id = "b3bc36eb6f8b47d1b45bc74c0aa8abc4";
+  let drop_box_id = "c1f10a2d58234882aeaf0f528a35aba3";
+  let drop_bank_id = "ef36c45b04ac41debe12533f4bb194eb";
   content = content.replace(BLANK_PATTERN, blank_id);
   content = content.replace(BOX_PATTERN, box_id);
   content = content.replace(DROP_LOCATION_PATTERN, drop_box_id);
+  content = content.replace(DROP_BANK_PATTERN, drop_bank_id);
 
   // Render markdown
   content = mk2html(content);
@@ -247,6 +283,9 @@ export function createFilledParsons(
   dropLocationLines.forEach((lines, i) => {
     content = content.replace(drop_box_id, dropLocationRenderer(submission_placeholder, question_uuid, lines, dropLocationWidths[i]));
   });
+
+  // Replace each drop bank
+  content = content.replace(new RegExp(drop_bank_id, "g"), dropBankRenderer(question_uuid));
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
@@ -280,5 +319,10 @@ function DEFAULT_BOX_RENDERER(submission_placeholder: string, lines: number, wid
 }
 
 function DEFAULT_DROP_LOCATION_RENDERER(submission_placeholder: string, group_id: string, lines: number, width: number) {
-  return `<span class="examma-ray-fitb-drop-location data-examma-ray-drop-group-id='${group_id}'">${submission_placeholder}</span>`;
+  let style = `style="min-width: ${width}ch; min-height: ${3 * lines}ch"`;
+  return `<span class="examma-ray-fitb-drop-location" data-examma-ray-fitb-drop-group-id="${group_id}" ${style}>${submission_placeholder}</span>`;
+}
+
+function DEFAULT_DROP_BANK_RENDERER(group_id: string,) {
+  return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}"></div>`;
 }
