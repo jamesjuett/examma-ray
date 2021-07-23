@@ -74,20 +74,20 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     
     let result = this.grade_helper(submission);
 
-    if (aq.question.sampleSolution) {
-      let sampleSolution = aq.question.sampleSolution;
-      assert(sampleSolution.length === this.rubric.length, `Error: Mismatched number of answers in FITB sample solution vs. rubric for ${aq.question.question_id}`.red)
-      let mutableSubmission = submission.slice();
-      let solutionWords = identifyCodeWords(sampleSolution);
+    // if (aq.question.sampleSolution) {
+    //   let sampleSolution = aq.question.sampleSolution;
+    //   assert(sampleSolution.length === this.rubric.length, `Error: Mismatched number of answers in FITB sample solution vs. rubric for ${aq.question.question_id}`.red)
+    //   let mutableSubmission = submission.slice();
+    //   let solutionWords = identifyCodeWords(sampleSolution);
   
-      let submissionWords = identifyCodeWords(mutableSubmission);
-      submissionWords.forEach(subWord => solutionWords.forEach(solWord => {
-        let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
-        if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
-          // console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
-        }
-      }));
-    }
+    //   let submissionWords = identifyCodeWords(mutableSubmission);
+    //   submissionWords.forEach(subWord => solutionWords.forEach(solWord => {
+    //     let newResult = this.grade_helper(replaceWordInSubmission(mutableSubmission, subWord, solWord));
+    //     if (newResult.pointsEarned > result.pointsEarned + this.minRubricItemPoints) {
+    //       // console.log(`HEYYYYY, might be double jeopardy here. ${aq.question.question_id} Replace ${subWord} with ${solWord}! ${result.pointsEarned} --> ${newResult.pointsEarned}`);
+    //     }
+    //   }));
+    // }
 
 
     return result;
