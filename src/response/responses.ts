@@ -1,8 +1,9 @@
-import { CODE_FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
+import { FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MCSpecification, MCSubmission, MC_HANDLER } from "./multiple_choice";
 import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
+import { ParsonsSpecification, ParsonsSubmission, PARSONS_HANDLER } from "./parsons";
 import { QuestionSkin } from "../skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
@@ -10,6 +11,7 @@ export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSpecification :
   QT extends "select_a_statement" ? SASSpecification :
   QT extends "code_editor" ? CodeEditorSpecification :
+  QT extends "parsons" ? ParsonsSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
@@ -17,12 +19,13 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSubmission :
   QT extends "select_a_statement" ? SASSubmission :
   QT extends "code_editor" ? CodeEditorSubmission :
+  QT extends "parsons" ? ParsonsSubmission :
   never;
 
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
-  render: (response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) => string,
+  render: (response: ResponseSpecification<QT>, question_uuid: string, skin?: QuestionSkin) => string,
   activate?: (responseElem: JQuery) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
@@ -32,17 +35,18 @@ export const RESPONSE_HANDLERS : {
   [QT in ResponseKind]: ResponseHandler<QT>
 } = {
   "multiple_choice": MC_HANDLER,
-  "fitb": CODE_FITB_HANDLER,
+  "fitb": FITB_HANDLER,
   "select_a_statement": SAS_HANDLER,
-  "code_editor": CODE_EDITOR_HANDLER
+  "code_editor": CODE_EDITOR_HANDLER,
+  "parsons": PARSONS_HANDLER
 };
 
 export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {
   return <SubmissionType<QT>>RESPONSE_HANDLERS[kind].parse(rawSubmission);
 }
 
-export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, skin?: QuestionSkin) : string {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, skin);
+export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_uuid: string, skin?: QuestionSkin) : string {
+  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_uuid, skin);
 }
 
 export function activate_response<QT extends ResponseKind>(kind: QT, responseElem: JQuery) : void {

@@ -66,7 +66,7 @@ function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   }
 }
 
-export const CODE_FITB_HANDLER = {
+export const FITB_HANDLER = {
   parse: FITB_PARSER,
   render: FITB_RENDERER,
   extract: FITB_EXTRACTOR,
@@ -81,8 +81,8 @@ export const CODE_FITB_HANDLER = {
 const BLANK_PATTERN = /_+ *(BLANK|Blank|blank) *_+/g;
 
 /**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n]] or [[Box\n\n]].
- * Those are real newlines, and at least 2 are required.
+ * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
+ * Those are real newlines, and at least 1 is required.
  */
 const BOX_PATTERN = /\[\[[ _]*(BOX|Box|box)[ _]*( *\n)+ *\]\]/g;
 

@@ -5,10 +5,12 @@ import { QuestionSkin } from "../skins";
 import { assert, assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
+import Sortable from "sortablejs";
 
 export type ParsonsSpecification = {
   kind: "parsons";
   content: string;
+  bank: {[index: string]: string};
   sample_solution?: Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>;
   default_grader?: QuestionGrader<"parsons", any>;
 };
@@ -56,8 +58,23 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
   }
 }
 
-function PARSONS_RENDERER(response: ParsonsSpecification, question_id: string, skin?: QuestionSkin) {
-  return createFilledParsons(applySkin(response.content, skin));
+function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
+  return createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid);
+}
+
+function PARSONS_ACTIVATE(responseElem: JQuery) {
+  responseElem.find(".examma-ray-fitb-drop-location").each(function() {
+    let self = $(this);
+    Sortable.create(this, {
+      swapThreshold: 0.2,
+      group: {
+        name: `group-${self.data("examma-ray-drop-group-id")}`,
+        put: () => {return self.closest("#bank").length === 0;},
+        pull: () => { return true; }
+      },
+      removeOnSpill: true
+    });
+  });
 }
 
 function getFirstLevelParsonsElements(responseElem: JQuery<HTMLElement>) {
@@ -136,9 +153,10 @@ function PARSONS_FILLER(responseElem: JQuery, submission: ParsonsSubmission) {
   fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-bank"));
 }
 
-export const CODE_PARSONS_HANDLER = {
+export const PARSONS_HANDLER = {
   parse: PARSONS_PARSER,
   render: PARSONS_RENDERER,
+  activate: PARSONS_ACTIVATE,
   extract: PARSONS_EXTRACTOR,
   fill: PARSONS_FILLER
 };
@@ -148,13 +166,24 @@ export const CODE_PARSONS_HANDLER = {
 /**
  * Matches anything that looks like e.g. ___BLANK___ or _____Blank_____.
  */
-const BLANK_PATTERN = /_+ *(BLANK|Blank|blank) *_+/g;
+const BLANK_PATTERN = /_+ *blank *_+/gi;
 
 /**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n]] or [[Box\n\n]].
- * Those are real newlines, and at least 2 are required.
+ * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
+ * Those are real newlines, and at least 1 is required.
  */
-const BOX_PATTERN = /\[\[[ _]*(BOX|Box|box)[ _]*( *\n)+ *\]\]/g;
+const BOX_PATTERN = /\[\[[ _]*box[ _]*( *\n)+ *\]\]/gi;
+
+/**
+ * Matches anything that looks like e.g. [[DROP\n\n\n\n\n__________] or [[Drop\n\n]].
+ * Those are real newlines, and at least 1 is required.
+ */
+const DROP_LOCATION_PATTERN = /\[\[[ _]*drop[ _]*( *\n)* *\]\]/gi;
+
+/**
+ * Matches anything that looks like e.g. _BANK_ or _____drop_bank_____.
+ */
+const BANK_PATTERN = /_+ *drop_bank *_+/gi;
 
 function count_char(str: string, c: string) {
   let count = 0;
@@ -165,24 +194,34 @@ function count_char(str: string, c: string) {
 }
 
 export function createFilledParsons(
-  content: string, submission?: ParsonsSubmission,
+  content: string,
+  dropBank: {[index: string]: string},
+  question_uuid: string,
+  submission?: ParsonsSubmission,
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,
+  dropLocationRenderer = DEFAULT_DROP_LOCATION_RENDERER,
   encoder: (s:string)=>string = encode) {
 
   // count the number of underscores in each blank pattern
   let blankLengths = content.match(BLANK_PATTERN)?.map(m => count_char(m, "_")) ?? [];
 
-  // count the number of newlines in each box pattern (will be number of lines in textarea)
+  // count the number of newlines and underscores in each box pattern (will be number of lines in textarea)
   let boxLines = content.match(BOX_PATTERN)?.map(m => 1+count_char(m, "\n")) ?? [];
   let boxWidths = content.match(BOX_PATTERN)?.map(m => count_char(m, "_")) ?? [];
+
+  // count the number of newlines and underscores in each box pattern (will be max number of drops allowed in that box)
+  let dropLocationLines = content.match(DROP_LOCATION_PATTERN)?.map(m => 1+count_char(m, "\n")) ?? [];
+  let dropLocationWidths = content.match(DROP_LOCATION_PATTERN)?.map(m => count_char(m, "_")) ?? [];
   
   // Replace blanks/boxes with an arbitrary string that won't mess with
   // the way the markdown is rendered
   let blank_id = "laefiahslkefhalskdfjlksn";
   let box_id = "ewonfeoawihlawenfawhflaw";
+  let drop_box_id = "ownerifweoinfahgknslflak";
   content = content.replace(BLANK_PATTERN, blank_id);
   content = content.replace(BOX_PATTERN, box_id);
+  content = content.replace(DROP_LOCATION_PATTERN, drop_box_id);
 
   // Render markdown
   content = mk2html(content);
@@ -194,7 +233,7 @@ export function createFilledParsons(
   // Replace each of the "blank ids" in the rendered html with
   // a corresponding input element of the right size based on the
   // number of underscores that were originally in the "__BLANK__"
-  blankLengths.forEach((length) => {
+  blankLengths.forEach(length => {
     content = content.replace(blank_id, blankRenderer(submission_placeholder, length))
   });
 
@@ -205,10 +244,20 @@ export function createFilledParsons(
     content = content.replace(box_id, boxRenderer(submission_placeholder, lines, boxWidths[i]));
   });
 
+  dropLocationLines.forEach((lines, i) => {
+    content = content.replace(drop_box_id, dropLocationRenderer(submission_placeholder, question_uuid, lines, dropLocationWidths[i]));
+  });
+
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
-    submission.forEach(
-      sub => content = content.replace(submission_placeholder, encoder(sub))
+    submission.forEach(sub => content = content.replace(submission_placeholder,
+      typeof sub === "string"
+       ? encoder(sub)
+       : sub.map(s => {
+          assert(dropBank[s.id], `Cannot find drop item with ID ${s.id}.`);
+          return createFilledParsons(dropBank[s.id], dropBank, question_uuid, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
+       }).join("")
+      )
     );
   }
 
@@ -228,4 +277,8 @@ function DEFAULT_BOX_RENDERER(submission_placeholder: string, lines: number, wid
   let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`;
   let style = `style="resize: none; overflow: auto;${width === 0 ? " width: 100%;" : ""}"`;
   return `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`;
+}
+
+function DEFAULT_DROP_LOCATION_RENDERER(submission_placeholder: string, group_id: string, lines: number, width: number) {
+  return `<span class="examma-ray-fitb-drop-location data-examma-ray-drop-group-id='${group_id}'">${submission_placeholder}</span>`;
 }
