@@ -61,7 +61,7 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
 function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
-      ${Object.keys(response.bank).map(id => createFilledParsons(response.bank[id], response.bank, question_uuid)).join("")}
+      ${Object.keys(response.bank).map(id => createFilledParsons(response.bank[id], response.bank, question_uuid, skin)).join("")}
     </div>
     ${createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid)}
   `;
@@ -73,6 +73,7 @@ function PARSONS_ACTIVATE(responseElem: JQuery) {
     let self = $(this);
     Sortable.create(this, {
       swapThreshold: 0.2,
+      animation: 150,
       group: {
         name: `group-${self.data("examma-ray-fitb-drop-group-id")}`,
         put: () => {return self.closest("#bank").length === 0;},
@@ -230,6 +231,7 @@ export function createFilledParsons(
   content: string,
   dropBank: {[index: string]: string},
   question_uuid: string,
+  skin?: QuestionSkin,
   submission?: ParsonsSubmission,
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,
@@ -294,7 +296,7 @@ export function createFilledParsons(
        ? encoder(sub)
        : sub.map(s => {
           assert(dropBank[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createFilledParsons(dropBank[s.id], dropBank, question_uuid, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
+          return createFilledParsons(mk2html(dropBank[s.id], skin), dropBank, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
        }).join("")
       )
     );

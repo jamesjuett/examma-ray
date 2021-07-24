@@ -417,6 +417,39 @@ code {
   background-color: rgba(0, 0, 255, 0.05);
 }
 
+.examma-ray-fitb-drop-bank > * {
+  display: inline-block;
+  vertical-align: middle;
+  min-width: 5ch;
+  min-height: 3ch;
+  margin: 5px;
+  border: solid 1px rgba(0, 0, 255, 0.2);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 255, 0.05);
+}
+
+.examma-ray-fitb-drop-location {
+  display: inline-block;
+  vertical-align: middle;
+  min-width: 5ch;
+  min-height: 3ch;
+  margin: 5px;
+  border: solid 1px rgba(0, 0, 255, 0.2);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 255, 0.05);
+}
+
+.examma-ray-fitb-drop-location > * {
+  margin: 5px;
+}
+
+.examma-ray-fitb-drop-location > *:not(:only-child) {
+  margin: 5px;
+  border: solid 1px rgba(0, 0, 255, 0.2);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 255, 0.05);
+}
+
 
 /* STARS */
 
