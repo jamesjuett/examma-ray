@@ -61,7 +61,11 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
 function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
-      ${Object.keys(response.bank).map(id => createFilledParsons(response.bank[id], response.bank, question_uuid, skin)).join("")}
+      ${Object.keys(response.bank).map(id => 
+        `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">
+          ${createFilledParsons(response.bank[id], response.bank, question_uuid, skin)}
+        </div>`
+      ).join("")}
     </div>
     ${createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid)}
   `;
@@ -69,19 +73,7 @@ function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string,
 
 function PARSONS_ACTIVATE(responseElem: JQuery) {
 
-  responseElem.find(".examma-ray-fitb-drop-location").each(function() {
-    let self = $(this);
-    Sortable.create(this, {
-      swapThreshold: 0.2,
-      animation: 150,
-      group: {
-        name: `group-${self.data("examma-ray-fitb-drop-group-id")}`,
-        put: () => {return self.closest("#bank").length === 0;},
-        pull: () => { return true; }
-      },
-      removeOnSpill: true
-    });
-  });
+  activateDropLocations(responseElem);
 
   // Fill each bank element with copies of the hidden originals.
   // This comes after activating sortablejs on the individual elements,
@@ -105,10 +97,25 @@ function PARSONS_ACTIVATE(responseElem: JQuery) {
       sort: false,
       animation: 150,
       // TODO
-      // onClone: function(evt) {registerAll($(evt.item)); }
+      onClone: evt => activateDropLocations($(evt.item))
     });
   });
 
+}
+
+function activateDropLocations(elem: JQuery<HTMLElement>) {
+  elem.find(".examma-ray-fitb-drop-location").each(function() {
+    Sortable.create(this, {
+      swapThreshold: 0.2,
+      animation: 150,
+      group: {
+        name: `group-${elem.data("examma-ray-fitb-drop-group-id")}`,
+        put: () => { return elem.closest("#bank").length === 0; },
+        pull: () => { return true; }
+      },
+      removeOnSpill: true
+    });
+  });
 }
 
 function getFirstLevelParsonsElements(responseElem: JQuery<HTMLElement>) {
@@ -122,23 +129,23 @@ function getFirstLevelParsonsElements(responseElem: JQuery<HTMLElement>) {
 }
 
 function extractHelper(responseElem: JQuery) : Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>{
-  return getFirstLevelParsonsElements(responseElem).map(function(this: HTMLElement) : string | DropSubmission {
+  return getFirstLevelParsonsElements(responseElem).map((elem: HTMLElement) => {
       let v: string | DropSubmission;
-      if ($(this).hasClass("examma-ray-fitb-drop-location")) {
+      if ($(elem).hasClass("examma-ray-fitb-drop-location")) {
         // Cases where we're looking at the element for a drop location. We
         // find all direct children that are droppables, then map over them
         // to extract their id and any children they hold recursively.
-        v = $(this).children(".examma-ray-fitb-droppable").get().map(function(this: HTMLElement) {
+        v = $(elem).children(".examma-ray-fitb-droppable").get().map((elem: HTMLElement) => {
           return {
-            id: "" + $(this).data("examma-ray-fitb-drop-id"),
-            children: extractHelper($(this))
+            id: "" + $(elem).data("examma-ray-fitb-drop-id"),
+            children: extractHelper($(elem))
           };
         });
       }
       else {
         // Cases where we selected an input or textarea element. Extract its
         // value as a string.
-        v = "" + ($(this).val() ?? "");
+        v = "" + ($(elem).val() ?? "");
         v = v.trim() === "" ? "" : v;
       }
       return v;
