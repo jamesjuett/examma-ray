@@ -170,6 +170,7 @@ function fillerHelper(elem: JQuery, submission: Exclude<ParsonsSubmission, typeo
     : sub.forEach(s => {
       // Fill in a clone of the element we recorded they had dropped in
       let droppedElem = cloneFromBank(dropBank, s.id);
+      activateDropLocations(droppedElem);
       $(elems[i]).append(droppedElem);
       // TODO: does anything need to be activated for sortablejs on the dropped element? I think so
       
