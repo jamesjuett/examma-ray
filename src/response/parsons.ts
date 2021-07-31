@@ -10,7 +10,8 @@ import Sortable from "sortablejs";
 export type ParsonsSpecification = {
   kind: "parsons";
   content: string;
-  bank: {[index: string]: string};
+  droppables: {[index: string]: string};
+  starter?: Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>;
   sample_solution?: Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>;
   default_grader?: QuestionGrader<"parsons", any>;
 };
@@ -61,13 +62,13 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
 function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
-      ${Object.keys(response.bank).map(id => 
+      ${Object.keys(response.droppables).map(id => 
         `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">
-          ${createFilledParsons(response.bank[id], response.bank, question_uuid, skin)}
+          ${createFilledParsons(response.droppables[id], response.droppables, question_uuid, skin)}
         </div>`
       ).join("")}
     </div>
-    ${createFilledParsons(applySkin(response.content, skin), response.bank, question_uuid)}
+    ${createFilledParsons(applySkin(response.content, skin), response.droppables, question_uuid)}
   `;
 }
 
@@ -123,7 +124,21 @@ function getFirstLevelParsonsElements(responseElem: JQuery<HTMLElement>) {
     .filter(function () {
       // Exclude elements that are nested inside an .examma-ray-fitb-drop-location element. Those
       // will be explored via the recursion below to properly populate the "children" array for a drop location.
-      return $(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length === 0;
+      if ($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length !== 0) {
+        return false;
+      }
+
+      // Exclude elements that are inside of the hidden original droppables element
+      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-originals").length !== 0) {
+        return false;
+      }
+
+      // Exclude elements that are inside of a drop bank
+      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-bank").length !== 0) {
+        return false;
+      }
+
+      return true;
     })
     .get();
 }
@@ -157,29 +172,6 @@ function PARSONS_EXTRACTOR(responseElem: JQuery) {
   return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? BLANK_SUBMISSION : filledResponses;
 }
 
-function cloneFromBank(dropBank: JQuery, id: string) {
-  return dropBank.find(`[data-examma-ray-fitb-drop-id='${id}']`).clone();
-}
-
-function fillerHelper(elem: JQuery, submission: Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>, dropBank: JQuery) {
-
-  let elems = getFirstLevelParsonsElements(elem);
-  assert(elems.length === submission.length);
-  submission.forEach((sub, i) => typeof sub === "string"
-    ? $(elems[i]).val(sub) // just set value if it was a blank/box
-    : sub.forEach(s => {
-      // Fill in a clone of the element we recorded they had dropped in
-      let droppedElem = cloneFromBank(dropBank, s.id);
-      activateDropLocations(droppedElem);
-      $(elems[i]).append(droppedElem);
-      // TODO: does anything need to be activated for sortablejs on the dropped element? I think so
-      
-      // Recursively process any children on the dropped element/submission
-      fillerHelper(droppedElem, s.children, dropBank);
-    })
-  );
-}
-
 function PARSONS_FILLER(responseElem: JQuery, submission: ParsonsSubmission) {
 
   if (submission === BLANK_SUBMISSION) {
@@ -203,7 +195,37 @@ export const PARSONS_HANDLER = {
   fill: PARSONS_FILLER
 };
 
+function fillerHelper(elem: JQuery, submission: Exclude<ParsonsSubmission, typeof BLANK_SUBMISSION>, originalsElem: JQuery) {
 
+  let elems = getFirstLevelParsonsElements(elem);
+  assert(elems.length === submission.length);
+  submission.forEach((sub, i) => typeof sub === "string"
+    ? $(elems[i]).val(sub) // just set value if it was a blank/box
+    : fillDropLocation($(elems[i]), sub, originalsElem)
+  );
+}
+
+function fillDropLocation(dropLocationElem: JQuery, sub: DropSubmission, originalsElem: JQuery) {
+
+  // clear out previous submission elements
+  dropLocationElem.empty();
+
+  sub.forEach(s => { // Alternative if it's a dropped submission
+
+    // Create a clone of the element we recorded they had dropped in
+    let droppedElem = cloneFromOriginals(originalsElem, s.id);
+
+    dropLocationElem.append(droppedElem);
+    activateDropLocations(droppedElem);
+    
+    // Recursively process any children on the dropped element/submission
+    fillerHelper(droppedElem, s.children, originalsElem);
+  });
+}
+
+function cloneFromOriginals(originalsElem: JQuery, id: string) {
+  return originalsElem.find(`[data-examma-ray-fitb-drop-id='${id}']`).clone();
+}
 
 /**
  * Matches anything that looks like e.g. ___BLANK___ or _____Blank_____.
@@ -237,7 +259,7 @@ function count_char(str: string, c: string) {
 
 export function createFilledParsons(
   content: string,
-  dropBank: {[index: string]: string},
+  dropOriginals: {[index: string]: string},
   question_uuid: string,
   skin?: QuestionSkin,
   submission?: ParsonsSubmission,
@@ -303,8 +325,8 @@ export function createFilledParsons(
       typeof sub === "string"
        ? encoder(sub)
        : sub.map(s => {
-          assert(dropBank[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createFilledParsons(mk2html(dropBank[s.id], skin), dropBank, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
+          assert(dropOriginals[s.id], `Cannot find drop item with ID ${s.id}.`);
+          return createFilledParsons(mk2html(dropOriginals[s.id], skin), dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
        }).join("")
       )
     );
