@@ -18,7 +18,7 @@ export type ParsonsSpecification = {
 
 export type DropSubmission = {
   id: string,
-  children: (string | DropSubmission)[]
+  children?: (string | DropSubmission)[]
 }[];
 
 export type ParsonsSubmission = (string | DropSubmission)[] | typeof BLANK_SUBMISSION;
@@ -59,16 +59,20 @@ function PARSONS_PARSER(rawSubmission: string | null | undefined) : ParsonsSubmi
   }
 }
 
+function createDroppableElement(id: string, html: string) {
+  return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">
+    ${html}
+  </div>`
+}
+
 function PARSONS_RENDERER(response: ParsonsSpecification, question_uuid: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
-      ${Object.keys(response.droppables).map(id => 
-        `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">
-          ${createFilledParsons(response.droppables[id], response.droppables, question_uuid, skin)}
-        </div>`
+      ${Object.keys(response.droppables).map(
+        id => createDroppableElement(id, createFilledParsons(response.droppables[id], response.droppables, question_uuid, skin))
       ).join("")}
     </div>
-    ${createFilledParsons(applySkin(response.content, skin), response.droppables, question_uuid)}
+    ${createFilledParsons(applySkin(response.content, skin), response.droppables, question_uuid, skin, response.starter)}
   `;
 }
 
@@ -219,7 +223,7 @@ function fillDropLocation(dropLocationElem: JQuery, sub: DropSubmission, origina
     activateDropLocations(droppedElem);
     
     // Recursively process any children on the dropped element/submission
-    fillerHelper(droppedElem, s.children, originalsElem);
+    fillerHelper(droppedElem, s.children || [], originalsElem);
   });
 }
 
@@ -292,7 +296,7 @@ export function createFilledParsons(
   content = content.replace(DROP_BANK_PATTERN, drop_bank_id);
 
   // Render markdown
-  content = mk2html(content);
+  content = mk2html(content, skin);
 
   // Include this in the html below so we can replace it in a moment
   // with the appropriate submission values
@@ -321,12 +325,13 @@ export function createFilledParsons(
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
+    console.log(submission);
     submission.forEach(sub => content = content.replace(submission_placeholder,
       typeof sub === "string"
        ? encoder(sub)
        : sub.map(s => {
           assert(dropOriginals[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createFilledParsons(mk2html(dropOriginals[s.id], skin), dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer)
+          return createDroppableElement(s.id, createFilledParsons(mk2html(dropOriginals[s.id], skin), dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
        }).join("")
       )
     );
