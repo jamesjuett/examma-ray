@@ -1,6 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
 import { applySkin, mk2html } from '../src/render';
+import { readFileSync } from 'fs';
+import path from 'path';
 
 describe('applySkin() function', () => {
 
