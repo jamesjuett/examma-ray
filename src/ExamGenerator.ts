@@ -10,6 +10,7 @@ import { ResponseKind } from './examma-ray';
 import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
+import path from 'path';
 
 type SectionStats = {
   section: Section,
@@ -194,10 +195,10 @@ export class ExamGenerator {
     return this.assignedExams.map(ex => ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path));
   }
 
-  public writeAll() {
+  public writeAll(examDir: string = "out", manifestDir: string = "data") {
 
-    const examDir = `out/${this.exam.exam_id}/exams`;
-    const manifestDir = `data/${this.exam.exam_id}/manifests`;
+    examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
+    manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });

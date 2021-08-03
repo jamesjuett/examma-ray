@@ -1,12 +1,14 @@
-describe('Welcome Modals', () => {
+describe("Welcome Modals", () => {
+  
+  const EXAM_URL = "simple_test/exams/test-test-simple_test.html";
 
   beforeEach(() => {
     cy.clearLocalStorage();
   });
 
-  it('Shows the normal welcome modal', () => {
+  it("Shows the normal welcome modal", () => {
 
-    cy.visit('test-test-simple_test.html');
+    cy.visit(EXAM_URL);
 
     cy.get("#exam-welcome-normal-modal button").click();
 
@@ -14,12 +16,12 @@ describe('Welcome Modals', () => {
 
   });
 
-  it('Shows the disabled local storage modal', () => {
+  it("Shows the disabled local storage modal", () => {
 
     cy.disableLocalStorage({
       withError: new Error("Local storage disabled for test.")
     });
-    cy.visit('test-test-simple_test.html');
+    cy.visit(EXAM_URL);
 
     cy.get("#exam-welcome-no-autosave-modal button").click();
 
@@ -27,9 +29,9 @@ describe('Welcome Modals', () => {
 
   });
 
-  it('Shows the answers restored modal', () => {
+  it("Shows the answers restored modal", () => {
 
-    cy.visit('test-test-simple_test.html');
+    cy.visit(EXAM_URL);
 
     cy.get("#exam-welcome-normal-modal button").click();
 

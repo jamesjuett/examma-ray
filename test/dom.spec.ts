@@ -6,13 +6,12 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import path from 'path';
 import { Exam, RenderMode } from '../src/exams';
 import { ExamGenerator } from "../src/ExamGenerator";
-import { Section_Simple_Test } from './content/simple/test';
+import { Section_Simple_Test } from './test-exams/content/simple/test';
 import { ExamUtils } from '../src/ExamUtils';
 
 const opts = {
   headless: true,
-  timeout: 10000,
-  args: [ '--disable-web-security', '--allow-file-access-from-files', '--enable-local-file-accesses']
+  timeout: 10000
 };
 
 let browser: Browser;
@@ -29,7 +28,7 @@ describe('index.html', function() {
       id: "simple_test",
       title: "Simple Test Exam",
       mk_intructions: "[Instructions]",
-      html_questions_message: `[Questions Message]`,
+      mk_questions_message: `[Questions Message]`,
       sections: [
         Section_Simple_Test
       ]

@@ -31,6 +31,13 @@ export function mk2html(mk: string, skin?: QuestionSkin) {
   return converter.makeHtml(mk);
 }
 
+export function mk2html_unwrapped(mk: string, skin?: QuestionSkin) {
+  let html = mk2html(mk, skin);
+  return html.startsWith("<p>") && html.endsWith("</p>")
+    ? html.slice(3, -4)
+    : html;
+}
+
 export function applySkin(text: string, skin: QuestionSkin | undefined) {
   if (!skin) {
     return text;

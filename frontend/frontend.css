@@ -334,6 +334,10 @@ code {
   text-align: center;
 }
 
+.examma-ray-exam-saver-status-note {
+  margin: 5px;
+}
+
 .btn:disabled {
   cursor: not-allowed;
 }

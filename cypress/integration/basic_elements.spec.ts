@@ -1,9 +1,13 @@
+
+
 describe('Welcome Modals', () => {
 
+  const EXAM_URL = "simple_test/exams/test-test-simple_test.html";
+  
   beforeEach(() => {
     cy.clearLocalStorage();
 
-    cy.visit('test-test-simple_test.html');
+    cy.visit(EXAM_URL);
 
     cy.get("#exam-welcome-normal-modal button").click();
 

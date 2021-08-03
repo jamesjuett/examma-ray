@@ -176,20 +176,12 @@ function onUnsavedChanges() {
   $(".examma-ray-exam-answers-file-button")
     .html(UNSAVED_CHANGES_HTML);
 
-  $("#examma-ray-exam-saver-status-note")
-    .css("visibility", "visible")
-    .html("Download an answers file to submit to Canvas.")
-
   HAS_UNSAVED_CHANGES = true;
 }
 
 function onSaved() {
   $(".examma-ray-exam-answers-file-button")
     .html(SAVED_HTML);
-
-  $("#examma-ray-exam-saver-status-note")
-    .css("visibility", "visible")
-    .html("Download an answers file to submit to Canvas.")
 
   HAS_UNSAVED_CHANGES = false;
 }

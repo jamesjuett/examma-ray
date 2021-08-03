@@ -15,7 +15,9 @@ export type ExamSpecification = {
   mk_announcements?: string[],
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
   enable_regrades?: boolean,
-  html_questions_message: string
+  mk_questions_message?: string,
+  mk_download_message?: string,
+  mk_bottom_message?: string
 };
 
 export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];

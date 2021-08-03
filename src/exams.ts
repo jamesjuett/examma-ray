@@ -2,7 +2,7 @@ import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, FILLED_STAR } from './icons';
 import { asMutable, assert, Mutable } from './util';
 import { parse_submission, ResponseSpecification, render_response, SubmissionType } from './response/responses';
 import { BLANK_SUBMISSION, ResponseKind } from './response/common';
-import { mk2html } from './render';
+import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderFixedPrecisionBadge, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
@@ -494,11 +494,11 @@ export class AssignedExam {
     return `
       <div class="examma-ray-exam-saver-status">
         <div>
-          ${this.exam.html_questions_message}
+          ${mk2html_unwrapped(this.exam.mk_questions_message)}
         </div>
         <br />
         <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
-        <div id="examma-ray-exam-saver-status-note" style="margin: 5px; visibility: hidden;"></div>
+        <div id="examma-ray-exam-saver-status-note">${mk2html_unwrapped(this.exam.mk_download_message)}</div>
       </div>`
   }
 
@@ -551,7 +551,7 @@ export class AssignedExam {
           ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
           <div class="container examma-ray-bottom-message">
             <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html(MK_DEFAULT_BOTTOM_MESSAGE_CANVAS)}
+              ${mk2html_unwrapped(this.exam.mk_bottom_message)}
             </div>
           </div>
         </div>
@@ -615,21 +615,30 @@ export interface GradedExam extends AssignedExam {
   readonly pointsEarned: number;
 }
 
-export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = `
-  Click the button below to save a copy of your answers as a \`.json\`
-  file. You may save as many times as you like. You can also restore answers
-  from a previously saved file.
-  
-  **Important!** You MUST submit your \`.json\` answers file to **Canvas**
-  BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
-  It is up to you to download your answer file and turn it in on **Canvas**.
-  
-  **Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
+export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = 
+`Click the button below to save a copy of your answers as a \`.json\`
+file. You may save as many times as you like. You can also restore answers
+from a previously saved file.
 
-export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = `
-  You've reached the bottom of the exam! If you're done, make sure to
-  click the **"Answers File"** button, download a **\`.json\`
-  answers file**, and submit to **Canvas** before the end of the exam!`;
+**Important!** You MUST submit your \`.json\` answers file to **Canvas**
+BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
+It is up to you to download your answer file and turn it in on **Canvas**.
+
+**Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
+
+export const MK_DEFAULT_QUESTIONS_MESSAGE = "";
+
+export const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
+
+export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = 
+`You've reached the bottom of the exam! If you're done, make sure to
+click the **"Answers File"** button, download a **\`.json\`
+answers file**, and submit to **Canvas** before the end of the exam!`;
+
+export const MK_DEFAULT_BOTTOM_MESSAGE = 
+`You've reached the bottom of the exam! If you're done, make sure to
+click the **"Answers File"** button, download a **\`.json\`
+answers file**, and submit it before the end of the exam!`;
 
 
 export const MK_DEFAULT_REGRADE_MESSAGE = 
@@ -646,7 +655,9 @@ export class Exam {
 
   public readonly html_instructions: string;
   public readonly html_announcements: readonly string[];
-  public readonly html_questions_message: string;
+  public readonly mk_questions_message: string;
+  public readonly mk_download_message: string;
+  public readonly mk_bottom_message: string;
 
   public readonly sections: readonly (SectionSpecification | Section | SectionChooser)[];
 
@@ -657,7 +668,9 @@ export class Exam {
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
-    this.html_questions_message = spec.html_questions_message ?? "";
+    this.mk_questions_message = spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE;
+    this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
+    this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
     this.sections = spec.sections;
     this.enable_regrades = !!spec.enable_regrades;
   }
