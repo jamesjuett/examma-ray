@@ -186,6 +186,14 @@ export class ExamGenerator {
 
   }
 
+  public createManifests() {
+    return this.assignedExams.map(ex => ex.createManifest());
+  }
+
+  public renderExams() {
+    return this.assignedExams.map(ex => ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path));
+  }
+
   public writeAll() {
 
     const examDir = `out/${this.exam.exam_id}/exams`;
@@ -203,20 +211,28 @@ export class ExamGenerator {
 
     let filenames : string[][] = [];
 
-    // Write out manifests and exams for all, sorted by uniqname
-    this.assignedExams
+    let manifests = this.createManifests();
+    let renderedExams = this.renderExams();
+
+    let toWrite = manifests
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
-      .forEach((ex, i, arr) => {
+      .map((m, i) => ({
+      manifest: m,
+      renderedHtml: renderedExams[i]
+    }));
 
-        // Create filename, add to list
-        let filenameBase = ex.student.uniqname + "-" + ex.uuid;
-        filenames.push([ex.student.uniqname, filenameBase])
+    // Write out manifests and exams for all, sorted by uniqname
+    toWrite.forEach((ex, i, arr) => {
+      let manifest = ex.manifest;
+      // Create filename, add to list
+      let filenameBase = manifest.student.uniqname + "-" + manifest.uuid;
+      filenames.push([manifest.student.uniqname, filenameBase])
 
-        console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${ex.student.uniqname} to ${filenameBase}.json`);
-        writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(ex.createManifest(), null, 2), {encoding: "utf-8"});
-        console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${ex.student.uniqname} to ${filenameBase}.html`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path), {encoding: "utf-8"});
-      });
+      console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
+      writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(manifest, null, 2), {encoding: "utf-8"});
+      console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
+      writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
+    });
 
     writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],

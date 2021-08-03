@@ -195,6 +195,7 @@ function onSaved() {
 }
 
 function main() {
+  console.log("in main() function");
 
   try {
     setupQuestionStars();
@@ -212,6 +213,8 @@ function main() {
   setupCodeEditors();
   
   startExam();
+
+  console.log("Exam Started!!!");
 
 }
 

@@ -14,7 +14,8 @@ module.exports = {
     filename: '[name].js',
     libraryTarget: 'umd',
     library: 'ExammaRay',
-    umdNamedDefine: true
+    umdNamedDefine: true,
+    publicPath: ""
   },
   optimization: {
     minimize: false,
