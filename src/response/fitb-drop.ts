@@ -327,13 +327,12 @@ export function createFilledFITBDrop(
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
-    console.log(submission);
     submission.forEach(sub => content = content.replace(submission_placeholder,
       typeof sub === "string"
        ? encoder(sub)
        : sub.map(s => {
           assert(dropOriginals[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createDroppableElement(s.id, createFilledFITBDrop(mk2html(dropOriginals[s.id], skin), dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
+          return createDroppableElement(s.id, createFilledFITBDrop(dropOriginals[s.id], dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
        }).join("")
       )
     );

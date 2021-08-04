@@ -15,10 +15,15 @@ _drop_bank_
 
 
 // EFFECTS: A constructor that does something
-______BLANK______ (int x, int y)
+________BLANK________ (int x, int y)
  : [[_____DROP_____  ]] {
   [[________________________________________DROP________________________________________
   
+  
+  ]]
+  [[_____DROP_____
+  ]]
+  [[____BOX____
   
   ]]
 }
@@ -34,10 +39,17 @@ for(int i = 0; [[_____DROP_____  ]]; ++i) {
       "item3": "item-test-3"
     },
     starter: [
-      "test",
+      "starter-blank",
       [{
         id: "item2"
-      }]
+      }],
+      [{
+        id: "item1"
+      }],
+      [
+
+      ],
+      "starter\nbox"
     ]
   }
 };

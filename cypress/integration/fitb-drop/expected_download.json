@@ -1,0 +1,12 @@
+{
+  "sections": [
+    {
+      "questions": [
+        {
+          "kind": "fitb-drop",
+          "response": "[\"starter-blank\",[{\"id\":\"item2\",\"children\":[]}],[{\"id\":\"item1\",\"children\":[[],\"\"]}],[],\"starter\\nbox\"]"
+        }
+      ]
+    }
+  ]
+}

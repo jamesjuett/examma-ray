@@ -1,0 +1,27 @@
+{
+  "exam_id": "full_test_exam",
+  "uuid": "test-full_test_exam",
+  "student": {
+    "uniqname": "test",
+    "name": "Test Student"
+  },
+  "trusted": false,
+  "sections": [
+    {
+      "section_id": "",
+      "skin_id": "",
+      "uuid": "test-full_test_exam-s-section",
+      "display_index": 1,
+      "questions": [
+        {
+          "question_id": "",
+          "skin_id": "",
+          "uuid": "test-full_test_exam-q-fitb_drop_test",
+          "display_index": 1.1,
+          "kind": "fitb-drop",
+          "response": "[\"starter-blank\",[{\"id\":\"item2\",\"children\":[]}],[{\"id\":\"item1\",\"children\":[[],\"\"]}],[],\"starter\\nbox\"]"
+        }
+      ]
+    }
+  ]
+}

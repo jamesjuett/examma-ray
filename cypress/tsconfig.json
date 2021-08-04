@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["es5", "dom"],
-    "types": ["cypress", "cypress-localstorage-commands"]
+    "types": ["cypress", "cypress-localstorage-commands", "cypress-file-upload", "node"],
+    "esModuleInterop": true,                  /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
+    "resolveJsonModule": true
   },
   "include": ["**/*.ts"]
 }
