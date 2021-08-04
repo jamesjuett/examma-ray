@@ -18,7 +18,7 @@
           "skin_id": "",
           "uuid": "test-full_test_exam-q-fitb_drop_test",
           "display_index": 1.1,
-          "kind": "fitb-drop",
+          "kind": "fitb_drop",
           "response": "[\"starter-blank\",[{\"id\":\"item2\",\"children\":[]}],[{\"id\":\"item1\",\"children\":[[],\"\"]}],[],\"starter\\nbox\"]"
         }
       ]

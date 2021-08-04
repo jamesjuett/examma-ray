@@ -11,7 +11,7 @@ export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSpecification :
   QT extends "select_a_statement" ? SASSpecification :
   QT extends "code_editor" ? CodeEditorSpecification :
-  QT extends "fitb-drop" ? FITBDropSpecification :
+  QT extends "fitb_drop" ? FITBDropSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
@@ -19,7 +19,7 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSubmission :
   QT extends "select_a_statement" ? SASSubmission :
   QT extends "code_editor" ? CodeEditorSubmission :
-  QT extends "fitb-drop" ? FITBDropSubmission :
+  QT extends "fitb_drop" ? FITBDropSubmission :
   never;
 
 
@@ -38,7 +38,7 @@ export const RESPONSE_HANDLERS : {
   "fitb": FITB_HANDLER,
   "select_a_statement": SAS_HANDLER,
   "code_editor": CODE_EDITOR_HANDLER,
-  "fitb-drop": FITB_DROP_HANDLER
+  "fitb_drop": FITB_DROP_HANDLER
 };
 
 export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {

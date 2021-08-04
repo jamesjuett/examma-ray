@@ -7,7 +7,8 @@
   "scripts": {
     "build-frontend": "webpack --config webpack.config.js",
     "test": "TS_NODE_FILES=true mocha --recursive -r ts-node/register 'test/**/*.spec.ts'",
-    "cypress": "CYPRESS_CRASH_REPORTS=0 cypress open",
+    "cypress:open": "CYPRESS_CRASH_REPORTS=0 cypress open",
+    "cypress:run": "CYPRESS_CRASH_REPORTS=0 cypress run --headless --browser chrome",
     "gen-test-exams": "ts-node --files test/test-exams/gen.ts",
     "serve-test-exams": "serve test/test-exams/out/",
     "docs": "typedoc --out docs src"

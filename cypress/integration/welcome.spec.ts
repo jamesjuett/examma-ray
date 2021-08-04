@@ -1,3 +1,5 @@
+import { unstickSectionHeadings } from "./common";
+
 describe("Welcome Modals", () => {
   
   const EXAM_URL = "simple_test/exams/test-test-simple_test.html";
@@ -9,6 +11,7 @@ describe("Welcome Modals", () => {
   it("Shows the normal welcome modal", () => {
 
     cy.visit(EXAM_URL);
+    unstickSectionHeadings();
 
     cy.get("#exam-welcome-normal-modal button").click();
 
@@ -22,6 +25,7 @@ describe("Welcome Modals", () => {
       withError: new Error("Local storage disabled for test.")
     });
     cy.visit(EXAM_URL);
+    unstickSectionHeadings();
 
     cy.get("#exam-welcome-no-autosave-modal button").click();
 
@@ -32,6 +36,7 @@ describe("Welcome Modals", () => {
   it("Shows the answers restored modal", () => {
 
     cy.visit(EXAM_URL);
+    unstickSectionHeadings();
 
     cy.get("#exam-welcome-normal-modal button").click();
 

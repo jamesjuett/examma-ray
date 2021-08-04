@@ -33,7 +33,7 @@ describe('Basic Page Elements', () => {
 
   it('Header', () => {
 
-    cy.get(".examma-ray-header").contains("Simple Test Exam"); // exam title
+    cy.get(".examma-ray-header").contains("[Title]"); // exam title
     cy.get(".examma-ray-header").contains("Test Student"); // student name
     cy.get(".examma-ray-header").contains("test"); // student uniqname
 

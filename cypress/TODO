@@ -1,0 +1,4 @@
+test display indices, including data-question attributes
+test section elements, uuids, display indices
+test question elements, uuids, display indices
+markdown rendered correctly in FITB? (basically test that the mk2html function got called everywhere it should)

@@ -2,13 +2,14 @@ import path from "path";
 import { ExamGenerator } from "../../src/ExamGenerator";
 import { Exam } from "../../src/exams";
 import { QuestionSpecification } from "../../src/specification";
-import { Question_Fitb_Drop_Test } from "./content/simple/fitb-drop";
+import { Test_Question_MC_Multiple, Test_Question_MC_Single } from "./content/mc";
+import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 
-function makeTestExam(questions: readonly QuestionSpecification[]) {
+function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return new Exam({
-    id: "full_test_exam",
-    title: "Test Exam: All Response Types",
+    id: id,
+    title: "[Title]",
     mk_intructions: "[Instructions]",
     mk_questions_message: "[Questions Message]",
     mk_bottom_message: "[Bottom Message]",
@@ -38,11 +39,13 @@ function genTestExam(exam: Exam) {
 }
 
 
-genTestExam(makeTestExam([
+genTestExam(makeTestExam("simple_test", [
   Question_Simple_Test_1,
-  Question_Simple_Test_2]
-));
+  Question_Simple_Test_2
+]));
 
-genTestExam(makeTestExam([
-  Question_Fitb_Drop_Test]
-));
+genTestExam(makeTestExam("full_test_exam", [
+  Test_Question_MC_Single,
+  Test_Question_MC_Multiple,
+  Test_Question_Fitb_Drop
+]));

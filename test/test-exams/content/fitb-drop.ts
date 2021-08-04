@@ -1,13 +1,13 @@
-import { QuestionSpecification, SectionSpecification } from "../../../../src/specification";
+import { QuestionSpecification, SectionSpecification } from "../../../src/specification";
 
-export const Question_Fitb_Drop_Test : QuestionSpecification = {
+export const Test_Question_Fitb_Drop : QuestionSpecification = {
   id: "fitb_drop_test",
   points: 4,
   mk_description:
-`This is a test.
+`FITB-Drop Test Question
 `,
   response: {
-    kind: "fitb-drop",
+    kind: "fitb_drop",
     content:
 `
 _drop_bank_

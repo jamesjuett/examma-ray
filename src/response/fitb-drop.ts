@@ -8,12 +8,12 @@ import { isStringArray } from "./util";
 import Sortable from "sortablejs";
 
 export type FITBDropSpecification = {
-  kind: "fitb-drop";
+  kind: "fitb_drop";
   content: string;
   droppables: {[index: string]: string};
   starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   sample_solution?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
-  default_grader?: QuestionGrader<"fitb-drop", any>;
+  default_grader?: QuestionGrader<"fitb_drop", any>;
 };
 
 export type DropSubmission = {
