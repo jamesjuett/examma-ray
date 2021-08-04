@@ -1,6 +1,6 @@
 
 
-describe('Welcome Modals', () => {
+describe('Basic Page Elements', () => {
 
   const EXAM_URL = "simple_test/exams/test-test-simple_test.html";
   

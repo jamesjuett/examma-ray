@@ -38,7 +38,7 @@ describe("Welcome Modals", () => {
     cy.get("#exam-welcome-normal-modal button").should("not.be.visible");
 
     // Make a change so that autosave will modify local storage
-    cy.get("input[type=radio]").first().click();
+    cy.get(".examma-ray-question input[type=radio]").first().click();
 
     // Wait for autosave
     cy.wait(7000);

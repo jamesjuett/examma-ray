@@ -1,6 +1,9 @@
 {
   "questions": {
-    "simple_test": {
+    "simple_test_1": {
+      "n": 1
+    },
+    "simple_test_2": {
       "n": 1
     }
   },

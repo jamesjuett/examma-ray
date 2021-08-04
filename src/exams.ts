@@ -498,7 +498,7 @@ export class AssignedExam {
         </div>
         <br />
         <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
-        <div id="examma-ray-exam-saver-status-note">${mk2html_unwrapped(this.exam.mk_download_message)}</div>
+        <div class="examma-ray-exam-saver-status-note">${mk2html_unwrapped(this.exam.mk_download_message)}</div>
       </div>`
   }
 
@@ -511,7 +511,7 @@ export class AssignedExam {
           <br>
           <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
           <br>
-          This is not an official timer. Please submit your answers to Canvas before the deadline.
+          This is not an official timer. Please submit your answers file before the deadline.
         </div>
       `;
     }
@@ -521,7 +521,6 @@ export class AssignedExam {
   }
 
   public renderGradingSummary() {
-    // TODO: remove ! assertions and use logic to produce partial summaries instead
     return `<div class="container examma-ray-grading-summary">
       <div class="text-center mb-3 border-bottom">
         <h2>Grading Information</h2>

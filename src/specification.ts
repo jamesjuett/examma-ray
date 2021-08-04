@@ -47,7 +47,7 @@ export type SectionSpecification = {
   readonly title: string,
   readonly mk_description: string,
   readonly mk_reference?: string,
-  readonly questions: QuestionSpecification | Question | QuestionChooser | (QuestionSpecification | Question | QuestionChooser)[],
+  readonly questions: QuestionSpecification | Question | QuestionChooser | readonly (QuestionSpecification | Question | QuestionChooser)[],
   readonly skins?: SkinGenerator,
   reference_width?: number
 }

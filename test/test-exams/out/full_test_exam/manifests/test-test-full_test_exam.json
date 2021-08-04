@@ -1,0 +1,29 @@
+{
+  "exam_id": "full_test_exam",
+  "uuid": "test-full_test_exam",
+  "student": {
+    "name": "Test Student",
+    "uniqname": "test"
+  },
+  "timestamp": 1628039968457,
+  "trusted": true,
+  "saverId": 0,
+  "sections": [
+    {
+      "section_id": "section",
+      "skin_id": "__DEFAULT",
+      "uuid": "test-full_test_exam-s-section",
+      "display_index": "1",
+      "questions": [
+        {
+          "question_id": "fitb_drop_test",
+          "skin_id": "__DEFAULT",
+          "uuid": "test-full_test_exam-q-fitb_drop_test",
+          "display_index": "1.1",
+          "kind": "fitb-drop",
+          "response": ""
+        }
+      ]
+    }
+  ]
+}

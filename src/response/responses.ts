@@ -3,7 +3,7 @@ import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MCSpecification, MCSubmission, MC_HANDLER } from "./multiple_choice";
 import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
-import { ParsonsSpecification, ParsonsSubmission, PARSONS_HANDLER } from "./parsons";
+import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
 import { QuestionSkin } from "../skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
@@ -11,7 +11,7 @@ export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSpecification :
   QT extends "select_a_statement" ? SASSpecification :
   QT extends "code_editor" ? CodeEditorSpecification :
-  QT extends "parsons" ? ParsonsSpecification :
+  QT extends "fitb-drop" ? FITBDropSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
@@ -19,7 +19,7 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "fitb" ? FITBSubmission :
   QT extends "select_a_statement" ? SASSubmission :
   QT extends "code_editor" ? CodeEditorSubmission :
-  QT extends "parsons" ? ParsonsSubmission :
+  QT extends "fitb-drop" ? FITBDropSubmission :
   never;
 
 
@@ -38,7 +38,7 @@ export const RESPONSE_HANDLERS : {
   "fitb": FITB_HANDLER,
   "select_a_statement": SAS_HANDLER,
   "code_editor": CODE_EDITOR_HANDLER,
-  "parsons": PARSONS_HANDLER
+  "fitb-drop": FITB_DROP_HANDLER
 };
 
 export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {
