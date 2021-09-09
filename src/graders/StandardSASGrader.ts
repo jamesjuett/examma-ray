@@ -114,7 +114,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
             <td class="examma-ray-sas-rubric-item">
               <div id="${elem_id}" class="card rubric-item-card">
                 <div class="card-header">
-                  <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} ${mk2html(rubricItem.title)}</a>
+                  <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} ${mk2html(rubricItem.title, skin)}</a>
                 </div>
                 <div class="collapse" id="${elem_id}-details">
                   <div class="card-body">
