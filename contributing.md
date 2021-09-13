@@ -10,3 +10,13 @@ Due to a [bug](https://github.com/highlightjs/highlight.js/issues/2682) in `high
 ```console
 cp node_modules/highlight.js/types/index.d.ts node_modules/highlight.js/lib/core.d.ts
 ```
+
+
+### Publishing to `npm`
+
+Update version number in `package.json`.
+
+```console
+tsc
+npm publish
+```
