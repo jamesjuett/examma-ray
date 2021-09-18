@@ -1,6 +1,11 @@
 
 import path from "path";
 
+
+export function responseElem(question_uuid: string) {
+  return cy.get(`*[data-question-uuid="${question_uuid}"] .examma-ray-question-response`);
+}
+
 export function clearDownloads() {
   cy.task('deleteFolder', Cypress.config("downloadsFolder"));
 }

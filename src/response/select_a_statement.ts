@@ -54,7 +54,7 @@ function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | 
   }
 }
 
-function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: QuestionSkin) {
+function SAS_RENDERER(response: SASSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
   let item_index = 0;
   return `
     <div style="text-align: right; margin-bottom: 5px;">
@@ -73,8 +73,8 @@ function SAS_RENDERER(response: SASSpecification, question_id: string, skin?: Qu
     <div class="examma-ray-sas-choices sas-view-choices">
       ${response.choices.map(
         group => group.kind === "item"
-          ? renderSASItem(group, question_id, item_index++, response.code_language, skin)
-          : group.items.map(item => renderSASItem(item, question_id, item_index++, response.code_language, skin)).join("\n")
+          ? renderSASItem(group, question_uuid, item_index++, response.code_language, skin)
+          : group.items.map(item => renderSASItem(item, question_uuid, item_index++, response.code_language, skin)).join("\n")
       ).join("\n")}
     </div>
     <div class="examma-ray-sas-footer">
