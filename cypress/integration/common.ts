@@ -6,6 +6,10 @@ export function responseElem(question_uuid: string) {
   return cy.get(`*[data-question-uuid="${question_uuid}"] .examma-ray-question-response`);
 }
 
+export function sectionElem(section_uuid: string) {
+  return cy.get(`.examma-ray-section[data-section-uuid="${section_uuid}"]`);
+}
+
 export function clearDownloads() {
   cy.task('deleteFolder', Cypress.config("downloadsFolder"));
 }

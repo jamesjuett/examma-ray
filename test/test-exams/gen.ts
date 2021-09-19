@@ -90,3 +90,43 @@ ${renderFITBDropBank("fitb_drop_test_3")}
     }
   ]
 }));
+
+genTestExam(new Exam({
+  id: "multi_section_test_exam",
+  title: "[Title]",
+  mk_intructions: "[Instructions]",
+  mk_questions_message: "[Questions Message]",
+  mk_bottom_message: "[Bottom Message]",
+  sections: [
+    {
+      id: "section1",
+      title: "[Section Title 1]",
+      mk_description: "[Section Description 1]",
+      mk_reference: "[Section Reference 1]",
+      reference_width: 20,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_1"}),
+      ]
+    },
+    {
+      id: "section2",
+      title: "[Section Title 2]",
+      mk_description: "[Section Description 2]",
+      mk_reference: "[Section Reference 2]",
+      reference_width: 40,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_2"}),
+      ]
+    },
+    {
+      id: "section3",
+      title: "[Section Title 3]",
+      mk_description: "[Section Description 3]",
+      mk_reference: "[Section Reference 3]",
+      reference_width: 60,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_3"}),
+      ]
+    }
+  ]
+}));
