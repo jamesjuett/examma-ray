@@ -183,7 +183,7 @@ export function writeFrontendJS(outDir: string, filename: string) {
       `${outDir}/${filename}`
     );
   }
-  catch(e) {
+  catch(e: any) {
     if (e.code === "MODULE_NOT_FOUND") {
 
       try {

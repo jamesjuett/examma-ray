@@ -47,7 +47,7 @@ export function applySkin(text: string, skin: QuestionSkin | undefined) {
   try {
     return template(skin.replacements);
   }
-  catch (e) {
+  catch (e: any) {
     assertFalse("Error applying skin: " + e.message + " within :\n" + JSON.stringify(skin));
   }
 }
