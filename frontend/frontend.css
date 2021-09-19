@@ -223,6 +223,7 @@ code {
 
 .examma-ray-section-reference-width-slider-container {
   float: right;
+  white-space: nowrap;
 }
 
 .examma-ray-section-reference-width-value {
