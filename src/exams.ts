@@ -380,9 +380,13 @@ export class AssignedSection {
               <div class="examma-ray-section-description">${this.html_description}</div>
               ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
             </td>
-            <td style="width: ${this.section.reference_width}%;">
+            <td class="examma-ray-section-reference-column" style="width: ${this.section.reference_width}%;">
               <div class="examma-ray-section-reference-container">
                 <div class="examma-ray-section-reference">
+                  <div class = "examma-ray-section-reference-width-slider-container">
+                    <div class = "examma-ray-section-reference-width-value">${this.section.reference_width}%</div>
+                    <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${this.section.reference_width}">
+                  </div>
                   <h6>Reference Material (Section ${this.displayIndex})</h6>
                   ${this.html_reference ?? NO_REFERNECE_MATERIAL}
                 </div>

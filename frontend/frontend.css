@@ -221,6 +221,21 @@ code {
   max-height: 80vh;
 }
 
+.examma-ray-section-reference-width-slider-container {
+  float: right;
+}
+
+.examma-ray-section-reference-width-value {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.examma-ray-section-reference-width-slider {
+  display: inline-block;
+  vertical-align: middle;
+  width: 75px;
+}
+
 
 .examma-ray-section-contents .h1,
 .examma-ray-section-contents .h2,
