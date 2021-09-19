@@ -107,7 +107,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
         // if (missing.length === 0 && extra.length === 0) {
         // details = `Your code contains these lines:<ul>${rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1).map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
         // details += `<br />The solution should contain these lines (and these lines only):<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-        let elem_id = `question-${question.question_id}-item-${i}`;
+        let elem_id = `question-${aq.uuid}-item-${i}`;
 
         return `
           <tr>
