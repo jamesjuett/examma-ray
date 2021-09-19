@@ -143,7 +143,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
 
       let explanation: string = mk2html(itemResult.explanation ?? "Your response for this blank was incomplete or incorrect.", skin);
 
-      let elem_id = `question-${question.question_id}-item-${i}`;
+      let elem_id = `question-${aq.uuid}-item-${i}`;
 
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
