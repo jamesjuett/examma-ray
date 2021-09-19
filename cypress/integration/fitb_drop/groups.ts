@@ -30,7 +30,7 @@ describe('FITB-Drop Response Groups', () => {
 
   it('Drag/Drop Within Q1', () => {
 
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').trigger("dragstart");
     cy.wait(100);
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
@@ -41,7 +41,7 @@ describe('FITB-Drop Response Groups', () => {
 
   it('Drag/Drop Prohibited From Q1 to Q2', () => {
 
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').trigger("dragstart");
     cy.wait(100);
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_2").find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
