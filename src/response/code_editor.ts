@@ -26,7 +26,7 @@ function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : CodeEdit
   return rawSubmission;
 }
 
-function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: string, skin?: QuestionSkin) {
+function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
   return `
     <div class="examma-ray-code-editor">
       <div style="text-align: right; margin-bottom: 5px;">

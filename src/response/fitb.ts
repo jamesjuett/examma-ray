@@ -40,7 +40,7 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
   }
 }
 
-function FITB_RENDERER(response: FITBSpecification, question_id: string, skin?: QuestionSkin) {
+function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 

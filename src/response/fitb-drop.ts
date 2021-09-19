@@ -7,10 +7,19 @@ import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
 import Sortable from "sortablejs";
 
+export type DroppableSpecification = {
+  [index: string]: string
+};
+
+// export type DroppableGroupSpecification = {
+//   group: string,
+//   members: DroppableSpecification
+// };
+
 export type FITBDropSpecification = {
   kind: "fitb_drop";
   content: string;
-  droppables: {[index: string]: string};
+  droppables: DroppableSpecification /* | [DroppableGroupSpecification] */;
   starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   sample_solution?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   default_grader?: QuestionGrader<"fitb_drop", any>;
@@ -67,14 +76,15 @@ function createDroppableElement(id: string, html: string) {
   return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">${html}</div>`
 }
 
-function FITB_DROP_RENDERER(response: FITBDropSpecification, question_uuid: string, skin?: QuestionSkin) {
+function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
+  let group_id = question_id;
   return `
-    <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${question_uuid}">
+    <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${group_id}">
       ${Object.keys(response.droppables).map(
-        id => createDroppableElement(id, createFilledFITBDrop(response.droppables[id], response.droppables, question_uuid, skin))
+        id => createDroppableElement(id, createFilledFITBDrop(response.droppables[id], response.droppables, group_id, skin))
       ).join("")}
     </div>
-    ${createFilledFITBDrop(applySkin(response.content, skin), response.droppables, question_uuid, skin, response.starter)}
+    ${createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)}
   `;
 }
 
@@ -110,15 +120,24 @@ function FITB_DROP_ACTIVATE(responseElem: JQuery) {
 
 }
 
+function groupsMatch(to: Sortable, from: Sortable) {
+  let to_group_name = typeof to.options.group === "string" ? to.options.group : to.options.group?.name;
+  let from_group_name = typeof from.options.group === "string" ? from.options.group : from.options.group?.name;
+  return to_group_name === from_group_name; // also covers undefined === undefined case
+}
+
 function activateDropLocations(elem: JQuery<HTMLElement>) {
   elem.find(".examma-ray-fitb-drop-location").each(function() {
     Sortable.create(this, {
       swapThreshold: 0.2,
       animation: 150,
       group: {
-        name: `group-${elem.data("examma-ray-fitb-drop-group-id")}`,
-        put: () => { return elem.closest("#bank").length === 0; },
-        pull: () => { return true; }
+        name: `group-${$(this).data("examma-ray-fitb-drop-group-id")}`,
+        put: (to: Sortable, from: Sortable) => {
+          return groupsMatch(to, from) // drop group ids must match
+            && elem.closest("#bank").length === 0; // not dropping into a nested drop location in a bank element
+        },
+        pull: true
       },
       removeOnSpill: true
     });
@@ -251,7 +270,7 @@ const BOX_PATTERN = /\[\[[ _]*box[ _]*( *\n)+ *\]\]/gi;
 const DROP_LOCATION_PATTERN = /\[\[[ _]*drop[ _]*( *\n)* *\]\]/gi;
 
 /**
- * Matches anything that looks like e.g. _BANK_ or _____drop_bank_____.
+ * Matches anything that looks like e.g. _DROP_BANK_ or _____drop_bank_____.
  */
 const DROP_BANK_PATTERN = /_+ *drop_bank *_+/gi;
 
@@ -266,7 +285,7 @@ function count_char(str: string, c: string) {
 export function createFilledFITBDrop(
   content: string,
   dropOriginals: {[index: string]: string},
-  question_uuid: string,
+  group_id: string,
   skin?: QuestionSkin,
   submission?: FITBDropSubmission,
   blankRenderer = DEFAULT_BLANK_RENDERER,
@@ -319,11 +338,11 @@ export function createFilledFITBDrop(
   });
 
   dropLocationLines.forEach((lines, i) => {
-    content = content.replace(drop_box_id, dropLocationRenderer(submission_placeholder, question_uuid, lines, dropLocationWidths[i]));
+    content = content.replace(drop_box_id, dropLocationRenderer(submission_placeholder, group_id, lines, dropLocationWidths[i]));
   });
 
   // Replace each drop bank
-  content = content.replace(new RegExp(drop_bank_id, "g"), dropBankRenderer(question_uuid));
+  content = content.replace(new RegExp(drop_bank_id, "g"), dropBankRenderer(group_id));
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
@@ -332,7 +351,7 @@ export function createFilledFITBDrop(
        ? encoder(sub)
        : sub.map(s => {
           assert(dropOriginals[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createDroppableElement(s.id, createFilledFITBDrop(dropOriginals[s.id], dropOriginals, question_uuid, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
+          return createDroppableElement(s.id, createFilledFITBDrop(dropOriginals[s.id], dropOriginals, group_id, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
        }).join("")
       )
     );
@@ -361,6 +380,10 @@ function DEFAULT_DROP_LOCATION_RENDERER(submission_placeholder: string, group_id
   return `<span class="examma-ray-fitb-drop-location" data-examma-ray-fitb-drop-group-id="${group_id}" ${style}>${submission_placeholder}</span>`;
 }
 
-function DEFAULT_DROP_BANK_RENDERER(group_id: string,) {
+function DEFAULT_DROP_BANK_RENDERER(group_id: string) {
   return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}"></div>`;
+}
+
+export function renderFITBDropBank(group_id: string) {
+  return DEFAULT_DROP_BANK_RENDERER(group_id);
 }

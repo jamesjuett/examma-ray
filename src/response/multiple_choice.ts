@@ -1,4 +1,5 @@
 import Mustache from "mustache";
+import { Question } from "../exams";
 import { QuestionGrader } from "../QuestionGrader";
 import { mk2html } from "../render";
 import { QuestionSkin } from "../skins";
@@ -39,13 +40,13 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
   }
 }
 
-function MC_RENDERER(response: MCSpecification, question_id: string, skin?: QuestionSkin) {
+function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
   return `
     <form>
     ${response.choices.map((item,i) => `
       <div>
-        <input id="${question_id}_choice_${i}" type="${response.multiple ? "checkbox" : "radio"}" name="${question_id}_choice" value="${i}"/>
-        <label for="${question_id}_choice_${i}" class="examma-ray-mc-option">${mk2html(item, skin)}</label>
+        <input id="${question_uuid}_choice_${i}" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}"/>
+        <label for="${question_uuid}_choice_${i}" class="examma-ray-mc-option">${mk2html(item, skin)}</label>
       </div>`
     ).join("")}
     </form>
