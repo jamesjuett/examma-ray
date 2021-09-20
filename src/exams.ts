@@ -6,7 +6,7 @@ import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderFixedPrecisionBadge, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from './ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
-import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR } from './specification';
+import { QuestionSpecification, SkinGenerator, SectionSpecification, QuestionChooser, SectionChooser, ExamSpecification, DEFAULT_SKIN_GENERATOR, isValidID } from './specification';
 import { DEFAULT_SKIN, QuestionSkin } from './skins';
 import { ExamManifest } from './submissions';
 import { sum } from 'simple-statistics';
@@ -47,6 +47,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   public constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
+    assert(isValidID(spec.id), `Invalid question ID: ${spec.id}`);
     this.question_id = spec.id;
     this.tags = spec.tags ?? [];
     this.mk_description = spec.mk_description;
@@ -278,6 +279,7 @@ export class Section {
 
   public constructor (spec: SectionSpecification) {
     this.spec = spec;
+    assert(isValidID(spec.id), `Invalid section ID: ${spec.id}`);
     this.section_id = spec.id;
     this.title = spec.title;
     this.mk_description = spec.mk_description;
@@ -442,6 +444,7 @@ export class AssignedExam {
     this.uuid = uuid;
     this.exam = exam;
     this.student = student;
+    assert(isValidID(student.uniqname), `Invalid student uniqname: ${student.uniqname}`);
     this.assignedSections = assignedSections;
     this.assignedQuestions = assignedSections.flatMap(s => s.assignedQuestions);
     this.assignedQuestions.forEach(q => this.assignedQuestionById[q.question.question_id] = q);
@@ -667,6 +670,7 @@ export class Exam {
   public readonly enable_regrades: boolean;
 
   public constructor(spec: ExamSpecification) {
+    assert(isValidID(spec.id), `Invalid exam ID: ${spec.id}`);
     this.exam_id = spec.id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
