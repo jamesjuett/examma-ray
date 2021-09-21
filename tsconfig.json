@@ -11,7 +11,9 @@
   "exclude": [
     "./tests/",
     "./node_modules/",
-    "./dist/"
+    "./dist/",
+    "./template/",
+    "./sample/"
   ],
   "compilerOptions": {
     /* Basic Options */
