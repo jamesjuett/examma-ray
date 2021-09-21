@@ -10,40 +10,54 @@ Students open the `.html` file and take the exam in their web browser. The appli
 
 Ensure you have `node` and `npm` installed:
 
-```console
+```bash
 sudo apt update
 sudo apt install nodejs
 ```
 
 Create a directory to work in:
 
-```console
-mkdir eecs280exams
-cd eecs280exams
+```bash
+mkdir my_exams
+cd my_exams
 ```
 
-Initialize a new `npm` package and install `ts-node` and `examma-ray` as dependencies. You'll also want types for the node environment:
+Initialize a new `npm` package and install `examma-ray` as a dependency.
 
-```console
+```bash
 npm init -y
-npm install ts-node
 npm install examma-ray
-npm install --save-dev @types/node
 ```
 
-You'll want a place to store question/section specifications.
+Set up some initial files for your exam. Run the following, with an appropriate name for your exam subbed in.
 
-```console
-mkdir content
-mkdir content/plants
+```bash
+npx examma-ray-init eecs280f21_final
 ```
 
-(Technically, you can put exam specification files wherever you want, and you might choose a different structure if e.g. you're creating a common question bank that might be used for several different exams across several terms.)
+You'll get a directory structure like shown below. `content` is for question/section specifications and `eecs280f21_final` contains specifications and scripts for generating an exam. These are separate because in theory you might want a "bank" of content, which is drawn upon for several different exams you might give in different terms. There would be one `content` folder but several folders for each exam.
 
-Now, a few files to add:
+```bash
+.
+├── content
+│   └── sample_mc.ts
+├── package-lock.json
+├── package.json
+└── template_exam
+    ├── exam-spec.ts
+    ├── grader-spec.ts
+    ├── instructions.md
+    ├── questions.md
+    ├── roster.csv
+    ├── scripts
+    │   ├── gen.ts
+    │   └── grade.ts
+    ├── secret
+    └── tsconfig.json
+```
 
 #### **`content/eecs280w21final/roster.csv`**
-```csv
+```
 uniqname,name
 awdeorio,Drew DeOrio
 jbbeau,Jonathan Beaumont
@@ -101,7 +115,7 @@ gen.writeAll();
 
 In the generation script above, we're opting to create V5 UUIDs to uniquely identify the assigned exam for each student and include in the generated exam filenames (this is the recommended approach). To do so, we need to create a unique "namespace" for our exam that is used to generate the UUIDs. The namespace should be a V4 UUID. Here's one way to generate it:
 
-```console
+```bash
 npm install --save-dev uuid
 npx uuid > content/eecs280w21final/secret
 ```
@@ -110,7 +124,7 @@ You can put this `secret` file wherever you want. The `gen.ts` script reads it i
 
 Now you're ready to generate exams!
 
-```console
+```bash
 npx ts-node content/eecs280w21final/gen.ts
 ```
 
@@ -123,7 +137,7 @@ This is where all generated content goes, e.g. the `.html` files for students' e
 
 We could try to open the generated exams, but they won't work quite right yet. They need access to the `frontend.js` bundle. You can copy that out of `node_modules`, where is should have been pulled in when you installed `examma-ray`.
 
-```console
+```bash
 mkdir out/js
 cp node_modules/examma-ray/dist/frontend/frontend.js out/js
 cp node_modules/examma-ray/dist/frontend/frontend-graded.js out/js
@@ -133,7 +147,7 @@ Remember the `frontend_js_path` in `exam-spec.ts` from earlier? That's the relat
 
 Now, your directories should look something like this:
 
-```console
+```bash
 data
 └── eecs280sp20test
     ├── student-ids.csv
@@ -177,7 +191,7 @@ out/
 
 When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exam manifests generated for each student, as well as their answer file submissions. For example, if your exam ID is `eecs280sp20test`:
 
-```console
+```bash
 git add data/eecs280sp20test
 ```
 
