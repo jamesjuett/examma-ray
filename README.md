@@ -1,8 +1,8 @@
 # examma-ray
 
-Examma Ray is a system for generating randomized or individualized exams
+Examma Ray is a system for generating randomized or individualized exams.
 
-You distribute the `.html` files however you want. A simple web server that serves static content works just fine, and there are several options for hosting if you don't want to set something up on your own. You could even distribute the files directly to students, e.g. in a zip file containing the `frontend.js` bundle as well.
+Each exam is generated as a static HTML file that includes a common javascript bundle. You distribute those files to students however you want. A simple web server that serves static content works great, and there are several options for hosting if you don't want to set something up on your own. You could even distribute the files directly to students, e.g. in a zip file containing the javascript bundle as well.
 
 Students open the `.html` file and take the exam in their web browser. The application is entirely client-side, and does not depend on a server (other than perhaps to originally serve the `.html` and `.js` bundle, if you choose to go that route.). As student's work, their answers are automatically backed up to their browser's local storage (as long as they're not using private/incognito mode). When students are finished, they click a button to download a `.json` "answers file", which they should submit separately (e.g. via Canvas).
 
@@ -31,11 +31,11 @@ npm install examma-ray
 npm install --save-dev @types/node
 ```
 
-You'll want a place to store exam specifications (e.g. questions, student rosters, etc.), with a subfolder for each exam. 
+You'll want a place to store question/section specifications.
 
 ```console
 mkdir content
-mkdir content/eecs280w21final
+mkdir content/plants
 ```
 
 (Technically, you can put exam specification files wherever you want, and you might choose a different structure if e.g. you're creating a common question bank that might be used for several different exams across several terms.)
