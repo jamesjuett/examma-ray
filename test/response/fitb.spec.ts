@@ -83,7 +83,7 @@ int main() {
 }
 \`\`\`
 `
-  }, "test_fitb", undefined);
+  }, "test_fitb", "test_fitb", undefined);
 
   it('renders markdown in FITB content', () => {
     expect(rendered).to.contain("this is a <strong>test</strong> <em>only</em> a <code>test</code>");

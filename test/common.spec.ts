@@ -2,6 +2,26 @@ import 'mocha';
 import { expect } from 'chai';
 import { ExamSubmission, fillManifest } from '../src/submissions';
 
+export const VALID_IDS = [
+  "blah",
+  "question_id1",
+  "aAzZ09-_",
+  "a",
+  "a_-_-_-a",
+];
+
+export const INVALID_IDS = [
+  "1question_id",
+  "",
+  "1",
+  "-_alsdf",
+  "_sflaalsdf",
+  "aslkdhf+=",
+  "_______",
+  "++++",
+  "0azaz",
+];
+
 const manifest : ExamSubmission = {
   "uuid": "exam_uuid_1",
   "exam_id": "eecs280sp20test",

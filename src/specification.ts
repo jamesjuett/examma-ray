@@ -6,6 +6,10 @@ import { ResponseSpecification, SubmissionType } from "./response/responses";
 import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
 
+export function isValidID(id: string) {
+  return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
+}
+
 export const CHOOSE_ALL = Symbol("choose_all");
 
 export type ExamSpecification = {
@@ -134,6 +138,7 @@ export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
 
 export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Exclude<QuestionSpecification, "response">>) : QuestionSpecification;
 export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Exclude<SectionSpecification, "response">>) : SectionSpecification;
-export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification, "response">>) : QuestionSpecification | SectionSpecification {
+export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Exclude<ExamSpecification, "response">>) : ExamSpecification;
+export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification | ExamSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification | ExamSpecification, "response">>) : QuestionSpecification | SectionSpecification | ExamSpecification {
   return Object.assign({}, spec, customizations);
 }
