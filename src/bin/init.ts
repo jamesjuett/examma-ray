@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { existsSync, writeFileSync } from "fs";
 import { ncp } from "ncp";
+import { v4 as uuidv4 } from 'uuid';
 import path from "path";
 
 function examma_ray_init() {
@@ -14,6 +16,10 @@ function examma_ray_init() {
       },
       (err) => { // callback
         if (!err) {
+          if (!existsSync("template_exam/scripts/secret")) {
+            console.log("Generating exam generation secret...")
+            writeFileSync("template_exam/secret", uuidv4(), {encoding: "utf8"});
+          }
           console.log("Template exam initialized successfully.")
         }
         else {

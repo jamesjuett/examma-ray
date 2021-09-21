@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.123",
+  "version": "1.0.130",
   "description": "## Setup",
   "main": "dist/examma-ray.js",
   "types": "dist/examma-ray.d.ts",
@@ -36,6 +36,8 @@
   "dependencies": {
     "@types/deep-equal": "^1.0.1",
     "@types/katex": "^0.11.0",
+    "@types/minimist": "^1.2.2",
+    "@types/node": "^14.17.9",
     "blob-polyfill": "^5.0.20210201",
     "chart.js": "^2.9.4",
     "chroma-js": "^2.1.0",
@@ -85,11 +87,9 @@
     "@types/jsdom": "^16.2.13",
     "@types/jsdom-global": "^3.0.2",
     "@types/json-stable-stringify": "^1.0.32",
-    "@types/minimist": "^1.2.1",
     "@types/mocha": "^8.2.2",
     "@types/mustache": "^4.1.1",
     "@types/ncp": "^2.0.5",
-    "@types/node": "^14.17.9",
     "@types/papaparse": "^5.2.5",
     "@types/plotly.js": "^1.54.10",
     "@types/random-seed": "^0.3.3",
