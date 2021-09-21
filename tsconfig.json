@@ -2,6 +2,7 @@
   "include": [
     "./src/examma-ray.ts",
     "./src/lib.d.ts",
+    "./src/bin/init.ts",
     "./src/grading/code-grader.ts",
     "src/frontend/frontend.ts",
     "src/test/lib.d.ts",
