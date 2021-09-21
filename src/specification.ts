@@ -7,7 +7,7 @@ import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
 
 export function isValidID(id: string) {
-  return /^[a-zA-Z][a-zA-Z0-9_\-]$/.test(id);
+  return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
 }
 
 export const CHOOSE_ALL = Symbol("choose_all");
