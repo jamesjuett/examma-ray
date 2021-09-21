@@ -138,6 +138,7 @@ export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
 
 export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Exclude<QuestionSpecification, "response">>) : QuestionSpecification;
 export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Exclude<SectionSpecification, "response">>) : SectionSpecification;
-export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification, "response">>) : QuestionSpecification | SectionSpecification {
+export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Exclude<ExamSpecification, "response">>) : ExamSpecification;
+export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification | ExamSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification | ExamSpecification, "response">>) : QuestionSpecification | SectionSpecification | ExamSpecification {
   return Object.assign({}, spec, customizations);
 }
