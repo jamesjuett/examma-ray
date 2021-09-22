@@ -1,0 +1,5 @@
+
+{
+  "entryPoints": ["./src/examma-ray.ts"],
+  "out": "docs"
+}

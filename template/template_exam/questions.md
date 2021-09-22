@@ -1,0 +1,1 @@
+During the exam, you may ask questions on Piazza or by joining a Zoom call with staff. Links to both will appear here.
