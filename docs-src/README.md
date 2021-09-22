@@ -75,7 +75,7 @@ The `scripts` directory contains scripts for generating and grading exams, based
 
 All these specification files and scripts are TypeScript code. The type checker will help make sure you don't miss a required property, spell something wrong, etc. If the code compiles, you've got a guarantee that your exam is reasonably well-formed. An IDE like VS Code (highly recommended!) will also provide autocomplete as you're working.
 
-## Generating Exams
+### Set Exam ID
 
 Before doing anything else, open up `exam-spec.ts` and change the specified `id` for your exam from `template_exam` to something else. Generally, you don't want to change this after you've started working on an exam (it acts as a seed for randomization). Let's use `eecs280f21_final` as an example:
 
@@ -92,6 +92,8 @@ export const EXAM = new Exam({
 });
 ...
 ```
+
+## Generating Individual Exams
 
 Before proceding, make sure your terminal is situated in your individual exam directory:
 
@@ -134,6 +136,8 @@ $ tree
 │           ├── student5-126075dd-f725-5468-8ce3-331ce6eecb5a.html
 ```
 
+To view a student's exam, just open the corresponding html file in a web browser.
+
 Note that the `eecs280f21_final` folder in each - this matches the configured exam `id` in your `exam-spec.ts`.
 
 In the `data` folder, you'll find
@@ -154,6 +158,42 @@ Those are combined and used to generate a V5 UUID, which is essentially a determ
 
 Note that there are other options for specifying how to create UUIDs for each student's exam (e.g. just using their uniqname). See [[ExamGenerator]] for details.
 
+## Generating a Preview Exam with All Possible Questions
+
+Before proceding, make sure your terminal is situated in your individual exam directory:
+
+```bash
+$ cd eecs280f21_final
+$ pwd
+/home/jjuett/my_exams/eecs280f21_final
+```
+
+To generate a preview exam with all possible questions:
+
+```bash
+npx ts-node scripts/gen.ts --all-questions
+```
+
+This will create `data` and `out` subdirectories with the desired files (see section above for details on these):
+
+```bash
+$ tree
+.
+├── data
+│   └── template_exam
+│       ├── manifests
+│       │   └── preview-preview-template_exam.json
+│       ├── stats.json
+│       └── student-ids.csv
+├── out
+│   └── template_exam
+│       └── exams
+│           ├── js
+│           │   └── frontend.js
+│           └── preview-preview-template_exam.html
+```
+
+To view the preview exam, just open the html file in a web browser.
 
 ## Version Control
 
