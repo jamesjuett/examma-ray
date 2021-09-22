@@ -1,3 +1,11 @@
+/**
+ * ## Specification
+ * 
+ * The 
+ * 
+ * @module
+ */
+
 import { Exam, Question, Section, StudentInfo } from "./exams";
 import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
@@ -13,17 +21,39 @@ export function isValidID(id: string) {
 export const CHOOSE_ALL = Symbol("choose_all");
 
 export type ExamSpecification = {
+  /**
+   * A unique ID for the exam. Also used as part of the composite seed for UUID generation
+   * by an [[ExamGenerator]] using the `"uniqname"` or "uuidv5" strategies.
+   */
   id: string,
+
+  /**
+   * Title shown at the top of the exam.
+   */
   title: string,
+
+  /**
+   * Markdown-formatted exam instructions, shown at the top of the exam.
+   */
   mk_intructions: string,
-  mk_announcements?: string[],
+
+  /**
+   * Specifies the sections of this exam. Each entry in the array may either specify
+   * a particular section 
+   */
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
-  enable_regrades?: boolean,
+  mk_announcements?: string[],
   mk_questions_message?: string,
   mk_download_message?: string,
   mk_bottom_message?: string
+  enable_regrades?: boolean,
 };
 
+/**
+ * A `SectionChooser` is a function that selects an array of questions given an exam, a student,
+ * and a source of randomness. You may define your own or use a predefined chooser:
+ * - [[RANDOM_SECTION]]
+ */
 export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
 
 export function chooseSections(chooser: SectionSpecification | Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -32,6 +62,12 @@ export function chooseSections(chooser: SectionSpecification | Section | Section
       [new Section(chooser)]
 }
 
+/**
+ * 
+ * @param n 
+ * @param sections 
+ * @returns 
+ */
 export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | Section)[]) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     if (rand === CHOOSE_ALL) {
@@ -64,13 +100,13 @@ export function chooseQuestions(chooser: QuestionSpecification| Question | Quest
       [new Question(chooser)]
 }
 
-export function BY_ID(id: string, questionBank: QuestionBank) {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    let q = questionBank.getQuestionById(id);
-    assert(q, `No question with ID: ${id}.`);
-    return [q];
-  }
-}
+// export function BY_ID(id: string, questionBank: QuestionBank) {
+//   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+//     let q = questionBank.getQuestionById(id);
+//     assert(q, `No question with ID: ${id}.`);
+//     return [q];
+//   }
+// }
 
 export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
@@ -83,7 +119,7 @@ export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank
   }
 }
 
-export function RANDOM_ANY(n: number, questionBank: QuestionBank | readonly (QuestionSpecification | Question)[]) {
+export function RANDOM_QUESTION(n: number, questionBank: QuestionBank | readonly (QuestionSpecification | Question)[]) {
   if (!(questionBank instanceof QuestionBank)) {
     questionBank = new QuestionBank(questionBank);
   }

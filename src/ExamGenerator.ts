@@ -7,7 +7,7 @@ import { assert, assertNever } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
 import { ResponseKind } from './examma-ray';
-import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
+import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
 import path from 'path';

@@ -1,8 +1,13 @@
 
 {
-  "entryPoints": ["./src/examma-ray.ts", "./src/specification.ts"],
+  "entryPoints": [
+    "./src/examma-ray.ts",
+    "./src/specification.ts",
+    "./src/randomization.ts"
+  ],
   "out": "docs",
   "includes": ".",
   "media": "docs-src/media",
-  "readme": "docs-src/README.md"
+  "readme": "docs-src/README.md",
+  "sort": ["static-first", "required-first", "source-order"]
 }
