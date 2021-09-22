@@ -1,4 +1,4 @@
-import { ExamGrader, ExceptionMap, GraderMap } from "examma-ray";
+import { ExamGrader, ExceptionMap, GraderMap, ExamCurve } from "examma-ray";
 import { readFileSync } from "fs";
 import { EXAM } from "./exam-spec";
 
@@ -20,4 +20,4 @@ export const EXAM_GRADER = new ExamGrader(EXAM, {
 }, GRADERS, EXCEPTIONS);
 
 
-export const CURVE = null; //new IndividualizedNormalCurve(EXAM_GRADER.stats, 84, 9);
+export const CURVE : ExamCurve | undefined = undefined; //new IndividualizedNormalCurve(EXAM_GRADER.stats, 84, 9);
