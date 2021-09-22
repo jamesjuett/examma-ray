@@ -1,1 +1,1 @@
-During the exam, you may ask questions on Piazza or by joining a Zoom call with staff. Links to both will appear here.
+If you have **questions during the exam**, you may post on <a href="TODO" target="_blank">Piazza</a> or join our <a href="TODO" target="_blank">Zoom</a>
