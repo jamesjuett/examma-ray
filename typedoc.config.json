@@ -3,6 +3,8 @@
   "entryPoints": [
     "./src/examma-ray.ts",
     "./src/specification.ts",
+    "./src/exam_components.ts",
+    "./src/assigned_exams.ts",
     "./src/randomization.ts"
   ],
   "out": "docs",

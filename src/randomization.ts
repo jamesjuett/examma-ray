@@ -1,5 +1,5 @@
 import { RandomSeed, create as createRNG } from 'random-seed';
-import { Exam, Question, Section } from './exam_constructs';
+import { Exam, Question, Section } from './exam_components';
 import { assert } from './util';
 
 

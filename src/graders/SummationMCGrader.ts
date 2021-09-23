@@ -1,5 +1,5 @@
 import { mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../exams";
+import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { assert } from "../util";

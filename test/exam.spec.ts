@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { CUSTOMIZE, ExamSpecification } from '../src/specification';
 import { INVALID_IDS, VALID_IDS } from './common.spec';
 import { Section_MC_Basic } from './section.spec';
-import { Exam } from '../src/exam_constructs';
+import { Exam } from '../src/exam_components';
 
 export const Exam_MC_Basic : ExamSpecification = {
   id: "exam_id",

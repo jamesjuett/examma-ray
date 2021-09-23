@@ -1,4 +1,4 @@
-import { Question } from "./exam_constructs";
+import { Question } from "./exam_components";
 import { QuestionSpecification } from "./specification";
 import { asMutable } from "./util";
 

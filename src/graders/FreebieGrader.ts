@@ -1,4 +1,4 @@
-import { AssignedQuestion, GradedQuestion } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 

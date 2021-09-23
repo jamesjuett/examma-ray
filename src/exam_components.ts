@@ -148,7 +148,7 @@ export class Section {
 
 
 
-export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = 
+const MK_DEFAULT_SAVER_MESSAGE_CANVAS = 
 `Click the button below to save a copy of your answers as a \`.json\`
 file. You may save as many times as you like. You can also restore answers
 from a previously saved file.
@@ -159,26 +159,26 @@ It is up to you to download your answer file and turn it in on **Canvas**.
 
 **Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
 
-export const MK_DEFAULT_QUESTIONS_MESSAGE = "";
+const MK_DEFAULT_QUESTIONS_MESSAGE = "";
 
-export const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
+const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
 
-export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = 
-`You've reached the bottom of the exam! If you're done, make sure to
-click the **"Answers File"** button, download a **\`.json\`
-answers file**, and submit to **Canvas** before the end of the exam!`;
+// const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = 
+// `You've reached the bottom of the exam! If you're done, make sure to
+// click the **"Answers File"** button, download a **\`.json\`
+// answers file**, and submit to **Canvas** before the end of the exam!`;
 
-export const MK_DEFAULT_BOTTOM_MESSAGE = 
+const MK_DEFAULT_BOTTOM_MESSAGE = 
 `You've reached the bottom of the exam! If you're done, make sure to
 click the **"Answers File"** button, download a **\`.json\`
 answers file**, and submit it before the end of the exam!`;
 
 
-export const MK_DEFAULT_REGRADE_MESSAGE = 
-`Please note that you should only submit a regrade request
-if you belive a grading **mistake** was made. Do not submit
-regrade requests based on a disagreement with the rubric or
-point values/weighting for rubric items.`;
+// const MK_DEFAULT_REGRADE_MESSAGE = 
+// `Please note that you should only submit a regrade request
+// if you belive a grading **mistake** was made. Do not submit
+// regrade requests based on a disagreement with the rubric or
+// point values/weighting for rubric items.`;
 
 
 

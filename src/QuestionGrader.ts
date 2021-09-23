@@ -1,4 +1,4 @@
-import { AssignedQuestion, GradedQuestion } from "./exams";
+import { AssignedQuestion, GradedQuestion } from "./assigned_exams";
 import { ResponseKind } from "./response/common";
 
 

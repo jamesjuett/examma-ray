@@ -5,7 +5,7 @@ import { Test_Question_MC_Multiple, Test_Question_MC_Single } from "./content/mc
 import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
-import { Exam } from "../../src/exam_constructs";
+import { Exam } from "../../src/exam_components";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({

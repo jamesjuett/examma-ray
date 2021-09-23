@@ -1,7 +1,7 @@
 import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection } from './exams';
+import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection } from './assigned_exams';
 import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer, CHOOSE_ALL } from "./randomization";
 import { assert } from './util';
 import { unparse } from 'papaparse';
@@ -10,7 +10,7 @@ import { chooseQuestions, chooseSections, StudentInfo } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
 import path from 'path';
-import { Exam, Question, Section } from './exam_constructs';
+import { Exam, Question, Section } from './exam_components';
 
 type SectionStats = {
   section: Section,

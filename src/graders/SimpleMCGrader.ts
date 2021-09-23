@@ -1,6 +1,6 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { AssignedQuestion, GradedQuestion } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
 import { assert } from "../util";

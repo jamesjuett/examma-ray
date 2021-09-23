@@ -12,7 +12,7 @@ import { ResponseKind } from "./response/common";
 import { ResponseSpecification } from "./response/responses";
 import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
-import { Exam, Question, Section } from "./exam_constructs";
+import { Exam, Question, Section } from "./exam_components";
 
 export function isValidID(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);

@@ -1,7 +1,7 @@
 import { encode } from "he";
 import { min, sum } from "simple-statistics";
 import { applySkin, mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { createFilledFITB, FITBSubmission } from "../response/fitb";
 import { assert } from "../util";

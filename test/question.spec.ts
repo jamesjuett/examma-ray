@@ -2,7 +2,7 @@ import 'mocha';
 import { expect } from 'chai';
 import { CUSTOMIZE, QuestionSpecification } from '../src/specification';
 import { INVALID_IDS, VALID_IDS } from './common.spec';
-import { Question } from '../src/exam_constructs';
+import { Question } from '../src/exam_components';
 
 export const MC_Basic : QuestionSpecification = {
   id: "question_id",

@@ -10,7 +10,7 @@ import { QuestionSkin } from './skins';
 import { ExamManifest } from './submissions';
 import { sum } from 'simple-statistics';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
-import { Exam, Question, Section } from './exam_constructs';
+import { Exam, Question, Section } from './exam_components';
 
 
 export enum RenderMode {

@@ -1,6 +1,6 @@
 import { applySkin, highlightCode, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
-import { AssignedQuestion, GradedQuestion } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";

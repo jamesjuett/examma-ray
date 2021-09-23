@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
 import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissions";
 import Papa from "papaparse";
-import { AssignedQuestion } from "./exams";
+import { AssignedQuestion } from "./assigned_exams";
 import path from "path";
 import { asMutable, assert, assertNever } from "./util";
 import { chunk } from "simple-statistics";

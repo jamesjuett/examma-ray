@@ -9,13 +9,13 @@ export {
   AssignedQuestion,
   AssignedSection,
   AssignedExam,
-} from "./exams";
+} from "./assigned_exams";
 
 export {
   Question,
   Section,
   Exam
-} from "./exam_constructs";
+} from "./exam_components";
 
 export {
   QuestionAnswer,
