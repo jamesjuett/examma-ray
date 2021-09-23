@@ -1,13 +1,13 @@
-import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { QuestionGrader, GradingResult } from "../QuestionGrader";
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
+import { QuestionGrader, GradingResult } from "../core/QuestionGrader";
 import { ExamUtils } from "../ExamUtils";
-import { CodeWritingGradingAssignment } from "../grading/code-grader";
-import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../ui_components";
+import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
+import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { sum } from "simple-statistics";
-import { applySkin, highlightCode, mk2html } from "../render";
-import { assert, assertFalse } from "../util";
-import { createFilledFITB, FITBSubmission } from "../response/fitb";
+import { applySkin, highlightCode, mk2html } from "../core/render";
+import { assert, assertFalse } from "../core/util";
+import { createFilledFITB, FITBSubmission } from "../core/response/fitb";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";

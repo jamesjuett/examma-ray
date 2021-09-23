@@ -1,12 +1,12 @@
 import { encode } from "he";
 import { min, sum } from "simple-statistics";
-import { applySkin, mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { createFilledFITB, FITBSubmission } from "../response/fitb";
-import { assert } from "../util";
-import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
-import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../ui_components";
+import { applySkin, mk2html } from "../core/render";
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
+import { createFilledFITB, FITBSubmission } from "../core/response/fitb";
+import { assert } from "../core/util";
+import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
+import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
 
 
 export type FITBRegexGradingResult = ImmutableGradingResult & {
