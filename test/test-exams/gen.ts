@@ -9,14 +9,14 @@ import { Exam } from "../../src/exam_components";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
-    id: id,
+    exam_id: id,
     title: "[Title]",
     mk_intructions: "[Instructions]",
     mk_questions_message: "[Questions Message]",
     mk_bottom_message: "[Bottom Message]",
     sections: [
       {
-        id: "section",
+        section_id: "section",
         title: "[Section Title]",
         mk_description: "[Section Description]",
         mk_reference: "[Section Reference]",
@@ -52,20 +52,20 @@ genTestExam(makeTestExam("full_test_exam", [
 ]));
 
 genTestExam(makeTestExam("fitb-drop-multiple", [
-  CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_1"}),
-  CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_2"}),
-  CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_3"}),
+  CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_1"}),
+  CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_2"}),
+  CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_3"}),
 ]));
 
 genTestExam(Exam.create({
-  id: "fitb-drop-reference",
+  exam_id: "fitb-drop-reference",
   title: "[Title]",
   mk_intructions: "[Instructions]",
   mk_questions_message: "[Questions Message]",
   mk_bottom_message: "[Bottom Message]",
   sections: [
     {
-      id: "section",
+      section_id: "section",
       title: "[Section Title]",
       mk_description: "[Section Description]",
       mk_reference:
@@ -83,49 +83,49 @@ ${renderFITBDropBank("fitb_drop_test_2")}
 ${renderFITBDropBank("fitb_drop_test_3")}
 `,
       questions: [
-        CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_1"}),
-        CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_2"}),
-        CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_3"}),
+        CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_1"}),
+        CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_2"}),
+        CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_3"}),
       ]
     }
   ]
 }));
 
 genTestExam(Exam.create({
-  id: "multi_section_test_exam",
+  exam_id: "multi_section_test_exam",
   title: "[Title]",
   mk_intructions: "[Instructions]",
   mk_questions_message: "[Questions Message]",
   mk_bottom_message: "[Bottom Message]",
   sections: [
     {
-      id: "section1",
+      section_id: "section1",
       title: "[Section Title 1]",
       mk_description: "[Section Description 1]",
       mk_reference: "[Section Reference 1]",
       reference_width: 20,
       questions: [
-        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_1"}),
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_1"}),
       ]
     },
     {
-      id: "section2",
+      section_id: "section2",
       title: "[Section Title 2]",
       mk_description: "[Section Description 2]",
       mk_reference: "[Section Reference 2]",
       reference_width: 40,
       questions: [
-        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_2"}),
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_2"}),
       ]
     },
     {
-      id: "section3",
+      section_id: "section3",
       title: "[Section Title 3]",
       mk_description: "[Section Description 3]",
       mk_reference: "[Section Reference 3]",
       reference_width: 60,
       questions: [
-        CUSTOMIZE(Test_Question_MC_Single, {id: "test_question_mc_single_3"}),
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_3"}),
       ]
     }
   ]

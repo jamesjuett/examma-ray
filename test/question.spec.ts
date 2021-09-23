@@ -5,7 +5,7 @@ import { INVALID_IDS, VALID_IDS } from './common.spec';
 import { Question } from '../src/exam_components';
 
 export const MC_Basic : QuestionSpecification = {
-  id: "question_id",
+  question_id: "question_id",
   points: 1,
   mk_description: "[description]",
   response: {
@@ -19,13 +19,13 @@ describe('Question Specification', () => {
 
   it('Allows Valid Question IDs', () => {
     VALID_IDS.forEach(
-      id => expect(() => Question.create(CUSTOMIZE(MC_Basic, {id: id}))).not.to.throw()
+      id => expect(() => Question.create(CUSTOMIZE(MC_Basic, {question_id: id}))).not.to.throw()
     );
   });
 
   it('Prohibits Invalid Question IDs', () => {
     INVALID_IDS.forEach(
-      id => expect(() => Question.create(CUSTOMIZE(MC_Basic, {id: id}))).to.throw()
+      id => expect(() => Question.create(CUSTOMIZE(MC_Basic, {question_id: id}))).to.throw()
     );
   });
 

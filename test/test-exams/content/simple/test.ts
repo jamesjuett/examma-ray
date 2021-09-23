@@ -2,7 +2,7 @@ import { QuestionSpecification } from "../../../../src/specification";
 import { FreebieGrader } from "../../../../src/graders/FreebieGrader";
 
 export const Question_Simple_Test_1 : QuestionSpecification = {
-  id: "simple_test_1",
+  question_id: "simple_test_1",
   points: 2,
   mk_description:
 `
@@ -23,7 +23,7 @@ This is a simple test question!
 }
 
 export const Question_Simple_Test_2 : QuestionSpecification = {
-  id: "simple_test_2",
+  question_id: "simple_test_2",
   points: 3,
   mk_description:
 `
