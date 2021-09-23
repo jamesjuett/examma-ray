@@ -39,8 +39,11 @@ export type ExamSpecification = {
 
   /**
    * Specifies the sections of this exam. Each entry in the array may either specify
-   * a particular section 
-   */
+   * a particular section or a "chooser" that selects one (or more) from a set of possible
+   * sections that an individual student might be assigned.
+   * @see [[SectionSpecification]]
+   * @see [[SectionChooser]]
+*/
   sections: readonly (SectionSpecification | Section | SectionChooser)[],
   mk_announcements?: string[],
   mk_questions_message?: string,
