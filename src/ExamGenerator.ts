@@ -111,7 +111,7 @@ export class ExamGenerator {
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionChoiceRandomizer(this.makeSeed(student), this.exam, section),
     skinRand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionSkinRandomizer(this.makeSeed(student), this.exam, section))
   {
-    let sectionSkins = section.skins.generate(this.exam, student, skinRand);
+    let sectionSkins = section.skins.choose(this.exam, student, skinRand);
     assert(this.options.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
       createStudentUuid(this.options, student, this.exam.exam_id + "-s-" + section.section_id),
@@ -132,7 +132,7 @@ export class ExamGenerator {
     sectionSkin: QuestionSkin,
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionSkinRandomizer(this.makeSeed(student), this.exam, question)) {
 
-    let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+    let questionSkins = question.skins.choose(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     assert(this.options.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
       createStudentUuid(this.options, student, this.exam.exam_id + "-q-" + question.question_id),

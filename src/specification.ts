@@ -25,21 +25,24 @@ export interface StudentInfo {
 }
 
 export type ExamSpecification = {
+
+  readonly component_kind?: "specification",
+
   /**
    * A unique ID for the exam. Also used as part of the composite seed for UUID generation
    * by an [[ExamGenerator]] using the `"uniqname"` or "uuidv5" strategies.
    */
-  id: string,
+  readonly id: string,
 
   /**
    * Title shown at the top of the exam.
    */
-  title: string,
+  readonly title: string,
 
   /**
    * Markdown-formatted exam instructions, shown at the top of the exam.
    */
-  mk_intructions: string,
+  readonly mk_intructions: string,
 
   /**
    * Specifies the sections of this exam. Each entry in the array may either specify
@@ -48,25 +51,29 @@ export type ExamSpecification = {
    * @see [[SectionSpecification]]
    * @see [[SectionChooser]]
 */
-  sections: readonly (SectionSpecification | Section | SectionChooser)[],
-  mk_announcements?: string[],
-  mk_questions_message?: string,
-  mk_download_message?: string,
-  mk_bottom_message?: string
-  enable_regrades?: boolean,
+  readonly sections: readonly (SectionSpecification | SectionChooser)[],
+  readonly mk_announcements?: string[],
+  readonly mk_questions_message?: string,
+  readonly mk_download_message?: string,
+  readonly mk_bottom_message?: string,
+  readonly enable_regrades?: boolean
 };
 
 
 
 /**
- * A `SectionChooser` is a function that selects an array of questions given an exam, a student,
+ * A `SectionChooser` selects an array of questions given an exam, a student,
  * and a source of randomness. You may define your own or use a predefined chooser:
  * - [[RANDOM_SECTION]]
  */
-export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
+export interface SectionChooser {
+  component_kind: "chooser";
+  choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly Section[];
+  getById(section_id: string): Section;
+}
 
 export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return typeof chooser === "function" ? chooser(exam, student, rand) : [chooser]
+  return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
 }
 
 /**
@@ -90,21 +97,26 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
 
 
 export type SectionSpecification = {
+  readonly component_kind?: "specification",
   readonly id: string,
   readonly title: string,
   readonly mk_description: string,
   readonly mk_reference?: string,
-  readonly questions: readonly (QuestionSpecification | Question | QuestionChooser)[],
-  readonly skins?: SkinGenerator,
-  reference_width?: number
+  readonly questions: readonly (QuestionSpecification | QuestionChooser)[],
+  readonly skins?: SkinChooser,
+  reference_width?: number,
 }
 
 
 
-export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
+export interface QuestionChooser {
+  component_kind: "chooser",
+  choose(exam: Exam, student: StudentInfo, rand: Randomizer) : readonly Question[];
+  getById(id: string) : Question | undefined;
+}
 
 export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return typeof chooser === "function" ? chooser(exam, student, rand) : [chooser];
+  return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
 }
 
 // export function BY_ID(id: string, questionBank: QuestionBank) {
@@ -143,35 +155,36 @@ export function RANDOM_QUESTION(n: number, questionBank: QuestionBank | readonly
 
 
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
-  id: string,
-  points: number,
-  mk_description: string,
-  response: ResponseSpecification<QT>,
-  tags?: readonly string[],
-  skins?: SkinGenerator
+  readonly component_kind?: "specification",
+  readonly id: string,
+  readonly points: number,
+  readonly mk_description: string,
+  readonly response: ResponseSpecification<QT>,
+  readonly tags?: readonly string[],
+  readonly skins?: SkinChooser
 };
 
 
 
 
 
-export type SkinGenerator = {
-  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[],
+export type SkinChooser = {
+  choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[],
   getById: (id: string) => QuestionSkin | undefined
 };
 
-export const DEFAULT_SKIN_GENERATOR : SkinGenerator = {
-  generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+export const DEFAULT_SKIN_GENERATOR : SkinChooser = {
+  choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     return [DEFAULT_SKIN];
   },
   getById: (id: string) => DEFAULT_SKIN
 }
 
-export function RANDOM_SKIN(skins: readonly QuestionSkin[]) {
+export function RANDOM_SKIN(skins: readonly QuestionSkin[]) : SkinChooser {
   let skinMap : {[index: string]: QuestionSkin | undefined} = {};
   skins.forEach(s => skinMap[s.id] = s);
   return {
-    generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
       assert(skins.length > 0, `Error - array of skin choices is empty.`);
       return rand === CHOOSE_ALL ? skins : [rand.choose(skins)]
     },

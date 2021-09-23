@@ -4,7 +4,7 @@ import { mk2html } from "./render";
 import { ResponseKind, BLANK_SUBMISSION } from "./response/common";
 import { ResponseSpecification, SubmissionType, render_response } from "./response/responses";
 import { QuestionSkin } from "./skins";
-import { DEFAULT_SKIN_GENERATOR, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinGenerator, StudentInfo } from "./specification";
+import { DEFAULT_SKIN_GENERATOR, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./specification";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -12,6 +12,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   // public readonly raw_description: string;
   // public readonly description: string;
   // public readonly section: Section;
+  public readonly component_kind = "component";
   public readonly spec: QuestionSpecification<QT>;
   public readonly question_id: string;
   public readonly tags: readonly string[];
@@ -19,7 +20,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
-  public readonly skins: SkinGenerator;
+  public readonly skins: SkinChooser;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
   public readonly defaultGrader?: QuestionGrader<QT>;
 
@@ -73,19 +74,22 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 const DEFAULT_REFERENCE_WIDTH = 40;
 
-function realizeQuestion(s: QuestionSpecification | Question | QuestionChooser) {
-  return (typeof s === "function" || s instanceof Question) ? s : Question.create(s);
+function realizeQuestion(q: QuestionSpecification | Question | QuestionChooser) {
+  return q.component_kind === "chooser" ? q :
+    q.component_kind === "component" ? q :
+    Question.create(q);
 }
 
 export class Section {
 
+  public readonly component_kind = "component";
   public readonly spec: SectionSpecification;
   public readonly section_id: string;
   public readonly title: string;
   public readonly mk_description: string;
   public readonly mk_reference?: string;
   public readonly questions: readonly (Question | QuestionChooser)[];
-  public readonly skins: SkinGenerator;
+  public readonly skins: SkinChooser;
 
   /**
    * Desired width of reference material as a percent (e.g. 40 means 40%).
@@ -183,11 +187,14 @@ answers file**, and submit it before the end of the exam!`;
 
 
 function realizeSection(s: SectionSpecification | Section | SectionChooser) {
-  return (typeof s === "function" || s instanceof Section) ? s : Section.create(s);
+  return s.component_kind === "chooser" ? s :
+    s.component_kind === "component" ? s :
+    Section.create(s);
 }
 
 export class Exam {
 
+  public readonly component_kind = "component";
   public readonly exam_id: string;
   public readonly title: string;
 
