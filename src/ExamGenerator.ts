@@ -216,12 +216,12 @@ export class ExamGenerator {
     let renderedExams = this.renderExams();
 
     let toWrite = manifests
-      .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map((m, i) => ({
-      manifest: m,
-      renderedHtml: renderedExams[i]
-    }));
-
+        manifest: m,
+        renderedHtml: renderedExams[i]
+      }))
+      .sort((a, b) => a.manifest.student.uniqname.localeCompare(b.manifest.student.uniqname));
+      
     // Write out manifests and exams for all, sorted by uniqname
     toWrite.forEach((ex, i, arr) => {
       let manifest = ex.manifest;
