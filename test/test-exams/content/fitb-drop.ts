@@ -1,7 +1,7 @@
 import { QuestionSpecification } from "../../../src/specification";
 
 export const Test_Question_Fitb_Drop : QuestionSpecification = {
-  id: "fitb_drop_test",
+  question_id: "fitb_drop_test",
   points: 4,
   mk_description:
 `FITB-Drop Test Question
