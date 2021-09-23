@@ -14,6 +14,8 @@
  * Valid IDs must start with a letter and may contain letters, numbers, underscores, and dashes (i.e. they
  * must match the regex `/^[a-zA-Z][a-zA-Z0-9_\-]*$/`). The [[isValidID]] function tests this.
  * 
+ * Student "uniqnames" are also required to meet these same criteria.
+ * 
  * When a question/section/exam is assigned to a student, it is given a UUID, with these original IDs used
  * as part of the seed (assuming one of the deterministic UUID generation policies is used). So, don't change
  * the IDs after you've started giving/grading an exam (or ideally don't change them EVER once a question is
@@ -36,6 +38,11 @@
  * 
  * Use the [[CUSTOMIZE]] function if you've got an existing specification (e.g. from a question bank) that
  * you just need to tweak slightly.
+ * 
+ * ### Student information
+ * 
+ * Presently, the only information needed for students are names and "uniqnames", which are a unique
+ * identifier for each student. These must satisfy the same 
  * 
  * @module
  */
@@ -66,6 +73,14 @@ export type SectionSpecification = {
   readonly title: string,
   readonly mk_description: string,
   readonly mk_reference?: string,
+
+  /**
+   * Specifies the sequence of questions in this section. Each entry in the array may either specify
+   * a particular question or a "chooser" that selects one (or more) from a set of possible
+   * questions that an individual student might be assigned.
+   * @see [[QuestionSpecification]]
+   * @see [[QuestionChooser]]
+   */
   readonly questions: readonly (QuestionSpecification | QuestionChooser)[],
   readonly skin?: ExamComponentSkin | SkinChooser,
   reference_width?: number,
@@ -92,17 +107,53 @@ export type ExamSpecification = {
   readonly mk_intructions: string,
 
   /**
-   * Specifies the sections of this exam. Each entry in the array may either specify
+   * Specifies the sequence of sections on this exam. Each entry in the array may either specify
    * a particular section or a "chooser" that selects one (or more) from a set of possible
    * sections that an individual student might be assigned.
    * @see [[SectionSpecification]]
    * @see [[SectionChooser]]
-*/
+   */
   readonly sections: readonly (SectionSpecification | SectionChooser)[],
+
+  /**
+   * Markdown-formatted announcements that will be shown in an "alert" style box at the top of the exam,
+   * right below the main instructions. These are intended to stand out from the regular instructions.
+   */
   readonly mk_announcements?: string[],
+
+  /**
+   * A markdown-formatted message that appears at the bottom left of the page, right above the
+   * "Answers File" button. A suggested use is to specify how students can ask questions during
+   * the exam, perhaps including a link to e.g. a course forum or video meeting with proctors.
+   */
   readonly mk_questions_message?: string,
+
+  /**
+   * A markdown-formatted message that appears at the bottom left of the page, right below the
+   * "Answers File" button. A suggested use is to remind students why to click the "Answers File"
+   * button, e.g. "Download an answers file to submit to Canvas".
+   */
   readonly mk_download_message?: string,
+
+  /**
+   * A markdown-formatted message that appears when students open the "Answers File" modal.
+   * A suggested use is to give students instructions for downloading and turning in their
+   * answers file.
+   */
+  readonly mk_saver_message?: string,
+
+  /**
+   * A markdown-formatted message that appears at the bottom of the exam. A suggested use is
+   * to confirm that students have reached the bottom of the exam and remind them to download
+   * the answers file and turn it in elsewhere (e.g. to Canvas or some other LMS).
+   * 
+   * Defaults to [[MK_DEFAULT_DOWNLOAD_MESSAGE]]
+   */
   readonly mk_bottom_message?: string,
+
+  /**
+   * TODO this will probably be moved elsewhere.
+   */
   readonly enable_regrades?: boolean
 };
 
