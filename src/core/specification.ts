@@ -223,5 +223,3 @@ export interface StudentInfo {
   readonly uniqname: string;
   readonly name: string;
 }
-
-export * from "./skins";
