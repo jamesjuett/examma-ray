@@ -1,19 +1,20 @@
 import { readdirSync, readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
-import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissions";
+import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./core/submissions";
 import Papa from "papaparse";
-import { AssignedQuestion } from "./assigned_exams";
+import { AssignedQuestion } from "./core/assigned_exams";
 import path from "path";
-import { asMutable, assert, assertNever } from "./util";
+import { asMutable, assert, assertNever } from "./core/util";
 import { chunk } from "simple-statistics";
-import { stringify_response } from "./response/responses";
-import { GradingAssignmentSpecification } from "./grading/common";
+import { stringify_response } from "./core/response/responses";
+import { GradingAssignmentSpecification } from "./grading_interface/common";
 import { v4 as uuidv4, v5 as uuidv5} from 'uuid';
 
 import glob from "glob";
 import del from "del";
+import "colors";
 
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { StudentInfo } from "./specification";
+import { StudentInfo } from "./core/specification";
 
 export namespace ExamUtils {
 

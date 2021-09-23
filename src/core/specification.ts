@@ -12,7 +12,12 @@
  * component specification category - e.g. it would be ok to have a question and section with the same ID.)
  * 
  * Valid IDs must start with a letter and may contain letters, numbers, underscores, and dashes (i.e. they
- * must match the regex `/^[a-zA-Z][a-zA-Z0-9_\-]*$/`). The [[isValidID function tests this]].
+ * must match the regex `/^[a-zA-Z][a-zA-Z0-9_\-]*$/`). The [[isValidID]] function tests this.
+ * 
+ * When a question/section/exam is assigned to a student, it is given a UUID, with these original IDs used
+ * as part of the seed (assuming one of the deterministic UUID generation policies is used). So, don't change
+ * the IDs after you've started giving/grading an exam (or ideally don't change them EVER once a question is
+ * put into some use).
  * 
  * ### Specifying Question/Section Choosers
  * 
@@ -39,7 +44,7 @@ import { CHOOSE_ALL, Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "./response/common";
 import { ResponseSpecification } from "./response/responses";
-import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
+import { ExamComponentSkin, SkinChooser } from "./skins";
 import { assert } from "./util";
 import { Exam, Question, Section } from "./exam_components";
 
@@ -223,5 +228,3 @@ export interface StudentInfo {
   readonly uniqname: string;
   readonly name: string;
 }
-
-export * from "./skins";

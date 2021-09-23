@@ -76,21 +76,21 @@
  */
 
 import { writeFileSync, mkdirSync } from 'fs';
-import { TrustedExamSubmission } from './submissions';
-import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './assigned_exams';
-import { QuestionGrader } from './QuestionGrader';
-import { chooseQuestions, chooseSections, StudentInfo } from './specification';
-import { asMutable, assert, assertFalse, Mutable } from './util';
+import { TrustedExamSubmission } from './core/submissions';
+import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
+import { QuestionGrader } from './core/QuestionGrader';
+import { chooseQuestions, chooseSections, StudentInfo } from './core/specification';
+import { asMutable, assert, assertFalse, Mutable } from './core/util';
 import { unparse } from 'papaparse';
 import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
-import { createCompositeSkin, DEFAULT_SKIN } from './skins';
+import { createCompositeSkin, DEFAULT_SKIN } from './core/skins';
 import del from 'del';
 import { average } from 'simple-statistics';
-import { renderGradingProgressBar, renderPointsProgressBar } from './ui_components';
-import { GradedStats } from "./GradedStats";
-import { ExamCurve } from "./ExamCurve";
-import { Exam, Question, Section } from './exam_components';
-import { CHOOSE_ALL } from './randomization';
+import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
+import { GradedStats } from "./core/GradedStats";
+import { ExamCurve } from "./core/ExamCurve";
+import { Exam, Question, Section } from './core/exam_components';
+import { CHOOSE_ALL } from './core/randomization';
 
 
 

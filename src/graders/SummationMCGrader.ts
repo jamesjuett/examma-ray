@@ -1,9 +1,9 @@
-import { mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
-import { assert } from "../util";
-import { renderPercentChosenProgressBar } from "../ui_components";
+import { mk2html } from "../core/render";
+import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned_exams";
+import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
+import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
+import { assert } from "../core/util";
+import { renderPercentChosenProgressBar } from "../core/ui_components";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {

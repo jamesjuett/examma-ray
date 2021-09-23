@@ -1,5 +1,7 @@
-import { Exam, ExamGenerator, ExamUtils } from "examma-ray";
 import { readFileSync } from "fs";
+import { Exam } from "examma-ray";
+import { ExamGenerator } from "examma-ray/dist/ExamGenerator";
+import { ExamUtils } from "examma-ray/dist/ExamUtils";
 import { Section_Sample_MC } from "../content/sample_mc";
 
 export const EXAM = Exam.create({

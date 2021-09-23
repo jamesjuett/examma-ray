@@ -1,5 +1,5 @@
 import { mean, sampleCovariance, standardDeviation } from "simple-statistics";
-import { ExamGrader } from "./ExamGrader";
+import { ExamGrader } from "../ExamGrader";
 import { isGradedQuestion } from "./assigned_exams";
 import { assert } from "./util";
 

@@ -1,7 +1,7 @@
-import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/response/responses";
+import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/core/response/responses";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
-import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/submissions";
+import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
 
 import CodeMirror from 'codemirror';
@@ -11,7 +11,7 @@ import './codemirror-modes';
 import 'codemirror/addon/comment/comment.js';
 import 'codemirror/keymap/sublime.js';
 import { decode } from "he";
-import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 
 import 'katex/dist/katex.min.css';
 
