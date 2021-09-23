@@ -2,7 +2,7 @@ import { encode } from "he";
 import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, mk2html } from "../render";
 import { QuestionSkin } from "../skins";
-import { assert, assertFalse } from "../util";
+import { assert } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
 

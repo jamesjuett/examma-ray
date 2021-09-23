@@ -1,4 +1,4 @@
-import { Question } from "./exams";
+import { Question } from "./exam_constructs";
 import { QuestionSpecification } from "./specification";
 import { asMutable } from "./util";
 
@@ -14,7 +14,7 @@ export class QuestionBank {
   
     public registerQuestion(q: Question | QuestionSpecification) {
       if (!(q instanceof Question)) {
-        q = new Question(q);
+        q = Question.create(q);
       }
       asMutable(this.questions).push(q);
       this.questionsById[q.question_id] = q;
@@ -23,8 +23,8 @@ export class QuestionBank {
       );
     }
   
-    public registerQuestions(qs: QuestionSpecification[]) {
-      qs.forEach(q => this.registerQuestion(new Question(q)));
+    public registerQuestions(qs: readonly (Question | QuestionSpecification)[]) {
+      qs.forEach(q => this.registerQuestion(q));
     }
   
     public getQuestionById(id: string) {

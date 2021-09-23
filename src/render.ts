@@ -3,7 +3,7 @@ import showdownKatex from 'showdown-katex';
 import showdownHighlight from 'showdown-highlight';
 import hljs from 'highlight.js'
 import { QuestionSkin } from './skins';
-import { assert, assertFalse } from './util';
+import { assertFalse } from './util';
 import * as Handlebars from "handlebars";
 
 const converter = new showdown.Converter({

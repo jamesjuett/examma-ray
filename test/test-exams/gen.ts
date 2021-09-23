@@ -1,14 +1,14 @@
 import path from "path";
 import { ExamGenerator } from "../../src/ExamGenerator";
-import { Exam } from "../../src/exams";
 import { CUSTOMIZE, QuestionSpecification } from "../../src/specification";
 import { Test_Question_MC_Multiple, Test_Question_MC_Single } from "./content/mc";
 import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
+import { Exam } from "../../src/exam_constructs";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
-  return new Exam({
+  return Exam.create({
     id: id,
     title: "[Title]",
     mk_intructions: "[Instructions]",
@@ -57,7 +57,7 @@ genTestExam(makeTestExam("fitb-drop-multiple", [
   CUSTOMIZE(Test_Question_Fitb_Drop, {id: "fitb_drop_test_3"}),
 ]));
 
-genTestExam(new Exam({
+genTestExam(Exam.create({
   id: "fitb-drop-reference",
   title: "[Title]",
   mk_intructions: "[Instructions]",
@@ -91,7 +91,7 @@ ${renderFITBDropBank("fitb_drop_test_3")}
   ]
 }));
 
-genTestExam(new Exam({
+genTestExam(Exam.create({
   id: "multi_section_test_exam",
   title: "[Title]",
   mk_intructions: "[Instructions]",

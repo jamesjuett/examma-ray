@@ -1,13 +1,11 @@
 import { mk2html } from "../render";
 import { renderNumBadge } from "../ui_components";
-import { AssignedQuestion, GradedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/multiple_choice";
-import { SubmissionType } from "../response/responses";
 import { assert } from "../util";
 import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
-import { QuestionSkin } from "../skins";
 
 /**
  * chosen is -1 if the submission was blank

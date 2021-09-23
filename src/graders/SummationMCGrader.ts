@@ -1,12 +1,9 @@
 import { mk2html } from "../render";
-import { AssignedQuestion, GradedQuestion, Question, wereGradedBy } from "../exams";
+import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { MCSubmission } from "../response/multiple_choice";
-import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
-import { QuestionSkin } from "../skins";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { assert } from "../util";
-import { renderNumBadge, renderPercentChosenProgressBar } from "../ui_components";
-import { RED_X_ICON } from "../icons";
+import { renderPercentChosenProgressBar } from "../ui_components";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {

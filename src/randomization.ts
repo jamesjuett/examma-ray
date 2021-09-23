@@ -1,8 +1,9 @@
 import { RandomSeed, create as createRNG } from 'random-seed';
-import { Exam, Question, Section, StudentInfo } from './exams';
-import { CHOOSE_ALL } from './specification';
+import { Exam, Question, Section } from './exam_constructs';
 import { assert } from './util';
 
+
+export const CHOOSE_ALL = Symbol("choose_all");
 
 class SeededRandomizerImpl {
 

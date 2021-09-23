@@ -6,19 +6,23 @@
  * @module
  */
 
-import { Exam, Question, Section, StudentInfo } from "./exams";
-import { Randomizer } from "./randomization";
+import { CHOOSE_ALL, Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
-import { BLANK_SUBMISSION, ResponseKind } from "./response/common";
-import { ResponseSpecification, SubmissionType } from "./response/responses";
+import { ResponseKind } from "./response/common";
+import { ResponseSpecification } from "./response/responses";
 import { DEFAULT_SKIN, QuestionSkin } from "./skins";
 import { assert } from "./util";
+import { Exam, Question, Section } from "./exam_constructs";
 
 export function isValidID(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
 }
 
-export const CHOOSE_ALL = Symbol("choose_all");
+
+export interface StudentInfo {
+  readonly uniqname: string;
+  readonly name: string;
+}
 
 export type ExamSpecification = {
   /**
@@ -52,6 +56,8 @@ export type ExamSpecification = {
   enable_regrades?: boolean,
 };
 
+
+
 /**
  * A `SectionChooser` is a function that selects an array of questions given an exam, a student,
  * and a source of randomness. You may define your own or use a predefined chooser:
@@ -59,10 +65,8 @@ export type ExamSpecification = {
  */
 export type SectionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Section[];
 
-export function chooseSections(chooser: SectionSpecification | Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return typeof chooser === "function" ? chooser(exam, student, rand) :
-      chooser instanceof Section ? [chooser] :
-      [new Section(chooser)]
+export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return typeof chooser === "function" ? chooser(exam, student, rand) : [chooser]
 }
 
 /**
@@ -74,10 +78,10 @@ export function chooseSections(chooser: SectionSpecification | Section | Section
 export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | Section)[]) {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     if (rand === CHOOSE_ALL) {
-      return sections.map(s => s instanceof Section ? s : new Section(s));
+      return sections.map(s => s instanceof Section ? s : Section.create(s));
     }
     assert(n <= sections.length, `Error - cannot choose ${n} sections from a set of ${sections.length} sections.`);
-    return rand.chooseN(sections, n).map(s => s instanceof Section ? s : new Section(s));
+    return rand.chooseN(sections, n).map(s => s instanceof Section ? s : Section.create(s));
   }
 }
 
@@ -90,17 +94,17 @@ export type SectionSpecification = {
   readonly title: string,
   readonly mk_description: string,
   readonly mk_reference?: string,
-  readonly questions: QuestionSpecification | Question | QuestionChooser | readonly (QuestionSpecification | Question | QuestionChooser)[],
+  readonly questions: readonly (QuestionSpecification | Question | QuestionChooser)[],
   readonly skins?: SkinGenerator,
   reference_width?: number
 }
 
+
+
 export type QuestionChooser = (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly Question[];
 
-export function chooseQuestions(chooser: QuestionSpecification| Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return typeof chooser === "function" ? chooser(exam, student, rand) :
-      chooser instanceof Question ? [chooser] :
-      [new Question(chooser)]
+export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return typeof chooser === "function" ? chooser(exam, student, rand) : [chooser];
 }
 
 // export function BY_ID(id: string, questionBank: QuestionBank) {
@@ -149,6 +153,8 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
 
 
 
+
+
 export type SkinGenerator = {
   generate: (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly QuestionSkin[],
   getById: (id: string) => QuestionSkin | undefined
@@ -181,3 +187,4 @@ export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Exclu
 export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification | ExamSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification | ExamSpecification, "response">>) : QuestionSpecification | SectionSpecification | ExamSpecification {
   return Object.assign({}, spec, customizations);
 }
+

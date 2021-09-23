@@ -6,15 +6,16 @@ export {
 } from "./skins";
 
 export {
-  StudentInfo,
-  Question,
   AssignedQuestion,
-  Section,
   AssignedSection,
   AssignedExam,
-  MK_DEFAULT_SAVER_MESSAGE_CANVAS as DEFAULT_SAVER_MESSAGE_CANVAS,
-  Exam
 } from "./exams";
+
+export {
+  Question,
+  Section,
+  Exam
+} from "./exam_constructs";
 
 export {
   QuestionAnswer,

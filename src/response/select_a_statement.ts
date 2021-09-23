@@ -1,8 +1,6 @@
-import { encode } from "he";
 import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, highlightCode } from "../render";
 import { QuestionSkin } from "../skins";
-import { assertFalse } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 

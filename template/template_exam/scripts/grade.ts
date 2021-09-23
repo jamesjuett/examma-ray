@@ -1,5 +1,4 @@
 import minimist from "minimist";
-import { IndividualizedNormalCurve } from "examma-ray/dist/ExamCurve";
 
 import { CURVE, EXAM_GRADER } from "../grader-spec";
 

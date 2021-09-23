@@ -1,5 +1,5 @@
 import { sum } from "simple-statistics";
-import { AssignedExam, GradedExam } from "./exams";
+import { GradedExam } from "./exams";
 import { GradedStats } from "./GradedStats";
 import { maxPrecisionString } from "./ui_components";
 

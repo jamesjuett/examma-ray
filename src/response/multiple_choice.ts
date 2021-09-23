@@ -1,5 +1,3 @@
-import Mustache from "mustache";
-import { Question } from "../exams";
 import { QuestionGrader } from "../QuestionGrader";
 import { mk2html } from "../render";
 import { QuestionSkin } from "../skins";

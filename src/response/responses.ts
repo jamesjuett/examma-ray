@@ -5,7 +5,6 @@ import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_stateme
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
 import { QuestionSkin } from "../skins";
-import { Question } from "../exams";
 
 export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSpecification :

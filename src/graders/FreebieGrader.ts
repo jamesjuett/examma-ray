@@ -1,8 +1,6 @@
-import { AssignedQuestion, GradedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../exams";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
-import { SubmissionType } from "../response/responses";
-import { QuestionSkin } from "../skins";
-import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;
 

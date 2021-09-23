@@ -11,24 +11,18 @@ import { applySkin, highlightCode, mk2html } from "../render";
 import "highlight.js/styles/github.css";
 
 import "./code-grader.css";
-import { COMPLETION_ALL_CHECKPOINTS, COMPLETION_LAST_CHECKPOINT, Exercise, Project } from "lobster-vis/dist/js/core/Project";
+import { COMPLETION_ALL_CHECKPOINTS, Exercise, Project } from "lobster-vis/dist/js/core/Project";
 import "lobster-vis/dist/css/buttons.css"
 import "lobster-vis/dist/css/main.css"
 import "lobster-vis/dist/css/code.css"
 import "lobster-vis/dist/css/exercises.css"
 import "lobster-vis/dist/css/frontend.css"
-import { ProjectEditor } from "lobster-vis/dist/js/view/editors";
-import { Checkpoint, EndOfMainStateCheckpoint, OutputCheckpoint, StaticAnalysisCheckpoint } from "lobster-vis/dist/js/analysis/checkpoints";
-import { Predicates } from "lobster-vis/dist/js/core/predicates";
-import { containsConstruct } from "lobster-vis/dist/js/analysis/analysis";
-import { Simulation } from "lobster-vis/dist/js/core/Simulation";
+import { Checkpoint } from "lobster-vis/dist/js/analysis/checkpoints";
 import "lobster-vis/dist/js/lib/standard";
-import { renderPointsWorthBadge, renderScoreBadge, renderShortPointsWorthBadge, renderUngradedBadge } from "../ui_components";
+import { renderScoreBadge, renderShortPointsWorthBadge, renderUngradedBadge } from "../ui_components";
 import { asMutable, assert } from "../util";
-import { Question } from "../exams";
 import { QuestionSpecification } from "../specification";
 import deepEqual from "deep-equal";
-import { SubmissionType } from "../response/responses";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and

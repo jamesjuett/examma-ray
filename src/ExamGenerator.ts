@@ -1,16 +1,16 @@
 import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
-import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
-import { assert, assertNever } from './util';
+import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection } from './exams';
+import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer, CHOOSE_ALL } from "./randomization";
+import { assert } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
-import { ResponseKind } from './examma-ray';
-import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
+import { chooseQuestions, chooseSections, StudentInfo } from './specification';
 import { createCompositeSkin, QuestionSkin } from './skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
 import path from 'path';
+import { Exam, Question, Section } from './exam_constructs';
 
 type SectionStats = {
   section: Section,
