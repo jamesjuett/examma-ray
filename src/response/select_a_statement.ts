@@ -1,6 +1,6 @@
 import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, highlightCode } from "../render";
-import { QuestionSkin } from "../skins";
+import { ExamComponentSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 
@@ -52,7 +52,7 @@ function SAS_PARSER(rawSubmission: string | null | undefined) : SASSubmission | 
   }
 }
 
-function SAS_RENDERER(response: SASSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
+function SAS_RENDERER(response: SASSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   let item_index = 0;
   return `
     <div style="text-align: right; margin-bottom: 5px;">
@@ -81,7 +81,7 @@ function SAS_RENDERER(response: SASSpecification, question_id: string, question_
   `;
 }
 
-function renderSASItem(item: SASItem, question_id: string, item_index: number, code_language: string, skin?: QuestionSkin) {
+function renderSASItem(item: SASItem, question_id: string, item_index: number, code_language: string, skin?: ExamComponentSkin) {
   return `
     <div class="examma-ray-sas-line">
       <input type="checkbox" id="${question_id}-sas-choice-${item_index}" value="${item_index}" class="sas-select-input"${item.forced ? " checked=\"checked\" disabled=\"disabled\"" : ""}></input> 

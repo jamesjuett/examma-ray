@@ -256,7 +256,7 @@ class CodeWritingManualGraderApp {
   }
 
   private createControls() {
-    $(".examma-ray-grading-title").html(this.question.id);
+    $(".examma-ray-grading-title").html(this.question.question_id);
   }
 
   private createRubricBar(sub?: GradingSubmission) {
@@ -319,7 +319,7 @@ class CodeWritingManualGraderApp {
     const contents = await file.text();
     let assn = <CodeWritingGradingAssignment>JSON.parse(contents);
 
-    if (assn.question_id !== this.question.id) {
+    if (assn.question_id !== this.question.question_id) {
       alert("The question ID for that grading assignment does not match the question ID for this rubric.");
       return;
     }

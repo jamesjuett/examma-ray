@@ -3,8 +3,8 @@ import { QuestionGrader } from "./QuestionGrader";
 import { mk2html } from "./render";
 import { ResponseKind, BLANK_SUBMISSION } from "./response/common";
 import { ResponseSpecification, SubmissionType, render_response } from "./response/responses";
-import { QuestionSkin } from "./skins";
-import { DEFAULT_SKIN_GENERATOR, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./specification";
+import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
+import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, StudentInfo } from "./specification";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -20,7 +20,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
-  public readonly skins: SkinChooser;
+  public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
   public readonly defaultGrader?: QuestionGrader<QT>;
 
@@ -30,7 +30,12 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   private static instances = new WeakMap<QuestionSpecification, Question>();
 
-  public static create<QT extends ResponseKind>(spec: QuestionSpecification<QT>) : Question<QT> {
+  public static create<QT extends ResponseKind>(spec: QuestionSpecification<QT> | Question<QT>) : Question<QT> {
+    // If an already created question was passed in, do nothing and return it
+    if (spec.component_kind === "component") {
+      return spec;
+    }
+
     if (this.instances.has(spec)) {
       return <Question<QT>>this.instances.get(spec)!;
     }
@@ -43,23 +48,23 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   private constructor (spec: QuestionSpecification<QT>) {
     this.spec = spec;
-    assert(isValidID(spec.id), `Invalid question ID: ${spec.id}`);
-    this.question_id = spec.id;
+    assert(isValidID(spec.question_id), `Invalid question ID: ${spec.question_id}`);
+    this.question_id = spec.question_id;
     this.tags = spec.tags ?? [];
     this.mk_description = spec.mk_description;
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
-    this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
+    this.skin = spec.skin ?? DEFAULT_SKIN;
     this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
     this.defaultGrader = <QuestionGrader<QT>>spec.response.default_grader;
   }
 
-  public renderResponse(uuid: string, skin?: QuestionSkin) {
+  public renderResponse(uuid: string, skin?: ExamComponentSkin) {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, this.question_id, uuid, skin)}</div>`;
   }
 
-  public renderDescription(skin: QuestionSkin) {
+  public renderDescription(skin: ExamComponentSkin) {
     return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
   }
 
@@ -89,7 +94,7 @@ export class Section {
   public readonly mk_description: string;
   public readonly mk_reference?: string;
   public readonly questions: readonly (Question | QuestionChooser)[];
-  public readonly skins: SkinChooser;
+  public readonly skin: ExamComponentSkin | SkinChooser;
 
   /**
    * Desired width of reference material as a percent (e.g. 40 means 40%).
@@ -107,7 +112,12 @@ export class Section {
 
   private static instances = new WeakMap<SectionSpecification, Section>();
 
-  public static create(spec: SectionSpecification) {
+  public static create(spec: SectionSpecification | Section) {
+    // If an already created section was passed in, do nothing and return it
+    if (spec.component_kind === "component") {
+      return spec;
+    }
+
     if (this.instances.has(spec)) {
       return this.instances.get(spec)!;
     }
@@ -120,13 +130,13 @@ export class Section {
 
   private constructor (spec: SectionSpecification) {
     this.spec = spec;
-    assert(isValidID(spec.id), `Invalid section ID: ${spec.id}`);
-    this.section_id = spec.id;
+    assert(isValidID(spec.section_id), `Invalid section ID: ${spec.section_id}`);
+    this.section_id = spec.section_id;
     this.title = spec.title;
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
     this.questions = spec.questions.map(q => realizeQuestion(q));
-    this.skins = spec.skins ?? DEFAULT_SKIN_GENERATOR;
+    this.skin = spec.skin ?? DEFAULT_SKIN;
 
     this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
 
@@ -136,11 +146,11 @@ export class Section {
     );
   }
 
-  public renderDescription(skin: QuestionSkin) {
+  public renderDescription(skin: ExamComponentSkin) {
     return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
   }
 
-  public renderReference(skin: QuestionSkin) {
+  public renderReference(skin: ExamComponentSkin) {
     return this.mk_reference && (this.referenceCache[skin.id] ??= mk2html(this.mk_reference, skin));
   }
 
@@ -210,7 +220,12 @@ export class Exam {
 
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
-  public static create(spec: ExamSpecification) {
+  public static create(spec: ExamSpecification | Exam) {
+    // If an already created exam was passed in, do nothing and return it
+    if (spec.component_kind === "component") {
+      return spec;
+    }
+
     if (this.instances.has(spec)) {
       return this.instances.get(spec)!;
     }
@@ -222,8 +237,8 @@ export class Exam {
   }
 
   private constructor(spec: ExamSpecification) {
-    assert(isValidID(spec.id), `Invalid exam ID: ${spec.id}`);
-    this.exam_id = spec.id;
+    assert(isValidID(spec.exam_id), `Invalid exam ID: ${spec.exam_id}`);
+    this.exam_id = spec.exam_id;
     this.title = spec.title;
     this.html_instructions = mk2html(spec.mk_intructions);
     this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];

@@ -2,7 +2,7 @@ import showdown from 'showdown';
 import showdownKatex from 'showdown-katex';
 import showdownHighlight from 'showdown-highlight';
 import hljs from 'highlight.js'
-import { QuestionSkin } from './skins';
+import { ExamComponentSkin } from './skins';
 import { assertFalse } from './util';
 import * as Handlebars from "handlebars";
 
@@ -23,7 +23,7 @@ const converter = new showdown.Converter({
   ]
 });
 
-export function mk2html(mk: string, skin?: QuestionSkin) {
+export function mk2html(mk: string, skin?: ExamComponentSkin) {
   // console.log("rendering mk"); // useful for debugging repeated (i.e. non-cached) mk renders
   if (skin) {
     mk = applySkin(mk, skin);
@@ -31,14 +31,14 @@ export function mk2html(mk: string, skin?: QuestionSkin) {
   return converter.makeHtml(mk);
 }
 
-export function mk2html_unwrapped(mk: string, skin?: QuestionSkin) {
+export function mk2html_unwrapped(mk: string, skin?: ExamComponentSkin) {
   let html = mk2html(mk, skin);
   return html.startsWith("<p>") && html.endsWith("</p>")
     ? html.slice(3, -4)
     : html;
 }
 
-export function applySkin(text: string, skin: QuestionSkin | undefined) {
+export function applySkin(text: string, skin: ExamComponentSkin | undefined) {
   if (!skin) {
     return text;
   }

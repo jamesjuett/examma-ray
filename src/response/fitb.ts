@@ -1,7 +1,7 @@
 import { encode } from "he";
 import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, mk2html } from "../render";
-import { QuestionSkin } from "../skins";
+import { ExamComponentSkin } from "../skins";
 import { assert } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isStringArray } from "./util";
@@ -40,7 +40,7 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
   }
 }
 
-function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
+function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 

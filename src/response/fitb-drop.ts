@@ -1,7 +1,7 @@
 import { encode } from "he";
 import { QuestionGrader } from "../QuestionGrader";
 import { applySkin, mk2html } from "../render";
-import { QuestionSkin } from "../skins";
+import { ExamComponentSkin } from "../skins";
 import { assert } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import Sortable from "sortablejs";
@@ -75,7 +75,7 @@ function createDroppableElement(id: string, html: string) {
   return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">${html}</div>`
 }
 
-function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
+function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   let group_id = question_id;
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${group_id}">
@@ -285,7 +285,7 @@ export function createFilledFITBDrop(
   content: string,
   dropOriginals: {[index: string]: string},
   group_id: string,
-  skin?: QuestionSkin,
+  skin?: ExamComponentSkin,
   submission?: FITBDropSubmission,
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,

@@ -6,7 +6,7 @@ import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUng
 import { Exception, GraderMap } from './ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
 import { isValidID, StudentInfo } from './specification';
-import { QuestionSkin } from './skins';
+import { ExamComponentSkin } from './skins';
 import { ExamManifest } from './submissions';
 import { sum } from 'simple-statistics';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
@@ -37,7 +37,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     public readonly exam: Exam,
     public readonly student: StudentInfo,
     public readonly question: Question<QT>,
-    public readonly skin: QuestionSkin,
+    public readonly skin: ExamComponentSkin,
     public readonly sectionIndex : number,
     public readonly partIndex : number,
     public readonly rawSubmission: string,
@@ -217,7 +217,7 @@ export class AssignedSection {
     public readonly uuid: string,
     public readonly section: Section, 
     public readonly sectionIndex : number,
-    public readonly skin: QuestionSkin,
+    public readonly skin: ExamComponentSkin,
     public readonly assignedQuestions: readonly AssignedQuestion[])
   {
     this.displayIndex = "" + (sectionIndex+1);
