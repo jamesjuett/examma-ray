@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
 import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./submissions";
 import Papa from "papaparse";
-import { AssignedQuestion, StudentInfo } from "./exams";
+import { AssignedQuestion } from "./assigned_exams";
 import path from "path";
 import { asMutable, assert, assertNever } from "./util";
 import { chunk } from "simple-statistics";
@@ -13,6 +13,7 @@ import glob from "glob";
 import del from "del";
 
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
+import { StudentInfo } from "./specification";
 
 export namespace ExamUtils {
 

@@ -1,8 +1,5 @@
-import { decode } from "he";
-import { AssignedQuestion, GradedQuestion, Question } from "./exams";
+import { AssignedQuestion, GradedQuestion } from "./assigned_exams";
 import { ResponseKind } from "./response/common";
-import { SubmissionType } from "./response/responses";
-import { QuestionSkin } from "./skins";
 
 
 /**

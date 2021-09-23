@@ -1,9 +1,7 @@
-import { QuestionAnswer } from "../submissions";
-import { AssignedQuestion, StudentInfo } from "../exams";
 import { GradingResult } from "../QuestionGrader";
-import { SubmissionType } from "../response/responses";
 import { ResponseKind } from "../response/common";
 import { SkinReplacements } from "../skins";
+import { StudentInfo } from "../specification";
 
 export type GradingSubmission<QT extends ResponseKind = ResponseKind> = {
   question_uuid: string,

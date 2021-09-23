@@ -75,23 +75,22 @@
  * @module
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './submissions';
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './exams';
+import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './assigned_exams';
 import { QuestionGrader } from './QuestionGrader';
-import { chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
+import { chooseQuestions, chooseSections, StudentInfo } from './specification';
 import { asMutable, assert, assertFalse, Mutable } from './util';
 import { unparse } from 'papaparse';
 import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin, DEFAULT_SKIN } from './skins';
 import del from 'del';
-import { average, chunk, mean, sampleCovariance, standardDeviation, sum } from 'simple-statistics';
-import { GradingAssignmentSpecification } from "./grading/common";
-import { stringify_response } from './response/responses';
-import { renderGradingProgressBar, renderNumBadge, renderPointsProgressBar, renderWideNumBadge } from './ui_components';
+import { average } from 'simple-statistics';
+import { renderGradingProgressBar, renderPointsProgressBar } from './ui_components';
 import { GradedStats } from "./GradedStats";
 import { ExamCurve } from "./ExamCurve";
-import { v4 } from 'uuid';
+import { Exam, Question, Section } from './exam_components';
+import { CHOOSE_ALL } from './randomization';
 
 
 
@@ -193,17 +192,26 @@ export class ExamGrader {
       this.exam,
       student,
       submission.sections.flatMap((s, s_i) => {
-        let section = this.sectionsMap[s.section_id] ?? assertFalse();
-        let sectionSkins = [section.skins.getById(s.skin_id) ?? DEFAULT_SKIN];
+        let section = this.sectionsMap[s.section_id] ?? assertFalse(`No matching section found id: ${s.section_id}`);
+        let sectionSkins = [
+          section.skin.component_kind !== "chooser"
+            ? section.skin
+            : section.skin.getById(s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+        ];
         return sectionSkins.map(sectionSkin => new AssignedSection(
           s.uuid,
           section,
           s_i,
           sectionSkin,
           s.questions.flatMap((q, q_i) => {
-            let question = this.questionsMap[q.question_id] ?? assertFalse();
-            let questionSkins = [question.skins.getById(q.skin_id) ?? DEFAULT_SKIN]
-              .map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+            let question = this.questionsMap[q.question_id] ?? assertFalse(`No matching question found id: ${q.question_id}`);
+            let questionSkins = [
+              question.skin.component_kind !== "chooser"
+                ? question.skin
+                : question.skin.getById(q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+            ].map(
+              qSkin => createCompositeSkin(sectionSkin, qSkin)
+            );
             return questionSkins.map(questionSkin => new AssignedQuestion(
               q.uuid,
               this.exam,

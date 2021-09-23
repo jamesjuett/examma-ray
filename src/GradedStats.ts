@@ -1,7 +1,7 @@
-import { mean, sampleCovariance, standardDeviation, sum } from "simple-statistics";
+import { mean, sampleCovariance, standardDeviation } from "simple-statistics";
 import { ExamGrader } from "./ExamGrader";
-import { isGradedQuestion } from "./exams";
-import { assert, assertFalse } from "./util";
+import { isGradedQuestion } from "./assigned_exams";
+import { assert } from "./util";
 
 export class GradedStats {
 

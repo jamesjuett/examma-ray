@@ -1,20 +1,18 @@
 export * from "./specification";
 
-export {
-  QuestionSkin,
-  SINGLE_REPLACEMENT_SKINS
-} from "./skins";
+export * from "./skins";
 
 export {
-  StudentInfo,
-  Question,
   AssignedQuestion,
-  Section,
   AssignedSection,
   AssignedExam,
-  MK_DEFAULT_SAVER_MESSAGE_CANVAS as DEFAULT_SAVER_MESSAGE_CANVAS,
+} from "./assigned_exams";
+
+export {
+  Question,
+  Section,
   Exam
-} from "./exams";
+} from "./exam_components";
 
 export {
   QuestionAnswer,

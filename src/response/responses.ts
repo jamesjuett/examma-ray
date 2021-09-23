@@ -4,8 +4,7 @@ import { MCSpecification, MCSubmission, MC_HANDLER } from "./multiple_choice";
 import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
-import { QuestionSkin } from "../skins";
-import { Question } from "../exams";
+import { ExamComponentSkin } from "../skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSpecification :
@@ -26,7 +25,7 @@ export type SubmissionType<QT extends ResponseKind> =
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
-  render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: QuestionSkin) => string,
+  render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
@@ -46,7 +45,7 @@ export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmissio
   return <SubmissionType<QT>>RESPONSE_HANDLERS[kind].parse(rawSubmission);
 }
 
-export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: QuestionSkin) : string {
+export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, question_uuid, skin);
 }
 

@@ -1,16 +1,16 @@
 import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { Section, Question, Exam, AssignedExam, StudentInfo, RenderMode, AssignedQuestion, AssignedSection } from './exams';
-import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./randomization";
-import { assert, assertNever } from './util';
+import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection } from './assigned_exams';
+import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer, CHOOSE_ALL } from "./randomization";
+import { assert } from './util';
 import { unparse } from 'papaparse';
 import del from 'del';
-import { ResponseKind } from './examma-ray';
-import { QuestionSpecification, QuestionChooser, SectionChooser, SectionSpecification, chooseQuestions, chooseSections, CHOOSE_ALL } from './specification';
-import { createCompositeSkin, QuestionSkin } from './skins';
+import { chooseQuestions, chooseSections, StudentInfo } from './specification';
+import { createCompositeSkin, ExamComponentSkin } from './skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
 import path from 'path';
+import { Exam, Question, Section } from './exam_components';
 
 type SectionStats = {
   section: Section,
@@ -111,7 +111,7 @@ export class ExamGenerator {
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionChoiceRandomizer(this.makeSeed(student), this.exam, section),
     skinRand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createSectionSkinRandomizer(this.makeSeed(student), this.exam, section))
   {
-    let sectionSkins = section.skins.generate(this.exam, student, skinRand);
+    let sectionSkins = section.skin.component_kind === "chooser" ? section.skin.choose(this.exam, student, skinRand) : [section.skin];
     assert(this.options.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
       createStudentUuid(this.options, student, this.exam.exam_id + "-s-" + section.section_id),
@@ -129,10 +129,12 @@ export class ExamGenerator {
     student: StudentInfo,
     sectionIndex: number,
     partIndex: number,
-    sectionSkin: QuestionSkin,
+    sectionSkin: ExamComponentSkin,
     rand: Randomizer = this.options.choose_all ? CHOOSE_ALL : createQuestionSkinRandomizer(this.makeSeed(student), this.exam, question)) {
 
-    let questionSkins = question.skins.generate(this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+    let questionSkins =
+      (question.skin.component_kind === "chooser" ? question.skin.choose(this.exam, student, rand) : [question.skin])
+      .map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     assert(this.options.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
       createStudentUuid(this.options, student, this.exam.exam_id + "-q-" + question.question_id),
@@ -216,12 +218,12 @@ export class ExamGenerator {
     let renderedExams = this.renderExams();
 
     let toWrite = manifests
-      .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .map((m, i) => ({
-      manifest: m,
-      renderedHtml: renderedExams[i]
-    }));
-
+        manifest: m,
+        renderedHtml: renderedExams[i]
+      }))
+      .sort((a, b) => a.manifest.student.uniqname.localeCompare(b.manifest.student.uniqname));
+      
     // Write out manifests and exams for all, sorted by uniqname
     toWrite.forEach((ex, i, arr) => {
       let manifest = ex.manifest;

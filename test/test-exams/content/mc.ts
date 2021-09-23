@@ -1,5 +1,4 @@
-import { QuestionSpecification, SectionSpecification } from "../../../src/specification";
-import { FreebieGrader } from "../../../src/graders/FreebieGrader";
+import { QuestionSpecification } from "../../../src/specification";
 
 export const Test_Question_MC_Single : QuestionSpecification = {
   id: "test_question_mc_single",

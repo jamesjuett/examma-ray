@@ -1,4 +1,4 @@
-import { QuestionSpecification, SectionSpecification } from "../../../../src/specification";
+import { QuestionSpecification } from "../../../../src/specification";
 import { FreebieGrader } from "../../../../src/graders/FreebieGrader";
 
 export const Question_Simple_Test_1 : QuestionSpecification = {

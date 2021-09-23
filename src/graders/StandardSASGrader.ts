@@ -1,11 +1,10 @@
 import { applySkin, highlightCode, mk2html } from "../render";
 import { renderScoreBadge } from "../ui_components";
-import { AssignedQuestion, GradedQuestion, Question } from "../exams";
+import { AssignedQuestion, GradedQuestion } from "../assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { SASItem, SASSubmission } from "../response/select_a_statement";
-import { QuestionGrader, GradingResult, ImmutableGradingResult } from "../QuestionGrader";
+import { QuestionGrader, ImmutableGradingResult } from "../QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../icons";
-import { QuestionSkin } from "../skins";
 import { assert } from "../util";
 
 

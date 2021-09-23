@@ -1,8 +1,6 @@
-import Mustache from "mustache";
-import { Question } from "../exams";
 import { QuestionGrader } from "../QuestionGrader";
 import { mk2html } from "../render";
-import { QuestionSkin } from "../skins";
+import { ExamComponentSkin } from "../skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 
@@ -40,7 +38,7 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
   }
 }
 
-function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: QuestionSkin) {
+function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return `
     <form>
     ${response.choices.map((item,i) => `

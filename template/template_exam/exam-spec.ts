@@ -1,8 +1,8 @@
-import { Exam, ExamGenerator, ExamUtils, ExceptionMap, GraderMap } from "examma-ray";
+import { Exam, ExamGenerator, ExamUtils } from "examma-ray";
 import { readFileSync } from "fs";
 import { Section_Sample_MC } from "../content/sample_mc";
 
-export const EXAM = new Exam({
+export const EXAM = Exam.create({
   id: "template_exam",
   title: "Examma Ray Template Exam",
   mk_intructions: readFileSync("instructions.md", "utf8"),
