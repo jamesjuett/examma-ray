@@ -27,16 +27,15 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
 }
 
 function genTestExam(exam: Exam) {
-  new ExamGenerator(exam, {
-    student_ids: "plain",
-    students: [
-      {
-        name: "Test Student",
-        uniqname: "test"
-      }
-    ],
+  let gen = new ExamGenerator(exam, {
+    uuid_strategy: "plain",
     frontend_js_path: "js/frontend.js"
-  }).writeAll(path.join(__dirname, "out"), path.join(__dirname, "out"));
+  });
+  gen.assignExam({
+    name: "Test Student",
+    uniqname: "test"
+  });
+  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "out"));
 }
 
 

@@ -1,7 +1,6 @@
 import { readFileSync } from "fs";
 import { Exam } from "examma-ray";
 import { ExamGenerator } from "examma-ray/dist/ExamGenerator";
-import { ExamUtils } from "examma-ray/dist/ExamUtils";
 import { Section_Sample_MC } from "../content/sample_mc";
 
 export const EXAM = Exam.create({
@@ -15,18 +14,13 @@ export const EXAM = Exam.create({
 });
 
 export const EXAM_GENERATOR = new ExamGenerator(EXAM, {
-  student_ids: "uuidv5",
+  uuid_strategy: "uuidv5",
   uuidv5_namespace: readFileSync("secret", "utf-8"),
-  students: ExamUtils.loadCSVRoster("roster.csv"),
   frontend_js_path: "js/frontend.js"
 });
 
 export const EXAM_GENERATOR_ALL = new ExamGenerator(EXAM, {
-  student_ids: "uniqname",
-  students: [{
-    name: "All Questions Preview",
-    uniqname: "preview"
-  }],
+  uuid_strategy: "plain",
   allow_duplicates: true,
   choose_all: true
 });
