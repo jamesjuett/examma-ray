@@ -15,7 +15,7 @@ export const EXCEPTIONS : ExceptionMap = {
 };
 
 export const EXAM_GRADER = new ExamGrader(EXAM, {
-  student_ids: "uuidv5",
+  uuid_strategy: "uuidv5",
   uuidv5_namespace: readFileSync("secret", "utf-8"),
   frontend_js_path: "js/frontend-graded.js",
 }, GRADERS, EXCEPTIONS);

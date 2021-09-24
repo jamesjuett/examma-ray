@@ -97,17 +97,17 @@ import { UUID_Strategy } from './ExamGenerator';
 
 export type ExamGraderOptions = {
   frontend_js_path: string,
-  student_ids: UUID_Strategy,
+  uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/frontend.js",
-  student_ids: "plain",
+  uuid_strategy: "plain",
 };
 
 function verifyOptions(options: Partial<ExamGraderOptions>) {
-  assert(options.student_ids !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
+  assert(options.uuid_strategy !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
   assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
 }
 

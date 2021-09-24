@@ -225,20 +225,20 @@ export function writeFrontendJS(outDir: string, filename: string) {
  * @returns 
  */
 export function createStudentUuid(options: {
-  student_ids: UUID_Strategy,
+  uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 }, student: StudentInfo, id: string) {
-  if(options.student_ids === "plain") {
+  if(options.uuid_strategy === "plain") {
     return student.uniqname + "-" + id;
   }
-  else if (options.student_ids === "uuidv4") {
+  else if (options.uuid_strategy === "uuidv4") {
     return uuidv4();
   }
-  else if (options.student_ids === "uuidv5") {
+  else if (options.uuid_strategy === "uuidv5") {
     assert(options.uuidv5_namespace);
     return uuidv5(student.uniqname + "-" + id, options.uuidv5_namespace!);
   }
   else {
-    assertNever(options.student_ids);
+    assertNever(options.uuid_strategy);
   }
 }
