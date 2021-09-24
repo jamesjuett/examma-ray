@@ -79,7 +79,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
 
   /**
    * The response for this question, which is the part of the question students interact with to enter their answer.
-   * Depending on the kind of response, this may also contain a significant amount of content as well. 
+   * Depending on the kind of response, this may also contain a significant amount of content as well.
    */
   readonly response: ResponseSpecification<QT>,
 
@@ -241,6 +241,15 @@ export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam,
 //   }
 // }
 
+/**
+ * This factory function returns a [[QuestionChooser]] that will randomly select a set
+ * of n questions matching the given tag. If there are not enough questions matching that
+ * tag, the chooser will throw an exception.
+ * @param tag Choose only questions with this tag
+ * @param n The number of questions to choose
+ * @param questionBank The bank to choose questions from
+ * @returns 
+ */
 export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank): QuestionChooser {
   return {
     component_kind: "chooser",
@@ -258,6 +267,14 @@ export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank
   }
 }
 
+/**
+ * This factory function returns a [[QuestionChooser]] that will randomly select a set
+ * of n questions from the given set of questions or question bank. If there are not enough
+ * to choose n or them, the chooser will throw an exception.
+ * @param n 
+ * @param questions 
+ * @returns 
+ */
 export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (QuestionSpecification | Question)[]): QuestionChooser {
   let qBank: QuestionBank =
     questions instanceof QuestionBank ? questions :

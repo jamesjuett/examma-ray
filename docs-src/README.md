@@ -1,6 +1,6 @@
 # examma-ray
 
-Examma Ray is a system for generating randomized or individualized exams.
+Examma Ray is a system for generating randomized or individualized exams which can be taken in a web browser.
 
 Each exam is generated as a static HTML file that includes a common javascript bundle. You distribute those files to students however you want. A simple web server that serves static content works great, and there are several options for hosting if you don't want to set something up on your own. You could even distribute the files directly to students, e.g. in a zip file containing the javascript bundle as well.
 
