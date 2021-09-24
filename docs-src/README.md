@@ -138,7 +138,7 @@ $ tree
 
 To view a student's exam, just open the corresponding html file in a web browser.
 
-Note that the `eecs280f21_final` folder in each - this matches the configured exam `id` in your `exam-spec.ts`.
+Note that `eecs280f21_final` folder in each - this matches the configured exam `id` in your `exam-spec.ts`.
 
 In the `data` folder, you'll find
 - `stats.json`, with an accounting of which questions were assigned how many times
