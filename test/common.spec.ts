@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { ExamSubmission, fillManifest } from '../src/submissions';
+import { ExamSubmission, fillManifest } from '../src/core/submissions';
 
 export const VALID_IDS = [
   "blah",

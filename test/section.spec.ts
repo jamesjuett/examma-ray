@@ -1,9 +1,9 @@
 import 'mocha';
 import { expect } from 'chai';
-import { CUSTOMIZE, SectionSpecification } from '../src/specification';
+import { CUSTOMIZE, SectionSpecification } from '../src/core/exam_specification';
 import { MC_Basic } from './question.spec';
 import { INVALID_IDS, VALID_IDS } from './common.spec';
-import { Section } from '../src/exam_components';
+import { Section } from '../src/core/exam_components';
 
 export const Section_MC_Basic : SectionSpecification = {
   section_id: "section_id",

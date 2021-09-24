@@ -21,7 +21,7 @@ import { Checkpoint } from "lobster-vis/dist/js/analysis/checkpoints";
 import "lobster-vis/dist/js/lib/standard";
 import { renderScoreBadge, renderShortPointsWorthBadge, renderUngradedBadge } from "../core/ui_components";
 import { asMutable, assert } from "../core/util";
-import { QuestionSpecification } from "../core/specification";
+import { QuestionSpecification } from "../core/exam_specification";
 import deepEqual from "deep-equal";
 
 // A significant amount of this code for interacting with the file

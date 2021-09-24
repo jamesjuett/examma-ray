@@ -6,7 +6,7 @@ import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQues
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
 import del from 'del';
-import { chooseQuestions, chooseSections, StudentInfo } from './core/specification';
+import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
 import { createStudentUuid, writeFrontendJS } from './ExamUtils';
 import path from 'path';
@@ -22,9 +22,11 @@ type QuestionStats = {
   n: number
 };
 
+export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
+
 export type ExamGeneratorOptions = {
   frontend_js_path: string,
-  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  student_ids: UUID_Strategy,
   uuidv5_namespace?: string,
   students: readonly StudentInfo[],
   choose_all?: boolean,
@@ -34,7 +36,7 @@ export type ExamGeneratorOptions = {
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/frontend.js",
-  student_ids: "uniqname",
+  student_ids: "plain",
   students: [],
   allow_duplicates: false
 };

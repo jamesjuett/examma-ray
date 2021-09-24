@@ -79,7 +79,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './core/submissions';
 import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
 import { QuestionGrader } from './core/QuestionGrader';
-import { chooseQuestions, chooseSections, StudentInfo } from './core/specification';
+import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { asMutable, assert, assertFalse, Mutable } from './core/util';
 import { unparse } from 'papaparse';
 import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
@@ -91,18 +91,19 @@ import { GradedStats } from "./core/GradedStats";
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { CHOOSE_ALL } from './core/randomization';
+import { UUID_Strategy } from './ExamGenerator';
 
 
 
 export type ExamGraderOptions = {
   frontend_js_path: string,
-  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  student_ids: UUID_Strategy,
   uuidv5_namespace?: string,
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/frontend.js",
-  student_ids: "uniqname",
+  student_ids: "plain",
 };
 
 function verifyOptions(options: Partial<ExamGraderOptions>) {

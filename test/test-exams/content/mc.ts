@@ -1,4 +1,4 @@
-import { QuestionSpecification } from "../../../src/specification";
+import { QuestionSpecification } from "../../../src/core/exam_specification";
 
 export const Test_Question_MC_Single : QuestionSpecification = {
   question_id: "test_question_mc_single",

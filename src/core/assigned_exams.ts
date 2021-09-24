@@ -5,7 +5,7 @@ import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from '../ExamGrader';
 import { QuestionGrader, GradingResult } from './QuestionGrader';
-import { isValidID, StudentInfo } from './specification';
+import { isValidID, StudentInfo } from './exam_specification';
 import { ExamComponentSkin } from './skins';
 import { ExamManifest } from './submissions';
 import { sum } from 'simple-statistics';

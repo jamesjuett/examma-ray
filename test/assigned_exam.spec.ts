@@ -1,9 +1,9 @@
 import 'mocha';
 import { expect } from 'chai';
-import { AssignedExam } from '../src/assigned_exams';
+import { AssignedExam } from '../src/core/assigned_exams';
 import { INVALID_IDS, VALID_IDS } from './common.spec';
 import { Exam_MC_Basic } from './exam.spec';
-import { Exam } from '../src/exam_components';
+import { Exam } from '../src/core/exam_components';
 
 
 describe('Exam Specification', () => {

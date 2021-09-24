@@ -1,6 +1,6 @@
 import { Exam } from "./exam_components";
 import { CHOOSE_ALL, Randomizer } from "./randomization";
-import { StudentInfo } from "./specification";
+import { StudentInfo } from "./exam_specification";
 import { assert } from "./util";
 
 export type SkinReplacements = {

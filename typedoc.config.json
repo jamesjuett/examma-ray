@@ -2,10 +2,11 @@
 {
   "entryPoints": [
     "./src/core.ts",
-    "./src/core/specification.ts",
+    "./src/core/exam_specification.ts",
     "./src/core/exam_components.ts",
     "./src/core/assigned_exams.ts",
     "./src/core/randomization.ts",
+    "./src/core/skins.ts",
     "./src/ExamGenerator.ts",
     "./src/ExamGrader.ts"
   ],

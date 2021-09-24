@@ -1,5 +1,5 @@
 import { Question } from "./exam_components";
-import { QuestionSpecification } from "./specification";
+import { QuestionSpecification } from "./exam_specification";
 import { asMutable } from "./util";
 
 export class QuestionBank {

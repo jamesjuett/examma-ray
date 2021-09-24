@@ -1,4 +1,4 @@
-import { QuestionSpecification } from "../../../src/specification";
+import { QuestionSpecification } from "../../../src/core/exam_specification";
 
 export const Test_Question_Fitb_Drop : QuestionSpecification = {
   question_id: "fitb_drop_test",

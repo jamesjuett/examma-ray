@@ -1,11 +1,11 @@
 import path from "path";
 import { ExamGenerator } from "../../src/ExamGenerator";
-import { CUSTOMIZE, QuestionSpecification } from "../../src/specification";
+import { CUSTOMIZE, QuestionSpecification } from "../../src/core/exam_specification";
 import { Test_Question_MC_Multiple, Test_Question_MC_Single } from "./content/mc";
 import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
-import { renderFITBDropBank } from "../../src/response/fitb-drop";
-import { Exam } from "../../src/exam_components";
+import { renderFITBDropBank } from "../../src/core/response/fitb-drop";
+import { Exam } from "../../src/core/exam_components";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
@@ -28,7 +28,7 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
 
 function genTestExam(exam: Exam) {
   new ExamGenerator(exam, {
-    student_ids: "uniqname",
+    student_ids: "plain",
     students: [
       {
         name: "Test Student",

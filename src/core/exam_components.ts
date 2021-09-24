@@ -4,7 +4,7 @@ import { mk2html } from "./render";
 import { ResponseKind, BLANK_SUBMISSION } from "./response/common";
 import { ResponseSpecification, SubmissionType, render_response } from "./response/responses";
 import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
-import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, StudentInfo } from "./specification";
+import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, StudentInfo } from "./exam_specification";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {

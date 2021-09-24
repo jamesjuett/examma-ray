@@ -1,4 +1,4 @@
-export * from "./core/specification";
+export * from "./core/exam_specification";
 
 export * from "./core/skins";
 

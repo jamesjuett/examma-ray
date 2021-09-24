@@ -59,19 +59,67 @@ import { Exam, Question, Section } from "./exam_components";
 
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   readonly component_kind?: "specification",
+
+  /**
+   * A unique ID for the question. Must be distinct from all other question IDs.
+   * Also used as part of the composite seed for UUID generation
+   * by an [[ExamGenerator]] using the `"plain"` or "uuidv5" strategies.
+   */
   readonly question_id: string,
+
+  /**
+   * The number of points the question is worth overall.
+   */
   readonly points: number,
+
+  /**
+   * Markdown-formatted question description.
+   */
   readonly mk_description: string,
+
+  /**
+   * The response for this question, which is the part of the question students interact with to enter their answer.
+   * Depending on the kind of response, this may also contain a significant amount of content as well. 
+   */
   readonly response: ResponseSpecification<QT>,
+
+  /**
+   * Tags for this question that may be used to pick it out of a question bank.
+   */
   readonly tags?: readonly string[],
+
+  /**
+   * A skin for this question, or a "chooser" that selects a skin from a set of possible
+   * skins. A question's skin is used in rendering its description and response.
+   * @see [[core/skins]]
+   */
   readonly skin?: ExamComponentSkin | SkinChooser
 };
 
 export type SectionSpecification = {
   readonly component_kind?: "specification",
+
+  /**
+   * A unique ID for the section. Must be distinct from all other section IDs.
+   * Also used as part of the composite seed for UUID generation
+   * by an [[ExamGenerator]] using the `"plain"` or "uuidv5" strategies.
+   */
   readonly section_id: string,
+  
+  /**
+   * The section title.
+   */
   readonly title: string,
+
+  /**
+   * Markdown-formatted section description, shown before its questions.
+   */
   readonly mk_description: string,
+
+  /**
+   * Markdown-formatted section reference material, shown to the side of its description
+   * and questions.
+   */
   readonly mk_reference?: string,
 
   /**
@@ -82,7 +130,19 @@ export type SectionSpecification = {
    * @see [[QuestionChooser]]
    */
   readonly questions: readonly (QuestionSpecification | QuestionChooser)[],
+  
+  /**
+   * A skin for this section, or a "chooser" that selects a skin from a set of possible
+   * skins. A section's skin is used in rendering its description and response, and also
+   * affects the rendering of its questions (each question uses a compound skin created
+   * by layering its own skin on top of the section skin).
+   * @see [[core/skins]]
+   */
   readonly skin?: ExamComponentSkin | SkinChooser,
+
+  /**
+   * The initial width, in percent 0-100, of the reference material for this section.
+   */
   reference_width?: number,
 }
 
@@ -92,7 +152,7 @@ export type ExamSpecification = {
 
   /**
    * A unique ID for the exam. Also used as part of the composite seed for UUID generation
-   * by an [[ExamGenerator]] using the `"uniqname"` or "uuidv5" strategies.
+   * by an [[ExamGenerator]] using the `"plain"` or "uuidv5" strategies.
    */
   readonly exam_id: string,
 

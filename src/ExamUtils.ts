@@ -14,7 +14,8 @@ import del from "del";
 import "colors";
 
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { StudentInfo } from "./core/specification";
+import { StudentInfo } from "./core/exam_specification";
+import { UUID_Strategy } from "./ExamGenerator";
 
 export namespace ExamUtils {
 
@@ -224,10 +225,10 @@ export function writeFrontendJS(outDir: string, filename: string) {
  * @returns 
  */
 export function createStudentUuid(options: {
-  student_ids: "uniqname" | "uuidv4" | "uuidv5",
+  student_ids: UUID_Strategy,
   uuidv5_namespace?: string,
 }, student: StudentInfo, id: string) {
-  if(options.student_ids === "uniqname") {
+  if(options.student_ids === "plain") {
     return student.uniqname + "-" + id;
   }
   else if (options.student_ids === "uuidv4") {

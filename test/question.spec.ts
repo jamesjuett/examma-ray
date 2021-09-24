@@ -1,8 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
-import { CUSTOMIZE, QuestionSpecification } from '../src/specification';
+import { CUSTOMIZE, QuestionSpecification } from '../src/core/exam_specification';
 import { INVALID_IDS, VALID_IDS } from './common.spec';
-import { Question } from '../src/exam_components';
+import { Question } from '../src/core/exam_components';
 
 export const MC_Basic : QuestionSpecification = {
   question_id: "question_id",
