@@ -1,4 +1,5 @@
-import { ExamGrader, ExceptionMap, GraderMap, ExamCurve } from "examma-ray";
+import { ExamCurve } from "examma-ray/dist/core/ExamCurve";
+import { GraderMap, ExceptionMap, ExamGrader } from "examma-ray/dist/ExamGrader";
 import { readFileSync } from "fs";
 import { EXAM } from "./exam-spec";
 
