@@ -1,4 +1,5 @@
-import { QuestionSpecification, SectionSpecification, SimpleMCGrader } from "examma-ray";
+import { QuestionSpecification, SectionSpecification } from "examma-ray";
+import { SimpleMCGrader } from "examma-ray/dist/graders/SimpleMCGrader";
 
 export const Question_Sample_MC : QuestionSpecification = {
   question_id: "sample_mc",
@@ -22,7 +23,7 @@ This is a sample question. Which of the following is NOT a heirloom variety of t
 }
 
 export const Section_Sample_MC : SectionSpecification = {
-  question_id: "sample_mc",
+  section_id: "sample_mc",
   title: "Sample Section",
   mk_description: "The section description goes here.",
   mk_reference: "Some reference material to help answer the question.",
