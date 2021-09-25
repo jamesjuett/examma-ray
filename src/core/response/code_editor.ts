@@ -18,7 +18,7 @@ export type CodeEditorSpecification = {
 export type CodeEditorSubmission = string | typeof BLANK_SUBMISSION;
 
 
-function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : CodeEditorSubmission | typeof MALFORMED_SUBMISSION {
+function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : CodeEditorSubmission {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }

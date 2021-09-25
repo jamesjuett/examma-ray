@@ -1,5 +1,5 @@
 /**
- * ## Specification
+ * ## Exam Specification
  * 
  * The general structure of an exam specification is:
  *  - [[QuestionSpecification]]s with content for individual questions.

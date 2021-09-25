@@ -2,7 +2,7 @@ import { mk2html } from "../core/render";
 import { renderNumBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
-import { MCSubmission } from "../core/response/multiple_choice";
+import { MCSubmission } from "../core/response/mc";
 import { assert } from "../core/util";
 import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../core/icons";

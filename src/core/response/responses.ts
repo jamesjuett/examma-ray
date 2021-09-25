@@ -1,6 +1,6 @@
 import { FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
-import { MCSpecification, MCSubmission, MC_HANDLER } from "./multiple_choice";
+import { MCSpecification, MCSubmission, MC_HANDLER } from "./mc";
 import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";

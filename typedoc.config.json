@@ -7,6 +7,9 @@
     "./src/core/assigned_exams.ts",
     "./src/core/randomization.ts",
     "./src/core/skins.ts",
+    "./src/core/response/common.ts",
+    "./src/core/response/fitb.ts",
+    "./src/core/response/mc.ts",
     "./src/ExamGenerator.ts",
     "./src/ExamGrader.ts"
   ],

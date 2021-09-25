@@ -27,7 +27,9 @@ export {
 } from "./core/QuestionBank";
 
 export {
-  ResponseKind
+  ResponseKind,
+  BLANK_SUBMISSION,
+  MALFORMED_SUBMISSION
 } from "./core/response/common";
 
 export {
@@ -50,7 +52,7 @@ export {
 export {
   MCSpecification,
   MCSubmission
-} from "./core/response/multiple_choice";
+} from "./core/response/mc";
 
 export {
   SASSpecification,

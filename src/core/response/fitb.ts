@@ -1,18 +1,119 @@
-import { encode } from "he";
+/**
+ * ## FITB Response
+ * 
+ * An FITB (Fill-In-The-Blank) response includes markdown-formatted content containing "blanks" and "boxes" that
+ * students fill in to compose their response.
+ * 
+ * The [[FITBSpecification]] type alias represents the information needed to specify an FITB
+ * response as part of a question.
+ * 
+ * Here's an example of a question with an FITB response. The content is specified as a
+ * backtick-quoted multi-string literal in typescript. (Note there are also escaped backticks
+ * around a markdown code block).
+ * 
+ * ```typescript
+ * export const Practice_Questions_Iterators_And_Functors_Replacer: QuestionSpecification = {
+ *   question_id: "practice_iterators_and_functors_replacer_fitb",
+ *   tags: [],
+ *   points: 8,
+ *   mk_description: "Complete the implementation of `Replacer` below by filling in the boxes.\n\nIf you believe a blank/box should be **empty**, write `// BLANK`.",
+ *   response: {
+ *     kind: "fitb",
+ *     content:
+ * `
+ * \`\`\`cpp
+ * template <typename T>; // Note: T must support ==
+ * class Replacer {
+ * private:
+ *   const T &target;
+ *   const T &replacement;
+ * 
+ * public:
+ *   Replacer(_________________________________BLANK_________________________________)
+ *    : _________________________________BLANK_________________________________ { }
+ *   
+ *   // Function call operator
+ *   _______BLANK_______ operator()(_______________BLANK_______________ item) const {
+ *     [[BOX___________________________________________________________
+ *     
+ *     
+ *     ]]
+ *   }
+ * };
+ * \`\`\`
+ * `,
+ *     sample_solution: [
+ *       "const T &target_in, const T &replacement_in",
+ *       "target(target_in), replacement(replacement_in)",
+ *       "void",
+ *       "T &",
+ *       "if (item == target) {\n  item = replacement;\n}"
+ *     ]
+ *   }
+ * };
+ * ```
+ * 
+ * ### Blanks and Boxes
+ * 
+ * To specify a blank, use a pattern like `____BLANK____`. Blanks are rendered as an HTML
+ * text input. The number of underscores controls the `size` and `maxlength` of that text
+ * input - students may not enter more content than will "fit" in the box. A blank may occur
+ * in the middle of a line or on its own.
+ * 
+ * To specify a box, use a pattern like `[[____BOX____\n\n\n]]`. Boxes are rendered as an HTML
+ * textarea input. The number of underscores controls the width of the textarea, and the number
+ * of newlines controls the height. There must be at least one newline (otherwise use a blank).
+ * If there are no underscores, the box will take up the full available width. A box may occur
+ * in the middle of a line or on its own. Those are real newlines, though if you're writing in code
+ * you'd use the escape sequence `\n`.
+ * 
+ * ### FITB Submissions
+ * 
+ * A submission for an FITB response is an array of strings that specify
+ * the content submitted for each blank/box. See [[FITBSubmission]].
+ * 
+ * @module
+ */
+
 import { QuestionGrader } from "../QuestionGrader";
-import { applySkin, mk2html } from "../render";
+import { applySkin } from "../render";
 import { ExamComponentSkin } from "../skins";
 import { assert } from "../util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { createFilledFITB } from "./util-fitb";
 import { isStringArray } from "./util";
 
+/**
+ * Specifies an FITB response as part of a question.
+ */
 export type FITBSpecification = {
+
+  /**
+   * The discriminant "fitb" is used to distinguish FITB specifications.
+   */
   kind: "fitb";
+
+  /**
+   * The content of the FITB response. See [[core/response/fitb#blanks-and-boxes]] for details.
+   */
   content: string;
+
+  /**
+   * A sample solution for this response.
+   */
   sample_solution?: Exclude<FITBSubmission, typeof BLANK_SUBMISSION>;
+
+  /**
+   * A default grader for this response.
+   */
   default_grader?: QuestionGrader<"fitb", any>;
 };
 
+/**
+ * A submission for an FITB response is an array of strings that specify
+ * the content submitted for each blank. The submission may also be the
+ * symbol [[BLANK_SUBMISSION]].
+ */
 export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
 
 
@@ -73,89 +174,3 @@ export const FITB_HANDLER = {
   fill: FITB_FILLER
 };
 
-
-
-/**
- * Matches anything that looks like e.g. ___BLANK___ or _____Blank_____.
- */
-const BLANK_PATTERN = /_+ *(BLANK|Blank|blank) *_+/g;
-
-/**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
- * Those are real newlines, and at least 1 is required.
- */
-const BOX_PATTERN = /\[\[[ _]*(BOX|Box|box)[ _]*( *\n)+ *\]\]/g;
-
-function count_char(str: string, c: string) {
-  let count = 0;
-  for(let i = 0; i < str.length; ++i) {
-    if (str[i] === c) { ++count; }
-  }
-  return count;
-}
-
-export function createFilledFITB(
-  content: string, submission?: FITBSubmission,
-  blankRenderer = DEFAULT_BLANK_RENDERER,
-  boxRenderer = DEFAULT_BOX_RENDERER,
-  encoder: (s:string)=>string = encode) {
-
-  // count the number of underscores in each blank pattern
-  let blankLengths = content.match(BLANK_PATTERN)?.map(m => count_char(m, "_")) ?? [];
-
-  // count the number of newlines in each box pattern (will be number of lines in textarea)
-  let boxLines = content.match(BOX_PATTERN)?.map(m => 1+count_char(m, "\n")) ?? [];
-  let boxWidths = content.match(BOX_PATTERN)?.map(m => count_char(m, "_")) ?? [];
-  
-  // Replace blanks/boxes with an arbitrary string that won't mess with
-  // the way the markdown is rendered
-  let blank_id = "laefiahslkefhalskdfjlksn";
-  let box_id = "ewonfeoawihlawenfawhflaw";
-  content = content.replace(BLANK_PATTERN, blank_id);
-  content = content.replace(BOX_PATTERN, box_id);
-
-  // Render markdown
-  content = mk2html(content);
-
-  // Include this in the html below so we can replace it in a moment
-  // with the appropriate submission values
-  let submission_placeholder = "awvblrefafhawonawflawlek";
-
-  // Replace each of the "blank ids" in the rendered html with
-  // a corresponding input element of the right size based on the
-  // number of underscores that were originally in the "__BLANK__"
-  blankLengths.forEach((length) => {
-    content = content.replace(blank_id, blankRenderer(submission_placeholder, length))
-  });
-
-  // Replace each of the "box ids" in the rendered html with
-  // a corresponding textarea element with the right # of lines based on the
-  // number of newlines that were originally in the "[[BOX\n\n\n]]"
-  boxLines.forEach((lines, i) => {
-    content = content.replace(box_id, boxRenderer(submission_placeholder, lines, boxWidths[i]));
-  });
-
-  // Replace placeholders with submission values
-  if (submission && submission !== BLANK_SUBMISSION) {
-    submission.forEach(
-      sub => content = content.replace(submission_placeholder, encoder(sub))
-    );
-  }
-
-  // Replace any remaining placeholders that weren't filled (or all of them if there was no submission)
-  content = content.replace(new RegExp(submission_placeholder, "g"), "");
-
-  return content;
-}
-
-function DEFAULT_BLANK_RENDERER(submission_placeholder: string, length: number) {
-  let autoAttrs = `autocomplete="off" autocorrect="off" spellcheck="false"`;
-  return `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>`;
-}
-
-function DEFAULT_BOX_RENDERER(submission_placeholder: string, lines: number, width: number) {
-  let rcAttrs = `rows="${lines}"${width !== 0 ? ` cols="${width}"` : ""}`;
-  let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`;
-  let style = `style="resize: none; overflow: auto;${width === 0 ? " width: 100%;" : ""}"`;
-  return `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`;
-}

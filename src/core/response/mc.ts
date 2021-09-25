@@ -1,3 +1,54 @@
+/**
+ * ## MC Response
+ * 
+ * An MC (Multiple Choice) response provides several options that students select from. It may
+ * be configured to allow only one choice (rendered as radio buttons) or multiple choice
+ * (rendered as checkboxes).
+ * 
+ * The [[MCSpecification]] type alias represents the information needed to specify an MC
+ * response as part of a question.
+ * 
+ * Here's an example of a question with an MC response.
+ * 
+ * ```typescript
+ * export const Question_Sample_MC : QuestionSpecification = {
+ *   question_id: "sample_mc",
+ *   points: 2,
+ *   mk_description:
+ * `
+ * This is a sample question. Which of the following is NOT a heirloom variety of tomato plant?
+ * `,
+ *   response: {
+ *     kind: "multiple_choice",
+ *     choices: [
+ *       "Green Zebra",
+ *       "Better Boy",
+ *       "Black Krim",
+ *       "Mr. Stripey",
+ *       "Brandywine"
+ *     ],
+ *     multiple: false,
+ *     default_grader: new SimpleMCGrader(1)
+ *   }
+ * }
+ * ```
+ * 
+ * ### Single or Multiple Response
+ * 
+ * If the `multiple` property is set to `false`, choices are rendered as radio buttons and
+ * students may only select a single choice. If the property is set to `true`, choices are
+ * rendered as checkboxes and students may select any number of choices.
+ * 
+ * ### MC Submissions
+ * 
+ * A submission for an MC response is an array of numbers corresponding to the indices
+ * of selected choices. For a single response question, this array will be a single element.
+ * For multiple response questions, the array may contain one or more elements. The submission
+ * may also be [[BLANK_SUBMISSION]].
+ * 
+ * @module
+ */
+
 import { QuestionGrader } from "../QuestionGrader";
 import { mk2html } from "../render";
 import { ExamComponentSkin } from "../skins";
