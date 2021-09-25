@@ -1,5 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { ResponseKind, BLANK_SUBMISSION } from "../core/response/common";
+import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;

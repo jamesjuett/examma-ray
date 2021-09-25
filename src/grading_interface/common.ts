@@ -1,5 +1,5 @@
 import { GradingResult } from "../core/QuestionGrader";
-import { ResponseKind } from "../core/response/common";
+import { ResponseKind } from "../response/common";
 import { SkinReplacements } from "../core/skins";
 import { StudentInfo } from "../core/exam_specification";
 

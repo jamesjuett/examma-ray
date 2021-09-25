@@ -1,8 +1,8 @@
 import { encode } from "he";
-import { QuestionGrader } from "../QuestionGrader";
-import { applySkin, mk2html } from "../render";
-import { ExamComponentSkin } from "../skins";
-import { assert } from "../util";
+import { QuestionGrader } from "../core/QuestionGrader";
+import { applySkin, mk2html } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
+import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import Sortable from "sortablejs";
 

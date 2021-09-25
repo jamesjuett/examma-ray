@@ -49,8 +49,8 @@
 
 import { CHOOSE_ALL, Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
-import { ResponseKind } from "./response/common";
-import { ResponseSpecification } from "./response/responses";
+import { ResponseKind } from "../response/common";
+import { ResponseSpecification } from "../response/responses";
 import { ExamComponentSkin, SkinChooser } from "./skins";
 import { assert } from "./util";
 import { Exam, Question, Section } from "./exam_components";

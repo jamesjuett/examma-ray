@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { mk2html } from "../render";
+import { mk2html } from "../core/render";
 import { BLANK_SUBMISSION } from "./common";
 import { FITBSubmission } from "./fitb";
 

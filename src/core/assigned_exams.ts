@@ -1,6 +1,6 @@
 import { asMutable, assert, Mutable } from './util';
-import { parse_submission, SubmissionType } from './response/responses';
-import { ResponseKind } from './response/common';
+import { parse_submission, SubmissionType } from '../response/responses';
+import { ResponseKind } from '../response/common';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from '../ExamGrader';

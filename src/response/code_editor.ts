@@ -1,7 +1,7 @@
 import { encode } from "he";
-import { QuestionGrader } from "../QuestionGrader";
-import { applySkin, highlightCode } from "../render";
-import { ExamComponentSkin } from "../skins";
+import { QuestionGrader } from "../core/QuestionGrader";
+import { applySkin, highlightCode } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 
 export type CodeEditorSpecification = {

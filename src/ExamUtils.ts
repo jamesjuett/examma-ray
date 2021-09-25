@@ -5,7 +5,7 @@ import { AssignedQuestion } from "./core/assigned_exams";
 import path from "path";
 import { asMutable, assert, assertNever } from "./core/util";
 import { chunk } from "simple-statistics";
-import { stringify_response } from "./core/response/responses";
+import { stringify_response } from "./response/responses";
 import { GradingAssignmentSpecification } from "./grading_interface/common";
 import { v4 as uuidv4, v5 as uuidv5} from 'uuid';
 

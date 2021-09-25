@@ -1,4 +1,4 @@
-import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/core/response/responses";
+import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/response/responses";
 import "highlight.js/styles/github.css";
 import storageAvailable from "storage-available";
 import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/core/submissions";

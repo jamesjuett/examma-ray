@@ -1,5 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "./assigned_exams";
-import { ResponseKind } from "./response/common";
+import { ResponseKind } from "../response/common";
 
 
 /**

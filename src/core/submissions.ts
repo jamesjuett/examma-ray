@@ -1,4 +1,4 @@
-import { ResponseKind } from "./response/common";
+import { ResponseKind } from "../response/common";
 import { assert } from "./util";
 
 export type QuestionAnswer = {

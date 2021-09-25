@@ -75,10 +75,10 @@
  * @module
  */
 
-import { QuestionGrader } from "../QuestionGrader";
-import { applySkin } from "../render";
-import { ExamComponentSkin } from "../skins";
-import { assert } from "../util";
+import { QuestionGrader } from "../core/QuestionGrader";
+import { applySkin } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
+import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { createFilledFITB } from "./util-fitb";
 import { isStringArray } from "./util";

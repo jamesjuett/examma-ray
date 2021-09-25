@@ -30,36 +30,36 @@ export {
   ResponseKind,
   BLANK_SUBMISSION,
   MALFORMED_SUBMISSION
-} from "./core/response/common";
+} from "./response/common";
 
 export {
   ResponseSpecification,
   SubmissionType,
   ResponseHandler,
   RESPONSE_HANDLERS
-} from "./core/response/responses";
+} from "./response/responses";
 
 export {
   CodeEditorSpecification,
   CodeEditorSubmission
-} from "./core/response/code_editor";
+} from "./response/code_editor";
 
 export {
   FITBSpecification,
   FITBSubmission
-} from "./core/response/fitb";
+} from "./response/fitb";
 
 export {
   MCSpecification,
   MCSubmission
-} from "./core/response/mc";
+} from "./response/mc";
 
 export {
   SASSpecification,
   SASSubmission,
   SASGroup,
   SASItem
-} from "./core/response/select_a_statement";
+} from "./response/select_a_statement";
 
 export {
   QuestionGrader

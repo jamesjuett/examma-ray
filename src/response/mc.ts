@@ -49,9 +49,9 @@
  * @module
  */
 
-import { QuestionGrader } from "../QuestionGrader";
-import { mk2html } from "../render";
-import { ExamComponentSkin } from "../skins";
+import { QuestionGrader } from "../core/QuestionGrader";
+import { mk2html } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 

@@ -1,8 +1,8 @@
 import { FILE_DOWNLOAD, FILE_UPLOAD, FILE_CHECK } from "./icons";
 import { QuestionGrader } from "./QuestionGrader";
 import { mk2html } from "./render";
-import { ResponseKind, BLANK_SUBMISSION } from "./response/common";
-import { ResponseSpecification, SubmissionType, render_response } from "./response/responses";
+import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
+import { ResponseSpecification, SubmissionType, render_response } from "../response/responses";
 import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
 import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, StudentInfo } from "./exam_specification";
 import { asMutable, assert } from "./util";

@@ -1,7 +1,7 @@
 import { GradingGroup, GradingAssignmentSpecification, GradingSubmission } from "./common";
 import { CodeWritingGradingResult, CodeWritingRubricItem, CodeWritingRubricItemStatus } from "../graders/CodeWritingGrader"
 import { Blob } from 'blob-polyfill';
-import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import indentString from "indent-string";
 import { Program, SimpleProgram, SourceFile } from "lobster-vis/dist/js/core/Program"
 import { SimpleExerciseLobsterOutlet } from "lobster-vis/dist/js/view/SimpleExerciseLobsterOutlet"

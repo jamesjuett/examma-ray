@@ -1,5 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../core/response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, GradingResult } from "../core/QuestionGrader";
 import { ExamUtils } from "../ExamUtils";
 import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
@@ -7,8 +7,8 @@ import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBad
 import { sum } from "simple-statistics";
 import { applySkin, highlightCode, mk2html } from "../core/render";
 import { assert, assertFalse } from "../core/util";
-import { FITBSubmission } from "../core/response/fitb";
-import { createFilledFITB } from "../core/response/util-fitb";
+import { FITBSubmission } from "../response/fitb";
+import { createFilledFITB } from "../response/util-fitb";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";

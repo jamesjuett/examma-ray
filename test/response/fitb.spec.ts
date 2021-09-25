@@ -1,7 +1,7 @@
 import 'mocha';
 import { expect } from 'chai';
-import { RESPONSE_HANDLERS } from '../../src/core/response/responses';
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from '../../src/core/response/common';
+import { RESPONSE_HANDLERS } from '../../src/response/responses';
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from '../../src/response/common';
 import { JSDOM } from 'jsdom';
 import jquery from 'jquery';
 
