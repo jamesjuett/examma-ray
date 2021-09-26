@@ -23,7 +23,7 @@
  * ```typescript
  * import { GraderMap, SimpleMCGrader } from "examma-ray";
  * export const S7_3_Grader = {
- *   "sp20_7_3_assn_op": new StandardSASGrader([
+ *   "sp20_7_3_assn_op": new StandardSLGrader([
  *     {
  *       title: "Function Header",
  *       description: `Function header has correct name, parameter, and return ...`,

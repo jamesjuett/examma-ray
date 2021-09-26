@@ -63,6 +63,13 @@ export type MCSpecification = {
   default_grader?: QuestionGrader<"multiple_choice", any>
 };
 
+
+/**
+ * A submission for an MC response is an array of numbers corresponding to the indices
+ * of selected choices. For a single response question, this array will be a single element.
+ * For multiple response questions, the array may contain one or more elements. The submission
+ * may also be [[BLANK_SUBMISSION]].
+ */
 export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
 function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {

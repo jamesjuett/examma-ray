@@ -68,7 +68,7 @@ const manifest : ExamSubmission = {
           "question_id": "sp20_2_2_part1",
           "skin_id": "skin3",
           "display_index": "2.1",
-          "kind": "fitb",
+          "kind": "fill_in_the_blank",
           "response": ""
         },
         {
@@ -111,7 +111,7 @@ const submitted : ExamSubmission = {
           "question_id": "sp20_2_2_part1",
           "skin_id": "blah",
           "display_index": "2.1",
-          "kind": "fitb",
+          "kind": "fill_in_the_blank",
           "response": "test_response_sp20_2_2_part1"
         },
         {
@@ -135,7 +135,7 @@ const submitted : ExamSubmission = {
           "question_id": "sp20_mc_containers_and_templates_1",
           "skin_id": "blah",
           "display_index": "1.2",
-          "kind": "fitb",
+          "kind": "fill_in_the_blank",
           "response": "test_response_sp20_mc_containers_and_templates_1"
         },
         {
@@ -143,7 +143,7 @@ const submitted : ExamSubmission = {
           "question_id": "sp20_mc_time_complexity_4",
           "skin_id": "blah",
           "display_index": "1.1",
-          "kind": "fitb",
+          "kind": "fill_in_the_blank",
           "response": "test_response_sp20_mc_time_complexity_4"
         }
       ]

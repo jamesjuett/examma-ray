@@ -55,11 +55,11 @@ export {
 } from "./response/mc";
 
 export {
-  SASSpecification,
-  SASSubmission,
-  SASGroup,
-  SASItem
-} from "./response/select_a_statement";
+  SLSpecification,
+  SLSubmission,
+  SLGroup,
+  SLItem
+} from "./response/select_lines";
 
 export {
   QuestionGrader

@@ -251,7 +251,7 @@ Several graders are currently supported:
 - `SimpleMCGrader` - Grades an MC question with one right answer
 - `SummationMCGrader` - Grades a multiple-select MC question where each selection is worth positive or negative points
 - `FITBRegexGrader` - Uses regular expressions to grade each blank in an FITB question. Also comes with an interface for human review of unique answers
-- `StandardSASGrader` - Grades SAS ("select-a-statement") questions based on which lines should/shouldn't be included
+- `StandardSLGrader` - Grades SL ("select-a-statement") questions based on which lines should/shouldn't be included
 
 The format for the graders looks like JSON, but it's actually typescript code defining an object literal, so autocomplete, etc. should be available in VS Code.
 

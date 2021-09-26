@@ -16,9 +16,14 @@
  *   question_id: "practice_iterators_and_functors_replacer_fitb",
  *   tags: [],
  *   points: 8,
- *   mk_description: "Complete the implementation of `Replacer` below by filling in the boxes.\n\nIf you believe a blank/box should be **empty**, write `// BLANK`.",
+ *   mk_description:
+ * `
+ * Complete the implementation of \`Replacer\` below by filling in the boxes.
+ * 
+ * If you believe a blank/box should be **empty**, write \`BLANK\`.
+ * `,
  *   response: {
- *     kind: "fitb",
+ *     kind: "fill_in_the_blank",
  *     content:
  * `
  * \`\`\`cpp
@@ -70,7 +75,8 @@
  * ### FITB Submissions
  * 
  * A submission for an FITB response is an array of strings that specify
- * the content submitted for each blank/box. See [[FITBSubmission]].
+ * the content submitted for each blank/box. See [[FITBSubmission]]. The submission
+ * may also be [[BLANK_SUBMISSION]].
  * 
  * @module
  */
@@ -89,9 +95,9 @@ import { isStringArray } from "./util";
 export type FITBSpecification = {
 
   /**
-   * The discriminant "fitb" is used to distinguish FITB specifications.
+   * The discriminant "fill_in_the_blank" is used to distinguish FITB specifications.
    */
-  kind: "fitb";
+  kind: "fill_in_the_blank";
 
   /**
    * The content of the FITB response. See [[core/response/fitb#blanks-and-boxes]] for details.
@@ -106,7 +112,7 @@ export type FITBSpecification = {
   /**
    * A default grader for this response.
    */
-  default_grader?: QuestionGrader<"fitb", any>;
+  default_grader?: QuestionGrader<"fill_in_the_blank", any>;
 };
 
 /**

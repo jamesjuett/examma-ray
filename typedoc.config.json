@@ -8,8 +8,9 @@
     "./src/core/randomization.ts",
     "./src/core/skins.ts",
     "./src/response/common.ts",
-    "./src/response/fitb.ts",
     "./src/response/mc.ts",
+    "./src/response/fitb.ts",
+    "./src/response/select_lines.ts",
     "./src/ExamGenerator.ts",
     "./src/ExamGrader.ts"
   ],

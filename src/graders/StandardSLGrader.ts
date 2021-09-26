@@ -2,20 +2,20 @@ import { applySkin, highlightCode, mk2html } from "../core/render";
 import { renderScoreBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { SASItem, SASSubmission } from "../response/select_a_statement";
+import { SLItem, SLSubmission } from "../response/select_lines";
 import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../core/icons";
 import { assert } from "../core/util";
 
 
-export type StandardSASGradingResult = ImmutableGradingResult & {
+export type StandardSLGradingResult = ImmutableGradingResult & {
   readonly itemResults: readonly {
     applied: boolean,
     submittedLines: number[]
   }[]
 };
 
-type SASRubricItem = {
+type SLRubricItem = {
   points: number;
   required: number[];
   prohibited: number[];
@@ -23,7 +23,7 @@ type SASRubricItem = {
   description: string;
 };
 
-function gradeSASRubricItem(rubricItem: SASRubricItem, submission: Exclude<SASSubmission, typeof BLANK_SUBMISSION>) {
+function gradeSLRubricItem(rubricItem: SLRubricItem, submission: Exclude<SLSubmission, typeof BLANK_SUBMISSION>) {
   return {
     applied: rubricItem.required.every(line => submission.indexOf(line) !== -1) && !rubricItem.prohibited.some(line => submission.indexOf(line) !== -1),
     submittedLines: rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1)
@@ -31,19 +31,19 @@ function gradeSASRubricItem(rubricItem: SASRubricItem, submission: Exclude<SASSu
 }
 
 
-export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
+export class StandardSLGrader implements QuestionGrader<"select_lines"> {
 
   public constructor(
-    public readonly rubric: readonly SASRubricItem[]
+    public readonly rubric: readonly SLRubricItem[]
   ) { }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
-    return responseKind === "select_a_statement";
+    return responseKind === "select_lines";
   };
 
   public prepare() { }
 
-  public grade(aq: AssignedQuestion<"select_a_statement">) : StandardSASGradingResult {
+  public grade(aq: AssignedQuestion<"select_lines">) : StandardSLGradingResult {
     let orig_submission = aq.submission;
     if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
       return {
@@ -54,7 +54,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     }
     let submission = orig_submission;
 
-    let itemResults = this.rubric.map(rubricItem => gradeSASRubricItem(rubricItem, submission));
+    let itemResults = this.rubric.map(rubricItem => gradeSLRubricItem(rubricItem, submission));
     return {
       wasBlankSubmission: false,
       pointsEarned: itemResults.reduce((p, r, i) => p + (r.applied ? this.rubric[i].points : 0), 0),
@@ -62,11 +62,11 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     }
   }
 
-  public pointsEarned(gr: StandardSASGradingResult) {
+  public pointsEarned(gr: StandardSLGradingResult) {
     return gr.pointsEarned;
   }
 
-  public renderReport(aq: GradedQuestion<"select_a_statement", StandardSASGradingResult>) {
+  public renderReport(aq: GradedQuestion<"select_lines", StandardSLGradingResult>) {
     let question = aq.question;
     let orig_submission = aq.submission;
     let submission: readonly number[];
@@ -85,7 +85,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
     assert(itemResults.length === this.rubric.length);
 
     return `
-    <table class="examma-ray-sas-diff table table-sm">
+    <table class="examma-ray-sl-diff table table-sm">
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
       ${itemResults.map((itemResult, i) => {
         let rubricItem = this.rubric[i];
@@ -110,7 +110,7 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
 
         return `
           <tr>
-            <td class="examma-ray-sas-rubric-item">
+            <td class="examma-ray-sl-rubric-item">
               <div id="${elem_id}" class="card rubric-item-card">
                 <div class="card-header">
                   <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(riScore, rubricItem.points)} ${mk2html(rubricItem.title, skin)}</a>
@@ -124,9 +124,9 @@ export class StandardSASGrader implements QuestionGrader<"select_a_statement"> {
             </td>
             <td>${included.length === 0
               ? `<pre style="font-style: italic">${rubricItem.required.length === 0 ? CHECK_ICON : RED_X_ICON} (no selection)</pre>`
-              : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${highlightCode(applySkin((<SASItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
+              : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
             </td>
-            <td>${rubricItem.required.map(line => `<pre><code>${highlightCode(applySkin((<SASItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
+            <td>${rubricItem.required.map(line => `<pre><code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
           </tr>`;
     }).join("")}
     </table>`;

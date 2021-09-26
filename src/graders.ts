@@ -16,8 +16,8 @@ export {
 } from "./graders/SimpleMCGrader";
 
 export {
-  StandardSASGrader
-} from "./graders/StandardSASGrader";
+  StandardSLGrader
+} from "./graders/StandardSLGrader";
 
 export {
   SummationMCGrader,

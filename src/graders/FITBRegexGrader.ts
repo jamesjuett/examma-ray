@@ -42,7 +42,7 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
   return submission.map(blankStr => blankStr.replace(word, replacement));
 }
 
-export class FITBRegexGrader implements QuestionGrader<"fitb"> {
+export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
   private minRubricItemPoints: number;
 
@@ -54,12 +54,12 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
-    return responseKind === "fitb";
+    return responseKind === "fill_in_the_blank";
   };
 
   public prepare() { }
 
-  public grade(aq: AssignedQuestion<"fitb">) : FITBRegexGradingResult {
+  public grade(aq: AssignedQuestion<"fill_in_the_blank">) : FITBRegexGradingResult {
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return {
@@ -117,7 +117,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     return gr.pointsEarned;
   }
 
-  public renderReport(aq: GradedQuestion<"fitb", FITBRegexGradingResult>) {
+  public renderReport(aq: GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>) {
     let gr = aq.gradingResult;
     let question = aq.question;
     let orig_submission = aq.submission;
@@ -175,7 +175,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     </table>`;
   }
 
-  public renderStats(aqs: readonly AssignedQuestion<"fitb">[]) {
+  public renderStats(aqs: readonly AssignedQuestion<"fill_in_the_blank">[]) {
     let question = aqs[0].question;
     let submissions = aqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
@@ -231,7 +231,7 @@ export class FITBRegexGrader implements QuestionGrader<"fitb"> {
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(gqs: readonly GradedQuestion<"fitb">[]) {
+  public renderOverview(gqs: readonly GradedQuestion<"fill_in_the_blank">[]) {
     let question = gqs[0].question;
     let submissions = gqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);

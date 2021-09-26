@@ -135,7 +135,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
         `;
       }
     }
-    else if (question.isKind("fitb")) {
+    else if (question.isKind("fill_in_the_blank")) {
       let content = question.response.content;
       let submission = <FITBSubmission>aq.submission;
       assert(submission !== BLANK_SUBMISSION);

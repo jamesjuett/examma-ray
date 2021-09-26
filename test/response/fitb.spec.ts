@@ -19,7 +19,7 @@ global.$ = jquery(<any>new JSDOM("").window, true);
 
 
 
-const FITB_HANDLER = RESPONSE_HANDLERS["fitb"];
+const FITB_HANDLER = RESPONSE_HANDLERS["fill_in_the_blank"];
 
 describe('FITB parser', () => {
 
@@ -59,7 +59,7 @@ describe('FITB parser', () => {
 describe('FITB renderer', () => {
 
   let rendered = FITB_HANDLER.render({
-    kind: "fitb",
+    kind: "fill_in_the_blank",
     content: `
 this is a **test** _only_ a \`test\`
 

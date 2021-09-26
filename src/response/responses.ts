@@ -1,23 +1,23 @@
 import { FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
 import { MCSpecification, MCSubmission, MC_HANDLER } from "./mc";
-import { SASSpecification, SASSubmission, SAS_HANDLER } from "./select_a_statement";
+import { SLSpecification, SLSubmission, SL_HANDLER } from "./select_lines";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
 import { ExamComponentSkin } from "../core/skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSpecification :
-  QT extends "fitb" ? FITBSpecification :
-  QT extends "select_a_statement" ? SASSpecification :
+  QT extends "fill_in_the_blank" ? FITBSpecification :
+  QT extends "select_lines" ? SLSpecification :
   QT extends "code_editor" ? CodeEditorSpecification :
   QT extends "fitb_drop" ? FITBDropSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSubmission :
-  QT extends "fitb" ? FITBSubmission :
-  QT extends "select_a_statement" ? SASSubmission :
+  QT extends "fill_in_the_blank" ? FITBSubmission :
+  QT extends "select_lines" ? SLSubmission :
   QT extends "code_editor" ? CodeEditorSubmission :
   QT extends "fitb_drop" ? FITBDropSubmission :
   never;
@@ -35,8 +35,8 @@ export const RESPONSE_HANDLERS : {
   [QT in ResponseKind]: ResponseHandler<QT>
 } = {
   "multiple_choice": MC_HANDLER,
-  "fitb": FITB_HANDLER,
-  "select_a_statement": SAS_HANDLER,
+  "fill_in_the_blank": FITB_HANDLER,
+  "select_lines": SL_HANDLER,
   "code_editor": CODE_EDITOR_HANDLER,
   "fitb_drop": FITB_DROP_HANDLER
 };

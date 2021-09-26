@@ -2,45 +2,45 @@ html {
   scroll-behavior: smooth;
 }
 
-.examma-ray-sas-diff pre {
+.examma-ray-sl-diff pre {
   margin-right: 0;
   margin-top: 0;
   margin-bottom: 0;
   margin-left: 1em;
 }
 
-.examma-ray-sas-diff pre>code {
+.examma-ray-sl-diff pre>code {
   display: inline-block;
   vertical-align: middle;
 }
 
-.examma-ray-sas-diff pre>svg {
+.examma-ray-sl-diff pre>svg {
   display: inline-block;
   vertical-align: middle;
 }
 
-.examma-ray-sas-diff .card-header p {
+.examma-ray-sl-diff .card-header p {
   display: inline;
   margin-bottom: 0;
 }
 
-.examma-ray-sas-diff {
+.examma-ray-sl-diff {
   font-size: 0.8rem;
 }
 
 .examma-ray-fitb-diff tr>*:first-child,
-.examma-ray-sas-diff tr>*:first-child {
+.examma-ray-sl-diff tr>*:first-child {
   position: -webkit-sticky;
   position: sticky;
   left: 0;
   background-color: white;
 }
 
-.examma-ray-sas-rubric-item {
+.examma-ray-sl-rubric-item {
   width: 250px;
 }
 
-.examma-ray-sas-rubric-item .badge {
+.examma-ray-sl-rubric-item .badge {
   vertical-align: middle;
 }
 
@@ -358,50 +358,50 @@ code {
   cursor: not-allowed;
 }
 
-.examma-ray-sas-choices {
+.examma-ray-sl-choices {
   overflow-x: auto;
   padding: 0.5em;
 }
 
-.examma-ray-sas-choices.sas-view-preview {
+.examma-ray-sl-choices.sl-view-preview {
   border: solid 1px rgba(0, 0, 255, 0.2);
   background-color: rgba(0, 0, 255, 0.05);
   border-radius: 2px;
 }
 
-.examma-ray-sas-line {
+.examma-ray-sl-line {
   white-space: nowrap;
 }
 
-.sas-select-input {
+.sl-select-input {
   vertical-align: middle;
   margin-bottom: 0.5em;
 }
 
-.sas-select-label {
+.sl-select-label {
   vertical-align: middle;
   padding-right: 1em;
   border: solid 1px transparent;
   padding-left: 3px;
 }
 
-.examma-ray-sas-choices.sas-view-choices .sas-select-input:checked+.sas-select-label {
+.examma-ray-sl-choices.sl-view-choices .sl-select-input:checked+.sl-select-label {
   border: solid 1px rgba(0, 0, 255, 0.2);
   background-color: rgba(0, 0, 255, 0.05);
   border-radius: 2px;
 }
 
-.sas-select-label > pre {
+.sl-select-label > pre {
   margin-bottom: 0;
 }
 
-.examma-ray-sas-header,
-.examma-ray-sas-footer {
+.examma-ray-sl-header,
+.examma-ray-sl-footer {
   margin-left: 1.75em;
 }
 
-.examma-ray-sas-header pre,
-.examma-ray-sas-footer pre {
+.examma-ray-sl-header pre,
+.examma-ray-sl-footer pre {
   margin-bottom: 0;
 }
 

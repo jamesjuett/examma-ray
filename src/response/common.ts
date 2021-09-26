@@ -3,8 +3,8 @@
  */
 export type ResponseKind =
   "multiple_choice" |
-  "fitb" |
-  "select_a_statement" |
+  "fill_in_the_blank" |
+  "select_lines" |
   "code_editor" |
   "fitb_drop";
 
