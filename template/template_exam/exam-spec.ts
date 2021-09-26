@@ -13,13 +13,13 @@ export const EXAM = Exam.create({
   ],
 });
 
-export const EXAM_GENERATOR = new ExamGenerator(EXAM, {
+export const EXAM_GENERATOR_INDIVIDUAL = new ExamGenerator(EXAM, {
   uuid_strategy: "uuidv5",
   uuidv5_namespace: readFileSync("secret", "utf-8"),
   frontend_js_path: "js/frontend.js"
 });
 
-export const EXAM_GENERATOR_ALL = new ExamGenerator(EXAM, {
+export const EXAM_GENERATOR_PREVIEW = new ExamGenerator(EXAM, {
   uuid_strategy: "plain",
   allow_duplicates: true,
   choose_all: true

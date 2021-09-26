@@ -8,7 +8,7 @@ describe('applySkin() function', () => {
     let rendered = applySkin(
       "this {is} a {{test}} of the {{test }}{{function}}",
       {
-        id: "test",
+        skin_id: "test",
         replacements: {
           "test": "apple",
           "function": "banana",
@@ -59,7 +59,7 @@ describe('mk2html() function', () => {
 
   it('should apply a skin (before markdown/math rendering) if called with one', () => {
     let rendered = mk2html("this is a {{test}} _only_ a {{math}} `test`", {
-      id: "test",
+      skin_id: "test",
       replacements: {
         "test": "**lizard**",
         "math": "$$x + y$$"

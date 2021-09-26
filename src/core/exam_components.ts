@@ -65,7 +65,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   }
 
   public renderDescription(skin: ExamComponentSkin) {
-    return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
+    return this.descriptionCache[skin.skin_id] ??= mk2html(this.mk_description, skin);
   }
 
   public isKind<RK extends QT>(kind: RK) : this is Question<RK> {
@@ -147,11 +147,11 @@ export class Section {
   }
 
   public renderDescription(skin: ExamComponentSkin) {
-    return this.descriptionCache[skin.id] ??= mk2html(this.mk_description, skin);
+    return this.descriptionCache[skin.skin_id] ??= mk2html(this.mk_description, skin);
   }
 
   public renderReference(skin: ExamComponentSkin) {
-    return this.mk_reference && (this.referenceCache[skin.id] ??= mk2html(this.mk_reference, skin));
+    return this.mk_reference && (this.referenceCache[skin.skin_id] ??= mk2html(this.mk_reference, skin));
   }
 
 }

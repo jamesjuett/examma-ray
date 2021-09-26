@@ -268,8 +268,8 @@ class CodeWritingManualGraderApp {
     buttons.empty();
     
     this.rubric.forEach((ri, i) => {
-      let skinnedTitle = sub ? applySkin(ri.title, {id: "[recorded]", replacements: sub.skin_replacements}) : ri.title;
-      let skinnedDesc = sub ? applySkin(ri.description, {id: "[recorded]", replacements: sub.skin_replacements}) : ri.description;
+      let skinnedTitle = sub ? applySkin(ri.title, {skin_id: "[recorded]", replacements: sub.skin_replacements}) : ri.title;
+      let skinnedDesc = sub ? applySkin(ri.description, {skin_id: "[recorded]", replacements: sub.skin_replacements}) : ri.description;
       let button = $(
         `<button type="button" class="list-group-item">
           ${renderShortPointsWorthBadge(ri.points)}
@@ -462,7 +462,7 @@ class CodeWritingManualGraderApp {
     }
 
     let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 4));
-    code = applySkin(code, {id: "[recorded]", replacements: rep.skin_replacements});
+    code = applySkin(code, {skin_id: "[recorded]", replacements: rep.skin_replacements});
     return code;
   }
 
@@ -532,7 +532,7 @@ class CodeWritingManualGraderApp {
   }
 
   private getGroupingFunctionName(sub: CodeWritingSubmission) {
-    return applySkin(this.groupingFunctionName, {id: "[recorded]", replacements: sub.skin_replacements});
+    return applySkin(this.groupingFunctionName, {skin_id: "[recorded]", replacements: sub.skin_replacements});
   }
 
   private autoGroupHelper(

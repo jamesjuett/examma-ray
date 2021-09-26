@@ -9,20 +9,20 @@ export type SkinReplacements = {
 
 export type ExamComponentSkin = {
   readonly component_kind?: "skin",
-  readonly id: string,
-  readonly non_composite_id?: string,
+  readonly skin_id: string,
+  readonly non_composite_skin_id?: string,
   replacements: SkinReplacements
 };
 
 export const DEFAULT_SKIN: ExamComponentSkin = {
-  id: "__DEFAULT",
+  skin_id: "__DEFAULT",
   replacements: { }
 }
 
 export function createCompositeSkin(sectionSkin: ExamComponentSkin, questionSkin: ExamComponentSkin) : ExamComponentSkin{
   return {
-    id: sectionSkin.id + "-" + questionSkin.id,
-    non_composite_id: questionSkin.id,
+    skin_id: sectionSkin.skin_id + "-" + questionSkin.skin_id,
+    non_composite_skin_id: questionSkin.skin_id,
     replacements: Object.assign({}, sectionSkin.replacements, questionSkin.replacements)
   };
 }
@@ -32,7 +32,7 @@ export function SINGLE_REPLACEMENT_SKINS(target: string, replacements: readonly 
     let reps: {[index: string]: string} = {};
     reps[target] = rep;
     return {
-      id: target + "_" + rep,
+      skin_id: target + "_" + rep,
       replacements: reps
     };
   });
@@ -47,7 +47,7 @@ export interface SkinChooser {
 
 export function RANDOM_SKIN(skins: readonly ExamComponentSkin[]) : SkinChooser {
   let skinMap : {[index: string]: ExamComponentSkin | undefined} = {};
-  skins.forEach(s => skinMap[s.id] = s);
+  skins.forEach(s => skinMap[s.skin_id] = s);
   return {
     component_kind: "chooser",
     choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
