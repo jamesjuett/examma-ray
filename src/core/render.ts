@@ -23,12 +23,38 @@ const converter = new showdown.Converter({
   ]
 });
 
+const mk_cache = new Map<string, string>();
+const skinned_mk_cache = new Map<string, Map<string, string>>();
+
 export function mk2html(mk: string, skin?: ExamComponentSkin) {
   // console.log("rendering mk"); // useful for debugging repeated (i.e. non-cached) mk renders
   if (skin) {
-    mk = applySkin(mk, skin);
+    return mk2html_with_skin(mk, skin);
   }
-  return converter.makeHtml(mk);
+  else {
+    if (mk_cache.has(mk)) {
+      return mk_cache.get(mk)!;
+    }
+    let rendered = converter.makeHtml(mk);
+    mk_cache.set(mk, rendered);
+    return rendered;
+  }
+}
+
+function mk2html_with_skin(mk: string, skin: ExamComponentSkin) {
+  // console.log("rendering mk"); // useful for debugging repeated (i.e. non-cached) mk renders
+  if (!skinned_mk_cache.has(skin.skin_id)) {
+    skinned_mk_cache.set(skin.skin_id, new Map<string,string>());
+  }
+
+  let cache_for_this_skin = skinned_mk_cache.get(skin.skin_id)!;
+  if (cache_for_this_skin.has(mk)) {
+    return cache_for_this_skin.get(mk)!;
+  }
+
+  let rendered = converter.makeHtml(applySkin(mk, skin));
+  cache_for_this_skin.set(mk, rendered);
+  return rendered;
 }
 
 export function mk2html_unwrapped(mk: string, skin?: ExamComponentSkin) {
