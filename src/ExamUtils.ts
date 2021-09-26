@@ -32,33 +32,17 @@ export namespace ExamUtils {
     );
   }
 
-  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string, trustedCacheDirectory?: string) {
-    if (trustedCacheDirectory) {
-      mkdirSync(trustedCacheDirectory, {recursive: true});
-    }
+  export function loadTrustedSubmissions(manifestDirectory: string, submittedDirectory: string) {
     
     let trustedAnswers : TrustedExamSubmission[] = [];
     readdirSync(submittedDirectory).forEach(
       filename => {
         try {
-          if (trustedCacheDirectory && existsSync(path.join(trustedCacheDirectory, filename))) {
-            trustedAnswers.push(<TrustedExamSubmission>loadExamAnswers(
-              path.join(trustedCacheDirectory, filename)
-            ));
-          }
-          else {
-            let trustedSub = loadTrustedSubmission(
-              manifestDirectory,
-              path.join(submittedDirectory, filename)
-            );
-            trustedAnswers.push(trustedSub);
-            if (trustedCacheDirectory) {
-              writeFileSync(
-                path.join(trustedCacheDirectory, filename),
-                JSON.stringify(trustedSub, null, 2), {encoding: "utf-8"}
-              );
-            }
-          }
+          let trustedSub = loadTrustedSubmission(
+            manifestDirectory,
+            path.join(submittedDirectory, filename)
+          );
+          trustedAnswers.push(trustedSub);
         }
         catch(e) {
           console.log("WARNING - unable to open submission file: " + filename);
