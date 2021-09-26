@@ -59,7 +59,7 @@ export class ExamGenerator {
   public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}) {
     this.exam = exam;
     verifyOptions(options);
-    this.options = Object.assign(DEFAULT_OPTIONS, options);
+    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
   }
 
   public assignExams(students: readonly StudentInfo[]) {
@@ -198,7 +198,10 @@ export class ExamGenerator {
   }
 
   public renderExams() {
-    return this.assignedExams.map(ex => ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path));
+    return this.assignedExams.map((ex, i) => {
+      console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
+      return ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path);
+    });
   }
 
   public writeAll(examDir: string = "out", manifestDir: string = "data") {
@@ -237,7 +240,7 @@ export class ExamGenerator {
 
       console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
       writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(manifest, null, 2), {encoding: "utf-8"});
-      console.log(`${i + 1}/${arr.length} Rendering assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
+      console.log(`${i + 1}/${arr.length} Saving assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
       writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
     });
 
