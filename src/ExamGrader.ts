@@ -182,8 +182,7 @@ export class ExamGrader {
   public loadAllSubmissions() {
     this.addSubmissions(ExamUtils.loadTrustedSubmissions(
       `data/${this.exam.exam_id}/manifests/`,
-      `data/${this.exam.exam_id}/submissions/`,
-      `data/${this.exam.exam_id}/trusted-submissions/`));
+      `data/${this.exam.exam_id}/submissions/`));
   }
 
   private createExamFromSubmission(submission: TrustedExamSubmission) {
