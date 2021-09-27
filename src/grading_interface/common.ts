@@ -1,4 +1,4 @@
-import { GradingResult } from "../core/QuestionGrader";
+import { GradingResult } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
 import { SkinReplacements } from "../core/skins";
 import { StudentInfo } from "../core/exam_specification";

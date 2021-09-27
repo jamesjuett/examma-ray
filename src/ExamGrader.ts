@@ -78,7 +78,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './core/submissions';
 import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
-import { QuestionGrader } from './core/QuestionGrader';
+import { QuestionGrader } from './graders/QuestionGrader';
 import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { asMutable, assert, assertFalse, Mutable } from './core/util';
 import { unparse } from 'papaparse';
@@ -147,12 +147,6 @@ export class ExamGrader {
 
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
-
-    this.allQuestions.forEach(question => {
-      if (!this.getGrader(question)) {
-        console.log(`WARNING: No grader registered for question: ${question.question_id}`);
-      }
-    });
 
     this.stats = new GradedStats(this);
   }
@@ -235,9 +229,6 @@ export class ExamGrader {
       (<readonly GraderMap[]>graderMap).forEach(gm => this.registerGraders(gm));
     }
     else {
-      for(let question_id in <GraderMap>graderMap) {
-        (<GraderMap>graderMap)[question_id]!.prepare(this.exam.exam_id, question_id);
-      }
       Object.assign(this.graderMap, <GraderMap>graderMap);
     }
   }
@@ -259,6 +250,18 @@ export class ExamGrader {
   }
 
   public gradeAll() {
+
+    // Prepare all graders (e.g. load manual grading data)
+    this.allQuestions.forEach(question => {
+      let grader = this.getGrader(question);
+      if (grader) {
+        let manual_grading = ExamUtils.readGradingAssignments(this.exam.exam_id, question.question_id);
+        grader.prepare(this.exam.exam_id, question.question_id, manual_grading);
+      }
+      else {
+        console.log(`WARNING: No grader registered for question: ${question.question_id}`);
+      }
+    });
 
     // Apply any exceptions to individual questions
     this.submittedExams.forEach(

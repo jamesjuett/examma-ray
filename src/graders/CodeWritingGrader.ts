@@ -1,14 +1,13 @@
-import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { QuestionGrader, GradingResult } from "../core/QuestionGrader";
-import { ExamUtils } from "../ExamUtils";
-import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
-import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { sum } from "simple-statistics";
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { applySkin, highlightCode, mk2html } from "../core/render";
+import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
+import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITB } from "../response/util-fitb";
+import { GradingResult, QuestionGrader } from "./QuestionGrader";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -38,7 +37,7 @@ export type CodeWritingGradingResult = GradingResult & {
 
 
 
-export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
+export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWritingGradingResult> {
 
   public readonly rubric: readonly CodeWritingRubricItem[];
   private manualGrading?: readonly CodeWritingGradingAssignment[];
@@ -52,12 +51,12 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind> {
     return true;
   }
 
-  public prepare(exam_id: string, question_id: string) {
+  public prepare(exam_id: string, question_id: string, manual_grading: readonly CodeWritingGradingAssignment[]) {
     if (this.manualGrading) {
       return;
     }
 
-    this.manualGrading = <CodeWritingGradingAssignment[]>ExamUtils.readGradingAssignments(exam_id, question_id); 
+    this.manualGrading = manual_grading;
 
     this.manualGradingMap = {};
     this.manualGrading.forEach(

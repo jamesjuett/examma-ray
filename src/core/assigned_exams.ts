@@ -4,7 +4,7 @@ import { ResponseKind } from '../response/common';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { Exception, GraderMap } from '../ExamGrader';
-import { QuestionGrader, GradingResult } from './QuestionGrader';
+import { QuestionGrader, GradingResult } from '../graders/QuestionGrader';
 import { isValidID, StudentInfo } from './exam_specification';
 import { ExamComponentSkin } from './skins';
 import { ExamManifest } from './submissions';
@@ -231,7 +231,6 @@ export class AssignedSection {
     this.assignedQuestions.forEach(aq => {
       let grader = graders[aq.question.question_id] ?? aq.question.defaultGrader;
       if (grader) {
-        grader.prepare(ex.exam.exam_id, aq.question.question_id);
         // console.log(`Grading ${aq.question.question_id}`);
         assert(grader.isGrader(aq.question.kind), `Grader ${grader} cannot be used for question ${aq.displayIndex}, which has type "${aq.question.kind}".`);
         aq.grade(grader);

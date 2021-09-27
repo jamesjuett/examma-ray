@@ -132,6 +132,13 @@ export namespace ExamUtils {
     return `data/${exam_id}/manual_grading/${question_id}`;
   }
 
+  /**
+   * Loads any manual grading assignments (and results) for the given exam/question.
+   * If there are no such results, returns an empty array.
+   * @param exam_id 
+   * @param question_id 
+   * @returns 
+   */
   export function readGradingAssignments(exam_id: string, question_id: string) {
     let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*.json`);
     return files.map(filename => {

@@ -49,7 +49,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../core/QuestionGrader";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";

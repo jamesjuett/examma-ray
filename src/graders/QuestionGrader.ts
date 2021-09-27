@@ -1,4 +1,5 @@
-import { AssignedQuestion, GradedQuestion } from "./assigned_exams";
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind } from "../response/common";
 
 
@@ -26,7 +27,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param exam_id 
    * @param question_id 
    */
-  prepare(exam_id: string, question_id: string): void;
+  prepare(exam_id: string, question_id: string, manual_grading: GradingAssignmentSpecification<RK, GR>[]): void;
 
   /**
    * Grades the given assigned question and returns the grading result. This function

@@ -4,7 +4,7 @@ import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/mc";
 import { assert } from "../core/util";
-import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
+import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../core/icons";
 
 /**

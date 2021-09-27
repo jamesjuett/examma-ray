@@ -141,7 +141,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../core/QuestionGrader";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";

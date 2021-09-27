@@ -1,5 +1,5 @@
 import { FILE_DOWNLOAD, FILE_UPLOAD, FILE_CHECK } from "./icons";
-import { QuestionGrader } from "./QuestionGrader";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { mk2html } from "./render";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { ResponseSpecification, SubmissionType, render_response } from "../response/responses";

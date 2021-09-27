@@ -6,7 +6,7 @@ import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITB } from "../response/util-fitb";
 import { assert } from "../core/util";
-import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
+import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
 
 

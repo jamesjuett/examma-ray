@@ -81,7 +81,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../core/QuestionGrader";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";

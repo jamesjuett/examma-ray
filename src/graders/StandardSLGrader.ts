@@ -3,7 +3,7 @@ import { renderScoreBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { SLItem, SLSubmission } from "../response/select_lines";
-import { QuestionGrader, ImmutableGradingResult } from "../core/QuestionGrader";
+import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { CHECK_ICON, RED_X_ICON } from "../core/icons";
 import { assert } from "../core/util";
 

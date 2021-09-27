@@ -63,4 +63,4 @@ export {
 
 export {
   QuestionGrader
-} from "./core/QuestionGrader";
+} from "./graders/QuestionGrader";

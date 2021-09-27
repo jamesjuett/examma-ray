@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { QuestionGrader } from "../core/QuestionGrader";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
