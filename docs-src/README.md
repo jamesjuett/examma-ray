@@ -35,6 +35,8 @@ Set up some initial files for your exam. Run the following, replacing `template_
 $ npx examma-ray-init template_exam
 ```
 
+## Creating a New Exam
+
 This will create a directory structure like shown below. `content` is for question/section specifications and `template_exam` contains specifications and scripts for generating an exam. These are separate because in theory you might want a "bank" of content, which is drawn upon for several different exams you might give in different terms. There would be one `content` folder but several folders for each exam.
 
 ```bash
@@ -82,7 +84,7 @@ Before doing anything else, open up `exam-spec.ts` and change the specified `id`
 ```typescript
 ...
 export const EXAM = new Exam({
-  id: "template_exam", // Change to something like "eecs280f21_final"
+  exam_id: "template_exam", // Change to something like "eecs280f21_final"
   title: "Examma Ray Template Exam",
   mk_intructions: readFileSync("instructions.md", "utf8"),
   mk_questions_message: readFileSync("questions.md", "utf8"),

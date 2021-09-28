@@ -148,7 +148,7 @@ export class ExamGrader {
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
-    this.stats = new GradedStats(this);
+    this.stats = new GradedStats();
   }
 
   public getGrader(question: Question) {
@@ -273,7 +273,7 @@ export class ExamGrader {
 
     this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
 
-    (<Mutable<this>>this).stats = new GradedStats(this);
+    this.stats.recompute(this);
   }
 
   public applyCurve(curve: ExamCurve) {
@@ -536,7 +536,7 @@ export class ExamGrader {
  * A mapping of question ID to grader.
  */
  export type GraderMap = {
-  [index: string]: QuestionGrader<any> | undefined;
+  [index: string]: QuestionGrader<any, any> | undefined;
 }
 
 /**

@@ -1,13 +1,13 @@
 import { mean, sampleCovariance, standardDeviation } from "simple-statistics";
 import { ExamGrader } from "../ExamGrader";
 import { isGradedQuestion } from "./assigned_exams";
-import { assert } from "./util";
+import { assert, Mutable } from "./util";
 
 export class GradedStats {
 
-  public readonly numFullyGraded: number;
-  public readonly mean: number;
-  public readonly stddev: number;
+  public readonly numFullyGraded: number = 0;
+  public readonly mean: number = 0;
+  public readonly stddev: number = 0;
 
   /**
    * Maps from question-id to mean grade on that question
@@ -27,12 +27,14 @@ export class GradedStats {
     };
   } = {};
 
-  public constructor(examGrader: ExamGrader) {
+  public recompute(examGrader: ExamGrader) {
+
+    let _this = (<Mutable<this>>this);
 
     let fullyGradedExams = examGrader.submittedExams.filter(ex => ex.isGraded());
-    this.numFullyGraded = fullyGradedExams.length;
-    this.mean = this.numFullyGraded > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
-    this.stddev = this.numFullyGraded > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
+    _this.numFullyGraded = fullyGradedExams.length;
+    _this.mean = this.numFullyGraded > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
+    _this.stddev = this.numFullyGraded > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
 
     examGrader.allQuestions.forEach(question => {
       let assignedQuestions = examGrader.getAllAssignedQuestionsById(question.question_id);
