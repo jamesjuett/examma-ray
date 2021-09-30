@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.157",
+  "version": "1.0.161",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
@@ -40,6 +40,7 @@
     "@types/katex": "^0.11.0",
     "@types/minimist": "^1.2.2",
     "@types/node": "^14.17.9",
+    "@types/shuffle-seed": "^1.1.0",
     "blob-polyfill": "^5.0.20210201",
     "chart.js": "^2.9.4",
     "chroma-js": "^2.1.0",
@@ -66,6 +67,7 @@
     "showdown": "^1.9.1",
     "showdown-highlight": "2.1.6",
     "showdown-katex": "^0.8.0",
+    "shuffle-seed": "^1.1.6",
     "simple-statistics": "^7.4.0",
     "sortablejs": "^1.14.0",
     "storage-available": "^1.1.0",

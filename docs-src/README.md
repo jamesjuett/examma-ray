@@ -208,7 +208,7 @@ data/
 out/
 ```
 
-When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exam manifests generated for each student, as well as their answer file submissions. For example, if your exam ID is `eecs280sp20test`, you could optionally add it once you've locked down the content:
+When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exam manifests generated for each student, as well as their answer file submissions. For example, if your exam ID is `eecs280f21_final`, you could optionally add it once you've locked down the content:
 
 ```bash
 git add eecs280f21_final/data

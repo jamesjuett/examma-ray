@@ -4,7 +4,7 @@ import { mk2html } from "./render";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { ResponseSpecification, SubmissionType, render_response } from "../response/responses";
 import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
-import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, StudentInfo } from "./exam_specification";
+import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeQuestion, realizeSection, SectionChooser, SectionSpecification, StudentInfo } from "./exam_specification";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -78,12 +78,6 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
 
 const DEFAULT_REFERENCE_WIDTH = 40;
-
-function realizeQuestion(q: QuestionSpecification | Question | QuestionChooser) {
-  return q.component_kind === "chooser" ? q :
-    q.component_kind === "component" ? q :
-    Question.create(q);
-}
 
 export class Section {
 
@@ -195,12 +189,6 @@ answers file**, and submit it before the end of the exam!`;
 // point values/weighting for rubric items.`;
 
 
-
-function realizeSection(s: SectionSpecification | Section | SectionChooser) {
-  return s.component_kind === "chooser" ? s :
-    s.component_kind === "component" ? s :
-    Section.create(s);
-}
 
 export class Exam {
 

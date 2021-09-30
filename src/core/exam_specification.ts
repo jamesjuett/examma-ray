@@ -225,8 +225,15 @@ export function isValidID(id: string) {
 
 export interface QuestionChooser {
   component_kind: "chooser",
+  chooser_kind: "question",
   choose(exam: Exam, student: StudentInfo, rand: Randomizer) : readonly Question[];
   getById(id: string) : Question | undefined;
+}
+
+export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooser) {
+  return q.component_kind === "chooser" ? q :
+    q.component_kind === "component" ? q :
+    Question.create(q);
 }
 
 export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -253,6 +260,7 @@ export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam,
 export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank): QuestionChooser {
   return {
     component_kind: "chooser",
+    chooser_kind: "question",
     choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
       let qs = questionBank.getQuestionsByTag(tag);
       if (rand === CHOOSE_ALL) {
@@ -282,6 +290,7 @@ export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (Q
 
   return {
     component_kind: "chooser",
+    chooser_kind: "question",
     choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
       let qs = qBank.questions;
       if (rand === CHOOSE_ALL) {
@@ -307,8 +316,15 @@ export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (Q
  */
 export interface SectionChooser {
   component_kind: "chooser";
+  chooser_kind: "section",
   choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly Section[];
   getById(section_id: string): Section | undefined;
+}
+
+export function realizeSection(s: SectionSpecification | Section | SectionChooser) {
+  return s.component_kind === "chooser" ? s :
+    s.component_kind === "component" ? s :
+    Section.create(s);
 }
 
 export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -324,6 +340,7 @@ export function chooseSections(chooser: Section | SectionChooser, exam: Exam, st
 export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | Section)[]): SectionChooser {
   return {
     component_kind: "chooser",
+    chooser_kind: "section",
     choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
       if (rand === CHOOSE_ALL) {
         return sections.map(s => s instanceof Section ? s : Section.create(s));
@@ -343,6 +360,61 @@ export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Ex
 export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Exclude<ExamSpecification, "response">>) : ExamSpecification;
 export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification | ExamSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification | ExamSpecification, "response">>) : QuestionSpecification | SectionSpecification | ExamSpecification {
   return Object.assign({}, spec, customizations);
+}
+
+
+export function SHUFFLE(questions: QuestionSpecification | QuestionChooser | readonly(QuestionSpecification | QuestionChooser)[]) : QuestionChooser;
+export function SHUFFLE(sections: SectionSpecification | SectionChooser | readonly(SectionSpecification | SectionChooser)[]) : SectionChooser;
+export function SHUFFLE(sectionsOrQuestions: QuestionSpecification | QuestionChooser | SectionSpecification | SectionChooser | readonly(QuestionSpecification | QuestionChooser)[] | readonly(SectionSpecification | SectionChooser)[]) : QuestionChooser | SectionChooser {
+  if(!Array.isArray(sectionsOrQuestions)) {
+    // If not an array, it's a single specification or chooser.
+    // Pack it in an array and cast to make the type system happy.
+    return SHUFFLE(<any[]>[sectionsOrQuestions]);
+  }
+  
+  assert(sectionsOrQuestions.length > 0);
+  let first = sectionsOrQuestions[0];
+  if (first.component_kind === "specification" && (<QuestionSpecification & SectionSpecification>first).question_id
+    || first.component_kind === "chooser" && first.chooser_kind === "question") {
+      return SHUFFLE_QUESTIONS(<readonly(QuestionSpecification | QuestionChooser)[]>sectionsOrQuestions);
+  }
+  else {
+    return SHUFFLE_SECTIONS(<readonly(SectionSpecification | SectionChooser)[]>sectionsOrQuestions);
+  }
+}
+
+function SHUFFLE_QUESTIONS(questions: readonly(QuestionSpecification | QuestionChooser)[]) : QuestionChooser {
+  return {
+    component_kind: "chooser",
+    chooser_kind: "question",
+    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+      let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
+      return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
+    },
+    getById: (question_id: string) => {
+      return questions
+        .map(q => realizeQuestion(q))
+        .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
+        .find(q => q?.question_id === question_id);
+    }
+  }
+}
+
+function SHUFFLE_SECTIONS(sections: readonly(SectionSpecification | SectionChooser)[]) : SectionChooser {
+  return {
+    component_kind: "chooser",
+    chooser_kind: "section",
+    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+      let qs = sections.map(q => realizeSection(q)).flatMap(q => chooseSections(q, exam, student, rand));
+      return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
+    },
+    getById: (section_id: string) => {
+      return sections
+        .map(q => realizeSection(q))
+        .map(q => q.component_kind === "chooser" ? q.getById(section_id) : q)
+        .find(q => q?.section_id === section_id);
+    }
+  }
 }
 
 

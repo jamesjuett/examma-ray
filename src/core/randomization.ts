@@ -1,4 +1,5 @@
 import { RandomSeed, create as createRNG } from 'random-seed';
+import { shuffle } from 'shuffle-seed';
 import { Exam, Question, Section } from './exam_components';
 import { assert } from './util';
 
@@ -14,7 +15,7 @@ class SeededRandomizerImpl {
   }
 
   public float() {
-    return this.rng.random;
+    return this.rng.random();
   }
 
   public range(n: number) {
@@ -34,6 +35,10 @@ class SeededRandomizerImpl {
       .sort((a, b) => a.i - b.i)
       .map(x => x.c)
       .slice(0, n);
+  }
+
+  public shuffle<T>(original: readonly T[]) {
+    return shuffle(original, ""+this.float());
   }
 
 }
