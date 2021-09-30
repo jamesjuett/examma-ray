@@ -34,6 +34,10 @@
  * section choosers or use predefined factory functions to create them:
  *  - [[RANDOM_SECTION]]
  * 
+ * ### Randomizing Question/Section Ordering
+ * 
+ * Use [[SHUFFLE]] to randomize the ordering (on a per-student basis) of a list of questions or sections.
+ * 
  * ### Customizing Existing Specifications
  * 
  * Use the [[CUSTOMIZE]] function if you've got an existing specification (e.g. from a question bank) that
