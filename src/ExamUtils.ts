@@ -16,6 +16,7 @@ import "colors";
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 import { StudentInfo } from "./core/exam_specification";
 import { UUID_Strategy } from "./ExamGenerator";
+import { ncp } from "ncp";
 
 export namespace ExamUtils {
 
@@ -176,6 +177,7 @@ export function writeFrontendJS(outDir: string, filename: string) {
       path,
       `${outDir}/${filename}`
     );
+    console.log("Copied frontend JS bundle.")
   }
   catch(e: any) {
     if (e.code === "MODULE_NOT_FOUND") {
@@ -205,6 +207,27 @@ export function writeFrontendJS(outDir: string, filename: string) {
     }
   }
 }
+
+export function copyFrontendMedia(media_source_dir: string, frontend_media_dir: string) {
+  console.log("from: " + media_source_dir);
+  console.log("to: " + frontend_media_dir);
+  mkdirSync(frontend_media_dir, { recursive: true });
+
+  ncp(
+    media_source_dir,
+    frontend_media_dir,
+    (err) => { // callback
+      if (!err) {
+        console.log("Copied exam media.")
+      }
+      else {
+        console.error("ERROR copying frontend media".red);
+      }
+    }
+  )
+
+}
+
 
 /**
  * Takes an ID for an exam, section, or question and creates a uuid

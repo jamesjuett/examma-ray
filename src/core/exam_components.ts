@@ -23,6 +23,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
   public readonly defaultGrader?: QuestionGrader<QT>;
+  public readonly media_dir?: string;
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -58,6 +59,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.skin = spec.skin ?? DEFAULT_SKIN;
     this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
     this.defaultGrader = <QuestionGrader<QT>>spec.response.default_grader;
+    this.media_dir = spec.media_dir;
   }
 
   public renderResponse(uuid: string, skin?: ExamComponentSkin) {
@@ -95,6 +97,7 @@ export class Section {
    * Guaranteed to be an integral value.
    */
   public readonly reference_width: number;
+  public readonly media_dir?: string;
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -133,6 +136,7 @@ export class Section {
     this.skin = spec.skin ?? DEFAULT_SKIN;
 
     this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
+    this.media_dir = spec.media_dir;
 
     assert(
       Number.isInteger(this.reference_width) && 0 <= this.reference_width && this.reference_width <= 100,
@@ -202,6 +206,7 @@ export class Exam {
   public readonly mk_download_message: string;
   public readonly mk_bottom_message: string;
   public readonly mk_saver_message: string;
+  public readonly media_dir?: string;
 
   public readonly sections: readonly (Section | SectionChooser)[];
 
@@ -237,6 +242,7 @@ export class Exam {
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
     this.sections = spec.sections.map(s => realizeSection(s));
     this.enable_regrades = !!spec.enable_regrades;
+    this.media_dir = spec.media_dir;
   }
 
   public addAnnouncement(announcement_mk: string) {
