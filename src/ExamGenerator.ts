@@ -8,7 +8,7 @@ import { unparse } from 'papaparse';
 import del from 'del';
 import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
-import { createStudentUuid, writeFrontendJS } from './ExamUtils';
+import { createStudentUuid, writeFrontendJS, copyFrontendMedia } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 
@@ -26,6 +26,7 @@ export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
 
 export type ExamGeneratorOptions = {
   frontend_js_path: string,
+  frontend_media_dir: string,
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
   choose_all?: boolean,
@@ -35,8 +36,8 @@ export type ExamGeneratorOptions = {
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/frontend.js",
+  frontend_media_dir: "media",
   uuid_strategy: "plain",
-  students: [],
   allow_duplicates: false
 };
 
@@ -51,8 +52,12 @@ export class ExamGenerator {
   public readonly assignedExams: AssignedExam[] = [];
   public readonly assignedExamsByUniqname: { [index: string]: AssignedExam | undefined; } = {};
 
-  private sectionStatsMap: { [index: string]: SectionStats; } = {};
-  private questionStatsMap: { [index: string]: QuestionStats; } = {};
+
+  private readonly sectionsMap: { [index: string]: Section | undefined } = {};
+  private readonly questionsMap: { [index: string]: Question | undefined } = {};
+
+  private readonly sectionStatsMap: { [index: string]: SectionStats; } = {};
+  private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
 
   private options: ExamGeneratorOptions;
 
@@ -155,6 +160,9 @@ export class ExamGenerator {
     // Find all sections assigned to any exam
     let sections = ae.assignedSections.map(s => s.section);
 
+    // Keep track of all sections
+    sections.forEach(s => this.sectionsMap[s.section_id] = s);
+
     // Verify that every section with the same ID originated from the same specification
     // If there wasn't a previous stats entry for that section ID, add one
     sections.forEach(
@@ -166,8 +174,12 @@ export class ExamGenerator {
         }
     );
 
+
     // Find all questions assigned to any exam
     let questions = ae.assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question));
+    
+    // Keep track of all questions
+    questions.forEach(q => this.questionsMap[q.question_id] = q);
 
     // Verify that every question with the same ID originated from the same specification
     questions.forEach(
@@ -193,6 +205,24 @@ export class ExamGenerator {
 
   }
 
+  private writeMedia(outDir: string) {
+
+    let mediaDir = path.join(outDir, this.options.frontend_media_dir);
+
+    // Copy overall exam media
+    this.exam.media_dir && copyFrontendMedia(this.exam.media_dir, path.join(mediaDir, "exam", this.exam.exam_id));
+
+    // Copy media for all sections
+    Object.values(this.sectionsMap).forEach(
+      s => s?.media_dir && copyFrontendMedia(s.media_dir, path.join(mediaDir, "section", s.section_id))
+    );
+
+    // Copy media for all questions
+    Object.values(this.questionsMap).forEach(
+      q => q?.media_dir && copyFrontendMedia(q.media_dir, path.join(mediaDir, "question", q.question_id))
+    );
+  }
+
   public createManifests() {
     return this.assignedExams.map(ex => ex.createManifest());
   }
@@ -216,6 +246,7 @@ export class ExamGenerator {
     del.sync(`${manifestDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend.js");
+    this.writeMedia(`${examDir}`);
 
     this.writeStats();
 

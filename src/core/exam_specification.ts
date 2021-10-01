@@ -98,6 +98,16 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * @see [[core/skins]]
    */
   readonly skin?: ExamComponentSkin | SkinChooser
+
+  /**
+   * An absolute path to a directory containing media for this question. Media will be
+   * available to the frontend at {{frontend_media_dir}}/question/{{question_id}}/ where
+   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
+   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * same directory as the file in which you define your specification. For example,
+   * `__dirname + "/media"`.
+   */
+  readonly media_dir?: string;
 };
 
 export type SectionSpecification = {
@@ -148,6 +158,17 @@ export type SectionSpecification = {
    * The initial width, in percent 0-100, of the reference material for this section.
    */
   reference_width?: number,
+
+
+  /**
+   * An absolute path to a directory containing media for this section. Media will be
+   * available to the frontend at {{frontend_media_dir}}/section/{{section_id}}/ where
+   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
+   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * same directory as the file in which you define your specification. For example,
+   * `__dirname + "/media"`.
+   */
+  readonly media_dir?: string;
 }
 
 export type ExamSpecification = {
@@ -219,6 +240,16 @@ export type ExamSpecification = {
    * TODO this will probably be moved elsewhere.
    */
   readonly enable_regrades?: boolean
+
+  /**
+   * An absolute path to a directory containing media for this exam. Media will be
+   * available to the frontend at {{frontend_media_dir}}/exam/{{exam_id}}/ where
+   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
+   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * same directory as the file in which you define your specification. For example,
+   * `__dirname + "/media"`.
+   */
+  readonly media_dir?: string;
 };
 
 export function isValidID(id: string) {
