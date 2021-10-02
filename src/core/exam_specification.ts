@@ -393,7 +393,10 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
 export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Exclude<QuestionSpecification, "response">>) : QuestionSpecification;
 export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Exclude<SectionSpecification, "response">>) : SectionSpecification;
 export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Exclude<ExamSpecification, "response">>) : ExamSpecification;
-export function CUSTOMIZE(spec: QuestionSpecification | SectionSpecification | ExamSpecification, customizations: Partial<Exclude<QuestionSpecification | SectionSpecification | ExamSpecification, "response">>) : QuestionSpecification | SectionSpecification | ExamSpecification {
+export function CUSTOMIZE<T extends keyof QuestionSpecification>(spec: Omit<QuestionSpecification, T>, customizations: Partial<Exclude<QuestionSpecification, "response">> & Pick<QuestionSpecification, T>): QuestionSpecification;
+export function CUSTOMIZE<T extends keyof SectionSpecification>(spec: Omit<SectionSpecification, T>, customizations: Partial<Exclude<SectionSpecification, "response">> & Pick<SectionSpecification, T>): SectionSpecification;
+export function CUSTOMIZE<T extends keyof ExamSpecification>(spec: Omit<ExamSpecification, T>, customizations: Partial<Exclude<ExamSpecification, "response">> & Pick<ExamSpecification, T>): ExamSpecification;
+export function CUSTOMIZE(spec: any, customizations: any) {
   return Object.assign({}, spec, customizations);
 }
 
