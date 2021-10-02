@@ -67,4 +67,5 @@ export type GradingResult = {
 export type ImmutableGradingResult = GradingResult & {
   readonly pointsEarned: number;
   readonly wasBlankSubmission: boolean;
+  readonly wasInvalidSubmission?: boolean;
 }

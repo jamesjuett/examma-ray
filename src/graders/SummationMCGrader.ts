@@ -1,16 +1,19 @@
 import { mk2html } from "../core/render";
 import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { assert } from "../core/util";
-import { renderPercentChosenProgressBar } from "../core/ui_components";
+import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
+import { RED_X_ICON } from "../core/icons";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {
   readonly selections: readonly {
     selected: boolean,
-    pointsEarned: number
+    pointsForThisItem: number
   }[]
+} | ImmutableGradingResult & {
+  readonly wasInvalidSubmission: true,
 };
 
 export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
@@ -37,6 +40,15 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     let question = aq.question;
     assert(this.pointValues.length === question.response.choices.length, "Summation MC grader submissions must have the same number of response choices as the grader configuration.")
     let orig_submission = aq.submission;
+
+    if (orig_submission === INVALID_SUBMISSION) {
+      return {
+        wasBlankSubmission: false,
+        wasInvalidSubmission: true,
+        pointsEarned: 0
+      };
+    }
+
     if (orig_submission === BLANK_SUBMISSION) {
       orig_submission = [];
     }
@@ -51,13 +63,13 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
       let isSelected = submission.indexOf(i) !== -1;
       return {
         selected: isSelected,
-        pointsEarned: isSelected === pv.selected ? pv.points : 0
+        pointsForThisItem: isSelected === pv.selected ? pv.points : 0
       };
     });
 
     return {
       wasBlankSubmission: submission.length === 0,
-      pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsEarned, 0))),
+      pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsForThisItem, 0))),
       selections: selections
     };
   }
@@ -71,7 +83,11 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     let skin = gq.skin;
     let gr = gq.gradingResult;
     
-    let selections = gr.selections;
+    if (gr.wasInvalidSubmission) {
+      return "Your submission for this question was invalid.";
+    }
+
+    const selections = gr.selections;
     let choices = question.response.choices;
     assert(selections.length === choices.length);
 
@@ -79,7 +95,7 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
       <form class="examma-ray-summation-grader">
       ${choices.map((item, i) => {
         return `
-          <div><span>${renderPointAdjustmentBadge(gr.selections[i].pointsEarned)}</span><input type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
+          <div><span>${renderPointAdjustmentBadge(selections[i].pointsForThisItem)}</span><input type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
           <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>
         `;
       }).join("")}
@@ -97,10 +113,16 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     assert(wereGradedBy(gqs, this));
     let results = gqs.map(gq => gq.gradingResult);
 
-    let hist: number[] = this.pointValues.map((pv, i) => results.filter(r => r.selections[i].selected).length);
+    let hist: number[] = this.pointValues.map((pv, i) => results.filter(r => !r.wasInvalidSubmission && r.selections[i].selected).length);
+    let numInvalid = results.filter(r => r.wasInvalidSubmission).length;
 
-    return hist.map((count, i) =>
-      `<div class="examma-ray-mc-option">${renderPercentChosenProgressBar(count, gqs.length)} ${renderPointAdjustmentBadge(this.pointValues[i].points)} (if ${this.pointValues[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}</div>`).join("");
+    return `
+      ${hist.map((count, i) =>
+      `<div class="examma-ray-mc-option">
+        ${renderPercentChosenProgressBar(count, gqs.length)} ${renderPointAdjustmentBadge(this.pointValues[i].points)} (if ${this.pointValues[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}
+      </div>`).join("")}
+      ${numInvalid === 0 ? "" : `<div>${renderNumBadge(numInvalid)} ${RED_X_ICON} invalid submissions</div>`}
+    `;
   }
 }
 

@@ -21,3 +21,10 @@ export const BLANK_SUBMISSION = Symbol("blank_submission");
  */
 export const MALFORMED_SUBMISSION = Symbol("malformed_submission");
 
+/**
+ * Represents a submission that is well-formed but somehow breaks the
+ * rules for a particular question, e.g. an MC submission that has more
+ * choices selected that were allowed by a checkbox limit.
+ */
+export const INVALID_SUBMISSION = Symbol("invalid_submission");
+
