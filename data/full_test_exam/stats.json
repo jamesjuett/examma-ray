@@ -6,6 +6,9 @@
     "test_question_mc_multiple": {
       "n": 1
     },
+    "test_question_mc_multiple_limit_3": {
+      "n": 1
+    },
     "test_question_mc_single": {
       "n": 1
     }

@@ -40,3 +40,24 @@ MC Test Question (Multiple Response)
   }
 };
 
+export const Test_Question_MC_Multiple_Limit_3 : QuestionSpecification = {
+  question_id: "test_question_mc_multiple_limit_3",
+  points: 2,
+  mk_description:
+`
+MC Test Question (Multiple Response)
+`,
+  response: {
+    kind: "multiple_choice",
+    choices: [
+      "Choice A",
+      "Choice B",
+      "Choice C",
+      "Choice D",
+      "Choice E"
+    ],
+    multiple: true,
+    limit: 3
+  }
+};
+

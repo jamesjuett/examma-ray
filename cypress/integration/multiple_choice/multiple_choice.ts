@@ -20,11 +20,15 @@ function loadFreshPage() {
 }
 
 function singleResponseElem() {
-  return cy.get('.examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]').eq(0);
+  return cy.get('#question-test-full_test_exam-q-test_question_mc_single .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
 }
 
 function multipleResponseElem() {
-  return cy.get('.examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]').eq(1);
+  return cy.get('#question-test-full_test_exam-q-test_question_mc_multiple .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
+}
+
+function multipleResponseLimitElem() {
+  return cy.get('#question-test-full_test_exam-q-test_question_mc_multiple_limit_3 .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
 }
 
 describe('MC Response', () => {
@@ -42,6 +46,7 @@ describe('MC Response', () => {
 
     singleResponseElem().should("be.visible");
     multipleResponseElem().should("be.visible");
+    multipleResponseLimitElem().should("be.visible");
 
   });
 
@@ -170,6 +175,141 @@ describe('MC Response', () => {
 
   });
 
+  
+
+  it('Respect Checkbox Limit', () => {
+
+    const LIMIT = 2;
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked')
+      .should("have.length", 0);
+      
+    multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+
+    // click all
+    let totalClicked = 0;
+    multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+
+    [0,1,2].forEach(i => {
+      multipleResponseLimitElem().find('input[type=checkbox]').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", ++totalClicked)
+        .should("contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("be.enabled");
+    multipleResponseLimitElem().find('input[type=checkbox]:not(:checked)').should("be.disabled");
+
+    // unclick all but one
+    [2, 1].forEach(i => {
+      multipleResponseLimitElem().find('input[type=checkbox]').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", --totalClicked)
+        .should("not.contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    // click some more
+    [3, 4].forEach(i => {
+      multipleResponseLimitElem().find('input[type=checkbox]').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", ++totalClicked)
+        .should("contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("be.enabled");
+    multipleResponseLimitElem().find('input[type=checkbox]:not(:checked)').should("be.disabled");
+
+    // unclick all but one
+    [4, 3].forEach(i => {
+      multipleResponseLimitElem().find('input[type=checkbox]').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", --totalClicked)
+        .should("not.contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    // uncheck last one
+    multipleResponseLimitElem().find('input[type=checkbox]').eq(0).click();
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("not.exist");
+    --totalClicked;
+    
+    multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+
+  });
+
+  it('Respect Checkbox Limit via Label', () => {
+
+    const LIMIT = 2;
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked')
+      .should("have.length", 0);
+      
+    multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+
+    // click all
+    let totalClicked = 0;
+    multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+
+    [0,1,2].forEach(i => {
+      multipleResponseLimitElem().find('label').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", ++totalClicked)
+        .should("contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("be.enabled");
+    multipleResponseLimitElem().find('input[type=checkbox]:not(:checked)').should("be.disabled");
+
+    // unclick all but one
+    [2, 1].forEach(i => {
+      multipleResponseLimitElem().find('label').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", --totalClicked)
+        .should("not.contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    // click some more
+    [3, 4].forEach(i => {
+      multipleResponseLimitElem().find('label').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", ++totalClicked)
+        .should("contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("be.enabled");
+    multipleResponseLimitElem().find('input[type=checkbox]:not(:checked)').should("be.disabled");
+
+    // unclick all but one
+    [4, 3].forEach(i => {
+      multipleResponseLimitElem().find('label').eq(i).click();
+      multipleResponseLimitElem().find('input[type=checkbox]').should("be.enabled");
+      multipleResponseLimitElem().find('input[type=checkbox]:checked').siblings("label")
+        .should("have.length", --totalClicked)
+        .should("not.contain", choices_text[i]);
+      multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+    });
+
+    // uncheck last one
+    multipleResponseLimitElem().find('input[type=checkbox]').eq(0).click();
+    multipleResponseLimitElem().find('input[type=checkbox]:checked').should("not.exist");
+    --totalClicked;
+    
+    multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
+
+  });
   
   // it('Respect Maxlength on Blanks', () => {
 

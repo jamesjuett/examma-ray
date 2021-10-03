@@ -113,8 +113,8 @@ function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
 function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return `
     <form>
+    ${(response.multiple && response.limit !== undefined) ? `<div data-examma-ray-mc-limit="${response.limit}">You have selected <span class="examma-ray-mc-num-selected">0</span> out of ${response.limit} allowed.</div>`: ""}
     ${response.choices.map((item,i) => `
-      ${(response.multiple && response.limit !== undefined) ? `<div data-examma-ray-mc-limit="${response.limit}">You have selected <span class="examma-ray-mc-num-selected">0</span> out of ${response.limit} allowed.</div>`: ""}
       <div>
         <input id="${question_uuid}_choice_${i}" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}"/>
         <label for="${question_uuid}_choice_${i}" class="examma-ray-mc-option">${mk2html(item, skin)}</label>

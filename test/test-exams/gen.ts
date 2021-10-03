@@ -1,7 +1,7 @@
 import path from "path";
 import { ExamGenerator } from "../../src/ExamGenerator";
 import { CUSTOMIZE, QuestionSpecification } from "../../src/core/exam_specification";
-import { Test_Question_MC_Multiple, Test_Question_MC_Single } from "./content/mc";
+import { Test_Question_MC_Multiple, Test_Question_MC_Multiple_Limit_3, Test_Question_MC_Single } from "./content/mc";
 import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
@@ -47,6 +47,7 @@ genTestExam(makeTestExam("simple_test", [
 genTestExam(makeTestExam("full_test_exam", [
   Test_Question_MC_Single,
   Test_Question_MC_Multiple,
+  Test_Question_MC_Multiple_Limit_3,
   Test_Question_Fitb_Drop,
 ]));
 

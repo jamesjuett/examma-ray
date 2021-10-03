@@ -20,7 +20,7 @@ function loadFreshPage() {
 }
 
 function responseElem() {
-  return cy.get('.examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]');
+  return cy.get('#question-test-full_test_exam-q-fitb_drop_test .examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]');
 }
 
 function checkOriginals() {
