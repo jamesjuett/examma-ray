@@ -202,6 +202,10 @@ describe('MC Response', () => {
     multipleResponseLimitElem().find('input[type=checkbox]:checked').should("be.enabled");
     multipleResponseLimitElem().find('input[type=checkbox]:not(:checked)').should("be.disabled");
 
+    // inputs from other questions should not be disabled
+    singleResponseElem().find('input').should("be.enabled");
+    multipleResponseElem().find('input').should("be.enabled");
+
     // unclick all but one
     [2, 1].forEach(i => {
       multipleResponseLimitElem().find('input[type=checkbox]').eq(i).click();
