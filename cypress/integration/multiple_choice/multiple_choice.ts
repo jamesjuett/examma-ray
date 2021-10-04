@@ -1,5 +1,5 @@
 import { clearDownloads, downloadAnswersFile, unstickSectionHeadings, uploadAnswersFile } from "../common";
-import expected from "./expected_download.json";
+import expected_download from "./expected_download.json";
 
 import chaiSubset from "chai-subset";
 chai.use(chaiSubset);
@@ -314,96 +314,87 @@ describe('MC Response', () => {
     multipleResponseLimitElem().find('.examma-ray-mc-num-selected').contains(""+totalClicked);
 
   });
-  
-  // it('Respect Maxlength on Blanks', () => {
 
-  //   responseElem().find('.examma-ray-fitb-blank-input').eq(2).type("123456");
-  //   responseElem().find('.examma-ray-fitb-blank-input').eq(2).should("have.value", "starter-blank123");
+  it("Restores From Local Storage", () => {
+
+    // Make a change so that autosave will modify local storage
+    singleResponseElem().find('input').eq(0).click();
+    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).click());
+    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).click());
+
+    // Wait for autosave
+    cy.wait(7000);
+    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+
+    // Compare current state of response element to state after page reload
+    cy.reload();
+    unstickSectionHeadings();
     
-  // });
+    cy.get("#exam-welcome-restored-modal button").click();
+    cy.get("#exam-welcome-restored-modal button").should("not.be.visible");
 
-  // it('Modify Boxes', () => {
-
-  //   responseElem().find('.examma-ray-fitb-box-input').first().type("!");
-  //   responseElem().find('.examma-ray-fitb-box-input').first().should("have.value", "starter\nbox!");
-
-  //   responseElem().find('.examma-ray-fitb-box-input').first().clear().type("new text");
-  //   responseElem().find('.examma-ray-fitb-box-input').first().should("have.value", "new text");
+    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
     
-  // });
+    singleResponseElem().find('input').eq(0).should("be.checked");
+    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).should("be.checked"));
+    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).should("be.checked"));
+    
+    [1,2,3,4].forEach(i => singleResponseElem().find('input').eq(i).should("not.be.checked"));
+    [0,3,4].forEach(i => multipleResponseElem().find('input').eq(i).should("not.be.checked"));
+    [0,1,2].forEach(i => multipleResponseLimitElem().find('input').eq(i).should("not.be.checked"));
+    
+  });
 
-  // it("Restores From Local Storage", () => {
+  it("Downloads to Answers File", () => {
+    
+    singleResponseElem().find('input').eq(0).click();
+    multipleResponseElem().find('input').eq(1).click();
+    multipleResponseElem().find('input').eq(2).click();
+    multipleResponseLimitElem().find('input').eq(3).click();
+    multipleResponseLimitElem().find('input').eq(4).click();
 
-  //   // Make a change so that autosave will modify local storage
+    let filepath = downloadAnswersFile("test-answers.json");
 
-  //   responseElem().find('.examma-ray-fitb-box-input').first().type("!");
+    cy.readFile(filepath, { timeout: 10000 }).should(json => {
+      expect(json).to.containSubset(expected_download);
+    });
+    
+  });
 
-  //   // Wait for autosave
-  //   cy.wait(7000);
-  //   cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+  it("Download + Restore from Answers File", () => {
 
-  //   // Compare current state of response element to state after page reload
-  //   responseElem().then((original) => {
-  //     cy.reload();
-  //     unstickSectionHeadings();
+    singleResponseElem().find('input').eq(0).click();
+    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).click());
+    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).click());
+    
+    // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.
       
-  //     cy.get("#exam-welcome-restored-modal button").click();
-  //     cy.get("#exam-welcome-restored-modal button").should("not.be.visible");
-  
-  //     cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+    const filename = "test-answers.json";
+    const filepath = downloadAnswersFile(filename);
+
+    loadFreshPage();
+
+    // sanity check no local storage
+    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("be.null");
+
+    cy.readFile(filepath, { timeout: 10000 }).then(json => {
+
+      uploadAnswersFile({
+        fileName: filename,
+        fileContent: json,
+        encoding: "utf8",
+      });
+    
+      singleResponseElem().find('input').eq(0).should("be.checked");
+      [1,2].forEach(i => multipleResponseElem().find('input').eq(i).should("be.checked"));
+      [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).should("be.checked"));
       
-  //     responseElem().should((restored) => restored.html().trim() === original.html().trim());
-  //   })
+      [1,2,3,4].forEach(i => singleResponseElem().find('input').eq(i).should("not.be.checked"));
+      [0,3,4].forEach(i => multipleResponseElem().find('input').eq(i).should("not.be.checked"));
+      [0,1,2].forEach(i => multipleResponseLimitElem().find('input').eq(i).should("not.be.checked"));
+    });
+
     
-  // });
-
-  // it("Downloads to Answers File", () => {
-
-  //   let filepath = downloadAnswersFile("test-answers.json");
-
-  //   cy.readFile(filepath, { timeout: 10000 }).should(json => {
-  //     expect(json).to.containSubset(expected);
-  //   });
-    
-  // });
-
-  // it("Download + Restore from Answers File", () => {
-
-  //   // Make a change to the answer - edit input blank
-  //   responseElem().find('.examma-ray-fitb-blank-input').eq(2).type("!");
-
-  //   // Make a change to the answer - drag/drop
-  //   responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-  //   responseElem().find('.sortable-chosen').trigger("dragstart");
-  //   cy.wait(100);
-  //   responseElem().find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
-  //   responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
-  //   responseElem().find('.examma-ray-fitb-drop-location').last().contains("item-test-2");
-    
-  //   // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.
-  //   responseElem().then((original) => {
-      
-  //     const filename = "test-answers.json";
-  //     const filepath = downloadAnswersFile(filename);
-
-  //     loadFreshPage();
-  
-  //     // sanity check no local storage
-  //     cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("be.null");
-
-  //     cy.readFile(filepath, { timeout: 10000 }).then(json => {
-
-  //       uploadAnswersFile({
-  //         fileName: filename,
-  //         fileContent: json,
-  //         encoding: "utf8",
-  //       });
-
-  //       responseElem().should((restored) => restored.html().trim() === original.html().trim());
-  //     });
-
-  //   });
-    
-  // });
+  });
 
 })

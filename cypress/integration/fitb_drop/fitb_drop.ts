@@ -1,5 +1,5 @@
 import { clearDownloads, downloadAnswersFile, unstickSectionHeadings, uploadAnswersFile } from "../common";
-import expected from "./expected_download.json";
+import expected_download from "./expected_download.json";
 
 import chaiSubset from "chai-subset";
 chai.use(chaiSubset);
@@ -207,7 +207,7 @@ describe('FITB-Drop Response', () => {
     let filepath = downloadAnswersFile("test-answers.json");
 
     cy.readFile(filepath, { timeout: 10000 }).should(json => {
-      expect(json).to.containSubset(expected);
+      expect(json).to.containSubset(expected_download);
     });
     
   });
