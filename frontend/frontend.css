@@ -463,9 +463,9 @@ code {
   background-color: rgba(0, 0, 255, 0.05);
 }
 
-.examma-ray-fitb-droppable p, pre {
+.examma-ray-fitb-droppable pre {
   margin: 0;
-  font-size: unset;
+  font-size: inherit;
 }
 
 
