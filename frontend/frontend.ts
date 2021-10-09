@@ -16,6 +16,7 @@ import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 import 'katex/dist/katex.min.css';
 
 import "./frontend.css";
+import { activateBank } from "../src/response/fitb-drop";
 
 function activateResponse(this: HTMLElement) {
   let response = $(this);
@@ -30,7 +31,14 @@ function activateExam() {
     let newWidth = $(this).val() + "%";
     column.css("width", newWidth);
     column.find(".examma-ray-section-reference-width-value").html(newWidth);
-  })
+  });
+
+  // Activate any FITB Drop banks in reference material
+  $(".examma-ray-section-reference .examma-ray-fitb-drop-bank").each(function() {
+    let bank = $(this);
+    let group_id = bank.data("examma-ray-fitb-drop-group-id")
+    activateBank(bank, group_id);
+  });
 
   $(".examma-ray-question-response").map(activateResponse).get()
 }
