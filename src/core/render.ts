@@ -64,6 +64,10 @@ export function mk2html_unwrapped(mk: string, skin?: ExamComponentSkin) {
     : html;
 }
 
+export function mk2html_rewrapped(mk: string, tag: string, skin?: ExamComponentSkin) {
+  return `<${tag}>${mk2html_unwrapped(mk, skin)}</${tag}>`; 
+}
+
 export function applySkin(text: string, skin: ExamComponentSkin | undefined) {
   if (!skin) {
     return text;
@@ -71,7 +75,7 @@ export function applySkin(text: string, skin: ExamComponentSkin | undefined) {
 
   let template = Handlebars.compile(text, { strict: true, noEscape: true });
   try {
-    return template(skin.replacements);
+    return template(Object.assign({skin_id: skin.skin_id}, skin.replacements));
   }
   catch (e: any) {
     assertFalse("Error applying skin: " + e.message + " within :\n" + JSON.stringify(skin));

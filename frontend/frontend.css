@@ -465,6 +465,9 @@ code {
 
 .examma-ray-fitb-droppable pre {
   margin: 0;
+}
+
+pre .examma-ray-fitb-droppable pre {
   font-size: inherit;
 }
 

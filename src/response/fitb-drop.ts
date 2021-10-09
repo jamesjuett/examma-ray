@@ -1,6 +1,6 @@
 import { encode } from "he";
 import { QuestionGrader } from "../graders/QuestionGrader";
-import { applySkin, mk2html } from "../core/render";
+import { applySkin, mk2html, mk2html_rewrapped, mk2html_unwrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -96,7 +96,10 @@ function FITB_DROP_ACTIVATE(responseElem: JQuery) {
   // since we don't want that to happen for nested drop locations within a bank.
   let originals = responseElem.find(".examma-ray-fitb-drop-originals").first();
   let group_id = originals.data("examma-ray-fitb-drop-group-id");
-  $(`.examma-ray-fitb-drop-bank[data-examma-ray-fitb-drop-group-id='${group_id}']`).each(function() {
+
+  // Find any drop banks within the current section that match this group id
+  const sectionElem = responseElem.closest(".examma-ray-section");
+  sectionElem.find(`.examma-ray-fitb-drop-bank[data-examma-ray-fitb-drop-group-id='${group_id}']`).each(function() {
     let bank = $(this);
     originals.children().each(function() {
       bank.append($(this).clone());
@@ -316,7 +319,7 @@ export function createFilledFITBDrop(
   content = content.replace(DROP_BANK_PATTERN, drop_bank_id);
 
   // Render markdown
-  content = mk2html(content, skin);
+  content = mk2html_rewrapped(content, "div", skin);
 
   // Include this in the html below so we can replace it in a moment
   // with the appropriate submission values
@@ -383,6 +386,6 @@ function DEFAULT_DROP_BANK_RENDERER(group_id: string) {
   return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}"></div>`;
 }
 
-export function renderFITBDropBank(group_id: string) {
-  return DEFAULT_DROP_BANK_RENDERER(group_id);
+export function renderFITBDropBank(question_id: string) {
+  return DEFAULT_DROP_BANK_RENDERER(question_id);
 }
