@@ -1,10 +1,11 @@
 import { encode } from "he";
 import { QuestionGrader } from "../graders/QuestionGrader";
-import { applySkin, mk2html } from "../core/render";
+import { applySkin, createSubRenderer, mk2html, mk2html_rewrapped, mk2html_unwrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import Sortable from "sortablejs";
+import { Question, QuestionSpecification, realizeQuestion } from "../core";
 
 export type DroppableSpecification = {
   [index: string]: string
@@ -22,6 +23,7 @@ export type FITBDropSpecification = {
   starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   sample_solution?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   default_grader?: QuestionGrader<"fitb_drop", any>;
+  group_id?: string;
 };
 
 export type DropSubmission = {
@@ -75,13 +77,17 @@ function createDroppableElement(id: string, html: string) {
   return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">${html}</div>`
 }
 
+function renderDroppables(droppables: DroppableSpecification, group_id: string, skin?: ExamComponentSkin) {
+  return Object.keys(droppables).map(
+    id => createDroppableElement(id, createFilledFITBDrop(droppables[id], droppables, group_id, skin))
+  ).join("");
+}
+
 function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  let group_id = question_id;
+  let group_id = response.group_id ?? question_id;
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${group_id}">
-      ${Object.keys(response.droppables).map(
-        id => createDroppableElement(id, createFilledFITBDrop(response.droppables[id], response.droppables, group_id, skin))
-      ).join("")}
+      ${renderDroppables(response.droppables, group_id, skin)}
     </div>
     ${createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)}
   `;
@@ -96,25 +102,18 @@ function FITB_DROP_ACTIVATE(responseElem: JQuery) {
   // since we don't want that to happen for nested drop locations within a bank.
   let originals = responseElem.find(".examma-ray-fitb-drop-originals").first();
   let group_id = originals.data("examma-ray-fitb-drop-group-id");
-  $(`.examma-ray-fitb-drop-bank[data-examma-ray-fitb-drop-group-id='${group_id}']`).each(function() {
+
+  // Find any drop banks within the current response element
+  responseElem.find(`.examma-ray-fitb-drop-bank[data-examma-ray-fitb-drop-group-id='${group_id}']`).each(function() {
     let bank = $(this);
+
+    // create clones from the originals to populate the bank
     originals.children().each(function() {
       bank.append($(this).clone());
     });
 
     // Activate sortablejs for the bank overall
-    Sortable.create(bank[0], {
-      swapThreshold: 0.2,
-      group: {
-        name: `group-${group_id}`,
-        pull: "clone",
-        put: () => { return false; }
-      },
-      sort: false,
-      animation: 150,
-      // TODO
-      onClone: evt => activateDropLocations($(evt.item))
-    });
+    activateBank(bank, group_id);
   });
 
 }
@@ -140,6 +139,21 @@ function activateDropLocations(elem: JQuery<HTMLElement>) {
       },
       removeOnSpill: true
     });
+  });
+}
+
+export function activateBank(elem: JQuery<HTMLElement>, group_id: string) {
+  Sortable.create(elem[0], {
+    swapThreshold: 0.2,
+    group: {
+      name: `group-${group_id}`,
+      pull: "clone",
+      put: () => { return false; }
+    },
+    sort: false,
+    animation: 150,
+    // TODO
+    onClone: evt => activateDropLocations($(evt.item))
   });
 }
 
@@ -316,7 +330,7 @@ export function createFilledFITBDrop(
   content = content.replace(DROP_BANK_PATTERN, drop_bank_id);
 
   // Render markdown
-  content = mk2html(content, skin);
+  content = mk2html_rewrapped(content, "div", skin);
 
   // Include this in the html below so we can replace it in a moment
   // with the appropriate submission values
@@ -383,6 +397,10 @@ function DEFAULT_DROP_BANK_RENDERER(group_id: string) {
   return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}"></div>`;
 }
 
-export function renderFITBDropBank(group_id: string) {
-  return DEFAULT_DROP_BANK_RENDERER(group_id);
+export function createFITBDropBankSubRenderer(droppables: DroppableSpecification, group_id: string) {
+  return createSubRenderer((skin?: ExamComponentSkin) => {
+    return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}">
+      ${renderDroppables(droppables, group_id, skin)}
+    </div>`;
+  });
 }

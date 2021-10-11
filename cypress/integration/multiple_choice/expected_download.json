@@ -3,8 +3,28 @@
     {
       "questions": [
         {
-          "kind": "fitb_drop",
-          "response": "[\"starter-blank\",[{\"id\":\"item2\",\"children\":[]}],[{\"id\":\"item1\",\"children\":[[],\"\"]}],[],\"starter\\nbox\"]"
+          "question_id": "",
+          "skin_id": "",
+          "uuid": "test-full_test_exam-q-test_question_mc_single",
+          "display_index": 1.1,
+          "kind": "multiple_choice",
+          "response": "[0]"
+        },
+        {
+          "question_id": "",
+          "skin_id": "",
+          "uuid": "test-full_test_exam-q-test_question_mc_multiple",
+          "display_index": 1.2,
+          "kind": "multiple_choice",
+          "response": "[1,2]"
+        },
+        {
+          "question_id": "",
+          "skin_id": "",
+          "uuid": "test-full_test_exam-q-test_question_mc_multiple_limit_3",
+          "display_index": 1.3,
+          "kind": "multiple_choice",
+          "response": "[3,4]"
         }
       ]
     }

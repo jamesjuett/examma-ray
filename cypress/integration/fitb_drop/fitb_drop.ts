@@ -1,5 +1,5 @@
 import { clearDownloads, downloadAnswersFile, unstickSectionHeadings, uploadAnswersFile } from "../common";
-import expected from "./expected_download.json";
+import expected_download from "./expected_download.json";
 
 import chaiSubset from "chai-subset";
 chai.use(chaiSubset);
@@ -20,7 +20,7 @@ function loadFreshPage() {
 }
 
 function responseElem() {
-  return cy.get('.examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]');
+  return cy.get('#question-test-full_test_exam-q-fitb_drop_test .examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]');
 }
 
 function checkOriginals() {
@@ -207,7 +207,7 @@ describe('FITB-Drop Response', () => {
     let filepath = downloadAnswersFile("test-answers.json");
 
     cy.readFile(filepath, { timeout: 10000 }).should(json => {
-      expect(json).to.containSubset(expected);
+      expect(json).to.containSubset(expected_download);
     });
     
   });

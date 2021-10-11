@@ -52,12 +52,14 @@
 import { QuestionGrader } from "../graders/QuestionGrader";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
+import { ResponseHandler } from "./responses";
 
 export type MCSpecification = {
   kind: "multiple_choice";
   multiple: boolean;
+  limit?: number;
   choices: string[];
   sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION>;
   default_grader?: QuestionGrader<"multiple_choice", any>
@@ -70,7 +72,7 @@ export type MCSpecification = {
  * For multiple response questions, the array may contain one or more elements. The submission
  * may also be [[BLANK_SUBMISSION]].
  */
-export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
+export type MCSubmission = readonly number[] | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
 
 function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -96,9 +98,22 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
   }
 }
 
+function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
+  if (submission === BLANK_SUBMISSION || submission === INVALID_SUBMISSION) {
+    return submission;
+  }
+
+  if (response.limit === undefined) {
+    return submission;
+  }
+
+  return submission.length <= response.limit ? submission : INVALID_SUBMISSION;
+}
+
 function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return `
     <form>
+    ${(response.multiple && response.limit !== undefined) ? `<div data-examma-ray-mc-limit="${response.limit}">You have selected <span class="examma-ray-mc-num-selected">0</span> out of ${response.limit} allowed.</div>`: ""}
     ${response.choices.map((item,i) => `
       <div>
         <input id="${question_uuid}_choice_${i}" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}"/>
@@ -109,27 +124,69 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
   `;
 }
 
+function getCheckboxLimit(responseElem: JQuery) : number | undefined {
+  let limitElem = responseElem.find("*[data-examma-ray-mc-limit]");
+  return limitElem.length > 0 ? parseInt(limitElem.data("examma-ray-mc-limit")) : undefined;
+}
+
+function MC_ACTIVATE(responseElem: JQuery) {
+
+  // frontend code to enforce checkbox limit. note that this won't absolutely prevent
+  // someone from messing with the front end to check extra boxes, but the limit is
+  // enforced elsewhere (e.g. extracting, parsing)
+  const limit = getCheckboxLimit(responseElem);
+  if (limit !== undefined) {
+    responseElem.find("input:checkbox").on("change", () => {
+      const numSelected = responseElem.find("input:checkbox:checked").length;
+      // checkbox just changed, unchecked ones that are enabled if and only if we aren't at the limit
+      responseElem.find("input:checkbox").not(":checked").prop("disabled", numSelected >= limit);
+      responseElem.find(".examma-ray-mc-num-selected").html(""+numSelected);
+    });
+  }
+  responseElem.data("sl-view", "choices");
+}
+
 function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
   let responses = responseElem.find("input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
-  return responses.length > 0 ? responses : BLANK_SUBMISSION;
+
+  if (responses.length === 0) {
+    return BLANK_SUBMISSION;
+  }
+
+  // Enforce checkbox limit if any
+  let limit = getCheckboxLimit(responseElem);
+  if (limit !== undefined) {
+    responses = responses.slice(0, limit);
+  }
+
+  return responses;
 }
 
-function MC_FILLER(elem: JQuery, submission: MCSubmission) {
+function MC_FILLER(responseElem: JQuery, submission: MCSubmission) {
   // blank out all selections
-  let inputs = elem.find("input");
+  let inputs = responseElem.find("input");
   inputs.prop("checked", false);
 
-  if (submission !== BLANK_SUBMISSION) {
+  if (submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
+
+    // Enforce checkbox limit if any
+    let limit = getCheckboxLimit(responseElem);
+    if (limit !== undefined) {
+      submission = submission.slice(0, limit);
+    }
+
     let inputElems = inputs.get();
     submission.forEach(n => $(inputElems[n]).prop("checked", true));
   }
 }
 
-export const MC_HANDLER = {
+export const MC_HANDLER : ResponseHandler<"multiple_choice"> = {
   parse: MC_PARSER,
+  validate: MC_VALIDATOR,
   render: MC_RENDERER,
+  activate: MC_ACTIVATE,
   extract: MC_EXTRACTOR,
   fill: MC_FILLER
 };

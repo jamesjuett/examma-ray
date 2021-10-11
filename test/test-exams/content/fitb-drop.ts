@@ -1,6 +1,6 @@
 import { QuestionSpecification } from "../../../src/core/exam_specification";
 
-export const Test_Question_Fitb_Drop : QuestionSpecification = {
+export const Test_Question_Fitb_Drop : QuestionSpecification<"fitb_drop"> = {
   question_id: "fitb_drop_test",
   points: 4,
   mk_description:

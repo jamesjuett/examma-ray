@@ -1,7 +1,7 @@
 import { mk2html } from "../core/render";
 import { renderNumBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
 import { MCSubmission } from "../response/mc";
 import { assert } from "../core/util";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
@@ -34,6 +34,17 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
   public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;
     let submission = aq.submission;
+
+    if (submission === INVALID_SUBMISSION) {
+      return {
+        wasBlankSubmission: false,
+        wasInvalidSubmission: true,
+        pointsEarned: 0,
+        indexChosen: -1,
+        indexCorrect: this.correctIndex
+      };
+    }
+
     if (submission === BLANK_SUBMISSION || submission.length === 0) {
       return {
         wasBlankSubmission: true,
@@ -89,14 +100,15 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     let question = gqs[0].question;
     let submissions = gqs.map(gq => gq.submission);
     let f = function (sub: MCSubmission): sub is number[] {
-      return sub !== BLANK_SUBMISSION && sub.length > 0;
+      return sub !== BLANK_SUBMISSION && sub !== INVALID_SUBMISSION && sub.length > 0;
     };
-    let nonBlankSubmissions = submissions.filter(f);
-    let numBlank = submissions.length - nonBlankSubmissions.length;
+    let normalSubmissions = submissions.filter(f);
+    let numBlank = submissions.filter(s => s === BLANK_SUBMISSION).length;
+    let numInvalid = submissions.filter(s => s === INVALID_SUBMISSION).length;
 
-    assert(nonBlankSubmissions.every(sub => sub.length === 1), "SimpleMCGrader cannot be used for questions where more than one selection is allowed.");
+    assert(normalSubmissions.every(sub => sub.length === 1), "SimpleMCGrader cannot be used for questions where more than one selection is allowed.");
 
-    let selectionChoices = nonBlankSubmissions.map(sub => sub[0]);
+    let selectionChoices = normalSubmissions.map(sub => sub[0]);
 
     let maxSelection = Math.max(...selectionChoices);
     let hist: number[] = [];
@@ -111,6 +123,7 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     return `
       ${hist.map((count, i) => `<div class="examma-ray-mc-option">${renderNumBadge(count)} ${i === this.correctIndex ? CHECK_ICON : RED_X_ICON} ${mk2html(question.response.choices[i])}</div>`).join("")}
       <div class="examma-ray-mc-option">${renderNumBadge(numBlank)} ${RED_X_ICON} BLANK</div>
+      ${numInvalid === 0 ? "" : `<div class="examma-ray-mc-option">${renderNumBadge(numInvalid)} ${RED_X_ICON} INVALID</div>`}
     `;
   }
 }
