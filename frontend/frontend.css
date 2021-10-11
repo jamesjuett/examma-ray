@@ -200,6 +200,10 @@ code {
   font-size: 90%;
 }
 
+.examma-ray-section-reference-column {
+  height: 100%;
+  padding-bottom: 30vh;
+}
 
 .examma-ray-section-reference-container {
   display: inline-block;
