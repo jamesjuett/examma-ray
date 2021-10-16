@@ -94,15 +94,19 @@ code {
 
 .examma-ray-question-description code:not(pre code),
 .examma-ray-section-description code:not(pre code),
-.examma-ray-section-reference code:not(pre code) {
+.examma-ray-section-reference code:not(pre code),
+.examma-ray-question-response code:not(pre code) {
   background: #eee;
   border-radius: 3px;
   padding: 2px;
 }
 
+.examma-ray-question-response-fill_in_the_blank {
+  font-size: 90%;
+}
 
-.examma-ray-question-response-fitb pre code input,
-.examma-ray-question-response-fitb pre code textarea {
+.examma-ray-question-response-fill_in_the_blank pre code input,
+.examma-ray-question-response-fill_in_the_blank pre code textarea {
   margin-top: 2px;
   margin-bottom: 2px;
 }
@@ -432,6 +436,10 @@ code {
 }
 
 /* FITB-DROP */
+
+.examma-ray-question-response-fitb_drop {
+  font-size: 90%;
+}
 
 .examma-ray-fitb-drop-originals {
   display: none;
