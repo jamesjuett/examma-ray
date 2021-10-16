@@ -209,8 +209,6 @@ export function writeFrontendJS(outDir: string, filename: string) {
 }
 
 export function copyFrontendMedia(media_source_dir: string, frontend_media_dir: string) {
-  console.log("from: " + media_source_dir);
-  console.log("to: " + frontend_media_dir);
   mkdirSync(frontend_media_dir, { recursive: true });
 
   ncp(
