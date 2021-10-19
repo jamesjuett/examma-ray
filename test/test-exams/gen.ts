@@ -76,11 +76,11 @@ ${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fi
 <br />
 <br />
 \`fitb_drop_test_2\`
-${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_1")}
+${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_2")}
 <br />
 <br />
 \`fitb_drop_test_3\`
-${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_1")}
+${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_3")}
 `,
       questions: [
         CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_1"}),

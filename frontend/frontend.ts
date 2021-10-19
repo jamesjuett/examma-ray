@@ -104,15 +104,17 @@ function isBlankAnswers(answers: ExamSubmission) {
   return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
-function loadQuestionAnswer(qa: QuestionAnswer) {
+function fillQuestionAnswer(qa: QuestionAnswer) {
   let questionElem = $(`#question-${qa.uuid}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
-  let sub = parse_submission(qa.kind, qa.response);
-  fill_response(responseElem, qa.kind, sub);
+  if (responseElem.length > 0 && qa.kind === responseElem.data("response-kind")) {
+    let sub = parse_submission(qa.kind, qa.response);
+    fill_response(responseElem, qa.kind, sub);
+  }
 }
 
-function loadExamAnswers(answers: ExamSubmission) {
-  answers.sections.map(s => s.questions.map(q => loadQuestionAnswer(q)))
+function fillExamAnswers(answers: ExamSubmission) {
+  answers.sections.map(s => s.questions.map(q => fillQuestionAnswer(q)))
   if (answers.time_started) {
     TIME_STARTED = answers.time_started;
   }
@@ -283,7 +285,7 @@ function setupSaverModal() {
         }
         else {
           if (!isBlankAnswers(answers)) {
-            loadExamAnswers(answers);
+            fillExamAnswers(answers);
             $("#exam-saver").modal("hide");
           }
           else {
@@ -392,8 +394,14 @@ function startExam() {
   if (storageAvailable("localStorage")) {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname, examUuid));
     if (autosavedAnswers) {
-      loadExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
-      $("#exam-welcome-restored-modal").modal("show");
+      try {
+        fillExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
+        $("#exam-welcome-restored-modal").modal("show");
+      }
+      catch (e: unknown) {
+        $("#exam-welcome-restored-error-modal").modal("show");
+        throw e;
+      }
     }
     else {
       $("#exam-welcome-normal-modal").modal("show");
