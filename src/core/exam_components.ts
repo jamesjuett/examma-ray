@@ -327,6 +327,30 @@ export class Exam {
       </div>
   
   
+      <div id="exam-welcome-restored-error-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${this.title}</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div class="alert alert-danger">
+                An error was encountered while attempting to restore your answers from a local backup.
+                If you are in the process of creating and previewing an exam, this may have occurred due
+                to a change to a question's type. If so, clear your browser's local storage before continuing.
+                <br />
+                If you're taking an exam, this should never happen. But, if it does, contact your instructor,
+                course staff, or proctor as soon as possible.
+              </div>
+              <div>
+                <button class="btn btn-success" data-dismiss="modal">${FILE_CHECK} OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+  
       <div id="exam-welcome-normal-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
