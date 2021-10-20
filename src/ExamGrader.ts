@@ -77,7 +77,8 @@
 
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './core/submissions';
-import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
+import { AssignedExam, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
+import { GradedExamRenderer } from './core/exam_renderer';
 import { QuestionGrader } from './graders/QuestionGrader';
 import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { asMutable, assert, assertFalse, Mutable } from './core/util';
@@ -132,6 +133,8 @@ export class ExamGrader {
   private readonly exceptionMap: ExceptionMap = {};
 
   private options: ExamGraderOptions;
+
+  private renderer = new GradedExamRenderer();
 
   public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
@@ -322,7 +325,7 @@ export class ExamGrader {
       .forEach((ex, i, arr) => {
         let filenameBase = this.createGradedFilenameBase(ex);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, ex.renderAll(RenderMode.GRADED, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 

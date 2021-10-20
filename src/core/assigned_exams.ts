@@ -13,11 +13,6 @@ import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
 
 
-export enum RenderMode {
-  ORIGINAL = "ORIGINAL",
-  GRADED = "GRADED",
-}
-
 
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
@@ -30,7 +25,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly displayIndex;
 
-  private readonly html_description: string;
+  public readonly html_description: string;
 
   public constructor(
     public readonly uuid: string,
@@ -71,91 +66,6 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     return this.isGraded()
         ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy.pointsEarned(this.gradingResult)))
         : undefined;
-  }
-
-  public render(mode: RenderMode) {
-
-    if (mode === RenderMode.ORIGINAL) {
-      let question_header_html = `<b>${this.displayIndex}</b> ${renderPointsWorthBadge(this.question.pointsPossible)}`;
-      return `
-        <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
-          <div class="card">
-            <div class="card-header">
-              ${question_header_html}
-            </div>
-            <div class="card-body">
-              <div class="examma-ray-question-description">
-                ${this.html_description}
-              </div>
-              ${this.question.renderResponse(this.uuid, this.skin)}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    else {
-      let question_header_html = `<b>${this.displayIndex}</b> ${this.isGraded() ? renderScoreBadge(this.pointsEarned, this.question.pointsPossible): renderUngradedBadge(this.question.pointsPossible)}`;
-
-      let graded_html: string;
-      let exception_html = "";
-      
-      if (this.isGraded()) {
-        graded_html = this.gradedBy.renderReport(this);
-        exception_html = this.renderExceptionIfPresent();
-      }
-      else {
-        graded_html = `
-        <div class="alert alert-danger" role="alert">
-          NOT GRADED
-        </div>`; 
-      }
-
-      let regrades = `
-        <div style="text-align: right">
-          <input type="checkbox" id="regrade-${this.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${this.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${this.uuid}"></input>
-          <label for="regrade-${this.uuid}-checkbox">Mark for Regrade</label>
-        </div>
-        <div class="collapse examma-ray-question-regrade" id="regrade-${this.uuid}">
-          <p>Please describe your regrade request for this question in the box below. After
-          marking <b>all</b> questions for which you would like to request a regrade,
-          click "Submit Regrade Request" at the bottom of the page.</p>
-          <textarea class="examma-ray-regrade-entry"></textarea>
-        </div>
-      `;
-
-      return `
-      <div id="question-${this.uuid}" data-question-uuid="${this.uuid}" data-question-display-index="${this.displayIndex}" class="examma-ray-question card-group">
-        <div class="card">
-          <div class="card-header">
-            ${question_header_html}
-          </div>
-          <div class="card-body" style="margin-bottom: 1em">
-            <div class="examma-ray-question-description">
-              ${this.html_description}
-            </div>
-            <div class="examma-ray-question-exception">
-              ${exception_html}
-            </div>
-            <div class="examma-ray-grading-report">
-              ${graded_html}
-            </div>
-            ${this.exam.enable_regrades ? regrades : ""}
-          </div>
-        </div>
-      </div>`;
-    }
-  }
-
-  private renderExceptionIfPresent() {
-    if (!this.exception) {
-      return "";
-    }
-
-    return `<div class="alert alert-warning">
-      <p><strong>An exception was applied when grading this question.</strong></p>
-      <p>Your score on this question was adjusted from <strong>${this.pointsEarnedWithoutExceptions}</strong> to <strong>${this.pointsEarned}</strong>.</p>
-      ${mk2html(this.exception.explanation)}
-    </div>`;
   }
 
   public isGraded() : this is GradedQuestion<QT> {
@@ -199,7 +109,6 @@ export function isGradedQuestion<QT extends ResponseKind>(aq: AssignedQuestion<Q
 
 
 
-const NO_REFERNECE_MATERIAL = "This section has no reference material."
 
 export class AssignedSection {
 
@@ -210,8 +119,8 @@ export class AssignedSection {
 
   private _isFullyGraded: boolean = false;
   
-  private readonly html_description: string;
-  private readonly html_reference?: string;
+  public readonly html_description: string;
+  public readonly html_reference?: string;
 
   public constructor(
     public readonly uuid: string,
@@ -245,51 +154,6 @@ export class AssignedSection {
       this._isFullyGraded = true;
       asMutable(this).pointsEarned = sum(this.assignedQuestions.map(aq => aq.pointsEarned));
     }
-  }
-
-  private renderHeader(mode: RenderMode) {
-    let badge = mode === RenderMode.ORIGINAL
-      ? renderPointsWorthBadge(this.pointsPossible, "badge-light")
-      : this.isGraded()
-        ? renderScoreBadge(this.pointsEarned, this.pointsPossible)
-        : renderUngradedBadge(this.pointsPossible);
-    let heading = mode === RenderMode.ORIGINAL
-      ? `${this.displayIndex}: ${this.section.title} ${badge}`
-      : `${badge} ${this.displayIndex}: ${this.section.title}`;
-
-    return `
-      <div class="examma-ray-section-heading">
-        <div class="badge badge-primary">${heading}</div>
-      </div>`;
-  }
-
-  public render(mode: RenderMode) {
-    return `
-      <div id="section-${this.uuid}" class="examma-ray-section" data-section-uuid="${this.uuid}" data-section-display-index="${this.displayIndex}">
-        <hr />
-        <table class="examma-ray-section-contents">
-          <tr>
-            <td class="examma-ray-questions-container">
-              ${this.renderHeader(mode)}
-              <div class="examma-ray-section-description">${this.html_description}</div>
-              ${this.assignedQuestions.map(aq => aq.render(mode)).join("<br />")}
-            </td>
-            <td class="examma-ray-section-reference-column" style="width: ${this.section.reference_width}%;">
-              <div class="examma-ray-section-reference-container">
-                <div class="examma-ray-section-reference">
-                  <div class = "examma-ray-section-reference-width-slider-container">
-                    <div class = "examma-ray-section-reference-width-value">${this.section.reference_width}%</div>
-                    <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${this.section.reference_width}">
-                  </div>
-                  <h6>Reference Material (Section ${this.displayIndex})</h6>
-                  ${this.html_reference ?? NO_REFERNECE_MATERIAL}
-                </div>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
-    `;
   }
   
   public isGraded() : this is GradedSection {
@@ -374,107 +238,6 @@ export class AssignedExam {
     return this.isGraded() ?
       maxPrecisionString(this.curve?.adjustedScore ?? this.pointsEarned, 2) + "/" + this.pointsPossible :
       "?/" + this.pointsPossible;
-  }
-
-  public renderNav(mode: RenderMode) {
-    return `
-      <ul class = "nav" style="display: unset; font-weight: 500">
-        ${this.assignedSections.map(s => {
-          let scoreBadge = 
-            mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(s.pointsPossible, "btn-secondary", true) :
-            s.isGraded() ? renderScoreBadge(s.pointsEarned, s.pointsPossible) :
-            renderUngradedBadge(s.pointsPossible);
-          return `<li class = "nav-item"><a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${scoreBadge} ${s.displayIndex + ": " + s.section.title}</a></li>`
-        }).join("")}
-      </ul>`
-  }
-
-  public renderSaverButton() {
-    return `
-      <div class="examma-ray-exam-saver-status">
-        <div>
-          ${mk2html_unwrapped(this.exam.mk_questions_message)}
-        </div>
-        <br />
-        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
-        <div class="examma-ray-exam-saver-status-note">${mk2html_unwrapped(this.exam.mk_download_message)}</div>
-      </div>`
-  }
-
-  public renderTimer(mode: RenderMode) {
-    if (mode === RenderMode.ORIGINAL) {
-      return `
-        <div class="text-center pb-1 border-bottom">
-          <button id="examma-ray-time-elapsed-button" class="btn btn-primary btn-sm" style="line-height: 0.75;" data-toggle="collapse" data-target="#examma-ray-time-elapsed" aria-expanded="true" aria-controls="examma-ray-time-elapsed">Hide</button>
-          <b>Time Elapsed</b>
-          <br>
-          <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
-          <br>
-          This is not an official timer. Please submit your answers file before the deadline.
-        </div>
-      `;
-    }
-    else {
-      return "";
-    }
-  }
-
-  public renderGradingSummary() {
-    return `<div class="container examma-ray-grading-summary">
-      <div class="text-center mb-3 border-bottom">
-        <h2>Grading Information</h2>
-      </div>
-      ${this.curve ? `
-        <div>
-          ${this.curve.report_html}
-        </div>
-      ` : ""}
-    </div>`;
-  }
-
-  public renderBody(mode: RenderMode) {
-    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${this.student.uniqname}" data-name="${this.student.name}" data-exam-id="${this.exam.exam_id}" data-exam-uuid="${this.uuid}">
-      <div class="row">
-        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
-          ${this.renderTimer(mode)}
-          <h3 class="text-center pb-1 border-bottom">
-            ${mode === RenderMode.ORIGINAL ? renderPointsWorthBadge(this.pointsPossible, "btn-secondary") : this.renderGrade()}
-          </h3>
-          ${this.renderNav(mode)}
-          ${mode === RenderMode.ORIGINAL ? this.renderSaverButton() : ""}
-        </div>
-        <div style="margin-left: 210px; width: calc(100% - 220px);">
-          ${mode === RenderMode.GRADED ? this.renderGradingSummary() : ""}
-          ${this.exam.renderHeader(this.student)}
-          ${this.assignedSections.map(section => section.render(mode)).join("<br />")}
-          <div class="container examma-ray-bottom-message">
-            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html_unwrapped(this.exam.mk_bottom_message)}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  public renderAll(mode: RenderMode, frontendPath: string) {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-        <script src="${frontendPath}"></script>
-      </head>
-      <body>
-        ${this.renderBody(mode)}
-        ${this.exam.renderModals(this.student)}
-      </body>
-      </html>
-    `;
   }
 
   public createManifest() : ExamManifest {

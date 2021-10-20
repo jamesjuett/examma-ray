@@ -1,7 +1,8 @@
 import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
-import { AssignedExam, RenderMode, AssignedQuestion, AssignedSection } from './core/assigned_exams';
+import { AssignedExam, AssignedQuestion, AssignedSection } from './core/assigned_exams';
+import { OriginalExamRenderer } from './core/exam_renderer';
 import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer, CHOOSE_ALL } from "./core/randomization";
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
@@ -52,7 +53,6 @@ export class ExamGenerator {
   public readonly assignedExams: AssignedExam[] = [];
   public readonly assignedExamsByUniqname: { [index: string]: AssignedExam | undefined; } = {};
 
-
   private readonly sectionsMap: { [index: string]: Section | undefined } = {};
   private readonly questionsMap: { [index: string]: Question | undefined } = {};
 
@@ -60,6 +60,8 @@ export class ExamGenerator {
   private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
 
   private options: ExamGeneratorOptions;
+
+  private renderer = new OriginalExamRenderer();
 
   public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}) {
     this.exam = exam;
@@ -230,7 +232,7 @@ export class ExamGenerator {
   public renderExams() {
     return this.assignedExams.map((ex, i) => {
       console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
-      return ex.renderAll(RenderMode.ORIGINAL, this.options.frontend_js_path);
+      return this.renderer.renderAll(ex, this.options.frontend_js_path);
     });
   }
 
