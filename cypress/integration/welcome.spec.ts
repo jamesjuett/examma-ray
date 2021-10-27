@@ -19,19 +19,23 @@ describe("Welcome Modals", () => {
 
   });
 
-  it("Shows the disabled local storage modal", () => {
+  // THIS TEST REMOVED SINCE BROWSERS ACTUALLY SHOULDNT
+  // ALLOW JAVASCRIPT TO DETECT IF LOCAL STORAGE IS DISABLED
+  // (EVEN THOUGH SOME STILL DO)
 
-    cy.disableLocalStorage({
-      withError: new Error("Local storage disabled for test.")
-    });
-    cy.visit(EXAM_URL);
-    unstickSectionHeadings();
+  // it("Shows the disabled local storage modal", () => {
 
-    cy.get("#exam-welcome-no-autosave-modal button").click();
+  //   cy.disableLocalStorage({
+  //     withError: new Error("Local storage disabled for test.")
+  //   });
+  //   cy.visit(EXAM_URL);
+  //   unstickSectionHeadings();
 
-    cy.get("#exam-welcome-no-autosave-modal button").should("not.be.visible");
+  //   cy.get("#exam-welcome-no-autosave-modal button").click();
 
-  });
+  //   cy.get("#exam-welcome-no-autosave-modal button").should("not.be.visible");
+
+  // });
 
   it("Shows the answers restored modal", () => {
 

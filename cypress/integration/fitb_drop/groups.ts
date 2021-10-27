@@ -30,22 +30,22 @@ describe('FITB-Drop Response Groups', () => {
 
   it('Drag/Drop Within Q1', () => {
 
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').trigger("dragstart");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-location').last().scrollIntoView().trigger("dragenter");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-location').last().contains("item-test-2");
 
   });
 
   it('Drag/Drop Prohibited From Q1 to Q2', () => {
 
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').trigger("dragstart");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.examma-ray-fitb-drop-bank *[data-examma-ray-fitb-drop-id="item2"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_2").find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
-    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_2").find('.examma-ray-fitb-drop-location').last().scrollIntoView().trigger("dragenter");
+    responseElem("test-fitb-drop-multiple-q-fitb_drop_test_1").find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem("test-fitb-drop-multiple-q-fitb_drop_test_2").find('.examma-ray-fitb-drop-location').last().contains("item-test-2").should("not.exist");;
 
   });

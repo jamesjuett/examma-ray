@@ -18,13 +18,13 @@
 <p>Initialize a new <code>npm</code> package and install <code>examma-ray</code> as a dependency.</p>
 <pre><code class="language-bash"><span class="hl-0">$ npm init -y</span><br/><span class="hl-0">$ npm install examma-ray</span>
 </code></pre>
-<p>Set up some initial files for your exam. Run the following, replacing <code>template_exam</code> with an appropriate name for your exam.</p>
-<pre><code class="language-bash"><span class="hl-0">$ npx examma-ray-init template_exam</span>
-</code></pre>
 
 <a href="#creating-a-new-exam" id="creating-a-new-exam" style="color: inherit; text-decoration: none;">
   <h2>Creating a New Exam</h2>
 </a>
+<p>Set up some initial files for your exam. Run the following, replacing <code>template_exam</code> with an appropriate name for your exam.</p>
+<pre><code class="language-bash"><span class="hl-0">$ npx examma-ray-init template_exam</span>
+</code></pre>
 <p>This will create a directory structure like shown below. <code>content</code> is for question/section specifications and <code>template_exam</code> contains specifications and scripts for generating an exam. These are separate because in theory you might want a &quot;bank&quot; of content, which is drawn upon for several different exams you might give in different terms. There would be one <code>content</code> folder but several folders for each exam.</p>
 <pre><code class="language-bash"><span class="hl-0">$ tree</span><br/><span class="hl-1">.</span><br/><span class="hl-0">├── content</span><br/><span class="hl-0">│   └── sample_mc.ts</span><br/><span class="hl-0">├── package-lock.json</span><br/><span class="hl-0">├── package.json</span><br/><span class="hl-0">└── template_exam</span><br/><span class="hl-0">    ├── exam-spec.ts</span><br/><span class="hl-0">    ├── grader-spec.ts</span><br/><span class="hl-0">    ├── instructions.md</span><br/><span class="hl-0">    ├── questions.md</span><br/><span class="hl-0">    ├── roster.csv</span><br/><span class="hl-0">    ├── scripts</span><br/><span class="hl-0">    │   ├── gen.ts</span><br/><span class="hl-0">    │   └── grade.ts</span><br/><span class="hl-0">    ├── secret</span><br/><span class="hl-0">    └── tsconfig.json</span>
 </code></pre>
@@ -69,6 +69,7 @@
 <ul>
 <li><code>exams</code>, which contains the actual HTML files for each student&#39;s exam</li>
 <li><code>exams/js/frontend.js</code>, which is the javascript bundle for the exam frontend</li>
+<li><code>exams/media/</code>, media files (e.g. images) included in the exam</li>
 </ul>
 <p>The UUIDs you see will be different from the ones shown here. They depend on:</p>
 <ul>
@@ -107,12 +108,73 @@
 <pre><code class="language-bash"><span class="hl-0">git add eecs280f21_final/data</span>
 </code></pre>
 
-<a href="#todo-old-documentation-below" id="todo-old-documentation-below" style="color: inherit; text-decoration: none;">
-  <h1>TODO old documentation below</h1>
+<a href="#administering-an-exam" id="administering-an-exam" style="color: inherit; text-decoration: none;">
+  <h2>Administering an Exam</h2>
 </a>
+<p>Essentially, you just need to distribute each student&#39;s <code>.html</code> file, the common <code>js/frontend.js</code>, and any media files. A reasonable way to do this is set up a simple http file server somewhere that serves these files. Just copy over the whole <code>out/eecs280f21_final/exams</code> directory and point students to their URL.</p>
+<p>Because the URL for each student (i.e. based on the name of their <code>.html</code> file) is deterministic, you can send out links ahead of time via a mailmerge or some other mechanism. Of course, you&#39;ll want to make sure you don&#39;t actually put the files up on your http file server until the exam starts. Ideally, you don&#39;t want to dump all the URLs publicly, since students could take each others exams and/or see more questions than they should by peeking at others&#39; exams. But you can evaluate that tradeoff vs. the complexity of distributing students&#39; URLs privately.</p>
+<p>You can find a mapping from student uniqnames to the base of their <code>.html</code> in the <code>data/eecs280f21_final/student-ids.csv</code> file.</p>
+<p>Once students finish their exam, they download their answers file (a <code>.json</code>) and submit it via some other mechanism, e.g. Canvas. You can set your deadline there to make sure students only take the proper amount of time to work on their exam.</p>
+<p>After students turn in their <code>.json</code> files, drop them in a new directory within your exam folder, <code>data/eecs280f21_final/submissions</code>. Canvas (or whatever you use for turn-in) may have changed the filenames, but this is fine. The submission is associated with the correct student based on the file&#39;s content, not its name.</p>
+<p>Here&#39;s the an example of the mailmerge we send out for EECS 280 at UM. We use <a href="https://github.com/awdeorio/mailmerge">https://github.com/awdeorio/mailmerge</a>, but you can use whatever you like.</p>
+<pre><code class="language-text">TO: {{uniqname}}@umich.edu
+SUBJECT: [IMPORTANT] EECS 280 Midterm Exam
+FROM: EECS 280 Staff &lt;eecs280staff@umich.edu&gt;
+REPLY-TO: EECS 280 Staff &lt;eecs280staff@umich.edu&gt;
+BCC: James Juett &lt;jjuett@umich.edu&gt;
+
+Hello!
+
+Here is the link for your EECS 280 final exam. It is currently inactive, but will take you to your exam once your exam is scheduled to start. This is your correct link regardless of whether you are taking the exam at the regular time or at an alternate time.
+
+[If you have withdrawn from the course, please disregard this message.]
+
+Your individual exam link is:
+https://lobster.eecs.umich.edu/exam-distribution/exams/eecs280f21_final/{{filenameBase}}.html
+
+In case that link doesn&#39;t work, you may use this link as a backup.
+https://eecs280staff.github.io/exam-distribution/exams/eecs280f21_final/{{filenameBase}}.html
+
+Only use one of these two links (i.e. don&#39;t switch back and forth between them).
+
+Please remember that you must turn in your answers file from the exam to Canvas before the end of the exam. Turn it in to this canvas assignment:
+(Canvas Link)
+
+You can find information about the exam logistics the practice exams on Piazza.
+(Piazza Link)
+</code></pre>
+<p>You&#39;ll notice in the example above that we actually have a main fileserver and use github pages as a backup. (The main fileserver is more responsive and not throttled, so it&#39;s the first choice, but it is on a local University machine and could theoretically go down.) To publish the exam, we queue up a pull request to the <code>main</code> branch on the github pages repo - once that&#39;s merged, the exams go live. We also have a cron job set up on the main fileserver to <code>git pull</code> from that repo every minute. You might come up with a more clever deployment process :).</p>
+
+<a href="#grading-an-exam" id="grading-an-exam" style="color: inherit; text-decoration: none;">
+  <h2>Grading an Exam</h2>
+</a>
+<p>Make sure you&#39;ve got the <code>.json</code> answers files copied into your <code>data/eecs280f21_final/submissions</code> folder.</p>
+<p>Also ensure your terminal is situated in your individual exam directory:</p>
+<pre><code class="language-bash"><span class="hl-0">$ </span><span class="hl-1">pwd</span><br/><span class="hl-0">/home/jjuett/my_exams/eecs280f21_final</span>
+</code></pre>
+<p>To run overall grading for the exam:</p>
+<pre><code class="language-bash"><span class="hl-0">npx ts-node scripts/grade.ts --reports</span>
+</code></pre>
+<p>This runs all autograders, picks up all manual grading results, generates a grading overview for the overall exam, and generates individual grading reports for each student. Generating the individual reports takes the longest amount of time, so if you&#39;re frequently re-running grading (e.g. while working on configuring a FITB autograder), you can leave off the <code>--reports</code> option.</p>
+<p>Generated grading results are in the <code>out/eecs280f21_final/graded</code> folder.</p>
+<pre><code class="language-bash"><span class="hl-0">$ tree out/eecs280f21_final/graded/</span><br/><span class="hl-0">out/eecs280f21_final/graded/</span><br/><span class="hl-0">├── exams</span><br/><span class="hl-0">│   ├── student1-11fa0de8-6736-5bbd-a6b9-ea379ae7c2c2.html</span><br/><span class="hl-0">│   ├── student2-aa6a6cba-2e3f-5bab-b202-4d4752e203f5.html</span><br/><span class="hl-0">│   ├── student3-db676b7e-8aa2-56de-9dd5-e140290f0c96.html</span><br/><span class="hl-0">│   ├── student4-d94baffe-0d23-517d-854f-a2cc3c14f660.html</span><br/><span class="hl-0">│   ├── student5-126075dd-f725-5468-8ce3-331ce6eecb5a.html</span><br/><span class="hl-0">├── overview.html</span><br/><span class="hl-0">├── questions</span><br/><span class="hl-0">│   ├── big_three_v1_add_v1.html</span><br/><span class="hl-0">│   ├── big_three_v1_add_v2.html</span><br/><span class="hl-0">│   ├── big_three_v1_add_v3.html</span><br/><span class="hl-0">│   ├── big_three_v1_assignment_op.html</span><br/><span class="hl-0">│   ├── big_three_v1_destructor.html</span><br/><span class="hl-0">│   ├── ...</span><br/><span class="hl-0">│   ├── ...</span><br/><span class="hl-0">└── scores.csv</span>
+</code></pre>
+<p>In this directory, you&#39;ll find:</p>
+<ul>
+<li><code>overview.html</code>: <strong>Start here!</strong> A grading overview, which also links to everything else.</li>
+<li><code>exams/</code>: A directory with each individual student&#39;s graded exam report (if you used <code>--reports</code>).</li>
+<li><code>questions/</code>: Some question grader types (e.g. FITB) generate question analysis pages to assist with grading.</li>
+<li><code>scores.csv</code>: A CSV file with grades</li>
+</ul>
+<p>Note that the UUIDs on the individual students&#39; report files are the same as for their original exam.</p>
+
+<a href="#configuring-autograders-and-manual-grading" id="configuring-autograders-and-manual-grading" style="color: inherit; text-decoration: none;">
+  <h3>Configuring Autograders and Manual Grading</h3>
+</a>
+<p>Of course, you&#39;ll need to configure autograders and/or set up manual grading for each question before running grading will do anything meaningful. See <a href="modules/graders.html">graders</a> for details.</p>
 
 <a href="#markdown-styling" id="markdown-styling" style="color: inherit; text-decoration: none;">
-  <h1>Markdown Styling</h1>
+  <h2>Markdown Styling</h2>
 </a>
 <p>You may also use components from Bootstrap 4 as HTML tags inside any Markdown. This will generally work fine. For example, let&#39;s say you want a Bootstrap <code>alert</code> at the top of your exam instructions:</p>
 
@@ -122,37 +184,4 @@
 <pre><code class="language-markdown"><span class="hl-0">&lt;div markdown=1 class=&quot;alert alert-info&quot;&gt;</span><br/><br/><span class="hl-0">This is a practice exam for EECS 280, covering content from lectures 11 (containers) through 16 (linked lists). Your final exam will be delivered via this same exam platform, so it&#39;s a good idea to get familiar with it.</span><br/><br/><span class="hl-8">**PLEASE NOTE**</span><span class="hl-0"> This exam is out of &quot;50 points&quot;, and the final exam is out of &quot;100 points&quot;, but the final exam is not likely to be quite &quot;twice as long&quot; as this one.</span><br/><br/><span class="hl-0">&lt;/div&gt;</span>
 </code></pre>
 <p>Note the use of the additional attribute <code>markdown=1</code> is required if you intend to use Markdown syntax (such as the <code>**PLEASE NOTE**</code> in the example above) within the HTML element.</p>
-
-<a href="#defining-a-rubric" id="defining-a-rubric" style="color: inherit; text-decoration: none;">
-  <h1>Defining a Rubric</h1>
-</a>
-<p>The code in each file in the <code>rubric</code> directory defines &quot;graders&quot; which are registered for specific questions. For example, a file containing this TS code would define a multiple choice grader where the first (index 0) option is correct and register it for problem 1.1:</p>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-5">Exam</span><span class="hl-0">, </span><span class="hl-5">SimpleMCGrader</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-6">&quot;../examma-ray-autograder&quot;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">Exam</span><span class="hl-0">.</span><span class="hl-1">registerGraders</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-6">&quot;1.1&quot;</span><span class="hl-5">:</span><span class="hl-0"> </span><span class="hl-3">new</span><span class="hl-0"> </span><span class="hl-1">SimpleMCGrader</span><span class="hl-0">(</span><span class="hl-9">0</span><span class="hl-0">)</span><br/><span class="hl-0">});</span>
-</code></pre>
-<p>Several graders are currently supported:</p>
-<ul>
-<li><code>FreebieGrader</code> - Gives points to everyone (or, optionally, to all non-blank submissions)</li>
-<li><code>SimpleMCGrader</code> - Grades an MC question with one right answer</li>
-<li><code>SummationMCGrader</code> - Grades a multiple-select MC question where each selection is worth positive or negative points</li>
-<li><code>FITBRegexGrader</code> - Uses regular expressions to grade each blank in an FITB question. Also comes with an interface for human review of unique answers</li>
-<li><code>StandardSLGrader</code> - Grades SL (&quot;select-a-statement&quot;) questions based on which lines should/shouldn&#39;t be included</li>
-</ul>
-<p>The format for the graders looks like JSON, but it&#39;s actually typescript code defining an object literal, so autocomplete, etc. should be available in VS Code.</p>
-<p>For the FITB Regex grader, you&#39;ll need to be familiar with javascript regular expression syntax.</p>
-<ul>
-<li>Tutorial/Documentation at <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions</a></li>
-<li>Interactive tool for testing out regexes, really neat. <a href="https://regex101.com/">https://regex101.com/</a> Make sure to select the &quot;ECMAScript/Javascript&quot; flavor on the left side.</li>
-<li>Tip: Normally, the regex will match against any substring of what the student entered. If you want it to only match the WHOLE thing, use <code>^</code> and <code>$</code>. For example, if you&#39;re looking to match any decimal number <code>/[\d\.]+</code> will match <code>6.2</code> and <code>My answer is 6.2</code>, whereas <code>^[\d\.]+$</code> will only match <code>6.2</code>. Essentially <code>^</code> means &quot;beginning of string&quot; and <code>$</code> means &quot;end of string&quot;.</li>
-</ul>
-<p>For now, refer to examples of existing graders. More thorough documentation coming.</p>
-
-<a href="#entering-exceptions" id="entering-exceptions" style="color: inherit; text-decoration: none;">
-  <h2>Entering Exceptions</h2>
-</a>
-<p>The code in each file in the <code>exceptions</code> directory defines exceptions which are registered for specific student/question pairs. For example, a file containing this TS code would define an exception intended to work around double jeopardy in the regular grader for a FITB question.</p>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-5">Exam</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-6">&quot;../examma-ray-autograder&quot;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">Exam</span><span class="hl-0">.</span><span class="hl-1">registerException</span><span class="hl-0">(</span><span class="hl-6">&quot;jjuett&quot;</span><span class="hl-0">, </span><span class="hl-6">&quot;6.1&quot;</span><span class="hl-0">, {</span><br/><span class="hl-0">    </span><span class="hl-5">adjustedScore:</span><span class="hl-0"> </span><span class="hl-9">6</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-5">explanation:</span><span class="hl-0"> </span><span class="hl-6">&quot;The first blank is incorrect, but the rest of the blanks all share the same error, which is a mismatched variable name. To avoid double jeopardy, we graded this question as an exceptional case.&quot;</span><br/><span class="hl-0">});</span>
-</code></pre>
-<p>In the <code>engr101f20final.ts</code> file, make sure to add import lines for all of the exception files. For example:</p>
-<pre><code class="language-typescript"><span class="hl-7">// Import from ALL exception files that you want to use</span><br/><span class="hl-2">import</span><span class="hl-0"> </span><span class="hl-6">&quot;./exceptions/exceptions&quot;</span><span class="hl-0">;</span><br/><span class="hl-0">...</span>
-</code></pre>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/ExamGenerator.html">Exam<wbr/>Generator</a></li><li class=" tsd-kind-module"><a href="modules/ExamGrader.html">Exam<wbr/>Grader</a></li><li class=" tsd-kind-module"><a href="modules/core.html">core</a></li><li class=" tsd-kind-module"><a href="modules/core_assigned_exams.html">core/assigned_<wbr/>exams</a></li><li class=" tsd-kind-module"><a href="modules/core_exam_components.html">core/exam_<wbr/>components</a></li><li class=" tsd-kind-module"><a href="modules/core_exam_specification.html">core/exam_<wbr/>specification</a></li><li class=" tsd-kind-module"><a href="modules/core_randomization.html">core/randomization</a></li><li class=" tsd-kind-module"><a href="modules/core_skins.html">core/skins</a></li><li class=" tsd-kind-module"><a href="modules/response_common.html">response/common</a></li><li class=" tsd-kind-module"><a href="modules/response_fitb.html">response/fitb</a></li><li class=" tsd-kind-module"><a href="modules/response_mc.html">response/mc</a></li><li class=" tsd-kind-module"><a href="modules/response_select_lines.html">response/select_<wbr/>lines</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li><li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li><li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li><li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li><li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li><li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li><li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/ExamGenerator.html">Exam<wbr/>Generator</a></li><li class=" tsd-kind-module"><a href="modules/ExamGrader.html">Exam<wbr/>Grader</a></li><li class=" tsd-kind-module"><a href="modules/core.html">core</a></li><li class=" tsd-kind-module"><a href="modules/core_assigned_exams.html">core/assigned_<wbr/>exams</a></li><li class=" tsd-kind-module"><a href="modules/core_exam_components.html">core/exam_<wbr/>components</a></li><li class=" tsd-kind-module"><a href="modules/core_exam_specification.html">core/exam_<wbr/>specification</a></li><li class=" tsd-kind-module"><a href="modules/core_randomization.html">core/randomization</a></li><li class=" tsd-kind-module"><a href="modules/core_skins.html">core/skins</a></li><li class=" tsd-kind-module"><a href="modules/graders.html">graders</a></li><li class=" tsd-kind-module"><a href="modules/graders_FITBRegexGrader.html">graders/FITBRegex<wbr/>Grader</a></li><li class=" tsd-kind-module"><a href="modules/response_common.html">response/common</a></li><li class=" tsd-kind-module"><a href="modules/response_fitb.html">response/fitb</a></li><li class=" tsd-kind-module"><a href="modules/response_mc.html">response/mc</a></li><li class=" tsd-kind-module"><a href="modules/response_select_lines.html">response/select_<wbr/>lines</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li><li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li><li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li><li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li><li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li><li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li><li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

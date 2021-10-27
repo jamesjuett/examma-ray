@@ -29,13 +29,13 @@ $ npm init -y
 $ npm install examma-ray
 ```
 
+## Creating a New Exam
+
 Set up some initial files for your exam. Run the following, replacing `template_exam` with an appropriate name for your exam.
 
 ```bash
 $ npx examma-ray-init template_exam
 ```
-
-## Creating a New Exam
 
 This will create a directory structure like shown below. `content` is for question/section specifications and `template_exam` contains specifications and scripts for generating an exam. These are separate because in theory you might want a "bank" of content, which is drawn upon for several different exams you might give in different terms. There would be one `content` folder but several folders for each exam.
 
@@ -150,6 +150,7 @@ In the `data` folder, you'll find
 In the `out` folder, you'll find
 - `exams`, which contains the actual HTML files for each student's exam
 - `exams/js/frontend.js`, which is the javascript bundle for the exam frontend
+- `exams/media/`, media files (e.g. images) included in the exam
 
 The UUIDs you see will be different from the ones shown here. They depend on:
 - The namespace generated in your `secret` file when you initialized your exam
@@ -214,9 +215,105 @@ When you're developing an exam and often generating new files, it would be annoy
 git add eecs280f21_final/data
 ```
 
-# TODO old documentation below
+## Administering an Exam
 
-# Markdown Styling
+Essentially, you just need to distribute each student's `.html` file, the common `js/frontend.js`, and any media files. A reasonable way to do this is set up a simple http file server somewhere that serves these files. Just copy over the whole `out/eecs280f21_final/exams` directory and point students to their URL.
+
+Because the URL for each student (i.e. based on the name of their `.html` file) is deterministic, you can send out links ahead of time via a mailmerge or some other mechanism. Of course, you'll want to make sure you don't actually put the files up on your http file server until the exam starts. Ideally, you don't want to dump all the URLs publicly, since students could take each others exams and/or see more questions than they should by peeking at others' exams. But you can evaluate that tradeoff vs. the complexity of distributing students' URLs privately.
+
+You can find a mapping from student uniqnames to the base of their `.html` in the `data/eecs280f21_final/student-ids.csv` file.
+
+Once students finish their exam, they download their answers file (a `.json`) and submit it via some other mechanism, e.g. Canvas. You can set your deadline there to make sure students only take the proper amount of time to work on their exam.
+
+After students turn in their `.json` files, drop them in a new directory within your exam folder, `data/eecs280f21_final/submissions`. Canvas (or whatever you use for turn-in) may have changed the filenames, but this is fine. The submission is associated with the correct student based on the file's content, not its name.
+
+Here's the an example of the mailmerge we send out for EECS 280 at UM. We use [https://github.com/awdeorio/mailmerge](https://github.com/awdeorio/mailmerge), but you can use whatever you like.
+
+```text
+TO: {{uniqname}}@umich.edu
+SUBJECT: [IMPORTANT] EECS 280 Midterm Exam
+FROM: EECS 280 Staff <eecs280staff@umich.edu>
+REPLY-TO: EECS 280 Staff <eecs280staff@umich.edu>
+BCC: James Juett <jjuett@umich.edu>
+
+Hello!
+
+Here is the link for your EECS 280 final exam. It is currently inactive, but will take you to your exam once your exam is scheduled to start. This is your correct link regardless of whether you are taking the exam at the regular time or at an alternate time.
+
+[If you have withdrawn from the course, please disregard this message.]
+
+Your individual exam link is:
+https://lobster.eecs.umich.edu/exam-distribution/exams/eecs280f21_final/{{filenameBase}}.html
+
+In case that link doesn't work, you may use this link as a backup.
+https://eecs280staff.github.io/exam-distribution/exams/eecs280f21_final/{{filenameBase}}.html
+
+Only use one of these two links (i.e. don't switch back and forth between them).
+
+Please remember that you must turn in your answers file from the exam to Canvas before the end of the exam. Turn it in to this canvas assignment:
+(Canvas Link)
+
+You can find information about the exam logistics the practice exams on Piazza.
+(Piazza Link)
+```
+
+You'll notice in the example above that we actually have a main fileserver and use github pages as a backup. (The main fileserver is more responsive and not throttled, so it's the first choice, but it is on a local University machine and could theoretically go down.) To publish the exam, we queue up a pull request to the `main` branch on the github pages repo - once that's merged, the exams go live. We also have a cron job set up on the main fileserver to `git pull` from that repo every minute. You might come up with a more clever deployment process :).
+
+## Grading an Exam
+
+Make sure you've got the `.json` answers files copied into your `data/eecs280f21_final/submissions` folder.
+
+Also ensure your terminal is situated in your individual exam directory:
+
+```bash
+$ pwd
+/home/jjuett/my_exams/eecs280f21_final
+```
+
+To run overall grading for the exam:
+
+```bash
+npx ts-node scripts/grade.ts --reports
+```
+
+This runs all autograders, picks up all manual grading results, generates a grading overview for the overall exam, and generates individual grading reports for each student. Generating the individual reports takes the longest amount of time, so if you're frequently re-running grading (e.g. while working on configuring a FITB autograder), you can leave off the `--reports` option.
+
+Generated grading results are in the `out/eecs280f21_final/graded` folder.
+
+```bash
+$ tree out/eecs280f21_final/graded/
+out/eecs280f21_final/graded/
+├── exams
+│   ├── student1-11fa0de8-6736-5bbd-a6b9-ea379ae7c2c2.html
+│   ├── student2-aa6a6cba-2e3f-5bab-b202-4d4752e203f5.html
+│   ├── student3-db676b7e-8aa2-56de-9dd5-e140290f0c96.html
+│   ├── student4-d94baffe-0d23-517d-854f-a2cc3c14f660.html
+│   ├── student5-126075dd-f725-5468-8ce3-331ce6eecb5a.html
+├── overview.html
+├── questions
+│   ├── big_three_v1_add_v1.html
+│   ├── big_three_v1_add_v2.html
+│   ├── big_three_v1_add_v3.html
+│   ├── big_three_v1_assignment_op.html
+│   ├── big_three_v1_destructor.html
+│   ├── ...
+│   ├── ...
+└── scores.csv
+```
+
+In this directory, you'll find:
+- `overview.html`: **Start here!** A grading overview, which also links to everything else.
+- `exams/`: A directory with each individual student's graded exam report (if you used `--reports`).
+- `questions/`: Some question grader types (e.g. FITB) generate question analysis pages to assist with grading.
+- `scores.csv`: A CSV file with grades
+
+Note that the UUIDs on the individual students' report files are the same as for their original exam.
+
+### Configuring Autograders and Manual Grading
+
+Of course, you'll need to configure autograders and/or set up manual grading for each question before running grading will do anything meaningful. See [[graders]] for details.
+
+## Markdown Styling
 
 You may also use components from Bootstrap 4 as HTML tags inside any Markdown. This will generally work fine. For example, let's say you want a Bootstrap `alert` at the top of your exam instructions:
 
@@ -232,57 +329,3 @@ This is a practice exam for EECS 280, covering content from lectures 11 (contain
 ```
 
 Note the use of the additional attribute `markdown=1` is required if you intend to use Markdown syntax (such as the `**PLEASE NOTE**` in the example above) within the HTML element.
-
-
-
-# Defining a Rubric
-
-The code in each file in the `rubric` directory defines "graders" which are registered for specific questions. For example, a file containing this TS code would define a multiple choice grader where the first (index 0) option is correct and register it for problem 1.1:
-
-```typescript
-import { Exam, SimpleMCGrader } from "../examma-ray-autograder";
-
-Exam.registerGraders({
-  "1.1": new SimpleMCGrader(0)
-});
-```
-
-Several graders are currently supported:
-
-- `FreebieGrader` - Gives points to everyone (or, optionally, to all non-blank submissions)
-- `SimpleMCGrader` - Grades an MC question with one right answer
-- `SummationMCGrader` - Grades a multiple-select MC question where each selection is worth positive or negative points
-- `FITBRegexGrader` - Uses regular expressions to grade each blank in an FITB question. Also comes with an interface for human review of unique answers
-- `StandardSLGrader` - Grades SL ("select-a-statement") questions based on which lines should/shouldn't be included
-
-The format for the graders looks like JSON, but it's actually typescript code defining an object literal, so autocomplete, etc. should be available in VS Code.
-
-For the FITB Regex grader, you'll need to be familiar with javascript regular expression syntax.
-
-- Tutorial/Documentation at [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions)
-- Interactive tool for testing out regexes, really neat. [https://regex101.com/](https://regex101.com/) Make sure to select the "ECMAScript/Javascript" flavor on the left side.
-- Tip: Normally, the regex will match against any substring of what the student entered. If you want it to only match the WHOLE thing, use `^` and `$`. For example, if you're looking to match any decimal number `/[\d\.]+` will match `6.2` and `My answer is 6.2`, whereas `^[\d\.]+$` will only match `6.2`. Essentially `^` means "beginning of string" and `$` means "end of string".
-
-For now, refer to examples of existing graders. More thorough documentation coming.
-
-## Entering Exceptions
-
-The code in each file in the `exceptions` directory defines exceptions which are registered for specific student/question pairs. For example, a file containing this TS code would define an exception intended to work around double jeopardy in the regular grader for a FITB question.
-
-```typescript
-import { Exam } from "../examma-ray-autograder";
-
-Exam.registerException("jjuett", "6.1", {
-    adjustedScore: 6,
-    explanation: "The first blank is incorrect, but the rest of the blanks all share the same error, which is a mismatched variable name. To avoid double jeopardy, we graded this question as an exceptional case."
-});
-```
-
-In the `engr101f20final.ts` file, make sure to add import lines for all of the exception files. For example:
-
-```typescript
-// Import from ALL exception files that you want to use
-import "./exceptions/exceptions";
-...
-```
-

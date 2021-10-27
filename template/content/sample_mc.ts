@@ -6,7 +6,7 @@ export const Question_Sample_MC : QuestionSpecification = {
   points: 2,
   mk_description:
 `
-This is a sample question. Which of the following is NOT a heirloom variety of tomato plant?
+This is a sample question. Which of the following is NOT an heirloom variety of tomato plant?
 `,
   response: {
     kind: "multiple_choice",

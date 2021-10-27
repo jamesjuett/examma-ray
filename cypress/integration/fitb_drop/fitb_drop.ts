@@ -93,11 +93,11 @@ describe('FITB-Drop Response', () => {
 
   it('Simple Drag/Drop', () => {
 
-    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-    responseElem().find('.sortable-chosen').trigger("dragstart");
+    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem().find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem().find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
-    responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem().find('.examma-ray-fitb-drop-location').last().scrollIntoView().trigger("dragenter");
+    responseElem().find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem().find('.examma-ray-fitb-drop-location').last().contains("item-test-2");
 
     // bank and originals should be unchanged
@@ -108,11 +108,11 @@ describe('FITB-Drop Response', () => {
 
   it('Drag/Drop Into Nested Location', () => {
 
-    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item3"]').trigger("pointerdown", {button: 0});
-    responseElem().find('.sortable-chosen').trigger("dragstart");
+    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item3"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem().find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem().find('.examma-ray-fitb-drop-location').eq(4).trigger("dragenter");
-    responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem().find('.examma-ray-fitb-drop-location').eq(4).scrollIntoView().trigger("dragenter");
+    responseElem().find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem().find('.examma-ray-fitb-drop-location').eq(4).contains("item-test-3");
 
     // bank and originals should be unchanged
@@ -123,21 +123,21 @@ describe('FITB-Drop Response', () => {
 
   it('Drag/Drop Into 2nd Level Nested Location', () => {
 
-    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item1"]').trigger("pointerdown", {button: 0});
-    responseElem().find('.sortable-chosen').trigger("dragstart");
+    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item1"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem().find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem().find('.examma-ray-fitb-drop-location').eq(4).trigger("dragenter");
-    responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem().find('.examma-ray-fitb-drop-location').eq(4).scrollIntoView().trigger("dragenter");
+    responseElem().find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem().find('.examma-ray-fitb-drop-location').eq(4).contains("for(int");
 
     // should be one additional drag location
     responseElem().find('.examma-ray-fitb-drop-location').should("have.length", 7);
 
-    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-    responseElem().find('.sortable-chosen').trigger("dragstart");
+    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem().find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem().find('.examma-ray-fitb-drop-location').eq(5).trigger("dragenter");
-    responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem().find('.examma-ray-fitb-drop-location').eq(5).scrollIntoView().trigger("dragenter");
+    responseElem().find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem().find('.examma-ray-fitb-drop-location').eq(4).contains("item-test-2");
     responseElem().find('.examma-ray-fitb-drop-location').eq(5).contains("item-test-2");
 
@@ -218,11 +218,11 @@ describe('FITB-Drop Response', () => {
     responseElem().find('.examma-ray-fitb-blank-input').eq(2).type("!");
 
     // Make a change to the answer - drag/drop
-    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').trigger("pointerdown", {button: 0});
-    responseElem().find('.sortable-chosen').trigger("dragstart");
+    responseElem().find('.examma-ray-fitb-drop-bank [data-examma-ray-fitb-drop-id="item2"]').scrollIntoView().trigger("pointerdown", {button: 0});
+    responseElem().find('.sortable-chosen').scrollIntoView().trigger("dragstart");
     cy.wait(100);
-    responseElem().find('.examma-ray-fitb-drop-location').last().trigger("dragenter");
-    responseElem().find('.sortable-chosen.sortable-ghost > *').first().trigger("drop");
+    responseElem().find('.examma-ray-fitb-drop-location').last().scrollIntoView().trigger("dragenter");
+    responseElem().find('.sortable-chosen.sortable-ghost > *').first().scrollIntoView().trigger("drop");
     responseElem().find('.examma-ray-fitb-drop-location').last().contains("item-test-2");
     
     // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.

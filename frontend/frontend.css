@@ -437,6 +437,7 @@ code {
 .examma-ray-codemirror {
   margin-left: 1ch;
   border: solid 1px #333;
+  font-size: 11pt; /* Safari needs this or it makes it super tiny */
 }
 
 /* FITB-DROP */

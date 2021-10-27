@@ -2,6 +2,8 @@
 {
   "entryPoints": [
     "./src/core.ts",
+    "./src/graders.ts",
+    "./src/graders/FITBRegexGrader.ts",
     "./src/core/exam_specification.ts",
     "./src/core/exam_components.ts",
     "./src/core/assigned_exams.ts",

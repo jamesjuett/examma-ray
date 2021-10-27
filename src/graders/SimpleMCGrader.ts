@@ -15,6 +15,9 @@ export type SimpleMCGradingResult = ImmutableGradingResult & {
   indexCorrect: number
 }
 
+/**
+ * Test wheee
+ */
 export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleMCGradingResult> {
 
   /**

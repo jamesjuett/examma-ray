@@ -1,3 +1,17 @@
+/**
+ * ## Fill-In-The-Blank Regular Expression Graders
+ * 
+ * For the FITB Regex grader, you'll need to be familiar with javascript regular expression syntax.
+ * - Tutorial/Documentation at [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions)
+ * - Interactive tool for testing out regexes, really neat. [https://regex101.com/](https://regex101.com/) Make sure to select the "ECMAScript/Javascript" flavor on the left side.
+ * - Tip: Normally, the regex will match against any substring of what the student entered. If you want it to only match the WHOLE thing, use `^` and `$`. For example, if you're looking to match any decimal number `/[\d\.]+` will match `6.2` and `My answer is 6.2`, whereas `^[\d\.]+$` will only match `6.2`. Essentially `^` means "beginning of string" and `$` means "end of string".
+ * 
+ * For now, refer to examples of existing graders. More thorough documentation coming.
+ * 
+ * @module
+ */
+
+
 import { encode } from "he";
 import { min, sum } from "simple-statistics";
 import { applySkin, mk2html } from "../core/render";

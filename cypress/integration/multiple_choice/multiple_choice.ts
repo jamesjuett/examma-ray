@@ -318,9 +318,9 @@ describe('MC Response', () => {
   it("Restores From Local Storage", () => {
 
     // Make a change so that autosave will modify local storage
-    singleResponseElem().find('input').eq(0).click();
-    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).click());
-    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).click());
+    singleResponseElem().find('input').eq(0).click({force: true});
+    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).click({force: true}));
+    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).click({force: true}));
 
     // Wait for autosave
     cy.wait(7000);
@@ -347,11 +347,11 @@ describe('MC Response', () => {
 
   it("Downloads to Answers File", () => {
     
-    singleResponseElem().find('input').eq(0).click();
-    multipleResponseElem().find('input').eq(1).click();
-    multipleResponseElem().find('input').eq(2).click();
-    multipleResponseLimitElem().find('input').eq(3).click();
-    multipleResponseLimitElem().find('input').eq(4).click();
+    singleResponseElem().find('input').eq(0).click({force: true});
+    multipleResponseElem().find('input').eq(1).click({force: true});
+    multipleResponseElem().find('input').eq(2).click({force: true});
+    multipleResponseLimitElem().find('input').eq(3).click({force: true});
+    multipleResponseLimitElem().find('input').eq(4).click({force: true});
 
     let filepath = downloadAnswersFile("test-answers.json");
 
@@ -363,9 +363,9 @@ describe('MC Response', () => {
 
   it("Download + Restore from Answers File", () => {
 
-    singleResponseElem().find('input').eq(0).click();
-    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).click());
-    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).click());
+    singleResponseElem().find('input').eq(0).scrollIntoView().click({force: true});
+    [1,2].forEach(i => multipleResponseElem().find('input').eq(i).scrollIntoView().click({force: true}));
+    [3,4].forEach(i => multipleResponseLimitElem().find('input').eq(i).scrollIntoView().click({force: true}));
     
     // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.
       
