@@ -3,6 +3,7 @@ import "highlight.js/styles/github.css";
 
 import 'katex/dist/katex.min.css';
 import { ExamRegradeRequest, QuestionRegradeRequest, SectionRegradeRequest } from "../src/regrades/regrades";
+import { activateExamComponents } from "./common";
 
 import "./frontend.css";
 
@@ -43,4 +44,23 @@ function extractExamRegradeRequest() : ExamRegradeRequest {
     saverId: saverID,
     section_requests: $(".examma-ray-section").map(extractSectionRegradeRequest).get()
   }
+}
+
+
+
+
+
+
+
+function main() {
+
+  activateExamComponents();
+
+}
+
+if (typeof $ === "function") {
+  $(main);
+}
+else {
+  alert("It appears some required 3rd party libraries did not load. Please try refreshing the page (might take a few tries). If the problem persists, contact your course staff or instructors.")
 }

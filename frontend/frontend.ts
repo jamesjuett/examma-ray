@@ -17,6 +17,7 @@ import 'katex/dist/katex.min.css';
 
 import "./frontend.css";
 import { activateBank } from "../src/response/fitb-drop";
+import { activateExamComponents } from "./common";
 
 function activateResponse(this: HTMLElement) {
   let response = $(this);
@@ -24,14 +25,6 @@ function activateResponse(this: HTMLElement) {
 }
 
 function activateExam() {
-
-  // Active section reference width slider
-  $(".examma-ray-section-reference-width-slider").on("input", function() {
-    let column = $(this).closest(".examma-ray-section-reference-column");
-    let newWidth = $(this).val() + "%";
-    column.css("width", newWidth);
-    column.find(".examma-ray-section-reference-width-value").html(newWidth);
-  });
 
   // Activate any FITB Drop banks in reference material
   $(".examma-ray-section-reference .examma-ray-fitb-drop-bank").each(function() {
@@ -206,7 +199,7 @@ function onSaved() {
 }
 
 function main() {
-  console.log("in main() function");
+  console.log("Attempting to start exam...");
 
   try {
     setupQuestionStars();
@@ -219,13 +212,15 @@ function main() {
 
   setupChangeListeners();
 
+  activateExamComponents();
+
   activateExam();
 
   setupCodeEditors();
   
   startExam();
 
-  console.log("Exam Started!!!");
+  console.log("Exam Started!");
 
 }
 
