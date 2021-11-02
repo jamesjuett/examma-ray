@@ -23,6 +23,8 @@ import { renderScoreBadge, renderShortPointsWorthBadge, renderUngradedBadge } fr
 import { asMutable, assert } from "../core/util";
 import { QuestionSpecification } from "../core/exam_specification";
 import deepEqual from "deep-equal";
+import { ExamComponentSkin } from "../core";
+import { v4 as uuidv4 } from "uuid";
 
 // A significant amount of this code for interacting with the file
 // system is based on the File System Access API tutorial and
@@ -184,7 +186,8 @@ export type CodeWritingManualGraderAppSpecification = {
   question: QuestionSpecification,
   rubric: readonly CodeWritingRubricItem[],
   testHarness: string,
-  extract_code?: (raw_submission: string) => string,
+  extract_code?: (raw_submission: string, skin: ExamComponentSkin) => string,
+  skin_override?: ExamComponentSkin,
   preprocess?: (submission: string) => string,
   checkpoints: Checkpoint[],
   autograder: (ex: Exercise) => CodeWritingGradingResult,
@@ -210,7 +213,8 @@ class CodeWritingManualGraderApp {
 
   public lobster: SimpleExerciseLobsterOutlet;
 
-  private extract_code: (raw_submission: string) => string;
+  private extract_code: (raw_submission: string, skin: ExamComponentSkin) => string;
+  private skin_override?: ExamComponentSkin;
   private preprocess?: (submission: string) => string;
   private testHarness: string;
   private groupingFunctionName: string;
@@ -241,6 +245,7 @@ class CodeWritingManualGraderApp {
     this.testHarness = spec.testHarness;
     this.autograder = spec.autograder;
     this.extract_code = spec.extract_code ?? DEFAULT_EXTRACT_CODE;
+    this.skin_override = spec.skin_override;
     this.preprocess = spec.preprocess;
     this.groupingFunctionName = spec.groupingFunctionName;
 
@@ -267,9 +272,10 @@ class CodeWritingManualGraderApp {
 
     buttons.empty();
     
+    let skin = this.skin_override ?? (sub && createRecordedSkin(sub));
     this.rubric.forEach((ri, i) => {
-      let skinnedTitle = sub ? applySkin(ri.title, {skin_id: "[recorded]", replacements: sub.skin_replacements}) : ri.title;
-      let skinnedDesc = sub ? applySkin(ri.description, {skin_id: "[recorded]", replacements: sub.skin_replacements}) : ri.description;
+      let skinnedTitle = sub ? applySkin(ri.title, skin) : ri.title;
+      let skinnedDesc = sub ? applySkin(ri.description, skin) : ri.description;
       let button = $(
         `<button type="button" class="list-group-item">
           ${renderShortPointsWorthBadge(ri.points)}
@@ -371,6 +377,8 @@ class CodeWritingManualGraderApp {
     assert(group.submissions.length > 0);
     let firstSub = group.submissions[group.representative_index];
     let response = firstSub.response;
+    let originalSkin = createRecordedSkin(firstSub);
+    let skin = this.skin_override ?? originalSkin;
     let jq = $(`
       <div class="panel panel-default examma-ray-grading-group-thumbnail">
         <div class="panel-heading">
@@ -378,7 +386,7 @@ class CodeWritingManualGraderApp {
           ${group.grading_result ? renderScoreBadge(this.pointsEarned(group.grading_result), this.question.points, group.grading_result.verified ? VERIFIED_ICON : "") : renderUngradedBadge(this.question.points)}
         </div>
         <div class="panel-body">
-          <pre><code>${highlightCode(this.extract_code(response), CODE_LANGUAGE)}</code></pre>
+          <pre><code>${highlightCode(this.extract_code(response, originalSkin), CODE_LANGUAGE)}</code></pre>
         </div>
       </div>
     `);
@@ -455,14 +463,16 @@ class CodeWritingManualGraderApp {
 
   private applyHarness(rep: GradingSubmission<ResponseKind>) {
     let response = rep.response;
-    let submittedCode = this.extract_code(response);
+    let originalSkin = createRecordedSkin(rep);
+    let skin = this.skin_override ?? originalSkin;
+    let submittedCode = this.extract_code(response, originalSkin);
 
     if (this.preprocess) {
       submittedCode = this.preprocess(submittedCode);
     }
 
     let code = this.testHarness.replace("{{submission}}", indentString(submittedCode, 4));
-    code = applySkin(code, {skin_id: "[recorded]", replacements: rep.skin_replacements});
+    code = applySkin(code, skin);
     return code;
   }
 
@@ -475,6 +485,8 @@ class CodeWritingManualGraderApp {
 
   private createMemberThumbnail(sub: CodeWritingSubmission) {
     let response = sub.response;
+    let originalSkin = createRecordedSkin(sub);
+    let skin = this.skin_override ?? originalSkin;
     let jq = $(`
       <div class="panel panel-default examma-ray-group-member-thumbnail">
         <div class="panel-heading">
@@ -482,7 +494,7 @@ class CodeWritingManualGraderApp {
           ${sub.student.name}
         </div>
         <div class="panel-body">
-          <pre><code>${highlightCode(this.extract_code(response), CODE_LANGUAGE)}</code></pre>
+          <pre><code>${highlightCode(this.extract_code(response, originalSkin), CODE_LANGUAGE)}</code></pre>
         </div>
       </div>
     `);
@@ -511,7 +523,14 @@ class CodeWritingManualGraderApp {
     })));
     for(let i = 0; i < allSubs.length; ++i) {
       let sub = allSubs[i];
-      $(".examma-ray-grouping-progress .progress-bar").css("width", (100*i/allSubs.length) + "%");
+      let percent = 100*i/allSubs.length;
+      if (Math.floor(percent/5) % 2 === 0) {
+        $(".examma-ray-grouping-progress .progress-bar").html("♪┏(・o･)┛♪┗( ･o･)┓♪")
+      }
+      else {
+        $(".examma-ray-grouping-progress .progress-bar").html("♪┗( ･o･)┓♪┏(・o･)┛♪")
+      }
+      $(".examma-ray-grouping-progress .progress-bar").css("width", percent + "%");
       console.log(i);
       await this.autoGroupHelper(equivalenceGroups, sub);
     }
@@ -532,7 +551,8 @@ class CodeWritingManualGraderApp {
   }
 
   private getGroupingFunctionName(sub: CodeWritingSubmission) {
-    return applySkin(this.groupingFunctionName, {skin_id: "[recorded]", replacements: sub.skin_replacements});
+    let skin = this.skin_override ?? createRecordedSkin(sub);
+    return applySkin(this.groupingFunctionName, skin);
   }
 
   private autoGroupHelper(
@@ -808,6 +828,11 @@ function copyGradingResult(gr: CodeWritingGradingResult | undefined) {
   }
 
   return $.extend(true, {}, gr);
+}
+
+function createRecordedSkin(sub: CodeWritingSubmission) {
+  // use a v4 uuid as the skin ID to avoid caching issues
+  return {skin_id: `[recorded-${uuidv4()}]`, replacements: sub.skin_replacements};
 }
 
 const VERIFIED_ICON = `<i class="bi bi-check2-circle" style="vertical-align: text-top;"></i> `;

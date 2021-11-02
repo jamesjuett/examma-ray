@@ -22,6 +22,7 @@ import { createFilledFITB } from "../response/util-fitb";
 import { assert } from "../core/util";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
+import { ICON_INFO } from "../core/icons";
 
 
 export type FITBRegexGradingResult = ImmutableGradingResult & {
@@ -162,7 +163,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       return `
         <tr><td><div id="${elem_id}" class="card rubric-item-card">
           <div class="card-header">
-            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} Blank ${i + 1}<br />${mk2html(rubricItem.title, skin)}</a>
+            <a class="nav-link" style="font-weight: 500;" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderScoreBadge(itemResult.pointsEarned, rubricItem.points)} ${ICON_INFO} Blank ${i + 1}<br />${mk2html(rubricItem.title, skin)}</a>
           </div>
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">

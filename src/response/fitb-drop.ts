@@ -5,7 +5,7 @@ import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import Sortable from "sortablejs";
-import { Question, QuestionSpecification, realizeQuestion } from "../core";
+import { Exam, Question, QuestionSpecification, realizeQuestion } from "../core";
 
 export type DroppableSpecification = {
   [index: string]: string
@@ -91,6 +91,8 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
     </div>
     ${createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)}
   `;
+
+  // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
 function FITB_DROP_ACTIVATE(responseElem: JQuery) {
@@ -403,4 +405,17 @@ export function createFITBDropBankSubRenderer(droppables: DroppableSpecification
       ${renderDroppables(droppables, group_id, skin)}
     </div>`;
   });
+}
+
+export function mapSkinOverSubmission(submission: FITBDropSubmission, skin: ExamComponentSkin) : FITBDropSubmission {
+  if (submission === BLANK_SUBMISSION) {
+    return BLANK_SUBMISSION;
+  }
+  return submission.map(dropSub => typeof dropSub === "string"
+    ? applySkin(dropSub, skin)
+    : dropSub.map(s => ({
+      id: s.id,
+      children: s.children && <(string | DropSubmission)[]>mapSkinOverSubmission(s.children, skin)
+    }))
+  )
 }

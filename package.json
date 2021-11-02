@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.185",
+  "version": "1.0.193",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
@@ -57,7 +57,7 @@
     "javascript-time-ago": "^2.3.4",
     "json-stable-stringify": "^1.0.1",
     "katex": "^0.11.1",
-    "lobster-vis": "^1.0.6",
+    "lobster-vis": "^1.0.9",
     "minimist": "^1.2.5",
     "ncp": "^2.0.0",
     "node-chartist": "^1.0.5",

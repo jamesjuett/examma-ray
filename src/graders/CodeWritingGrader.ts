@@ -6,6 +6,7 @@ import { assert, assertFalse } from "../core/util";
 import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
+import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
 import { createFilledFITB } from "../response/util-fitb";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -142,6 +143,32 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
       studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
       if (question.sampleSolution) {
         sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>question.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
+      }
+      
+    }
+    else if (question.isKind("fitb_drop")) {
+      let response = question.response;
+      let submission = <FITBDropSubmission>aq.submission;
+      let group_id = response.group_id ?? question.question_id;
+      assert(submission !== BLANK_SUBMISSION);
+      // createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)
+      studentSubmission_html = createFilledFITBDrop(
+        applySkin(response.content, skin),
+        response.droppables,
+        group_id,
+        skin,
+        submission
+      );
+
+      if (question.sampleSolution) {
+
+        sampleSolution_html = createFilledFITBDrop(
+          applySkin(response.content, skin),
+          response.droppables,
+          group_id,
+          skin,
+          mapSkinOverSubmission(question.sampleSolution, skin)
+        );
       }
       
     }

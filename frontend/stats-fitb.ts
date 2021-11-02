@@ -14,7 +14,7 @@ $(function() {
       return $(this).data("blank-num") === blank_num;
     }).map(function() {
       return '"'+
-        $(this).data("blank-submission")
+        (""+$(this).data("blank-submission"))
           .replace(/\"/g,'\\"')
           .replace(/\n/g,'\\n')
         +'"';
