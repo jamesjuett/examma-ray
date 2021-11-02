@@ -9,7 +9,7 @@ import { unparse } from 'papaparse';
 import del from 'del';
 import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
-import { createStudentUuid, writeFrontendJS, copyFrontendMedia } from './ExamUtils';
+import { createStudentUuid, writeFrontendJS, copyFrontendMedia, ExamUtils } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 
@@ -209,20 +209,9 @@ export class ExamGenerator {
 
   private writeMedia(outDir: string) {
 
-    let mediaDir = path.join(outDir, this.options.frontend_media_dir);
-
-    // Copy overall exam media
-    this.exam.media_dir && copyFrontendMedia(this.exam.media_dir, path.join(mediaDir, "exam", this.exam.exam_id));
-
-    // Copy media for all sections
-    Object.values(this.sectionsMap).forEach(
-      s => s?.media_dir && copyFrontendMedia(s.media_dir, path.join(mediaDir, "section", s.section_id))
-    );
-
-    // Copy media for all questions
-    Object.values(this.questionsMap).forEach(
-      q => q?.media_dir && copyFrontendMedia(q.media_dir, path.join(mediaDir, "question", q.question_id))
-    );
+    let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
+    
+    ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
   public createManifests() {

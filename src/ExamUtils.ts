@@ -17,6 +17,7 @@ import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-
 import { StudentInfo } from "./core/exam_specification";
 import { UUID_Strategy } from "./ExamGenerator";
 import { ncp } from "ncp";
+import { Exam, Question, Section } from "./core";
 
 export namespace ExamUtils {
 
@@ -157,6 +158,22 @@ export namespace ExamUtils {
         { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
       )
     });
+  }
+
+  export function writeExamMedia(media_out_dir: string, exam: Exam, all_sections: readonly Section[], all_questions: readonly Question[]) {
+    
+    // Copy overall exam media
+    exam.media_dir && copyFrontendMedia(exam.media_dir, path.join(media_out_dir, "exam", exam.exam_id));
+
+    // Copy media for all sections
+    all_sections.forEach(
+      s => s?.media_dir && copyFrontendMedia(s.media_dir, path.join(media_out_dir, "section", s.section_id))
+    );
+
+    // Copy media for all questions
+    all_questions.forEach(
+      q => q?.media_dir && copyFrontendMedia(q.media_dir, path.join(media_out_dir, "question", q.question_id))
+    );
   }
 }
 

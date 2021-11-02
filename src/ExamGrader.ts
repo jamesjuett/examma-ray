@@ -113,17 +113,20 @@ import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { CHOOSE_ALL } from './core/randomization';
 import { UUID_Strategy } from './ExamGenerator';
+import path from 'path';
 
 
 
 export type ExamGraderOptions = {
   frontend_js_path: string,
+  frontend_media_dir: string,
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/frontend.js",
+  frontend_media_dir: "media",
   uuid_strategy: "plain",
 };
 
@@ -321,7 +324,10 @@ export class ExamGrader {
     }
   }
 
-
+  private writeMedia(outDir: string) {
+    let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
+    ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+  }
 
   public writeStats() {
     writeFrontendJS("out/js", "stats-fitb.js");
@@ -338,6 +344,7 @@ export class ExamGrader {
     del.sync(`${examDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend-graded.js");
+    this.writeMedia(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
