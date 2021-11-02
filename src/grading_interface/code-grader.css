@@ -35,7 +35,6 @@ body {
   top: 0;
   width: 200px;
   overflow-y: auto;
-  padding-top: 1em;
   height: 100%;
   border-left: #dedede;
 }

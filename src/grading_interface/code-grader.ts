@@ -94,7 +94,7 @@ $(() => {
       </div>
     </div>
     <div class="examma-ray-grading-right-panel">
-      <div style="position: sticky; top: 0; text-align: center; background: white; z-index: 10">
+      <div style="position: sticky; top: 0; text-align: center; background: white; z-index: 10; padding-top: 1em;">
         <button class="btn btn-default examma-ray-grading-finished-button">Mark as Finished</button>
         <hr />
       </div>
