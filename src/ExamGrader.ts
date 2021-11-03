@@ -114,6 +114,7 @@ import { Exam, Question, Section } from './core/exam_components';
 import { CHOOSE_ALL } from './core/randomization';
 import { UUID_Strategy } from './ExamGenerator';
 import path from 'path';
+import { ICON_BOX_CHECK } from './core/icons';
 
 
 
@@ -493,7 +494,7 @@ export class ExamGrader {
       let question_overview: string;
       let avg: number | undefined;
       if (!grader) {
-        header = `<h4>${question.question_id}</h4>`;
+        header = `<b>${question.question_id}</b> (No grader registered)`;
         question_overview = "No grader for this question.";
       }
       else {
@@ -509,6 +510,7 @@ export class ExamGrader {
       return `<div class="examma-ray-question-overview">
         <div id="${overview_id}" class="card">
           <div class="card-header">
+            <span ${gradedQuestions.length < assignedQuestions.length ? 'style="visibility: hidden;"' : ""}>${ICON_BOX_CHECK}</span>
             ${renderGradingProgressBar(gradedQuestions.length, assignedQuestions.length)}
             ${renderPointsProgressBar(avg ?? 0, question.pointsPossible)}
             <a class="nav-link" data-toggle="collapse" data-target="#${overview_id}-details" role="button" aria-expanded="false" aria-controls="${overview_id}-details">${header}</a>

@@ -51,16 +51,16 @@ export class IndividualizedNormalCurve extends ExamCurve {
       adjustedScore: adjustedScore,
       report_html: `
         <h2>Exam Curve</h2>
-        <div>
+        <div class="alert alert-primary">
           <p>Due to randomization, your exam was different from everyone else's. However, because each individual question was still taken by a large number of students, we are able to statistically compute what the overall score distribution would have been if everyone had taken your exam. Then, we curve all exams individually to the same target distribution. Students who took more difficult exams will have a more generous curve.</p>
 
           <p>Please note that this curving mechanism does not guarantee a boost to every students' score. In fact, the literal adjustment may bring most high scores down, given a smaller target standard deviation. In this case, we use the raw score rather than the curved score.</p>
 
           <p>If everyone had taken your version of the exam, the mean raw score would have been <b>${maxPrecisionString(indExamMean, 5)}</b> with a standard deviation of <b>${maxPrecisionString(indExamStddev, 5)}</b>.</p>
 
-          <p>Your raw score on this exam was <b>${maxPrecisionString(ex.pointsEarned, 5)}</b>, which corresponds to a z-score of <b>${maxPrecisionString(zScore, 5)}</b> given this distribution.</p>
+          <p>Your raw score on this exam was <b>${maxPrecisionString(ex.pointsEarned, 5)}</b>, which corresponds to a z-score of <b>${maxPrecisionString(zScore, 5)}</b> ( (${maxPrecisionString(ex.pointsEarned, 5)} - ${maxPrecisionString(indExamMean, 5)}) / ${maxPrecisionString(indExamStddev, 5)} ) given this distribution.</p>
           
-          <p>We curved the exam to a target mean of <b>${maxPrecisionString(this.targetMean, 5)}</b> and standard deviation of <b>${maxPrecisionString(this.targetStddev, 5)}</b>. Applying your z-score yields a curved score of <b>${maxPrecisionString(curvedScore, 5)}</b> (${`${this.targetMean} + ${maxPrecisionString(zScore, 5)} * ${this.targetStddev}`}).</p>
+          <p>We curved the exam to a target mean of <b>${maxPrecisionString(this.targetMean, 5)}</b> and standard deviation of <b>${maxPrecisionString(this.targetStddev, 5)}</b>. Applying your z-score yields a curved score of <b>${maxPrecisionString(curvedScore, 5)}</b> (${this.targetMean} + ${maxPrecisionString(zScore, 5)} * ${this.targetStddev}).</p>
 
           <p>Your final score is the higher of your raw/curved score: <b>${maxPrecisionString(adjustedScore, 5)}</b></p>
 
