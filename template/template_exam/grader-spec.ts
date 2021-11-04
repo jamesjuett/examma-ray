@@ -17,4 +17,4 @@ export const EXAM_GRADER = new ExamGrader(EXAM, {
 }, GRADERS, EXCEPTIONS);
 
 
-export const CURVE : ExamCurve | undefined = undefined; //new IndividualizedNormalCurve(EXAM_GRADER.stats, 84, 9);
+export const CURVE : ExamCurve | undefined = undefined; //new IndividualizedNormalCurve(EXAM_GRADER.stats, 84, 9, true);

@@ -304,7 +304,11 @@ export class ExamGrader {
   }
 
   public applyCurve(curve: ExamCurve) {
+    assert(!this.curve, "A grader may only apply one curve.");
+    asMutable(this).curve = curve;
+    curve.initialize(this);
     this.submittedExams.forEach(ex => ex.isGraded() && ex.applyCurve(curve));
+    curve.lock(this);
   }
 
   // public prepareManualGrading() {
@@ -374,7 +378,10 @@ export class ExamGrader {
       .map(ex => {
         let student_data : {[index:string]: any} = {};
         student_data["uniqname"] = ex.student.uniqname;
-        student_data["total"] = ex.pointsEarned;
+        student_data["raw_total"] = ex.pointsEarned;
+        if (ex.curve) {
+          student_data["curved_total"] = ex.curve.adjustedScore;
+        }
         ex.assignedSections.forEach(s => s.assignedQuestions.forEach(q => student_data[q.question.question_id] = q.pointsEarned));
 
         if (ex.curve) {
@@ -386,7 +393,13 @@ export class ExamGrader {
 
     
     writeFileSync(`out/${this.exam.exam_id}/graded/scores.csv`, unparse({
-      fields: ["uniqname", "total", "individual_exam_mean", "individual_exam_stddev", ...this.allQuestions.map(q => q.question_id)],
+      fields: [
+        "uniqname",
+        "raw_total",
+        ...(this.curve ? ["curved_total"] : []),
+        "individual_exam_mean",
+        "individual_exam_stddev",
+        ...this.allQuestions.map(q => q.question_id)],
       data: data
     }));
   }
