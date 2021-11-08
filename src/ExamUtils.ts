@@ -215,7 +215,7 @@ export function writeFrontendJS(outDir: string, filename: string) {
           console.log("Cannot resolve and copy frontend JS, using local copy instead.");
         }
         catch(e) {
-          console.log("Failed to find and copy frontend JS".red);
+          console.log(`Failed to find and copy frontend JS: ${filename}`.red);
         }
       }
     }

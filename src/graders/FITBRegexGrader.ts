@@ -196,17 +196,17 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
     let sampleSolution = question.sampleSolution;
-    let solutionFilled = createFilledFITB(question.response.content, sampleSolution);
+    // let solutionFilled = createFilledFITB(question.response.content, sampleSolution);
+    const gqs = aqs.filter((aq: AssignedQuestion) : aq is GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult> => aq.isGraded());
 
-
-    return `<table class="table" style="border-collapse: separate; border-spacing: 0;">
+    const table = `<table class="table" style="border-collapse: separate; border-spacing: 0;">
       <tr>
-        <th style="position: sticky; left: 0; top: 0; z-index: 11; background-color: white; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">Sample Solution</th>
+        <th style="position: sticky; left: 0; top: 0; z-index: 11; background-color: white; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">Overview</th>
         ${this.rubric.map(ri => `<th style="position: sticky; top: 0; z-index: 10; background: white; z-index: 10; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6;">Blank ${ri.blankIndex} <button class="examma-ray-blank-saver btn btn-primary" data-blank-num="${ri.blankIndex - 1}">Copy</button></th>`).join("")}
       </tr>
       <tr>
       <td style="position: sticky; left: 0; background-color: white; border-top: none; border-right: 1px solid #dee2e6;">
-        <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${solutionFilled}</div>
+        <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${this.renderOverview(gqs)}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
             ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
@@ -215,6 +215,40 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       </tr>
 
     </table>`;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <meta charset="UTF-8">
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+      <script src="../js/grader-page-fitb.js"></script>
+      <body>
+        <div style="margin: 2em">
+          ${question.question_id}
+        </div>
+        ${table}
+        <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Selected Answers</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <pre><code class="checked-submissions-content"></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </body>
+      </html>
+    `;
   }
 
   private getGradedBlanksSubmissions(submissions: readonly FITBSubmission[]) {
@@ -246,7 +280,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     return gradedBlankSubmissions;
   }
 
-  public renderOverview(gqs: readonly GradedQuestion<"fill_in_the_blank">[]) {
+  public renderOverview(gqs: readonly GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>[]) {
     let question = gqs[0].question;
     let submissions = gqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
@@ -257,7 +291,11 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
     let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i] ?? ""}`));
     let solutionFilled = createFilledFITB(question.response.content, blankBars, s=>s, s=>s, s=>s);
-    return solutionFilled;
+    return `
+    <div class="examma-ray-fitb-regex-overview">
+      ${solutionFilled}
+    </div>
+    `;
   }
 
 }

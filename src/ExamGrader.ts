@@ -334,10 +334,10 @@ export class ExamGrader {
     ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
-  public writeStats() {
-    writeFrontendJS("out/js", "stats-fitb.js");
+  public writeGraderPages() {
+    writeFrontendJS(`out/${this.exam.exam_id}/graded/js`, "grader-page-fitb.js");
 
-    console.log("Rendering question stats files...");
+    console.log("Rendering grader pages...");
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
@@ -362,10 +362,9 @@ export class ExamGrader {
   }
 
   public writeAll() {
-
-    this.writeStats();
-    this.writeOverview();
     this.writeScoresCsv();
+    this.writeOverview();
+    this.writeGraderPages();
   }
 
   private createGradedFilenameBase(ex: AssignedExam) {
@@ -427,49 +426,7 @@ export class ExamGrader {
     let aqs = this.getAllAssignedQuestionsById(question.question_id);
     let statsReport = grader.renderStats(aqs);
 
-    let header = `
-      <div style="margin: 2em">
-          ${question.question_id}
-      </div>`;
-
-    this.writeStatsFile(out_filename, `
-      ${header}
-      ${statsReport}
-    `);
-  }
-
-  private writeStatsFile(filename: string, body: string) {
-    writeFileSync(filename, `
-      <!DOCTYPE html>
-      <html>
-      <meta charset="UTF-8">
-      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-      <script src="../../../js/stats-fitb.js"></script>
-      <body>
-        ${body}
-        <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Selected Answers</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <pre><code class="checked-submissions-content"></code></pre>
-              </div>
-            </div>
-          </div>
-        </div>
-  
-      </body>
-      </html>`,
-      { encoding: "utf-8" }
-    );
+    writeFileSync(out_filename, statsReport, "utf8");
   }
 
   

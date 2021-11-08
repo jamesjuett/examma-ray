@@ -26,9 +26,7 @@ function main() {
     EXAM_GRADER.applyCurve(CURVE);
   }
 
-  EXAM_GRADER.writeScoresCsv();
-  EXAM_GRADER.writeOverview();
-  EXAM_GRADER.writeStats();
+  EXAM_GRADER.writeAll();
   
   if (reports) {
     EXAM_GRADER.writeReports();

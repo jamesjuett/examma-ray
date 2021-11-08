@@ -327,19 +327,6 @@ code {
   background-color: #c8c8c8;
 }
 
-.examma-ray-question-overview pre code .progress {
-  width: unset;
-  background-color: #c8c8c8;
-}
-
-.examma-ray-question-overview .progress-bar {
-  padding-left: 0.4em;
-  padding-right: 0.4em;
-  font-weight: 600;
-  text-align: left;
-}
-
-
 .examma-ray-students-overview .progress {
   width: 7em;
   background-color: #c8c8c8;
@@ -574,4 +561,19 @@ pre .examma-ray-fitb-droppable pre {
   position: absolute;
   right: -0.5em;
   top: -0.5em;
+}
+
+
+
+
+.examma-ray-fitb-regex-overview pre code .progress {
+  width: unset;
+  background-color: #c8c8c8;
+}
+
+.examma-ray-fitb-regex-overview .progress-bar {
+  padding-left: 0.4em;
+  padding-right: 0.4em;
+  font-weight: 600;
+  text-align: left;
 }

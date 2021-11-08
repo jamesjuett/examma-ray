@@ -6,7 +6,7 @@ module.exports = {
   entry: {
     'frontend': './frontend/frontend',
     'frontend-graded': './frontend/frontend-graded',
-    'stats-fitb': './frontend/stats-fitb',
+    'grader-page-fitb': './frontend/grader-page-fitb',
     'overview': './frontend/overview',
   },
   output: {
