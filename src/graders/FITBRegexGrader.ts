@@ -191,6 +191,10 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   }
 
   public renderStats(aqs: readonly AssignedQuestion<"fill_in_the_blank">[]) {
+    if (aqs.length === 0) {
+      return "No submissions for this question.";
+    }
+    
     let question = aqs[0].question;
     let submissions = aqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
