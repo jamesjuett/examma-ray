@@ -1,29 +1,25 @@
-import { Question } from "./exam_components";
 import { QuestionSpecification } from "./exam_specification";
 import { asMutable } from "./util";
 
 export class QuestionBank {
 
-    public readonly questions: readonly Question[] = [];
-    private readonly questionsById: {[index: string] : Question | undefined } = {};
-    private readonly questionsByTag: {[index: string] : Question[] | undefined } = {};
+    public readonly questions: readonly QuestionSpecification[] = [];
+    private readonly questionsById: {[index: string] : QuestionSpecification | undefined } = {};
+    private readonly questionsByTag: {[index: string] : QuestionSpecification[] | undefined } = {};
   
-    public constructor(questions: readonly (Question | QuestionSpecification)[]) {
+    public constructor(questions: readonly QuestionSpecification[]) {
       questions.forEach(q => this.registerQuestion(q));
     }
   
-    public registerQuestion(q: Question | QuestionSpecification) {
-      if (!(q instanceof Question)) {
-        q = Question.create(q);
-      }
+    public registerQuestion(q: QuestionSpecification) {
       asMutable(this.questions).push(q);
       this.questionsById[q.question_id] = q;
-      q.tags.forEach(tag => 
-        (this.questionsByTag[tag] ??= []).push(<Question>q)
+      q.tags?.forEach(tag => 
+        (this.questionsByTag[tag] ??= []).push(q)
       );
     }
   
-    public registerQuestions(qs: readonly (Question | QuestionSpecification)[]) {
+    public registerQuestions(qs: readonly QuestionSpecification[]) {
       qs.forEach(q => this.registerQuestion(q));
     }
   
