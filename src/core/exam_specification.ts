@@ -98,7 +98,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * skins. A question's skin is used in rendering its description and response.
    * @see [[core/skins]]
    */
-  readonly skin?: ExamComponentSkin | ExamComponentChooserSpecification<"skin">
+  readonly skin?: ExamComponentSkin | SkinChooserSpecification
 
   /**
    * An absolute path to a directory containing media for this question. Media will be
@@ -153,7 +153,7 @@ export type SectionSpecification = {
    * by layering its own skin on top of the section skin).
    * @see [[core/skins]]
    */
-  readonly skin?: ExamComponentSkin | ExamComponentChooserSpecification<"skin">,
+  readonly skin?: ExamComponentSkin | SkinChooserSpecification,
 
   /**
    * The initial width, in percent 0-100, of the reference material for this section.
