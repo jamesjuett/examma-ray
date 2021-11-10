@@ -14,12 +14,16 @@ import del from "del";
 import "colors";
 
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { StudentInfo } from "./core/exam_specification";
+import { ExamSpecification, StudentInfo } from "./core/exam_specification";
 import { UUID_Strategy } from "./ExamGenerator";
 import { ncp } from "ncp";
 import { Exam, Question, Section } from "./core";
 
 export namespace ExamUtils {
+
+  export function loadExamSpecification(filename: string) : ExamSpecification {
+    return JSON.parse(readFileSync(filename, "utf8"));
+  }
 
   export function loadExamAnswers(filename: string) : ExamSubmission {
     return <ExamSubmission>JSON.parse(readFileSync(filename, "utf8"));

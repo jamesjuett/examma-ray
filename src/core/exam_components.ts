@@ -222,6 +222,8 @@ export class Exam {
 
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
+  public readonly spec: ExamSpecification;
+
   public static create(spec: ExamSpecification | Exam) {
     // If an already created exam was passed in, do nothing and return it
     if (spec.component_kind === "component") {
@@ -251,6 +253,8 @@ export class Exam {
     this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
     this.media_dir = spec.media_dir;
+
+    this.spec = spec;
   }
 
   public addAnnouncement(announcement_mk: string) {

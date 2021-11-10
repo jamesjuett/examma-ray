@@ -1,15 +1,15 @@
 import { encode } from "he";
-import { QuestionGrader } from "../graders/QuestionGrader";
-import { applySkin, createSubRenderer, mk2html, mk2html_rewrapped, mk2html_unwrapped } from "../core/render";
+import Sortable from "sortablejs";
+import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
+import { QuestionGrader } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import Sortable from "sortablejs";
-import { Exam, Question, QuestionSpecification, realizeQuestion } from "../core";
 
 export type DroppableSpecification = {
-  [index: string]: string
-};
+  id: string,
+  content: string;
+}[];
 
 // export type DroppableGroupSpecification = {
 //   group: string,
@@ -78,8 +78,8 @@ function createDroppableElement(id: string, html: string) {
 }
 
 function renderDroppables(droppables: DroppableSpecification, group_id: string, skin?: ExamComponentSkin) {
-  return Object.keys(droppables).map(
-    id => createDroppableElement(id, createFilledFITBDrop(droppables[id], droppables, group_id, skin))
+  return droppables.map(
+    droppable => createDroppableElement(droppable.id, createFilledFITBDrop(droppable.content, droppables, group_id, skin))
   ).join("");
 }
 
@@ -299,7 +299,7 @@ function count_char(str: string, c: string) {
 
 export function createFilledFITBDrop(
   content: string,
-  dropOriginals: {[index: string]: string},
+  dropOriginals: DroppableSpecification,
   group_id: string,
   skin?: ExamComponentSkin,
   submission?: FITBDropSubmission,
@@ -365,8 +365,9 @@ export function createFilledFITBDrop(
       typeof sub === "string"
        ? encoder(sub)
        : sub.map(s => {
-          assert(dropOriginals[s.id], `Cannot find drop item with ID ${s.id}.`);
-          return createDroppableElement(s.id, createFilledFITBDrop(dropOriginals[s.id], dropOriginals, group_id, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
+          let droppable = dropOriginals.find(d => d.id === s.id);
+          assert(droppable, `Cannot find drop item with ID ${s.id}.`);
+          return createDroppableElement(s.id, createFilledFITBDrop(droppable.content, dropOriginals, group_id, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
        }).join("")
       )
     );
@@ -399,12 +400,10 @@ function DEFAULT_DROP_BANK_RENDERER(group_id: string) {
   return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}"></div>`;
 }
 
-export function createFITBDropBankSubRenderer(droppables: DroppableSpecification, group_id: string) {
-  return createSubRenderer((skin?: ExamComponentSkin) => {
-    return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}">
-      ${renderDroppables(droppables, group_id, skin)}
-    </div>`;
-  });
+export function renderFITBDropBank(droppables: DroppableSpecification, group_id: string, skin?: ExamComponentSkin) {
+  return `<div class="examma-ray-fitb-drop-bank" data-examma-ray-fitb-drop-group-id="${group_id}">
+    ${renderDroppables(droppables, group_id, skin)}
+  </div>`.replace(/\<pre/g, '<pre markdown="0"');
 }
 
 export function mapSkinOverSubmission(submission: FITBDropSubmission, skin: ExamComponentSkin) : FITBDropSubmission {

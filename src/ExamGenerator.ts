@@ -231,6 +231,12 @@ export class ExamGenerator {
 
   public writeAll(examDir: string = "out", manifestDir: string = "data") {
 
+    // Write exam specification as JSON
+    writeFileSync(
+      `data/${this.exam.exam_id}/exam-spec.json`,
+      JSON.stringify(this.exam.spec, null, 2 )
+    );
+
     examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
     manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);
 
