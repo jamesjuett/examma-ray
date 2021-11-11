@@ -15,18 +15,25 @@ export type SimpleMCGradingResult = ImmutableGradingResult & {
   indexCorrect: number
 }
 
-/**
- * Test wheee
- */
+
+export type SimpleMCGraderSpecification = {
+  readonly grader_kind: "simple_multiple_choice",
+  readonly correct_index: number
+};
+
 export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleMCGradingResult> {
+
+  public readonly spec: SimpleMCGraderSpecification;
+
+  public readonly t_response_kinds!: "multiple_choice";
 
   /**
    *
    * @param correctIndex 0-based index of correct answer.
    */
-  public constructor(
-    public readonly correctIndex: number
-  ) { }
+  public constructor(spec: SimpleMCGraderSpecification) {
+    this.spec = spec;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "multiple_choice";
@@ -44,7 +51,7 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
         wasInvalidSubmission: true,
         pointsEarned: 0,
         indexChosen: -1,
-        indexCorrect: this.correctIndex
+        indexCorrect: this.spec.correct_index
       };
     }
 
@@ -53,7 +60,7 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
         wasBlankSubmission: true,
         pointsEarned: 0,
         indexChosen: -1,
-        indexCorrect: this.correctIndex
+        indexCorrect: this.spec.correct_index
       };
     }
 
@@ -61,9 +68,9 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
 
     return {
       wasBlankSubmission: false,
-      pointsEarned: submission[0] === this.correctIndex ? question.pointsPossible : 0,
+      pointsEarned: submission[0] === this.spec.correct_index ? question.pointsPossible : 0,
       indexChosen: submission[0],
-      indexCorrect: this.correctIndex
+      indexCorrect: this.spec.correct_index
     };
   }
 
@@ -82,12 +89,12 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
       <form>
       ${question.response.choices.map((item, i) => `
         <div><input type="radio" ${i === chosen ? "checked" : "disabled"}/>
-        <label class="examma-ray-mc-option ${i === this.correctIndex ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, aq.skin)}</label></div>`).join("")}
+        <label class="examma-ray-mc-option ${i === this.spec.correct_index ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, aq.skin)}</label></div>`).join("")}
       </form>
       
       `;
     if (chosen !== -1) {
-      report += `<span class="examma-ray-grading-annotation">${chosen === this.correctIndex ? `You selected item ${chosen + 1}, which was correct.` : `You selected item ${chosen + 1}, but the correct answer was item ${this.correctIndex + 1}.`}</span>`;
+      report += `<span class="examma-ray-grading-annotation">${chosen === this.spec.correct_index ? `You selected item ${chosen + 1}, which was correct.` : `You selected item ${chosen + 1}, but the correct answer was item ${this.spec.correct_index + 1}.`}</span>`;
     }
     else {
       report += `<span class="examma-ray-grading-annotation">You did not select an answer for this question.`;
@@ -120,11 +127,11 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     }
     selectionChoices.forEach(c => ++hist[c]);
 
-    let numCorrect = selectionChoices.filter(c => c === this.correctIndex).length;
+    let numCorrect = selectionChoices.filter(c => c === this.spec.correct_index).length;
     let percentCorrect = numCorrect / submissions.length;
 
     return `
-      ${hist.map((count, i) => `<div class="examma-ray-mc-option">${renderNumBadge(count)} ${i === this.correctIndex ? CHECK_ICON : RED_X_ICON} ${mk2html(question.response.choices[i])}</div>`).join("")}
+      ${hist.map((count, i) => `<div class="examma-ray-mc-option">${renderNumBadge(count)} ${i === this.spec.correct_index ? CHECK_ICON : RED_X_ICON} ${mk2html(question.response.choices[i])}</div>`).join("")}
       <div class="examma-ray-mc-option">${renderNumBadge(numBlank)} ${RED_X_ICON} BLANK</div>
       ${numInvalid === 0 ? "" : `<div class="examma-ray-mc-option">${renderNumBadge(numInvalid)} ${RED_X_ICON} INVALID</div>`}
     `;

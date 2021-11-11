@@ -28,16 +28,25 @@ ________BLANK________ (int x, int y)
   ]]
 }
 \`\`\``,
-    droppables: {
-      "item1":
+    droppables: [
+      {
+        id: "item1",
+        content:
 `\`\`\`cpp
 for(int i = 0; [[_____DROP_____  ]]; ++i) {
   cout << "____blank____" << endl;
 }
 \`\`\``,
-      "item2": "item-test-2",
-      "item3": "item-test-3"
-    },
+      },
+      {
+        id: "item2",
+        content:"item-test-2"
+      },
+      {
+        id: "item3",
+        content: "item-test-3"
+      }
+    ],
     starter: [
       "starter-blank",
       [{

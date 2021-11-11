@@ -31,6 +31,7 @@ const skinned_mk_cache = new Map<string, Map<string, string>>();
   
 // }
 
+
 export function mk2html(mk: string, skin?: ExamComponentSkin) {
   // console.log("rendering mk"); // useful for debugging repeated (i.e. non-cached) mk renders
   if (skin) {
@@ -41,7 +42,7 @@ export function mk2html(mk: string, skin?: ExamComponentSkin) {
       return mk_cache.get(mk)!;
     }
 
-    let rendered = runSubRenderers(converter.makeHtml(mk));
+    let rendered = skinFriendlyMakeHtml(mk);
     mk_cache.set(mk, rendered);
     return rendered;
   }
@@ -58,7 +59,7 @@ function mk2html_with_skin(mk: string, skin: ExamComponentSkin) {
     return cache_for_this_skin.get(mk)!;
   }
 
-  let rendered = runSubRenderers(converter.makeHtml(applySkin(mk, skin)), skin);
+  let rendered = skinFriendlyMakeHtml(applySkin(mk, skin));
   cache_for_this_skin.set(mk, rendered);
   return rendered;
 }
@@ -92,19 +93,27 @@ export function highlightCode(text: string, language: string) {
   return hljs.highlight(language, text).value;
 }
 
-type SubRenderer = (skin?: ExamComponentSkin) => string;
-const SUB_RENDERER_PLACEHOLDER = "wiuglanadghxnwngslsehshd";
-const SUB_RENDERER_PLACEHOLDER_REGEX = new RegExp(SUB_RENDERER_PLACEHOLDER + "([0-9]+)", "g");
-const SUB_RENDERERS : SubRenderer[] = [];
-let current_sub_renderer = 0;
+const SKIN_PLACEHOLDER_SUB = "wiuglanadghxnwngslsehshd";
+const SKIN_PLACEHOLDER_SUB_REGEX = new RegExp(SKIN_PLACEHOLDER_SUB, "g");
 
-export function createSubRenderer(subRenderer: SubRenderer) {
-  SUB_RENDERERS.push(subRenderer);
-  return " " + SUB_RENDERER_PLACEHOLDER + (current_sub_renderer++) + " ";
-}
+/**
+ * Uninstantiated skins with patterns like "{{placeholder}}" don't play nicely
+ * with syntax highlighting in markdown code blocks since they mess with parsing.
+ * So we systematically replace them with placeholders that do render nicely,
+ */
+function skinFriendlyMakeHtml(mk: string) {
+  let saved: string[] = [];
 
-function runSubRenderers(mk: string, skin?: ExamComponentSkin) {
-  return mk.replace(SUB_RENDERER_PLACEHOLDER_REGEX, (match, index) => {
-    return SUB_RENDERERS[parseInt(index)](skin);
+  // replace all the {{blah}} with placeholders, while saving each {{blah}}
+  mk = mk.replace(/\{\{[^\{\}]*\}\}/g, (match) => {
+    saved.push(match);
+    return SKIN_PLACEHOLDER_SUB;
+  });
+
+  let html = converter.makeHtml(mk);
+  
+  let i = 0;
+  return html.replace(SKIN_PLACEHOLDER_SUB_REGEX, () => {
+    return saved[i++];
   });
 }

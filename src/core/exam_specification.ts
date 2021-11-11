@@ -55,9 +55,10 @@ import { CHOOSE_ALL, Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "../response/common";
 import { ResponseSpecification } from "../response/responses";
-import { ExamComponentSkin, SkinChooser } from "./skins";
-import { assert } from "./util";
+import { ExamComponentSkin } from "./skins";
+import { assert, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
+import { quantileSorted } from "simple-statistics";
 
 
 
@@ -97,7 +98,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * skins. A question's skin is used in rendering its description and response.
    * @see [[core/skins]]
    */
-  readonly skin?: ExamComponentSkin | SkinChooser
+  readonly skin?: ExamComponentSkin | SkinChooserSpecification
 
   /**
    * An absolute path to a directory containing media for this question. Media will be
@@ -143,7 +144,7 @@ export type SectionSpecification = {
    * @see [[QuestionSpecification]]
    * @see [[QuestionChooser]]
    */
-  readonly questions: readonly (QuestionSpecification | QuestionChooser)[],
+  readonly questions: readonly (QuestionSpecification | QuestionChooserSpecification)[],
   
   /**
    * A skin for this section, or a "chooser" that selects a skin from a set of possible
@@ -152,7 +153,7 @@ export type SectionSpecification = {
    * by layering its own skin on top of the section skin).
    * @see [[core/skins]]
    */
-  readonly skin?: ExamComponentSkin | SkinChooser,
+  readonly skin?: ExamComponentSkin | SkinChooserSpecification,
 
   /**
    * The initial width, in percent 0-100, of the reference material for this section.
@@ -198,7 +199,7 @@ export type ExamSpecification = {
    * @see [[SectionSpecification]]
    * @see [[SectionChooser]]
    */
-  readonly sections: readonly (SectionSpecification | SectionChooser)[],
+  readonly sections: readonly (SectionSpecification | SectionChooserSpecification)[],
 
   /**
    * Markdown-formatted announcements that will be shown in an "alert" style box at the top of the exam,
@@ -258,17 +259,118 @@ export function isValidID(id: string) {
 
 
 
-export interface QuestionChooser {
-  component_kind: "chooser",
-  chooser_kind: "question",
-  choose(exam: Exam, student: StudentInfo, rand: Randomizer) : readonly Question[];
-  getById(id: string) : Question | undefined;
+
+
+
+type ChooserStrategySpecification = {
+  kind: "random_1";
+} | {
+  kind: "random_n";
+  n: number;
+} | {
+  kind: "shuffle";
 }
 
-export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooser) {
-  return q.component_kind === "chooser" ? q :
+type ChooserKind = "section" | "question" | "skin";
+
+type ChoiceKind = {
+  "section": SectionSpecification,
+  "question": QuestionSpecification,
+  "skin": ExamComponentSkin
+};
+
+interface ExamComponentChooserSpecification<CK extends ChooserKind> {
+  readonly component_kind: "chooser_specification";
+  readonly chooser_kind: CK;
+  readonly choices: readonly (ChoiceKind[CK] | ExamComponentChooserSpecification<CK>)[];
+  readonly strategy: ChooserStrategySpecification;
+}
+
+export type SectionChooserSpecification = ExamComponentChooserSpecification<"section">;
+
+export type QuestionChooserSpecification = ExamComponentChooserSpecification<"question">;
+
+export type SkinChooserSpecification = ExamComponentChooserSpecification<"skin">;
+
+interface ExamComponentChooser<CK extends ChooserKind> {
+  readonly component_kind: "chooser";
+  readonly chooser_kind: CK;
+  choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly ChoiceKind[CK][];
+  getById(id: string): ChoiceKind[CK] | undefined;
+}
+
+/**
+ * A `SectionChooser` selects an array of questions given an exam, a student,
+ * and a source of randomness. You may define your own or use a predefined chooser:
+ * - [[RANDOM_SECTION]]
+ */
+export type SectionChooser = ExamComponentChooser<"section">;
+
+export type QuestionChooser = ExamComponentChooser<"question">;
+
+export type SkinChooser = ExamComponentChooser<"skin">;
+
+export function realizeChooser<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) : ExamComponentChooser<CK> {
+  return {
+    component_kind: "chooser",
+    chooser_kind: spec.chooser_kind,
+    choose: createChooseFunction(spec),
+    getById: createGetByIdFunction(spec)
+  }
+}
+
+// choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+//   let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
+//   return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
+// },
+// getById: (question_id: string) => {
+//   return questions
+//     .map(q => realizeQuestion(q))
+//     .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
+//     .find(q => q?.question_id === question_id);
+// }
+
+function localChoose<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return rand === CHOOSE_ALL ? spec.choices :
+    spec.strategy.kind === "random_1" ? [rand.choose_one(spec.choices)] :
+    spec.strategy.kind === "random_n" ? rand.chooseN(spec.choices, spec.strategy.n) :
+    spec.strategy.kind === "shuffle" ? rand.shuffle(spec.choices) :
+    assertNever(spec.strategy);
+}
+
+function createChooseFunction<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>)
+  : (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly ChoiceKind[CK][] {
+  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    return localChoose(spec, exam, student, rand).flatMap(c =>
+      c.component_kind === "chooser_specification" ? createChooseFunction(c)(exam, student, rand) : c
+    );
+  };
+};
+
+function createGetByIdFunction<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) {
+  return (
+    spec.chooser_kind === "section" ? (id: string) => (spec.choices as readonly SectionSpecification[]).find(c => c.section_id === id) :
+    spec.chooser_kind === "question" ? (id: string) => (spec.choices as readonly QuestionSpecification[]).find(c => c.question_id === id) :
+    spec.chooser_kind === "skin" ? (id: string) => (spec.choices as readonly ExamComponentSkin[]).find(c => c.skin_id === id) :
+    assertNever(spec.chooser_kind)
+  ) as (id: string) => ChoiceKind[CK] | undefined;
+}
+
+
+
+export function realizeQuestion(q: QuestionSpecification | Question) : Question;
+export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser) : Question | QuestionChooser;
+export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser) {
+  return q.component_kind === "chooser_specification" ? realizeChooser(q) :
+    q.component_kind === "chooser" ? q :
     q.component_kind === "component" ? q :
     Question.create(q);
+}
+
+export function realizeQuestions(questions: readonly (QuestionSpecification | Question)[]) : readonly Question[];
+export function realizeQuestions(questions: readonly (QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser)[]) : readonly (Question | QuestionChooser)[];
+export function realizeQuestions(questions: readonly (QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser)[]) {
+  return <readonly Question[]>questions.map(realizeQuestion);
 }
 
 export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -292,22 +394,17 @@ export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam,
  * @param questionBank The bank to choose questions from
  * @returns 
  */
-export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank): QuestionChooser {
+export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
+  let qs = questions instanceof QuestionBank ? questions.questions : questions;
   return {
-    component_kind: "chooser",
+    component_kind: "chooser_specification",
     chooser_kind: "question",
-    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-      let qs = questionBank.getQuestionsByTag(tag);
-      if (rand === CHOOSE_ALL) {
-        return qs;
-      }
-      assert(n <= qs.length, `Error - cannot choose ${n} questions for tag "${tag}" that only has ${qs.length} associated questions.`);
-      return rand.chooseN(qs, n);
-    },
-    getById: (question_id: string) => {
-      return questionBank.getQuestionById(question_id);
+    choices: qs.filter(q => q.tags?.indexOf(tag) !== -1),
+    strategy: {
+      kind: "random_n",
+      n: n
     }
-  }
+  };
 }
 
 /**
@@ -318,48 +415,38 @@ export function RANDOM_BY_TAG(tag: string, n: number, questionBank: QuestionBank
  * @param questions 
  * @returns 
  */
-export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (QuestionSpecification | Question)[]): QuestionChooser {
-  let qBank: QuestionBank =
-    questions instanceof QuestionBank ? questions :
-    new QuestionBank(questions);
-
+export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
+  let qs = questions instanceof QuestionBank ? questions.questions : questions;
   return {
-    component_kind: "chooser",
+    component_kind: "chooser_specification",
     chooser_kind: "question",
-    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-      let qs = qBank.questions;
-      if (rand === CHOOSE_ALL) {
-        return qs;
-      }
-      assert(n <= qs.length, `Error - cannot choose ${n} questions from a question bank that only has ${qs.length} questions.`);
-      return rand.chooseN(qs, n);
-    },
-    getById: (question_id: string) => {
-      return qBank.getQuestionById(question_id);
+    choices: qs,
+    strategy: {
+      kind: "random_n",
+      n: n
     }
-  }
+  };
 }
 
 
 
 
 
-/**
- * A `SectionChooser` selects an array of questions given an exam, a student,
- * and a source of randomness. You may define your own or use a predefined chooser:
- * - [[RANDOM_SECTION]]
- */
-export interface SectionChooser {
-  component_kind: "chooser";
-  chooser_kind: "section",
-  choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly Section[];
-  getById(section_id: string): Section | undefined;
-}
 
-export function realizeSection(s: SectionSpecification | Section | SectionChooser) {
-  return s.component_kind === "chooser" ? s :
+
+export function realizeSection(s: SectionSpecification | Section) : Section;
+export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) : Section | SectionChooser;
+export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) {
+  return s.component_kind === "chooser_specification" ? realizeChooser(s) :
+    s.component_kind === "chooser" ? s :
     s.component_kind === "component" ? s :
     Section.create(s);
+}
+
+export function realizeSections(sections: readonly (SectionSpecification | Section)[]) : readonly Section[];
+export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) : readonly (Section | SectionChooser)[];
+export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) {
+  return <readonly Section[]>sections.map(realizeSection);
 }
 
 export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -372,22 +459,16 @@ export function chooseSections(chooser: Section | SectionChooser, exam: Exam, st
  * @param sections 
  * @returns 
  */
-export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | Section)[]): SectionChooser {
+export function RANDOM_SECTION(n: number, sections: readonly SectionSpecification[]): SectionChooserSpecification {
   return {
-    component_kind: "chooser",
+    component_kind: "chooser_specification",
     chooser_kind: "section",
-    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-      if (rand === CHOOSE_ALL) {
-        return sections.map(s => s instanceof Section ? s : Section.create(s));
-      }
-      assert(n <= sections.length, `Error - cannot choose ${n} sections from a set of ${sections.length} sections.`);
-      return rand.chooseN(sections, n).map(s => s instanceof Section ? s : Section.create(s));
-    },
-    getById: (section_id: string) => {
-      let match = sections.find(s => s.section_id === section_id);
-      return match && Section.create(match);
+    choices: sections,
+    strategy: {
+      kind: "random_n",
+      n: n
     }
-  }
+  };
 }
 
 export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Omit<QuestionSpecification, "response">>) : QuestionSpecification;
@@ -401,9 +482,9 @@ export function CUSTOMIZE(spec: any, customizations: any) {
 }
 
 
-export function SHUFFLE(questions: QuestionSpecification | QuestionChooser | readonly(QuestionSpecification | QuestionChooser)[]) : QuestionChooser;
-export function SHUFFLE(sections: SectionSpecification | SectionChooser | readonly(SectionSpecification | SectionChooser)[]) : SectionChooser;
-export function SHUFFLE(sectionsOrQuestions: QuestionSpecification | QuestionChooser | SectionSpecification | SectionChooser | readonly(QuestionSpecification | QuestionChooser)[] | readonly(SectionSpecification | SectionChooser)[]) : QuestionChooser | SectionChooser {
+export function SHUFFLE(questions: QuestionSpecification | QuestionChooserSpecification | readonly(QuestionSpecification | QuestionChooserSpecification)[]) : QuestionChooserSpecification;
+export function SHUFFLE(sections: SectionSpecification | SectionChooserSpecification | readonly(SectionSpecification | SectionChooserSpecification)[]) : SectionChooserSpecification;
+export function SHUFFLE(sectionsOrQuestions: QuestionSpecification | QuestionChooserSpecification | SectionSpecification | SectionChooserSpecification | readonly(QuestionSpecification | QuestionChooserSpecification)[] | readonly(SectionSpecification | SectionChooserSpecification)[]) : QuestionChooserSpecification | SectionChooserSpecification {
   if(!Array.isArray(sectionsOrQuestions)) {
     // If not an array, it's a single specification or chooser.
     // Pack it in an array and cast to make the type system happy.
@@ -414,43 +495,41 @@ export function SHUFFLE(sectionsOrQuestions: QuestionSpecification | QuestionCho
   let first = sectionsOrQuestions[0];
   if (first.component_kind === "specification" && (<QuestionSpecification & SectionSpecification>first).question_id
     || first.component_kind === "chooser" && first.chooser_kind === "question") {
-      return SHUFFLE_QUESTIONS(<readonly(QuestionSpecification | QuestionChooser)[]>sectionsOrQuestions);
+      return SHUFFLE_QUESTIONS(<readonly(QuestionSpecification | QuestionChooserSpecification)[]>sectionsOrQuestions);
   }
   else {
-    return SHUFFLE_SECTIONS(<readonly(SectionSpecification | SectionChooser)[]>sectionsOrQuestions);
+    return SHUFFLE_SECTIONS(<readonly(SectionSpecification | SectionChooserSpecification)[]>sectionsOrQuestions);
   }
 }
 
-function SHUFFLE_QUESTIONS(questions: readonly(QuestionSpecification | QuestionChooser)[]) : QuestionChooser {
+function SHUFFLE_QUESTIONS(questions: readonly(QuestionSpecification | QuestionChooserSpecification)[]) : QuestionChooserSpecification {
   return {
-    component_kind: "chooser",
+    component_kind: "chooser_specification",
     chooser_kind: "question",
-    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-      let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
-      return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
-    },
-    getById: (question_id: string) => {
-      return questions
-        .map(q => realizeQuestion(q))
-        .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
-        .find(q => q?.question_id === question_id);
+    choices: questions,
+    strategy: {
+      kind: "shuffle"
     }
+    // choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
+    //   let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
+    //   return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
+    // },
+    // getById: (question_id: string) => {
+    //   return questions
+    //     .map(q => realizeQuestion(q))
+    //     .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
+    //     .find(q => q?.question_id === question_id);
+    // }
   }
 }
 
-function SHUFFLE_SECTIONS(sections: readonly(SectionSpecification | SectionChooser)[]) : SectionChooser {
+function SHUFFLE_SECTIONS(sections: readonly(SectionSpecification | SectionChooserSpecification)[]) : SectionChooserSpecification {
   return {
-    component_kind: "chooser",
+    component_kind: "chooser_specification",
     chooser_kind: "section",
-    choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-      let qs = sections.map(q => realizeSection(q)).flatMap(q => chooseSections(q, exam, student, rand));
-      return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
-    },
-    getById: (section_id: string) => {
-      return sections
-        .map(q => realizeSection(q))
-        .map(q => q.component_kind === "chooser" ? q.getById(section_id) : q)
-        .find(q => q?.section_id === section_id);
+    choices: sections,
+    strategy: {
+      kind: "shuffle"
     }
   }
 }

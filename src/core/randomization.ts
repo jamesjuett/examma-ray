@@ -22,7 +22,7 @@ class SeededRandomizerImpl {
     return this.rng.range(n);
   };
 
-  public choose<T>(choices: readonly T[]) {
+  public choose_one<T>(choices: readonly T[]) {
     assert(choices.length > 0, "No choices available.");
     return choices[this.rng.range(choices.length)];
   };

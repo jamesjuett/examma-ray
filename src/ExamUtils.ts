@@ -14,12 +14,47 @@ import del from "del";
 import "colors";
 
 import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { StudentInfo } from "./core/exam_specification";
+import { ExamSpecification, StudentInfo } from "./core/exam_specification";
 import { UUID_Strategy } from "./ExamGenerator";
 import { ncp } from "ncp";
 import { Exam, Question, Section } from "./core";
 
 export namespace ExamUtils {
+
+  export function loadExamSpecification(filename: string) : ExamSpecification {
+    return JSON.parse(
+      readFileSync(filename, "utf8"),
+      (key: string, value: any) => {
+        if (typeof value === "object" && typeof value["examma_ray_serialized_regex"] === "object") {
+          return new RegExp(
+            value["examma_ray_serialized_regex"]["source"],
+            value["examma_ray_serialized_regex"]["flags"]
+          );
+        }
+        return value;
+      }
+    );
+  }
+
+  export function saveExamSpecification(filename: string, spec: ExamSpecification) {
+    writeFileSync(filename,
+      JSON.stringify(
+        spec,
+        (key: string, value: any) => {
+          if (value instanceof RegExp) {
+            return {
+              examma_ray_serialized_regex: {
+                source: value.source,
+                flags: value.flags
+              }
+            }
+          }
+          return value;
+        },
+        2
+      )
+    ,"utf8");
+  }
 
   export function loadExamAnswers(filename: string) : ExamSubmission {
     return <ExamSubmission>JSON.parse(readFileSync(filename, "utf8"));

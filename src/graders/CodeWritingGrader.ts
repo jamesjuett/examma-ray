@@ -36,23 +36,29 @@ export type CodeWritingGradingResult = GradingResult & {
 
 
 
-
+export type CodeWritingGraderSpecification = {
+  readonly grader_kind: "manual_code_writing",
+  readonly rubric: readonly CodeWritingRubricItem[],
+}
 
 export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWritingGradingResult> {
 
-  public readonly rubric: readonly CodeWritingRubricItem[];
+  public readonly t_response_kinds!: ResponseKind;
+
+  public readonly spec: CodeWritingGraderSpecification;
+
   private manualGrading?: readonly CodeWritingGradingAssignment[];
   private manualGradingMap?: {[index: string]: CodeWritingGradingResult | undefined};
 
-  public constructor(rubric: readonly CodeWritingRubricItem[]) {
-    this.rubric = rubric;
+  public constructor(spec: CodeWritingGraderSpecification) {
+    this.spec = spec;
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return true;
   }
 
-  public prepare(exam_id: string, question_id: string, manual_grading: readonly CodeWritingGradingAssignment[]) {
+  public prepare(exam_id: string, question_id: string, manual_grading: any[]/*readonly CodeWritingGradingAssignment[]*/) {
     if (this.manualGrading) {
       return;
     }
@@ -77,7 +83,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   //   this.writeGradingAssignments(aqs[0].exam.exam_id, aqs[0].question.question_id, assns);
   // }
 
-  public grade(aq: AssignedQuestion) : CodeWritingGradingResult | undefined {
+  public grade(aq: AssignedQuestion<ResponseKind>) : CodeWritingGradingResult | undefined {
     assert(this.manualGradingMap, "Grader prepare() function must be called before attempting grading.");
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission === "") {
@@ -92,7 +98,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   }
 
   public pointsEarned(gr: CodeWritingGradingResult) {
-    return Object.values(this.rubric).reduce((p, ri) => p + (gr.itemResults[ri.id]?.status === "on" ? ri.points : 0), 0);
+    return Object.values(this.spec.rubric).reduce((p, ri) => p + (gr.itemResults[ri.id]?.status === "on" ? ri.points : 0), 0);
   }
 
   public renderReport(aq: GradedQuestion<ResponseKind, CodeWritingGradingResult>) {
@@ -187,7 +193,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <tr>
           <td>
             <ul class="list-group examma-ray-manual-graded-rubric">
-              ${this.rubric.map(ri => {
+              ${this.spec.rubric.map(ri => {
                 let itemResult = res.itemResults[ri.id];
                 let statusClass = "";
                 if (itemResult?.status === "on") {

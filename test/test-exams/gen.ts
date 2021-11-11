@@ -4,7 +4,7 @@ import { CUSTOMIZE, QuestionSpecification } from "../../src/core/exam_specificat
 import { Test_Question_MC_Multiple, Test_Question_MC_Multiple_Limit_3, Test_Question_MC_Single } from "./content/mc";
 import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
-import { createFITBDropBankSubRenderer } from "../../src/response/fitb-drop";
+import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
@@ -35,7 +35,7 @@ function genTestExam(exam: Exam) {
     name: "Test Student",
     uniqname: "test"
   });
-  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "out"));
+  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "data"));
 }
 
 
@@ -72,15 +72,18 @@ genTestExam(Exam.create({
 `[Section Reference]
 
 \`fitb_drop_test_1\`
-${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_1")}
+
+${renderFITBDropBank(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_1")}
 <br />
 <br />
+
 \`fitb_drop_test_2\`
-${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_2")}
+${renderFITBDropBank(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_2")}
 <br />
 <br />
+
 \`fitb_drop_test_3\`
-${createFITBDropBankSubRenderer(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_3")}
+${renderFITBDropBank(Test_Question_Fitb_Drop.response.droppables, "fitb_drop_test_3")}
 `,
       questions: [
         CUSTOMIZE(Test_Question_Fitb_Drop, {question_id: "fitb_drop_test_1"}),

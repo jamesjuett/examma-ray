@@ -99,8 +99,8 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './core/submissions';
 import { AssignedExam, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
 import { GradedExamRenderer } from './core/exam_renderer';
-import { QuestionGrader } from './graders/QuestionGrader';
-import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
+import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
+import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
 import { asMutable, assert, assertFalse, Mutable } from './core/util';
 import { unparse } from 'papaparse';
 import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
@@ -160,7 +160,7 @@ export class ExamGrader {
 
   private renderer = new GradedExamRenderer();
 
-  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderMap | readonly GraderMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
+  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
     this.exam = exam;
     verifyOptions(options);
     this.options = Object.assign(DEFAULT_OPTIONS, options);
@@ -169,10 +169,10 @@ export class ExamGrader {
     exceptions && this.registerExceptions(exceptions);
     let ignore: StudentInfo = { uniqname: "", name: "" };
 
-    this.allSections = exam.sections.flatMap(chooser => chooseSections(chooser, exam, ignore, CHOOSE_ALL));
+    this.allSections = exam.sections.flatMap(chooser => realizeSections(chooseSections(chooser, exam, ignore, CHOOSE_ALL)));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => chooseQuestions(chooser, exam, ignore, CHOOSE_ALL));
+    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseQuestions(chooser, exam, ignore, CHOOSE_ALL)));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
     this.stats = new GradedStats();
@@ -250,12 +250,14 @@ export class ExamGrader {
     );
   }
 
-  public registerGraders(graderMap: GraderMap | readonly GraderMap[]) {
+  public registerGraders(graderMap: GraderSpecificationMap | readonly GraderSpecificationMap[]) {
     if (Array.isArray(graderMap)) {
-      (<readonly GraderMap[]>graderMap).forEach(gm => this.registerGraders(gm));
+      (<readonly GraderSpecificationMap[]>graderMap).forEach(gm => this.registerGraders(gm));
     }
     else {
-      Object.assign(this.graderMap, <GraderMap>graderMap);
+      for (const spec in graderMap) {
+        this.graderMap[spec] = realizeGrader((<GraderSpecificationMap>graderMap)[spec]!);
+      }
     }
   }
 
@@ -537,8 +539,15 @@ export class ExamGrader {
 /**
  * A mapping of question ID to grader.
  */
- export type GraderMap = {
+export type GraderMap = {
   [index: string]: QuestionGrader<any, any> | undefined;
+}
+
+/**
+ * A mapping of question ID to grader specification.
+ */
+export type GraderSpecificationMap = {
+  [index: string]: GraderSpecification | undefined;
 }
 
 /**

@@ -1,10 +1,9 @@
-import { FILE_DOWNLOAD, FILE_UPLOAD, FILE_CHECK } from "./icons";
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderFor, QuestionGrader, realizeGrader } from "../graders/QuestionGrader";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { render_response, ResponseSpecification, SubmissionType } from "../response/responses";
+import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
 import { mk2html } from "./render";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
-import { ResponseSpecification, SubmissionType, render_response } from "../response/responses";
-import { DEFAULT_SKIN, ExamComponentSkin, SkinChooser } from "./skins";
-import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeQuestion, realizeSection, SectionChooser, SectionSpecification, StudentInfo } from "./exam_specification";
+import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -22,7 +21,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly response : ResponseSpecification<QT>;
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
-  public readonly defaultGrader?: QuestionGrader<QT>;
+  public readonly defaultGrader?: GraderFor<QT>;
   public readonly media_dir?: string;
 
   private readonly descriptionCache: {
@@ -47,7 +46,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     }
   }
 
-  private constructor (spec: QuestionSpecification<QT>) {
+  private constructor(spec: QuestionSpecification<QT>) {
     this.spec = spec;
     assert(isValidID(spec.question_id), `Invalid question ID: ${spec.question_id}`);
     this.question_id = spec.question_id;
@@ -56,9 +55,13 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
-    this.skin = spec.skin ?? DEFAULT_SKIN;
+    this.skin = spec.skin ? (
+      spec.skin.component_kind === "chooser_specification"
+        ? realizeChooser(spec.skin)
+        : spec.skin
+    ) : DEFAULT_SKIN;
     this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
-    this.defaultGrader = <QuestionGrader<QT>>spec.response.default_grader;
+    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
     this.media_dir = spec.media_dir;
   }
 
@@ -133,7 +136,11 @@ export class Section {
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
     this.questions = spec.questions.map(q => realizeQuestion(q));
-    this.skin = spec.skin ?? DEFAULT_SKIN;
+    this.skin = spec.skin ? (
+      spec.skin.component_kind === "chooser_specification"
+        ? realizeChooser(spec.skin)
+        : spec.skin
+    ) : DEFAULT_SKIN;
 
     this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
     this.media_dir = spec.media_dir;
@@ -214,6 +221,8 @@ export class Exam {
 
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
+  public readonly spec: ExamSpecification;
+
   public static create(spec: ExamSpecification | Exam) {
     // If an already created exam was passed in, do nothing and return it
     if (spec.component_kind === "component") {
@@ -240,9 +249,11 @@ export class Exam {
     this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
     this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
-    this.sections = spec.sections.map(s => realizeSection(s));
+    this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
     this.media_dir = spec.media_dir;
+
+    this.spec = spec;
   }
 
   public addAnnouncement(announcement_mk: string) {

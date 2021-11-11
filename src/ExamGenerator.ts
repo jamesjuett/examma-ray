@@ -7,7 +7,7 @@ import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQues
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
 import del from 'del';
-import { chooseQuestions, chooseSections, StudentInfo } from './core/exam_specification';
+import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
 import { createStudentUuid, writeFrontendJS, copyFrontendMedia, ExamUtils } from './ExamUtils';
 import path from 'path';
@@ -101,7 +101,7 @@ export class ExamGenerator {
       this.exam,
       student,
       this.exam.sections
-        .flatMap(chooser => chooseSections(chooser, this.exam, student, rand))
+        .flatMap(chooser => realizeSections(chooseSections(chooser, this.exam, student, rand)))
         .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)),
       this.options.allow_duplicates
     );
@@ -133,7 +133,7 @@ export class ExamGenerator {
       sectionIndex,
       sectionSkin,
       section.questions
-        .flatMap(chooser => chooseQuestions(chooser, this.exam, student, rand))
+        .flatMap(chooser => realizeQuestions(chooseQuestions(chooser, this.exam, student, rand)))
         .flatMap((q, partIndex) => this.createRandomizedQuestion(q, student, sectionIndex, partIndex, sectionSkin))
     ));
   }
@@ -230,6 +230,13 @@ export class ExamGenerator {
   }
 
   public writeAll(examDir: string = "out", manifestDir: string = "data") {
+
+    // Write exam specification as JSON
+    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
+    ExamUtils.saveExamSpecification(
+      `data/${this.exam.exam_id}/exam-spec.json`,
+      this.exam.spec
+    );
 
     examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
     manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);

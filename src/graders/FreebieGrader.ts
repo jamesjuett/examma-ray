@@ -4,21 +4,34 @@ import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;
 
+export type FreebieGraderSpecification = {
+  readonly grader_kind: "freebie",
+
+  /**
+   * How many points are awarded to submissions.
+   */
+  readonly points: number,
+
+  /**
+   * Whether or not blank submissions earn points.
+   */
+  readonly allow_blanks?: boolean
+};
+
 /**
  * A grader that gives points to all submissions. Whether or not blank
  * submissions earn points can be configured.
  * @template QT May be any response type
  */
 export class FreebieGrader implements QuestionGrader<ResponseKind> {
+  
+  public readonly spec: FreebieGraderSpecification;
 
-  /**
-   * @param pointValue How many points are awarded to submissions.
-   * @param blankAllowed Whether or not blank submissions earn points.
-   */
-  public constructor(
-    public readonly pointValue: number,
-    public readonly blankAllowed = false
-  ) { }
+  public readonly t_response_kinds!: ResponseKind;
+
+  public constructor(spec: FreebieGraderSpecification) {
+    this.spec = spec;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return true;
@@ -29,7 +42,7 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   public grade(aq: AssignedQuestion) : FreebieGradingResult {
     return {
       wasBlankSubmission: aq.submission === BLANK_SUBMISSION,
-      pointsEarned: this.blankAllowed || aq.submission !== BLANK_SUBMISSION ? this.pointValue : 0
+      pointsEarned: this.spec.allow_blanks || aq.submission !== BLANK_SUBMISSION ? this.spec.points : 0
     };
   }
 
@@ -38,11 +51,11 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   }
 
   public renderReport(aq: GradedQuestion<ResponseKind, FreebieGradingResult>) {
-    if (!this.blankAllowed && aq.gradingResult.wasBlankSubmission) {
+    if (!this.spec.allow_blanks && aq.gradingResult.wasBlankSubmission) {
       return "You did not select an answer for this question.";
     }
     else {
-      return `<span class="examma-ray-grading-annotation">You earned ${this.pointValue}/${aq.question.pointsPossible} points for answering this question.</span>`;
+      return `<span class="examma-ray-grading-annotation">You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.</span>`;
     }
   }
 
@@ -52,13 +65,13 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
 
   public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) {
     let submissions = gqs.map(gq => gq.submission);
-    if (this.blankAllowed) {
-      return `Assigned ${this.pointValue} freebie points to all ${submissions.length} submissions.`;
+    if (this.spec.allow_blanks) {
+      return `Assigned ${this.spec.points} freebie points to all ${submissions.length} submissions.`;
     }
     else {
       let numBlank = submissions.filter(sub => sub === BLANK_SUBMISSION).length;
       let numNonBlank = submissions.length - numBlank;
-      return `Assigned ${this.pointValue} freebie points to ${numNonBlank} submissions.<br />Assigned 0 points to ${numBlank} blank submissions.`;
+      return `Assigned ${this.spec.points} freebie points to ${numNonBlank} submissions.<br />Assigned 0 points to ${numBlank} blank submissions.`;
     }
   }
 }

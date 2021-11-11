@@ -81,7 +81,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
@@ -112,7 +112,7 @@ export type FITBSpecification = {
   /**
    * A default grader for this response.
    */
-  default_grader?: QuestionGrader<"fill_in_the_blank", any>;
+  default_grader?: GraderSpecificationFor<"fill_in_the_blank">;
 };
 
 /**

@@ -57,15 +57,22 @@ function replaceWordInSubmission(submission: string[], word: string, replacement
   return submission.map(blankStr => blankStr.replace(word, replacement));
 }
 
+export type FITBRegexGraderSpecification = {
+  readonly grader_kind: "manual_regex_fill_in_the_blank",
+  readonly rubric: readonly FITBRegexRubricItem[]
+}
+
 export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
+
+  public readonly spec: FITBRegexGraderSpecification;
+
+  public readonly t_response_kinds!: "fill_in_the_blank";
 
   private minRubricItemPoints: number;
 
-  public constructor(
-    public readonly rubric: readonly FITBRegexRubricItem[]
-  ) {
-
-    this.minRubricItemPoints = min(this.rubric.map(ri => ri.points));
+  public constructor(spec: FITBRegexGraderSpecification) {
+    this.spec = spec;
+    this.minRubricItemPoints = min(this.spec.rubric.map(ri => ri.points));
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
@@ -85,13 +92,13 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     }
 
     
-    assert(submission.length === this.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
+    assert(submission.length === this.spec.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
     
     let result = this.grade_helper(submission);
 
     // if (aq.question.sampleSolution) {
     //   let sampleSolution = aq.question.sampleSolution;
-    //   assert(sampleSolution.length === this.rubric.length, `Error: Mismatched number of answers in FITB sample solution vs. rubric for ${aq.question.question_id}`.red)
+    //   assert(sampleSolution.length === this.spec.rubric.length, `Error: Mismatched number of answers in FITB sample solution vs. rubric for ${aq.question.question_id}`.red)
     //   let mutableSubmission = submission.slice();
     //   let solutionWords = identifyCodeWords(sampleSolution);
   
@@ -110,7 +117,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
   private grade_helper(submission: readonly string[]) : FITBRegexGradingResult {
 
-    let itemResults = this.rubric.map((rubricItem, i) => {
+    let itemResults = this.spec.rubric.map((rubricItem, i) => {
       assert(rubricItem.blankIndex === i + 1, "Mismatched blank index on FITB rubric.");
 
       let match = FITBRubricItemMatch(rubricItem, submission[i]);
@@ -151,10 +158,10 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s)); //, content, scores);
     
     let itemResults = gr.itemResults;
-    assert(itemResults.length === this.rubric.length);
+    assert(itemResults.length === this.spec.rubric.length);
 
     let rubricItemsHtml = `<table style="position: sticky; top: 0;">${itemResults.map((itemResult, i) => {
-      let rubricItem = this.rubric[i];
+      let rubricItem = this.spec.rubric[i];
 
       let explanation: string = mk2html(itemResult.explanation ?? "Your response for this blank was incomplete or incorrect.", skin);
 
@@ -206,14 +213,14 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     const table = `<table class="table" style="border-collapse: separate; border-spacing: 0;">
       <tr>
         <th style="position: sticky; left: 0; top: 0; z-index: 11; background-color: white; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">Overview</th>
-        ${this.rubric.map(ri => `<th style="position: sticky; top: 0; z-index: 10; background: white; z-index: 10; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6;">Blank ${ri.blankIndex} <button class="examma-ray-blank-saver btn btn-primary" data-blank-num="${ri.blankIndex - 1}">Copy</button></th>`).join("")}
+        ${this.spec.rubric.map(ri => `<th style="position: sticky; top: 0; z-index: 10; background: white; z-index: 10; border-bottom: 1px solid #dee2e6; border-top: 1px solid #dee2e6;">Blank ${ri.blankIndex} <button class="examma-ray-blank-saver btn btn-primary" data-blank-num="${ri.blankIndex - 1}">Copy</button></th>`).join("")}
       </tr>
       <tr>
       <td style="position: sticky; left: 0; background-color: white; border-top: none; border-right: 1px solid #dee2e6;">
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${this.renderOverview(gqs)}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
+            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
@@ -256,9 +263,9 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   }
 
   private getGradedBlanksSubmissions(submissions: readonly FITBSubmission[]) {
-    let blankSubmissions = this.rubric.map(ri => <string[]>[]);
+    let blankSubmissions = this.spec.rubric.map(ri => <string[]>[]);
     submissions.forEach(sub => {
-      if (sub === BLANK_SUBMISSION || sub.length === 0 || sub.length !== this.rubric.length) {
+      if (sub === BLANK_SUBMISSION || sub.length === 0 || sub.length !== this.spec.rubric.length) {
         return;
       }
 
@@ -272,7 +279,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let gradedBlankSubmissions = uniqueSubmissions.map(
       (bs, blankIndex) => bs.map(
         b => ({
-          points: FITBRubricItemMatch(this.rubric[blankIndex], b)?.points ?? 0,
+          points: FITBRubricItemMatch(this.spec.rubric[blankIndex], b)?.points ?? 0,
           sub: b,
           num: blankSubmissions[blankIndex].reduce((prev, s) => prev + (s === b ? 1 : 0), 0)
         })
@@ -290,7 +297,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
     let blankAverages = gradedBlankSubmissions.map(
       gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
-    let blankPoints = this.rubric.map(ri => ri.points);
+    let blankPoints = this.spec.rubric.map(ri => ri.points);
     let blankSolutions : string[] = question.sampleSolution?.map(s => encode(s)) ?? [];
     let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
     let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i] ?? ""}`));
