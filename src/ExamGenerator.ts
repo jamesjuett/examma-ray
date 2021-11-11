@@ -232,9 +232,10 @@ export class ExamGenerator {
   public writeAll(examDir: string = "out", manifestDir: string = "data") {
 
     // Write exam specification as JSON
-    writeFileSync(
+    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
+    ExamUtils.saveExamSpecification(
       `data/${this.exam.exam_id}/exam-spec.json`,
-      JSON.stringify(this.exam.spec, null, 2 )
+      this.exam.spec
     );
 
     examDir = path.join(examDir, `${this.exam.exam_id}/exams`);

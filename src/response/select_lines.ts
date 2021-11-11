@@ -141,7 +141,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -204,7 +204,7 @@ export type SLSpecification = {
   /**
    * A default grader for this response.
    */
-  default_grader?: QuestionGrader<"select_lines", any>
+  default_grader?: GraderSpecificationFor<"select_lines">
 };
 
 /**

@@ -35,7 +35,7 @@ function genTestExam(exam: Exam) {
     name: "Test Student",
     uniqname: "test"
   });
-  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "out"));
+  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "data"));
 }
 
 

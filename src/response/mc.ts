@@ -49,7 +49,7 @@
  * @module
  */
 
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -62,7 +62,7 @@ export type MCSpecification = {
   limit?: number;
   choices: string[];
   sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION>;
-  default_grader?: QuestionGrader<"multiple_choice", any>
+  default_grader?: GraderSpecificationFor<"multiple_choice">
 };
 
 

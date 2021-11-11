@@ -30,12 +30,20 @@ function gradeSLRubricItem(rubricItem: SLRubricItem, submission: Exclude<SLSubmi
   };
 }
 
+export type StandardSLGraderSpecification = {
+  readonly grader_kind: "standard_select_lines",
+  readonly rubric: readonly SLRubricItem[]
+};
 
 export class StandardSLGrader implements QuestionGrader<"select_lines"> {
 
-  public constructor(
-    public readonly rubric: readonly SLRubricItem[]
-  ) { }
+  public readonly spec: StandardSLGraderSpecification;
+
+  public readonly t_response_kinds!: "select_lines";
+
+  public constructor(spec: StandardSLGraderSpecification) {
+    this.spec = spec;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "select_lines";
@@ -54,10 +62,10 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     }
     let submission = orig_submission;
 
-    let itemResults = this.rubric.map(rubricItem => gradeSLRubricItem(rubricItem, submission));
+    let itemResults = this.spec.rubric.map(rubricItem => gradeSLRubricItem(rubricItem, submission));
     return {
       wasBlankSubmission: false,
-      pointsEarned: itemResults.reduce((p, r, i) => p + (r.applied ? this.rubric[i].points : 0), 0),
+      pointsEarned: itemResults.reduce((p, r, i) => p + (r.applied ? this.spec.rubric[i].points : 0), 0),
       itemResults: itemResults
     }
   }
@@ -82,13 +90,13 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     let skin = aq.skin;
 
     let itemResults = gr.itemResults;
-    assert(itemResults.length === this.rubric.length);
+    assert(itemResults.length === this.spec.rubric.length);
 
     return `
     <table class="examma-ray-sl-diff table table-sm">
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
       ${itemResults.map((itemResult, i) => {
-        let rubricItem = this.rubric[i];
+        let rubricItem = this.spec.rubric[i];
         let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
         let riScore = itemResult.applied ? rubricItem.points : 0;
 

@@ -1,6 +1,15 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { assertNever } from "../core/util";
 import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind } from "../response/common";
+import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingGradingResult } from "./CodeWritingGrader";
+import { FITBRegexGrader, FITBRegexGraderSpecification } from "./FITBRegexGrader";
+import { FreebieGrader, FreebieGraderSpecification } from "./FreebieGrader";
+import { SimpleMCGrader, SimpleMCGraderSpecification } from "./SimpleMCGrader";
+import { StandardSLGrader, StandardSLGraderSpecification } from "./StandardSLGrader";
+import { SummationMCGrader, SummationMCGraderSpecification } from "./SummationMCGrader";
+import { StandardFITBDropGrader, StandardFITBDropGraderSpecification } from "./StandardFITBDropGrader";
+import { BugCatchingGrader, BugCatchingGraderSpecification } from "./BugCatchingGrader";
 
 /**
  * ## TODO this documentation is old and needs to be updated Grading Exams
@@ -162,6 +171,58 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
   renderOverview(gqs: readonly GradedQuestion<RK>[]): string;
 
 };
+
+
+type GraderKind = 
+  | "manual_code_writing"
+  | "manual_regex_fill_in_the_blank"
+  | "freebie"
+  | "simple_multiple_choice"
+  | "summation_multiple_choice"
+  | "standard_select_lines"
+  | "standard_fitb_drop"
+  | "bug_catching";
+
+export type GraderSpecification<GK extends GraderKind = GraderKind> =
+  GK extends "manual_code_writing" ? CodeWritingGraderSpecification :
+  GK extends "manual_regex_fill_in_the_blank" ? FITBRegexGraderSpecification :
+  GK extends "freebie" ? FreebieGraderSpecification :
+  GK extends "simple_multiple_choice" ? SimpleMCGraderSpecification :
+  GK extends "summation_multiple_choice" ? SummationMCGraderSpecification :
+  GK extends "standard_select_lines" ? StandardSLGraderSpecification :
+  GK extends "standard_fitb_drop" ? StandardFITBDropGraderSpecification :
+  GK extends "bug_catching" ? BugCatchingGraderSpecification :
+  never;
+
+export type Grader<GK extends GraderKind = GraderKind> =
+  GK extends "manual_code_writing" ? CodeWritingGrader :
+  GK extends "manual_regex_fill_in_the_blank" ? FITBRegexGrader :
+  GK extends "freebie" ? FreebieGrader :
+  GK extends "simple_multiple_choice" ? SimpleMCGrader :
+  GK extends "summation_multiple_choice" ? SummationMCGrader :
+  GK extends "standard_select_lines" ? StandardSLGrader :
+  GK extends "standard_fitb_drop" ? StandardFITBDropGrader :
+  GK extends "bug_catching" ? BugCatchingGrader :
+  never;
+
+type ExtractViableGraders<G extends Grader, RK> = G extends Grader ? RK extends G["t_response_kinds"] ? G : never : never;
+
+export type GraderSpecificationFor<RK extends ResponseKind> = ExtractViableGraders<Grader, RK>["spec"];
+export type GraderFor<RK extends ResponseKind> = ExtractViableGraders<Grader, RK>;
+
+export function realizeGrader<GK extends GraderKind>(spec: GraderSpecification<GK>) : Grader<GK> {
+  return <Grader<GK>>(
+    spec.grader_kind === "manual_code_writing" ? new CodeWritingGrader(spec) :
+    spec.grader_kind === "manual_regex_fill_in_the_blank" ? new FITBRegexGrader(spec) :
+    spec.grader_kind === "freebie" ? new FreebieGrader(spec) :
+    spec.grader_kind === "simple_multiple_choice" ? new SimpleMCGrader(spec) :
+    spec.grader_kind === "summation_multiple_choice" ? new SummationMCGrader(spec) :
+    spec.grader_kind === "standard_select_lines" ? new StandardSLGrader(spec) :
+    spec.grader_kind === "standard_fitb_drop" ? new StandardFITBDropGrader(spec) :
+    spec.grader_kind === "bug_catching" ? new BugCatchingGrader(spec) :
+    assertNever(spec)
+  );
+}
 
 
 export type GradingResult = {

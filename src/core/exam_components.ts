@@ -1,10 +1,9 @@
-import { FILE_DOWNLOAD, FILE_UPLOAD, FILE_CHECK } from "./icons";
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderFor, QuestionGrader, realizeGrader } from "../graders/QuestionGrader";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { render_response, ResponseSpecification, SubmissionType } from "../response/responses";
+import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
 import { mk2html } from "./render";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
-import { ResponseSpecification, SubmissionType, render_response } from "../response/responses";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
-import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeSection, realizeSections, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./exam_specification";
 import { asMutable, assert } from "./util";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
@@ -22,7 +21,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly response : ResponseSpecification<QT>;
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
-  public readonly defaultGrader?: QuestionGrader<QT>;
+  public readonly defaultGrader?: GraderFor<QT>;
   public readonly media_dir?: string;
 
   private readonly descriptionCache: {
@@ -47,7 +46,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     }
   }
 
-  private constructor (spec: QuestionSpecification<QT>) {
+  private constructor(spec: QuestionSpecification<QT>) {
     this.spec = spec;
     assert(isValidID(spec.question_id), `Invalid question ID: ${spec.question_id}`);
     this.question_id = spec.question_id;
@@ -62,7 +61,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
         : spec.skin
     ) : DEFAULT_SKIN;
     this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
-    this.defaultGrader = <QuestionGrader<QT>>spec.response.default_grader;
+    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
     this.media_dir = spec.media_dir;
   }
 

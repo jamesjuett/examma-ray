@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
@@ -12,7 +12,7 @@ export type CodeEditorSpecification = {
   header?: string,
   footer?: string,
   sample_solution?: Exclude<CodeEditorSubmission, typeof BLANK_SUBMISSION>,
-  default_grader?: QuestionGrader<"code_editor", any>
+  default_grader?: GraderSpecificationFor<"code_editor">
 };
 
 export type CodeEditorSubmission = string | typeof BLANK_SUBMISSION;

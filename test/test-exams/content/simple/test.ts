@@ -18,7 +18,11 @@ This is a simple test question!
       "E"
     ],
     multiple: false,
-    default_grader: new FreebieGrader(2, true)
+    default_grader: {
+      grader_kind: "freebie",
+      points: 2,
+      allow_blanks: true
+    }
   }
 }
 
@@ -39,7 +43,11 @@ This is another simple test question!
       "J"
     ],
     multiple: false,
-    default_grader: new FreebieGrader(3, true)
+    default_grader: {
+      grader_kind: "freebie",
+      point_value: 3,
+      allow_blanks: true,
+    }
   }
 }
 

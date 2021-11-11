@@ -3,7 +3,7 @@ import Sortable from "sortablejs";
 import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
-import { QuestionGrader } from "../graders/QuestionGrader";
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 
 export type DroppableSpecification = {
@@ -22,7 +22,7 @@ export type FITBDropSpecification = {
   droppables: DroppableSpecification /* | [DroppableGroupSpecification] */;
   starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
   sample_solution?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
-  default_grader?: QuestionGrader<"fitb_drop", any>;
+  default_grader?: GraderSpecificationFor<"fitb_drop">;
   group_id?: string;
 };
 
