@@ -1,7 +1,8 @@
 import { GraderFor, QuestionGrader, realizeGrader } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { render_response, ResponseSpecification, SubmissionType } from "../response/responses";
-import { ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
+import { chooseQuestions, chooseSections, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./exam_specification";
+import { CHOOSE_ALL } from "./randomization";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
@@ -223,6 +224,12 @@ export class Exam {
 
   public readonly spec: ExamSpecification;
 
+  public readonly allSections: readonly Section[];
+  public readonly allQuestions: readonly Question[];
+  
+  private readonly sectionsMap: { [index: string]: Section | undefined } = {};
+  private readonly questionsMap: { [index: string]: Question | undefined } = {};
+
   public static create(spec: ExamSpecification | Exam) {
     // If an already created exam was passed in, do nothing and return it
     if (spec.component_kind === "component") {
@@ -254,6 +261,14 @@ export class Exam {
     this.media_dir = spec.media_dir;
 
     this.spec = spec;
+
+    let ignore: StudentInfo = { uniqname: "", name: "" };
+
+    this.allSections = this.sections.flatMap(chooser => realizeSections(chooseSections(chooser, this, ignore, CHOOSE_ALL)));
+    this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
+
+    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseQuestions(chooser, this, ignore, CHOOSE_ALL)));
+    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
   }
 
   public addAnnouncement(announcement_mk: string) {

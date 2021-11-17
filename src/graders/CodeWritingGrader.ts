@@ -21,8 +21,8 @@ export type CodeWritingRubricItem = {
 };
 
 export type CodeWritingRubricItemGradingResult = {
-  status: CodeWritingRubricItemStatus,
   // manual_override_status?: ManualOverrideRubricItemStatus,
+  status: CodeWritingRubricItemStatus,
   // verified: boolean
 };
 
