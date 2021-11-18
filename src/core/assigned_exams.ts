@@ -250,7 +250,7 @@ export class AssignedExam {
       saverId: 0,
       sections: this.assignedSections.map(s => ({
         section_id: s.section.section_id,
-        skin_id: s.skin.skin_id,
+        skin_id: s.skin.non_composite_skin_id ?? s.skin.skin_id,
         uuid: s.uuid,
         display_index: s.displayIndex,
         questions: s.assignedQuestions.map(q => ({
