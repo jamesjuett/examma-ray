@@ -1,7 +1,14 @@
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import { mk2html } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { isNumericArray } from "./util";
+import { ResponseHandler } from "./responses";
+
 /**
- * ## MC Response
+ * ## Multiple Choice Response Element Specification 
  * 
- * An MC (Multiple Choice) response provides several options that students select from. It may
+ * An Multiple Choice response provides several options that students select from. It may
  * be configured to allow only one choice (rendered as radio buttons) or multiple choice
  * (rendered as checkboxes).
  * 
@@ -9,6 +16,8 @@
  * response as part of a question.
  * 
  * Here's an example of a question with an MC response.
+ * 
+ * ![image](media://response-sample-mc.png)
  * 
  * ```typescript
  * export const Question_Sample_MC : QuestionSpecification = {
@@ -39,38 +48,60 @@
  * students may only select a single choice. If the property is set to `true`, choices are
  * rendered as checkboxes and students may select any number of choices.
  * 
+ * A multiple-selection MC question may specify a limit for the number of checkboxes
+ * that may be selected via the `limit` property. (This property is ignored if multiple
+ * selections are not allowed.)
+ * 
  * ### MC Submissions
  * 
- * A submission for an MC response is an array of numbers corresponding to the indices
- * of selected choices. For a single response question, this array will be a single element.
- * For multiple response questions, the array may contain one or more elements. The submission
- * may also be [[BLANK_SUBMISSION]].
- * 
- * @module
+ * Essentially, a submission for an MC response is an array of numbers corresponding to the indices
+ * of selected choices. See [[`MCSubmission`]] for details.
  */
-
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
-import { mk2html } from "../core/render";
-import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { isNumericArray } from "./util";
-import { ResponseHandler } from "./responses";
-
 export type MCSpecification = {
+
+  /**
+   * The discriminant `"multiple_choice"` is used to distinguish FITB specifications.
+   */
   kind: "multiple_choice";
+
+  /**
+   * Whether or not the question allows multiple selection.
+   */
   multiple: boolean;
+
+  /**
+   * For multiple-selection questions, an optional limit on selected choices.
+   */
   limit?: number;
+
+  /**
+   * Choices for selection. May include markdown.
+   */
   choices: string[];
-  sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION>;
+
+  /**
+   * A sample solution, which may not be blank or invalid.
+   */
+  sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION>;
+
+  /**
+   * A default grader, used to evaluate submissions for this response.
+   */
   default_grader?: GraderSpecificationFor<"multiple_choice">
 };
 
 
 /**
- * A submission for an MC response is an array of numbers corresponding to the indices
+ * Essentially, a submission for an MC response is an array of numbers corresponding to the indices
  * of selected choices. For a single response question, this array will be a single element.
- * For multiple response questions, the array may contain one or more elements. The submission
- * may also be [[BLANK_SUBMISSION]].
+ * For multiple response questions, the array may contain one or more elements.
+ * 
+ * A submission may also be [[`BLANK_SUBMISSION`]] if nothing was selected.
+ * 
+ * A submission may also be [[`INVALID_SUBMISSION`]] if the array of selected choices contains more
+ * elements than a specified `limit`. (This should not regularly happen, but is possible if e.g. a
+ * student were to nefariously edit their answers `.json` file before turning it in. Upon loading,
+ * their submission would be checked and replaced by [[`INVALID_SUBMISSION`]]).
  */
 export type MCSubmission = readonly number[] | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
 
@@ -103,7 +134,7 @@ function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
     return submission;
   }
 
-  if (response.limit === undefined) {
+  if (!response.multiple || response.limit === undefined) {
     return submission;
   }
 

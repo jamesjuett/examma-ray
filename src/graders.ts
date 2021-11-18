@@ -25,6 +25,7 @@
  *     kind: "multiple_choice",
  *     choices: ["Green Zebra","Better Boy","Black Krim","Mr. Stripey","Brandywine"],
  *     multiple: false,
+ *     sample_solution: [1],
  *     default_grader: new SimpleMCGrader(1)
  *   }
  * }

@@ -1,15 +1,25 @@
+import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import { applySkin } from "../core/render";
+import { ExamComponentSkin } from "../core/skins";
+import { assert } from "../core/util";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { createFilledFITB } from "./util-fitb";
+import { isStringArray } from "./util";
+
 /**
- * ## FITB Response
+ * ## Fill-In-The-Blank (FITB) Response Element Specification
  * 
- * An FITB (Fill-In-The-Blank) response includes markdown-formatted content containing "blanks" and "boxes" that
+ * An FITB response includes markdown-formatted content containing "blanks" and "boxes" that
  * students fill in to compose their response.
  * 
- * The [[FITBSpecification]] type alias represents the information needed to specify an FITB
+ * The [[`FITBSpecification`]] type alias represents the information needed to specify an FITB
  * response as part of a question.
  * 
  * Here's an example of a question with an FITB response. The content is specified as a
  * backtick-quoted multi-string literal in typescript. (Note there are also escaped backticks
  * around a markdown code block).
+ * 
+ * ![image](media://response-sample-fitb-replacer.png)
  * 
  * ```typescript
  * export const Practice_Questions_Iterators_And_Functors_Replacer: QuestionSpecification = {
@@ -70,47 +80,39 @@
  * of newlines controls the height. There must be at least one newline (otherwise use a blank).
  * If there are no underscores, the box will take up the full available width. A box may occur
  * in the middle of a line or on its own. Those are real newlines, though if you're writing in code
- * you'd use the escape sequence `\n`.
+ * you'd use the escape sequence `\n`. Or, if you use backtick-quoted multi-line string literals,
+ * those can just contain natural newlines.
+ * 
+ * ### Markdown Formatting
+ * 
+ * The content specification for an FITB response element may contain markdown formatting. In
+ * particular, blank/box placeholders may be included inside code boxes.
  * 
  * ### FITB Submissions
  * 
  * A submission for an FITB response is an array of strings that specify
- * the content submitted for each blank/box. See [[FITBSubmission]]. The submission
- * may also be [[BLANK_SUBMISSION]].
+ * the content submitted for each blank/box. See [[FITBSubmission]] for details.
  * 
- * @module
- */
-
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
-import { applySkin } from "../core/render";
-import { ExamComponentSkin } from "../core/skins";
-import { assert } from "../core/util";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { createFilledFITB } from "./util-fitb";
-import { isStringArray } from "./util";
-
-/**
- * Specifies an FITB response as part of a question.
  */
 export type FITBSpecification = {
 
   /**
-   * The discriminant "fill_in_the_blank" is used to distinguish FITB specifications.
+   * The discriminant `"fill_in_the_blank"` is used to distinguish FITB specifications.
    */
   kind: "fill_in_the_blank";
 
   /**
-   * The content of the FITB response. See [[core/response/fitb#blanks-and-boxes]] for details.
+   * The content specification of the FITB response. May include markdown and placeholders for blanks/boxes.
    */
   content: string;
 
   /**
-   * A sample solution for this response.
+   * A sample solution, which may not be blank or invalid.
    */
   sample_solution?: Exclude<FITBSubmission, typeof BLANK_SUBMISSION>;
 
   /**
-   * A default grader for this response.
+   * A default grader, used to evaluate submissions for this response.
    */
   default_grader?: GraderSpecificationFor<"fill_in_the_blank">;
 };

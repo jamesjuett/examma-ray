@@ -1,146 +1,3 @@
-/**
- * ## Select Lines Response
- * 
- * A select lines response gives students a sequence of lines of code and asks them to choose the ones
- * that are correct and should become part of a final solution. The relative ordering of the lines
- * is fixed, but each may be turned on/off. Lines may be "forced", meaning they cannot be turned off
- * and are always included in the final solution. A "line" may in fact contain several lines if its
- * specified content contains newline characters.
- * 
- * The response is rendered as a sequence of lines with checkboxes. Clicking a line toggles whether
- * it is selected or not. Students may also preview their final solution, composed of only the
- * selected lines.
- * 
- * The [[SLSpecification]] type alias represents the information needed to specify an FITB
- * response as part of a question.
- * 
- * Here's an example of a question with a select lines response.
- * 
- * ```typescript
- * export const Practice_Question_Big_Three_V1_Assignment_Op : QuestionSpecification = {
- *   question_id: "practice_big_three_v1_assignment_op",
- *   tags: [],
- *   points: 9,
- *   mk_description:
- * `
- * Implement the **assignment operator** as it would be defined inside the
- * \`{{class_name}}\` class by selecting from the lines of code given below.
- * Click all lines that should be included. You are not able to change the
- * relative ordering of the lines. You may use the buttons to toggle between
- * viewing all choices or just the ones you have selected to preview your
- * chosen code. When finished, the **selected lines should form a working
- * function** that performs a **deep copy** where appropriate and **avoids
- * undefined behavior or memory leaks**. Some lines contain **mistakes**
- * or are **unnecessary** for the function - these lines should not be selected.
- * `,
- *   response: {
- *     kind: "select_lines",
- *     code_language: "cpp",
- *     choices: [
- *       {
- *         kind: "item",
- *         text: "{{class_name}} *operator=(const {{class_name}} &rhs) {",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "{{class_name}} &operator=(const {{class_name}} &rhs) {",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  if (&this == rhs) { return *this; }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  if (this == &rhs) { return *this; }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  delete {{mem_array}};",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  delete[] {{mem_array}};",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  delete {{mem_vector}};",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  for(size_t i=0; i < {{mem_vector}}.size(); ++i) {\n    delete {{mem_vector}}[i];\n  }  ",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  while(!{{mem_vector}}.empty()) {\n    {{mem_vector}}.pop_back();\n  }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  {{mem_array}} = rhs.{{mem_array}};",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  {{mem_array}} = new {{array_elt_class_name}}[{{array_capacity}}];",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  for(int i = 0; i < {{array_capacity}}; ++i) {\n    {{mem_array}}[i] = rhs.{{mem_array}}[i];\n  }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  for (int i = 0; i < {{array_capacity}}; ++i) {\n    {{mem_array}}[i] = new {{array_elt_class_name}}(rhs.{{mem_array}}[i]);\n  }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  {{mem_vector}} = rhs.{{mem_vector}};",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  {{mem_vector}} = new vector<{{dynamic_class_name}}>(rhs.{{mem_vector}});",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  for(size_t i=0; i < rhs.{{mem_vector}}.size(); ++i) {\n    {{mem_vector}}.push_back(new {{dynamic_class_name}}(*rhs.{{mem_vector}}[i]));\n  }",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  return *this;",
- *         forced: false
- *       },
- *       {
- *         kind: "item",
- *         text: "  return rhs;",
- *         forced: false
- *       }
- *     ],
- *     footer: "}"
- *   }
- * }
- * ```
- * 
- * ### Select Lines Submissions
- * 
- * A submission for a select lines response is an array of numbers corresponding to the indices
- * of selected lines. The submission may also be [[BLANK_SUBMISSION]] if none were selected.
- * 
- * @module
- */
-
 import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
@@ -166,7 +23,97 @@ export type SLGroup = {
 
 
 /**
- * Specifies a select lines response as part of a question.
+ * ## Select Lines Response Element Specification
+ * 
+ * A select lines response gives students a sequence of lines of code and asks them to choose the ones
+ * that are correct and should become part of a final solution. The relative ordering of the lines
+ * is fixed, but each may be turned on/off. Lines may be "forced", meaning they cannot be turned off
+ * and are always included in the final solution. A "line" may in fact contain several lines if its
+ * specified content contains newline characters.
+ * 
+ * The response is rendered as a sequence of lines with checkboxes. Clicking a line toggles whether
+ * it is selected or not. Students may also preview their final solution, composed of only the
+ * selected lines.
+ * 
+ * Here's an example of a question with a select lines response.
+ * 
+ * ![image](media://response-sample-select-lines.png)
+ * 
+ * ![image](media://response-sample-select-lines-selected-only.png)
+ * 
+ * ```typescript
+ * export const Question_Sample_Select_Lines : QuestionSpecification = {
+ *   question_id: "sample_select_lines",
+ *   tags: [],
+ *   points: 9,
+ *   mk_description:
+ * `
+ * Compose a poem by selecting from the lines below.
+ * Click all lines that should be included. You are not able to change the
+ * relative ordering of the lines. You may use the buttons to toggle between
+ * viewing all choices or just the ones you have selected to preview your
+ * chosen code. When finished, the **selected lines should form a working
+ * function** that performs a **deep copy** where appropriate and **avoids
+ * undefined behavior or memory leaks**. Some lines contain **mistakes**
+ * or are **unnecessary** for the function - these lines should not be selected.
+ * `,
+ *   response: {
+ *     kind: "select_lines",
+ *     code_language: "cpp",
+ *     header: "A profound poem:",
+ *     choices: [
+ *       {
+ *         kind: "item",
+ *         text: "Roses are red",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "Roses are pink",
+ *         forced: true
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "Violets are blue",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "Violets are purple",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "This question is easy",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "This question is tough",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "But you already knew",
+ *         forced: false
+ *       },
+ *       {
+ *         kind: "item",
+ *         text: "Nothing rhymes with purple",
+ *         forced: false
+ *       },
+ *     ],
+ *     footer: "The end",
+ *     sample_solution: [1, 2, 4, 6]
+ *   }
+ * }
+ * ```
+ * 
+ * ### Select Lines Submissions
+ * 
+ * A submission for a select lines response is an array of numbers corresponding to the indices
+ * of selected lines. See [[`SLSubmission`]] for details.
+ * 
  */
 export type SLSpecification = {
   
@@ -176,8 +123,8 @@ export type SLSpecification = {
   kind: "select_lines",
 
   /**
-   * The language to use for syntax highlighting. May be any 
-   * [hljs supported language](https://highlightjs.readthedocs.io/en/latest/supported-languages.html).
+   * The language to use for syntax highlighting. Specify the alias for any 
+   * [highlightjs supported language](https://highlightjs.readthedocs.io/en/latest/supported-languages.html).
    */
   code_language: string,
 
@@ -209,7 +156,8 @@ export type SLSpecification = {
 
 /**
  * A submission for a select lines response is an array of numbers corresponding to the indices
- * of selected lines. The submission may also be [[BLANK_SUBMISSION]] if none were selected.
+ * of selected lines. Note that any "forced" items will always be included in a submission.
+ * The submission may also be [[BLANK_SUBMISSION]] if no items were selected.
  */
 export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 

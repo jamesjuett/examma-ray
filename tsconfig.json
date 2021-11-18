@@ -4,6 +4,7 @@
     "src/ExamGenerator.ts",
     "src/ExamGrader.ts",
     "src/ExamUtils.ts",
+    "src/response.ts",
     "src/graders.ts",
     "./src/lib.d.ts",
     "./src/bin/init.ts",

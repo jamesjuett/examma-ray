@@ -2,6 +2,7 @@
 {
   "entryPoints": [
     "./src/core.ts",
+    "./src/response.ts",
     "./src/graders.ts",
     "./src/graders/FITBRegexGrader.ts",
     "./src/core/exam_specification.ts",
@@ -13,6 +14,8 @@
     "./src/response/mc.ts",
     "./src/response/fitb.ts",
     "./src/response/select_lines.ts",
+    "./src/response/fitb-drop.ts",
+    "./src/response/code_editor.ts",
     "./src/ExamGenerator.ts",
     "./src/ExamGrader.ts"
   ],

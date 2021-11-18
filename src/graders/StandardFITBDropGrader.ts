@@ -1,10 +1,11 @@
 
-import { BLANK_SUBMISSION, QuestionGrader, ResponseKind, AssignedQuestion } from "../core";
+import { QuestionGrader, AssignedQuestion } from "../core";
 import { GradedQuestion } from "../core/assigned_exams";
 import { mk2html, mk2html_unwrapped, applySkin } from "../core/render";
 import { renderScoreBadge } from "../core/ui_components";
 import { assertNever } from "../core/util";
 import { GradingAssignmentSpecification } from "../grading_interface/common";
+import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission } from "../response/fitb-drop";
 import { GradingResult } from "./QuestionGrader";
 

@@ -45,7 +45,7 @@ This is another simple test question!
     multiple: false,
     default_grader: {
       grader_kind: "freebie",
-      point_value: 3,
+      points: 3,
       allow_blanks: true,
     }
   }
