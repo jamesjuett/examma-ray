@@ -49,6 +49,8 @@ function verifyOptions(options: Partial<ExamGeneratorOptions>) {
   assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
 }
 
+export type ExamGeneratorSpecification = Partial<ExamGeneratorOptions>;
+
 export class ExamGenerator {
 
   public readonly exam: Exam;
