@@ -185,7 +185,7 @@ export class ExamGrader {
   }
 
   public addSubmission(answers: TrustedExamSubmission) {
-    let ex = this.createExamFromSubmission(answers);
+    let ex = AssignedExam.createFromSubmission(this.exam, answers);
     this.submittedExams.push(ex);
     ex.assignedSections.forEach(s => s.assignedQuestions.forEach(aq => {
       asMutable(this.allAssignedQuestions).push(aq);
@@ -206,50 +206,6 @@ export class ExamGrader {
     this.addSubmissions(ExamUtils.loadTrustedSubmissions(
       `data/${this.exam.exam_id}/manifests/`,
       `data/${this.exam.exam_id}/submissions/`));
-  }
-
-  private createExamFromSubmission(submission: TrustedExamSubmission) {
-    let student = submission.student;
-    return new AssignedExam(
-      submission.exam_id,
-      this.exam,
-      student,
-      submission.sections.flatMap((s, s_i) => {
-        let section = this.sectionsMap[s.section_id] ?? assertFalse(`No matching section found id: ${s.section_id}`);
-        let sectionSkins = [
-          section.skin.component_kind !== "chooser"
-            ? section.skin
-            : section.skin.getById(s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
-        ];
-        return sectionSkins.map(sectionSkin => new AssignedSection(
-          s.uuid,
-          section,
-          s_i,
-          sectionSkin,
-          s.questions.flatMap((q, q_i) => {
-            let question = this.questionsMap[q.question_id] ?? assertFalse(`No matching question found id: ${q.question_id}`);
-            let questionSkins = [
-              question.skin.component_kind !== "chooser"
-                ? question.skin
-                : question.skin.getById(q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
-            ].map(
-              qSkin => createCompositeSkin(sectionSkin, qSkin)
-            );
-            return questionSkins.map(questionSkin => new AssignedQuestion(
-              q.uuid,
-              this.exam,
-              submission.student,
-              question,
-              questionSkin,
-              s_i,
-              q_i,
-              q.response
-            )); 
-          })
-        ));
-      }),
-      false
-    );
   }
 
   public registerGraders(graderMap: GraderSpecificationMap | readonly GraderSpecificationMap[]) {

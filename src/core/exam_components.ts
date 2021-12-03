@@ -275,6 +275,14 @@ export class Exam {
     asMutable(this.html_announcements).push(mk2html(announcement_mk));
   }
 
+  public getSectionById(section_id: string) {
+    return this.sectionsMap[section_id];
+  }
+
+  public getQuestionById(question_id: string) {
+    return this.questionsMap[question_id];
+  }
+
 }
 
 

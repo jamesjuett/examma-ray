@@ -6,7 +6,7 @@ import { assert } from './util';
 
 export const CHOOSE_ALL = Symbol("choose_all");
 
-class SeededRandomizerImpl {
+export class SeededRandomizer {
 
   private rng: RandomSeed;
 
@@ -40,10 +40,6 @@ class SeededRandomizerImpl {
   public shuffle<T>(original: readonly T[]) {
     return shuffle(original, ""+this.float());
   }
-
-}
-
-export interface SeededRandomizer extends SeededRandomizerImpl {
 
 }
 

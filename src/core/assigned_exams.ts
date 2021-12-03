@@ -1,4 +1,4 @@
-import { asMutable, assert, Mutable } from './util';
+import { asMutable, assert, assertFalse, Mutable } from './util';
 import { parse_submission, SubmissionType } from '../response/responses';
 import { ResponseKind } from '../response/common';
 import { mk2html, mk2html_unwrapped } from './render';
@@ -6,8 +6,8 @@ import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUng
 import { Exception, GraderMap } from '../ExamGrader';
 import { QuestionGrader, GradingResult } from '../graders/QuestionGrader';
 import { isValidID, StudentInfo } from './exam_specification';
-import { ExamComponentSkin } from './skins';
-import { ExamManifest } from './submissions';
+import { createCompositeSkin, ExamComponentSkin } from './skins';
+import { ExamManifest, TrustedExamSubmission } from './submissions';
 import { sum } from 'simple-statistics';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
@@ -213,6 +213,50 @@ export class AssignedExam {
       let questionIds = assignedSections.flatMap(s => s.assignedQuestions.map(q => q.question.question_id));
       assert(new Set(questionIds).size === questionIds.length, `This exam contains a duplicate question. Question IDs are:\n  ${questionIds.sort().join("\n  ")}`);
     }
+  }
+
+  public static createFromSubmission(exam: Exam, submission: TrustedExamSubmission) {
+    let student = submission.student;
+    return new AssignedExam(
+      submission.exam_id,
+      exam,
+      student,
+      submission.sections.flatMap((s, s_i) => {
+        let section = exam.getSectionById(s.section_id) ?? assertFalse(`No matching section found id: ${s.section_id}`);
+        let sectionSkins = [
+          section.skin.component_kind !== "chooser"
+            ? section.skin
+            : section.skin.getById(s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+        ];
+        return sectionSkins.map(sectionSkin => new AssignedSection(
+          s.uuid,
+          section,
+          s_i,
+          sectionSkin,
+          s.questions.flatMap((q, q_i) => {
+            let question = exam.getQuestionById(q.question_id) ?? assertFalse(`No matching question found id: ${q.question_id}`);
+            let questionSkins = [
+              question.skin.component_kind !== "chooser"
+                ? question.skin
+                : question.skin.getById(q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+            ].map(
+              qSkin => createCompositeSkin(sectionSkin, qSkin)
+            );
+            return questionSkins.map(questionSkin => new AssignedQuestion(
+              q.uuid,
+              exam,
+              submission.student,
+              question,
+              questionSkin,
+              s_i,
+              q_i,
+              q.response
+            )); 
+          })
+        ));
+      }),
+      false
+    );
   }
 
   public getAssignedQuestionById(question_id: string) {

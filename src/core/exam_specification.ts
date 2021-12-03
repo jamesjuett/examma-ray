@@ -282,7 +282,7 @@ type ChoiceKind = {
 interface ExamComponentChooserSpecification<CK extends ChooserKind> {
   readonly component_kind: "chooser_specification";
   readonly chooser_kind: CK;
-  readonly choices: readonly (ChoiceKind[CK] | ExamComponentChooserSpecification<CK>)[];
+  readonly choices: readonly (ChoiceKind[CK] | ChoiceKind[CK][] | ExamComponentChooserSpecification<CK>)[];
   readonly strategy: ChooserStrategySpecification;
 }
 
@@ -342,6 +342,7 @@ function createChooseFunction<CK extends ChooserKind>(spec: ExamComponentChooser
   : (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly ChoiceKind[CK][] {
   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
     return localChoose(spec, exam, student, rand).flatMap(c =>
+      Array.isArray(c) ? c : 
       c.component_kind === "chooser_specification" ? createChooseFunction(c)(exam, student, rand) : c
     );
   };
@@ -410,12 +411,33 @@ export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | 
 /**
  * This factory function returns a [[QuestionChooser]] that will randomly select a set
  * of n questions from the given set of questions or question bank. If there are not enough
- * to choose n or them, the chooser will throw an exception.
+ * to choose n of them, the chooser will throw an exception.
  * @param n 
  * @param questions 
  * @returns 
  */
 export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
+  let qs = questions instanceof QuestionBank ? questions.questions : questions;
+  return {
+    component_kind: "chooser_specification",
+    chooser_kind: "question",
+    choices: qs,
+    strategy: {
+      kind: "random_n",
+      n: n
+    }
+  };
+}
+
+/**
+ * This factory function returns a [[QuestionChooser]] that will randomly select a set
+ * of n sequences of questions from the given set of question sequences. If there are not enough
+ * to choose n of them, the chooser will throw an exception.
+ * @param n 
+ * @param questions 
+ * @returns 
+ */
+export function RANDOM_QUESTION_SEQUENCE(n: number, questions: readonly QuestionSpecification[][]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
   return {
     component_kind: "chooser_specification",

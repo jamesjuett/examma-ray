@@ -67,19 +67,31 @@ export class ExamGenerator {
 
   private renderer = new OriginalExamRenderer();
 
-  public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}) {
+  private onStatus?: (status: string) => void;
+  private totalExams: number;
+
+  public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}, onStatus?: (status: string) => void) {
     this.exam = exam;
     verifyOptions(options);
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    this.onStatus = onStatus;
+    this.totalExams = 0
   }
 
   public assignExams(students: readonly StudentInfo[]) {
-    students.forEach(s => this.assignExam(s));
+    this.totalExams += students.length;
+    students.forEach(s => this.assignExam_impl(s));
   }
 
   public assignExam(student: StudentInfo) {
+    this.totalExams += 1;
+    this.assignExam_impl(student);
+  }
 
-    console.log(`Creating randomized exam for ${student.uniqname}...`);
+  private assignExam_impl(student: StudentInfo) {
+
+    console.log(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
+    this.onStatus && this.onStatus(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
     let ae = this.createRandomizedExam(student);
 
     this.assignedExams.push(ae);
@@ -88,10 +100,6 @@ export class ExamGenerator {
     assert(ae.pointsPossible === this.assignedExams[0].pointsPossible, `Error: Inconsistent total point values. ${this.assignedExams[0].student.uniqname}=${this.assignedExams[0].pointsPossible}, ${ae.student.uniqname}=${ae.pointsPossible}.`.red);
 
     return ae;
-  }
-
-  public assignRandomizedExams(students: readonly StudentInfo[]) {
-    students.forEach(s => this.assignExam(s));
   }
 
   private createRandomizedExam(
@@ -227,11 +235,13 @@ export class ExamGenerator {
   public renderExams() {
     return this.assignedExams.map((ex, i) => {
       console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
+      this.onStatus && this.onStatus(`Phase 2/3: Rendering exams... (${i + 1}/${this.totalExams})`);
       return this.renderer.renderAll(ex, this.options.frontend_js_path);
     });
   }
 
   public writeAll(examDir: string = "out", manifestDir: string = "data") {
+    this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
     // Write exam specification as JSON
     mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
@@ -277,6 +287,7 @@ export class ExamGenerator {
       writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(manifest, null, 2), {encoding: "utf-8"});
       console.log(`${i + 1}/${arr.length} Saving assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
       writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
+
     });
 
     writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
