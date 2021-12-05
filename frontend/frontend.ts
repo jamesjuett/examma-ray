@@ -231,24 +231,101 @@ else {
   alert("It appears some required 3rd party libraries did not load. Please try refreshing the page (might take a few tries). If the problem persists, contact your course staff or instructors.")
 }
 
-function setupQuestionStars() {
-  $(".examma-ray-question > .card > .card-header").each(function() {
+class QuestionStarList {
+  constructor() {
+    this.starMarkedMap = {};
+  }
+
+  /**
+   * newStarElementForQuestion returns a clickable star that is tied to a question.
+   *
+   * Like with QuestionStar.newStarElement(), the stars produced from the same UUID
+   * are all connected and will toggle on and off together.
+   *
+   * @param question_id The corresponding question's UUID
+   */
+  public newStarElementForQuestion(question_id: string): JQuery<HTMLElement> {
+    if (question_id in this.starMarkedMap) {
+      return this.starMarkedMap[question_id].newStarElement();
+    } else {
+      let star = new QuestionStar(question_id, false);
+      this.starMarkedMap[question_id] = star;
+      return star.newStarElement();
+    }
+  }
+
+  private readonly starMarkedMap: { [question_id: string]: QuestionStar }
+}
+
+class QuestionStar {
+  constructor(question_id: string, marked: boolean) {
+    this.question_id = question_id;
+    this.marked = marked;
+    this.star_elements = [];
+  }
+
+  /**
+   * newStarElement returns a new HTML element with a clickable star.
+   *
+   * All stars produced by this QuestionStar object are 'connected',
+   * such that clicking any one will update all the others.
+   */
+  public newStarElement(): JQuery<HTMLElement> {
     let star = $(
       `<span class="examma-ray-question-star">
         ${FILLED_STAR}
       </span>`
     );
-    star.on("click", function() {
-      if ($(this).hasClass("examma-ray-question-star-marked")) {
-        $(this).removeClass("examma-ray-question-star-marked");
-      }
-      else {
-        $(this).addClass("examma-ray-question-star-marked");
-      }
-    });
-    $(this).append(star);
-  })
 
+    star.on("click", this.toggle.bind(this))
+    this.star_elements.push(star);
+    return star;
+  }
+
+  private toggle() {
+    this.marked = !this.marked;
+
+    // Update every star element that was created through newStarElement()
+    for (let element of this.star_elements) {
+      if (this.marked) {
+        element.addClass("examma-ray-question-star-marked");
+      } else {
+        element.removeClass("examma-ray-question-star-marked");
+      }
+    }
+
+    // Show/hide the corresponding question in the section outline
+    if (this.marked) {
+      $("#starred-question-" + this.question_id).show();
+    } else {
+      $("#starred-question-" + this.question_id).hide();
+    }
+  }
+
+  private readonly question_id: string
+  private marked: boolean
+
+  // keeps track of every element issued by newStarElement()
+  private readonly star_elements: JQuery<HTMLElement>[]
+}
+
+function setupQuestionStars() {
+  let starList = new QuestionStarList();
+
+  $(".examma-ray-question > .card > .card-header").each(function() {
+    // Add a star after each question header
+    let question = $(this).closest(".examma-ray-question");
+    let question_id = question.data("question-uuid");
+    let starElement = starList.newStarElementForQuestion(question_id);
+    $(this).append(starElement);
+  });
+
+  $(".examma-ray-starred-nav").each(function () {
+    // Add a star before each (initially hidden) question in the section navigation
+    let question_id = $(this).data("question-uuid");
+    let starElement = starList.newStarElementForQuestion(question_id);
+    $(this).prepend(starElement);
+  });
 }
 
 function setupSaverModal() {
