@@ -102,8 +102,8 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
       <form class="examma-ray-summation-grader">
       ${choices.map((item, i) => {
         return `
-          <div><span>${renderPointAdjustmentBadge(selections[i].pointsForThisItem)}</span><input type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
-          <label class="examma-ray-mc-option">${mk2html(item, skin)}</label></div>
+          <div class="form-check"><span>${renderPointAdjustmentBadge(selections[i].pointsForThisItem)}</span><input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
+          <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label></div>
         `;
       }).join("")}
       </form>

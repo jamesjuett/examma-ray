@@ -88,8 +88,8 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     let report = `
       <form>
       ${question.response.choices.map((item, i) => `
-        <div><input type="radio" ${i === chosen ? "checked" : "disabled"}/>
-        <label class="examma-ray-mc-option ${i === this.spec.correct_index ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, aq.skin)}</label></div>`).join("")}
+        <div class="form-check"><input class="form-check-input" type="radio" ${i === chosen ? "checked" : "disabled"}/>
+        <label class="form-check-label examma-ray-mc-option ${i === this.spec.correct_index ? "examma-ray-correct" : "examma-ray-incorrect"}">${mk2html(item, aq.skin)}</label></div>`).join("")}
       </form>
       
       `;
