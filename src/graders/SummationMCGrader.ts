@@ -2,7 +2,7 @@ import { mk2html } from "../core/render";
 import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
-import { assert } from "../core/util";
+import { assert, assertFalse } from "../core/util";
 import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
 import { RED_X_ICON } from "../core/icons";
 
@@ -101,9 +101,20 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     return `
       <form class="examma-ray-summation-grader">
       ${choices.map((item, i) => {
+        const ri = this.spec.rubric[i];
+        const res = selections[i];
+
+        const match = res.selected === ri.selected;
+
+        // If the # of points is positive, a match is good.
+        // If the # of points is negative
+
         return `
-          <div class="form-check"><span>${renderPointAdjustmentBadge(selections[i].pointsForThisItem)}</span><input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
-          <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label></div>
+          <div class="form-check" ${question.response.spacing ? `style="margin-bottom: ${question.response.spacing};"` : ""}>
+            <span>${renderPointAdjustmentBadge(res.selected, ri)}</span>
+            <input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
+            <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
+          </div>
         `;
       }).join("")}
       </form>
@@ -126,15 +137,19 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     return `
       ${hist.map((count, i) =>
       `<div class="examma-ray-mc-option">
-        ${renderPercentChosenProgressBar(count, gqs.length)} ${renderPointAdjustmentBadge(this.spec.rubric[i].points)} (if ${this.spec.rubric[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}
+        ${renderPercentChosenProgressBar(count, gqs.length)} ${renderPointAdjustmentBadge(this.spec.rubric[i].selected, this.spec.rubric[i])} (if ${this.spec.rubric[i].selected ? "" : "not "}selected): ${mk2html(question.response.choices[i])}
       </div>`).join("")}
       ${numInvalid === 0 ? "" : `<div>${renderNumBadge(numInvalid)} ${RED_X_ICON} invalid submissions</div>`}
     `;
   }
 }
 
-function renderPointAdjustmentBadge(pointAdjustment: number) {
-  return `<span class="badge ${pointAdjustment === 0 ? "badge-secondary" :
-      pointAdjustment < 0 ? "badge-danger" :
-        "badge-success"} examma-ray-point-adjustment-badge">${pointAdjustment > 0 ? "+" + pointAdjustment : pointAdjustment === 0 ? "n/a" : pointAdjustment}</span>`;
+function renderPointAdjustmentBadge(selected: boolean, rubric_item: { selected: boolean, points: number }) {
+  const match = selected === rubric_item.selected;
+  return match && rubric_item.points > 0 ? `<span class="badge badge-success examma-ray-point-adjustment-badge">+${rubric_item.points}</span>` : // matched and earned points
+         match && rubric_item.points < 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">${rubric_item.points}</span>` : // matched a penalty and lost points
+         !match && rubric_item.points > 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">0</span>` : // missed out on earning points
+         !match && rubric_item.points < 0 ? `<span class="badge badge-success examma-ray-point-adjustment-badge">ok</span>` : // dodged a penalty
+         rubric_item.points === 0 ? `<span class="badge badge-secondary examma-ray-point-adjustment-badge">n/a</span>` : // matched a 0 point item
+         assertFalse();
 }

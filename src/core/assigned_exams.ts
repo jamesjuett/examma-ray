@@ -55,11 +55,20 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   }
 
   public get pointsEarned() : number | undefined {
-    return this.exception?.adjustedScore ?? (
-      this.isGraded()
-        ? Math.max(0, Math.min(this.question.pointsPossible, this.gradedBy.pointsEarned(this.gradingResult)))
-        : undefined
-    );
+    if (this.exception?.adjustedScore) {
+      return this.exception.adjustedScore;
+    }
+    
+    if (!this.isGraded()) {
+      return undefined;
+    }
+
+    let points = this.gradedBy.pointsEarned(this.gradingResult);
+    if (this.exception?.pointAdjustment) {
+      points += this.exception.pointAdjustment;
+    }
+
+    return Math.max(0, Math.min(this.question.pointsPossible, points));
   }
 
   public get pointsEarnedWithoutExceptions() : number | undefined {

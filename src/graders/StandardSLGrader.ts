@@ -1,10 +1,10 @@
 import { applySkin, highlightCode, mk2html } from "../core/render";
-import { renderScoreBadge } from "../core/ui_components";
+import { renderPercentChosenProgressBar, renderPointsProgressBar, renderScoreBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { SLItem, SLSubmission } from "../response/select_lines";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
-import { CHECK_ICON, RED_X_ICON } from "../core/icons";
+import { CHECK_ICON, GRAY_DASH_ICON, INFO_OCTICON, RED_X_ICON } from "../core/icons";
 import { assert } from "../core/util";
 
 
@@ -19,6 +19,7 @@ type SLRubricItem = {
   points: number;
   required: number[];
   prohibited: number[];
+  optional?: number[];
   title: string;
   description: string;
 };
@@ -97,7 +98,8 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
       ${itemResults.map((itemResult, i) => {
         let rubricItem = this.spec.rubric[i];
-        let included = rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1);
+        let relevant_lines = rubricItem.required.concat(rubricItem.prohibited).concat(rubricItem.optional ?? []).sort((a, b) => a - b);
+        let student_selected = relevant_lines.filter(line => submission.indexOf(line) !== -1);
         let riScore = itemResult.applied ? rubricItem.points : 0;
 
         // let details: string;
@@ -130,11 +132,15 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
                 </div>
               </div>
             </td>
-            <td>${included.length === 0
+            <td>${student_selected.length === 0
               ? `<pre style="font-style: italic">${rubricItem.required.length === 0 ? CHECK_ICON : RED_X_ICON} (no selection)</pre>`
-              : (included.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : RED_X_ICON} <code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
+              : (student_selected.map(line => `<pre>${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : rubricItem.prohibited.indexOf(line) !== -1 ? RED_X_ICON : GRAY_DASH_ICON} <code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>'))}
             </td>
-            <td>${rubricItem.required.map(line => `<pre><code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`).join('<br style="font-size: 0.3rem"/>')}</td>
+            <td>
+              ${rubricItem.required.concat(rubricItem.optional ?? []).sort((a, b) => a - b).map(line => `
+                <pre ${rubricItem.required.indexOf(line) !== -1 ? "" : 'class="examma-ray-sl-diff-optional-solution-line" style="position: relative;"'}>${rubricItem.required.indexOf(line) !== -1 ? "" : `<span class="examma-ray-sl-diff-optional-solution-line-info-icon" data-toggle="tooltip" data-placement="top" title="This line is not necessary for a correct solution.">${INFO_OCTICON}</span>`}<code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`
+              ).join('<br style="font-size: 0.3rem"/>')}
+            </td>
           </tr>`;
     }).join("")}
     </table>`;
@@ -144,7 +150,62 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     return "Stats are not implemented for this question/grader type yet.";
   }
 
-  public renderOverview() {
-    return "Overview is not implemented for this question/grader type yet.";
+  public renderOverview(gqs: readonly GradedQuestion<"select_lines", StandardSLGradingResult>[]) {
+    if (gqs.length === 0) {
+      return "No graded questions.";
+    }
+    
+    let submissions = gqs.map(aq => aq.submission);
+    let grading_results = gqs.map(gq => gq.gradingResult);
+
+    let question = gqs[0].question;
+    let gr = gqs[0].gradingResult;
+
+    let skin = gqs[0].skin;
+
+    const rubric = this.spec.rubric;
+
+    let lines_n_chosen = new Array(question.response.choices.length).fill(0);
+    submissions.forEach(sub => sub !== BLANK_SUBMISSION && sub.forEach(s => ++lines_n_chosen[s]));
+
+    // let itemResults = gr.itemResults;
+    // assert(itemResults.length === this.spec.rubric.length);
+
+    return `
+    <table class="examma-ray-sl-diff table table-sm">
+      <tr><th>Rubric</th><th>Student Selections</th><th>Solution</th></tr>
+      ${rubric.map((rubricItem, i) => {
+        let relevant_lines = rubricItem.required.concat(rubricItem.prohibited).concat(rubricItem.optional ?? []).sort((a, b) => a - b);
+        let student_summary = relevant_lines.map(line => `<pre>
+          ${rubricItem.required.indexOf(line) !== -1 ? CHECK_ICON : rubricItem.prohibited.indexOf(line) !== -1 ? RED_X_ICON : GRAY_DASH_ICON} ${renderPercentChosenProgressBar(lines_n_chosen[line], submissions.length)}<code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code>
+        </pre>`).join('<br style="font-size: 0.3rem"/>')
+
+        let riAvg = grading_results.filter(gr => !gr.wasBlankSubmission && gr.itemResults[i].applied).length / grading_results.length * rubricItem.points;
+        let elem_id = `question-${question.question_id}-item-${i}`;
+
+        return `
+          <tr>
+            <td class="examma-ray-sl-rubric-item">
+              <div id="${elem_id}" class="card rubric-item-card">
+                <div class="card-header">
+                  <a class="nav-link" data-toggle="collapse" data-target="#${elem_id}-details" role="button" aria-expanded="false" aria-controls="${elem_id}-details">${renderPointsProgressBar(riAvg, rubricItem.points)} ${mk2html(rubricItem.title, skin)}</a>
+                </div>
+                <div class="collapse" id="${elem_id}-details">
+                  <div class="card-body">
+                    ${mk2html(rubricItem.description, skin)}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>${student_summary}
+            </td>
+            <td>
+              ${rubricItem.required.concat(rubricItem.optional ?? []).sort((a, b) => a - b).map(line => `
+                <pre ${rubricItem.required.indexOf(line) !== -1 ? "" : 'class="examma-ray-sl-diff-optional-solution-line" style="position: relative;"'}>${rubricItem.required.indexOf(line) !== -1 ? "" : `<span class="examma-ray-sl-diff-optional-solution-line-info-icon" data-toggle="tooltip" data-placement="top" title="This line is not necessary for a correct solution.">${INFO_OCTICON}</span>`}<code>${highlightCode(applySkin((<SLItem>question.response.choices[line]).text, skin), question.response.code_language)}</code></pre>`
+              ).join('<br style="font-size: 0.3rem"/>')}
+            </td>
+          </tr>`;
+    }).join("")}
+    </table>`;
   }
 }

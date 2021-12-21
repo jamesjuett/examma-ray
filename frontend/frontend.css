@@ -7,6 +7,7 @@ html {
   margin-top: 0;
   margin-bottom: 0;
   margin-left: 1em;
+  overflow: visible;
 }
 
 .examma-ray-sl-diff pre>code {
@@ -34,6 +35,16 @@ html {
   position: sticky;
   left: 0;
   background-color: white;
+}
+
+.examma-ray-sl-diff-optional-solution-line {
+  opacity: 0.5;
+}
+
+.examma-ray-sl-diff-optional-solution-line-info-icon {
+  position: absolute;
+  top: calc(50% - 9px);
+  left: -8px;
 }
 
 .examma-ray-sl-rubric-item {
@@ -291,8 +302,8 @@ code {
 
 .examma-ray-summation-grader .examma-ray-point-adjustment-badge {
   min-width: 3em;
-  margin-left: 0.5em;
-  margin-right: 0.5em;
+  margin-left: -1.5em;
+  margin-right: 2.5em;
   vertical-align: text-top;
 }
 
@@ -561,6 +572,10 @@ pre .examma-ray-fitb-droppable pre {
   position: absolute;
   right: -0.5em;
   top: -0.5em;
+}
+
+.examma-ray-manual-graded-rubric-item svg {
+  vertical-align: text-top;
 }
 
 

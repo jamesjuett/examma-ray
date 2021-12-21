@@ -56,6 +56,8 @@ function main() {
 
   activateExamComponents();
 
+  $('[data-toggle="tooltip"]').tooltip();
+
 }
 
 if (typeof $ === "function") {

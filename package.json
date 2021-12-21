@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.227",
+  "version": "1.0.265",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
@@ -13,7 +13,8 @@
     "build": "tsc",
     "build-frontend": "webpack --config webpack.config.js",
     "copy-code-grader-css": "cp src/grading_interface/code-grader.css dist/grading_interface/",
-    "prepublish": "rm -rf dist && npm run build && npm run build-frontend && npm run copy-code-grader-css",
+    "copy-frontend-css": "cp frontend/frontend.css dist/frontend/",
+    "prepublish": "rm -rf dist && npm run build && npm run build-frontend && npm run copy-code-grader-css && npm run copy-frontend-css",
     "test": "TS_NODE_FILES=true mocha --recursive -r ts-node/register 'test/**/*.spec.ts'",
     "cypress:open": "CYPRESS_CRASH_REPORTS=0 cypress open",
     "cypress:run": "CYPRESS_CRASH_REPORTS=0 cypress run --headless --browser chrome",

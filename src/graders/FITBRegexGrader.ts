@@ -220,7 +220,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${this.renderOverview(gqs)}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.slice().sort((a,b)=>b.num - a.num).map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
+            ${blankSubs.slice().map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
@@ -286,8 +286,13 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       )
     );
 
-    // sort by points earned
-    gradedBlankSubmissions = gradedBlankSubmissions.map(bs => bs.sort((a, b) => b.points - a.points));
+    // sort by points earned, then number
+    gradedBlankSubmissions = gradedBlankSubmissions.map(
+      bs => bs.sort((a, b) => b.points - a.points === 0
+        ? b.num - a.num
+        : b.points - a.points
+      )
+    );
     return gradedBlankSubmissions;
   }
 

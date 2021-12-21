@@ -102,7 +102,7 @@ export {
 export {
   CodeWritingGrader,
   CodeWritingRubricItem,
-  CodeWritingGradingResult
+  CodeWritingRubricResult as CodeWritingGradingResult
 } from "./graders/CodeWritingGrader";
 
 export {

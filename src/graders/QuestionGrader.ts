@@ -2,7 +2,8 @@ import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { assertNever } from "../core/util";
 import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind } from "../response/common";
-import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingGradingResult } from "./CodeWritingGrader";
+import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingRubricResult } from "./CodeWritingGrader";
+import { LegacyCodeWritingGrader, LegacyCodeWritingGraderSpecification, LegacyCodeWritingRubricResult } from "./LegacyCodeWritingGrader";
 import { FITBRegexGrader, FITBRegexGraderSpecification } from "./FITBRegexGrader";
 import { FreebieGrader, FreebieGraderSpecification } from "./FreebieGrader";
 import { SimpleMCGrader, SimpleMCGraderSpecification } from "./SimpleMCGrader";
@@ -136,7 +137,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param question_id 
    * @param manual_grading
    */
-  prepare(exam_id: string, question_id: string, manual_grading: GradingAssignmentSpecification<RK, GR>[]): void;
+  prepare(exam_id: string, question_id: string, grader_data: any): void;
 
   /**
    * Grades the given assigned question and returns the grading result. This function
@@ -181,7 +182,8 @@ type GraderKind =
   | "summation_multiple_choice"
   | "standard_select_lines"
   | "standard_fitb_drop"
-  | "bug_catching";
+  | "bug_catching"
+  | "legacy_code_writing";
 
 export type GraderSpecification<GK extends GraderKind = GraderKind> =
   GK extends "manual_code_writing" ? CodeWritingGraderSpecification :
@@ -192,6 +194,7 @@ export type GraderSpecification<GK extends GraderKind = GraderKind> =
   GK extends "standard_select_lines" ? StandardSLGraderSpecification :
   GK extends "standard_fitb_drop" ? StandardFITBDropGraderSpecification :
   GK extends "bug_catching" ? BugCatchingGraderSpecification :
+  GK extends "legacy_code_writing" ? LegacyCodeWritingGraderSpecification :
   never;
 
 export type Grader<GK extends GraderKind = GraderKind> =
@@ -203,6 +206,7 @@ export type Grader<GK extends GraderKind = GraderKind> =
   GK extends "standard_select_lines" ? StandardSLGrader :
   GK extends "standard_fitb_drop" ? StandardFITBDropGrader :
   GK extends "bug_catching" ? BugCatchingGrader :
+  GK extends "legacy_code_writing" ? LegacyCodeWritingGrader :
   never;
 
 type ExtractViableGraders<G extends Grader, RK> = G extends Grader ? RK extends G["t_response_kinds"] ? G : never : never;
@@ -220,6 +224,7 @@ export function realizeGrader<GK extends GraderKind>(spec: GraderSpecification<G
     spec.grader_kind === "standard_select_lines" ? new StandardSLGrader(spec) :
     spec.grader_kind === "standard_fitb_drop" ? new StandardFITBDropGrader(spec) :
     spec.grader_kind === "bug_catching" ? new BugCatchingGrader(spec) :
+    spec.grader_kind === "legacy_code_writing" ? new LegacyCodeWritingGrader(spec) :
     assertNever(spec)
   );
 }

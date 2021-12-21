@@ -162,8 +162,11 @@ export class ExamGrader {
 
   private renderer = new GradedExamRenderer();
 
-  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[]) {
+  private onStatus?: (status: string) => void;
+
+  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
     this.exam = exam;
+    this.onStatus = onStatus;
     verifyOptions(options);
     this.options = Object.assign(DEFAULT_OPTIONS, options);
 
@@ -241,8 +244,10 @@ export class ExamGrader {
     this.allQuestions.forEach(question => {
       let grader = this.getGrader(question);
       if (grader) {
-        let manual_grading = ExamUtils.readGradingAssignments(this.exam.exam_id, question.question_id);
-        grader.prepare(this.exam.exam_id, question.question_id, manual_grading);
+        let grading_data = this.prepareGradingData(question, grader);
+        if (grading_data) {
+          grader.prepare(this.exam.exam_id, question.question_id, grading_data);
+        }
       }
       else {
         console.log(`WARNING: No grader registered for question: ${question.question_id}`);
@@ -258,9 +263,19 @@ export class ExamGrader {
       )
     );
 
-    this.submittedExams.forEach(s => s.gradeAll(this.graderMap));
+    this.submittedExams.forEach((s, i) => {
+      this.onStatus && this.onStatus(`Grading exams... (${i + 1}/${this.submittedExams.length})`);
+      s.gradeAll(this.graderMap)
+    });
 
     this.stats.recompute(this);
+  }
+
+  protected prepareGradingData(question: Question, grader: QuestionGrader) : any {
+    return {
+      rubric: [],
+      submission_results: ExamUtils.readGradingAssignments(this.exam.exam_id, question.question_id)
+    };
   }
 
   public applyCurve(curve: ExamCurve) {
@@ -283,9 +298,11 @@ export class ExamGrader {
 
   private addAppropriateExceptions(aq: AssignedQuestion, student: StudentInfo) {
     let studentExMap = this.exceptionMap[student.uniqname];
-    let questionEx = studentExMap && studentExMap[aq.question.question_id];
-    if (questionEx) {
-      aq.addException(questionEx);
+    if (studentExMap) {
+      let questionEx = studentExMap[aq.question.question_id] ?? studentExMap[aq.displayIndex];
+      if (questionEx) {
+        aq.addException(questionEx);
+      }
     }
   }
 
@@ -297,6 +314,7 @@ export class ExamGrader {
   public writeGraderPages() {
     writeFrontendJS(`out/${this.exam.exam_id}/graded/js`, "grader-page-fitb.js");
 
+    this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
     this.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
@@ -316,6 +334,7 @@ export class ExamGrader {
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
         let filenameBase = this.createGradedFilenameBase(ex);
+        this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
         writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
@@ -458,10 +477,10 @@ export class ExamGrader {
 
     let overview = `
       ${main_overview}
+      ${questions_overview}
       <div class="examma-ray-students-overview">
         ${students_overview}
       <div>
-      ${questions_overview}
     `;
 
     writeFileSync(out_filename, `
@@ -512,15 +531,17 @@ export type GraderSpecificationMap = {
  * An exception including an adjusted score and an explanation
  * of why the exception was applied.
  */
-export type Exception = {
-  adjustedScore: number,
-  explanation: string
-}
+ export declare type Exception = {
+  adjustedScore?: number;
+  pointAdjustment?: number;
+  explanation: string;
+};
 
 /**
  * A mapping from (uniqname, question id) to any exceptions applied
- * for that student for that question. Only one exception may be
- * specified per student/question pair.
+ * for that student for that question. The question's display index
+ * (e.g. "3.2") may be used in place of the question ID.
+ * Only one exception may be specified per student/question pair.
  */
 export type ExceptionMap = {
   [index: string]: { // uniqname
