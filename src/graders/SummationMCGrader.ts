@@ -24,7 +24,7 @@ export type SummationMCGraderSpecification = {
    * for the option to be selected or not (true/false) and the number of points to add 
    * (or subtract if negative) in that case
    */
-  readonly rubric: readonly {selected: boolean, points: number}[];
+  readonly rubric: readonly {selected: boolean, points: number, ignore_selection?: boolean}[];
 }
 
 export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
@@ -70,7 +70,7 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
       let isSelected = submission.indexOf(i) !== -1;
       return {
         selected: isSelected,
-        pointsForThisItem: isSelected === pv.selected ? pv.points : 0
+        pointsForThisItem: isSelected === pv.selected || pv.ignore_selection ? pv.points : 0
       };
     });
 
@@ -104,13 +104,13 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
         const ri = this.spec.rubric[i];
         const res = selections[i];
 
-        const match = res.selected === ri.selected;
+        const match = res.selected === ri.selected || ri.ignore_selection;
 
         // If the # of points is positive, a match is good.
         // If the # of points is negative
 
         return `
-          <div class="form-check" ${question.response.spacing ? `style="margin-bottom: ${question.response.spacing};"` : ""}>
+          <div class="form-check" style="padding-left: 5rem;${question.response.spacing ? ` margin-bottom: ${question.response.spacing};` : ""}">
             <span>${renderPointAdjustmentBadge(res.selected, ri)}</span>
             <input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
             <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
@@ -144,8 +144,8 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
   }
 }
 
-function renderPointAdjustmentBadge(selected: boolean, rubric_item: { selected: boolean, points: number }) {
-  const match = selected === rubric_item.selected;
+function renderPointAdjustmentBadge(selected: boolean, rubric_item: { selected: boolean, points: number, ignore_selected?: boolean }) {
+  const match = selected === rubric_item.selected || rubric_item.ignore_selected;
   return match && rubric_item.points > 0 ? `<span class="badge badge-success examma-ray-point-adjustment-badge">+${rubric_item.points}</span>` : // matched and earned points
          match && rubric_item.points < 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">${rubric_item.points}</span>` : // matched a penalty and lost points
          !match && rubric_item.points > 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">0</span>` : // missed out on earning points
