@@ -151,7 +151,7 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
     <form>
     ${(response.multiple && response.limit !== undefined) ? `<div data-examma-ray-mc-limit="${response.limit}">You have selected <span class="examma-ray-mc-num-selected">0</span> out of ${response.limit} allowed.</div>`: ""}
     ${response.choices.map((item,i) => `
-      <div class="form-check" style="margin-left: 3.25rem${response.spacing ? ` margin-bottom: ${response.spacing};` : ""}">
+      <div class="form-check" style="${response.spacing ? ` margin-bottom: ${response.spacing};` : ""}">
         <input id="${question_uuid}_choice_${i}" class="form-check-input" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}"/>
         <label for="${question_uuid}_choice_${i}" class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
       </div>`
