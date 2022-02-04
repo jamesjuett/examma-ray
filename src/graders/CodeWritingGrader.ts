@@ -218,7 +218,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <tr>
           <td>
             <ul class="list-group examma-ray-manual-graded-rubric">
-              ${this.rubric.map(ri => {
+              ${this.rubric.sort((a,b) => (a.sort_index ?? "")?.localeCompare(b.sort_index ?? "")).map(ri => {
                 let itemResult = res.rubric_items[ri.rubric_item_uuid];
                 let statusClass = "";
                 if (itemResult?.status === "on") {

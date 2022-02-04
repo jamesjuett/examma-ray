@@ -183,7 +183,7 @@ export class ExamGenerator {
     // If there wasn't a previous stats entry for that section ID, add one
     sections.forEach(
       section => this.sectionStatsMap[section.section_id]
-        ? ++this.sectionStatsMap[section.section_id].n && assert(section.spec === this.sectionStatsMap[section.section_id].section.spec, `Multiple sections from different specifications with the ID "${section.section_id}" were detected.`)
+        ? ++this.sectionStatsMap[section.section_id].n && assert(this.options.allow_duplicates || section.spec === this.sectionStatsMap[section.section_id].section.spec, `Multiple sections from different specifications with the ID "${section.section_id}" were detected.`)
         : this.sectionStatsMap[section.section_id] = {
           section: section,
           n: 1
@@ -200,7 +200,7 @@ export class ExamGenerator {
     // Verify that every question with the same ID originated from the same specification
     questions.forEach(
       question => this.questionStatsMap[question.question_id]
-        ? ++this.questionStatsMap[question.question_id].n && assert(question.spec === this.questionStatsMap[question.question_id].question.spec, `Multiple questions from different specifications with the ID "${question.question_id}" were detected.`)
+        ? ++this.questionStatsMap[question.question_id].n && assert(this.options.allow_duplicates || question.spec === this.questionStatsMap[question.question_id].question.spec, `Multiple questions from different specifications with the ID "${question.question_id}" were detected.`)
         : this.questionStatsMap[question.question_id] = {
           question: question,
           n: 1

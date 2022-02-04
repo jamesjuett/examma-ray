@@ -145,7 +145,12 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
 }
 
 function renderPointAdjustmentBadge(selected: boolean, rubric_item: { selected: boolean, points: number, ignore_selected?: boolean }) {
-  const match = selected === rubric_item.selected || rubric_item.ignore_selected;
+
+  if (rubric_item.ignore_selected) {
+    return `<span class="badge badge-success examma-ray-point-adjustment-badge">+${rubric_item.points}</span>`;
+  }
+
+  const match = selected === rubric_item.selected;
   return match && rubric_item.points > 0 ? `<span class="badge badge-success examma-ray-point-adjustment-badge">+${rubric_item.points}</span>` : // matched and earned points
          match && rubric_item.points < 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">${rubric_item.points}</span>` : // matched a penalty and lost points
          !match && rubric_item.points > 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">0</span>` : // missed out on earning points
