@@ -5,6 +5,7 @@ import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { ResponseHandler, ViableSubmission } from "./responses";
 
 export type DroppableSpecification = {
   id: string,
@@ -21,7 +22,7 @@ export type FITBDropSpecification = {
   content: string;
   droppables: DroppableSpecification /* | [DroppableGroupSpecification] */;
   starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
-  sample_solution?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
+  sample_solution?: ViableSubmission<FITBDropSubmission>;
   default_grader?: GraderSpecificationFor<"fitb_drop">;
   group_id?: string;
 };
@@ -95,7 +96,16 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
-function FITB_DROP_ACTIVATE(responseElem: JQuery) {
+function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ViableSubmission<FITBDropSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  return "<div>not yet implemented</div>";
+}
+
+function FITB_DROP_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
+
+  if (is_sample_solution) {
+    // Drag/drop should not be active if we're just showing them a sample solution
+    return;
+  }
 
   activateDropLocations(responseElem);
 
@@ -227,9 +237,10 @@ function FITB_DROP_FILLER(responseElem: JQuery, submission: FITBDropSubmission) 
   fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-originals"));
 }
 
-export const FITB_DROP_HANDLER = {
+export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   parse: FITB_DROP_PARSER,
   render: FITB_DROP_RENDERER,
+  render_sample_solution: FITB_DROP_SOLUTION_RENDERER,
   activate: FITB_DROP_ACTIVATE,
   extract: FITB_DROP_EXTRACTOR,
   fill: FITB_DROP_FILLER

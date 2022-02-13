@@ -5,6 +5,7 @@ import { assert } from "../core/util";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { createFilledFITB } from "./util-fitb";
 import { isStringArray } from "./util";
+import { ResponseHandler, ViableSubmission } from "./responses";
 
 /**
  * ## Fill-In-The-Blank (FITB) Response Element Specification
@@ -109,7 +110,7 @@ export type FITBSpecification = {
   /**
    * A sample solution, which may not be blank or invalid.
    */
-  sample_solution?: Exclude<FITBSubmission, typeof BLANK_SUBMISSION>;
+  sample_solution?: ViableSubmission<FITBSubmission>;
 
   /**
    * A default grader, used to evaluate submissions for this response.
@@ -153,6 +154,10 @@ function FITB_RENDERER(response: FITBSpecification, question_id: string, questio
   return createFilledFITB(applySkin(response.content, skin));
 }
 
+function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ViableSubmission<FITBSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  return createFilledFITB(applySkin(response.content, skin), solution.map(s => applySkin(s, skin)));
+}
+
 function FITB_EXTRACTOR(responseElem: JQuery) {
   let filledResponses = responseElem.find("input, textarea").map(function() {
     let v = "" + ($(this).val() ?? "");
@@ -175,9 +180,10 @@ function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   }
 }
 
-export const FITB_HANDLER = {
+export const FITB_HANDLER : ResponseHandler<"fill_in_the_blank"> = {
   parse: FITB_PARSER,
   render: FITB_RENDERER,
+  render_sample_solution: FITB_SOLUTION_RENDERER,
   extract: FITB_EXTRACTOR,
   fill: FITB_FILLER
 };

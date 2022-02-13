@@ -1,6 +1,6 @@
 import { GraderFor, QuestionGrader, realizeGrader } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { render_response, ResponseSpecification, SubmissionType } from "../response/responses";
+import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
 import { chooseQuestions, chooseSections, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./exam_specification";
 import { CHOOSE_ALL } from "./randomization";
 import { mk2html } from "./render";
@@ -21,7 +21,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
   public readonly skin: ExamComponentSkin | SkinChooser;
-  public readonly sampleSolution?: Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>;
+  public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
   public readonly media_dir?: string;
 
@@ -61,13 +61,17 @@ export class Question<QT extends ResponseKind = ResponseKind> {
         ? realizeChooser(spec.skin)
         : spec.skin
     ) : DEFAULT_SKIN;
-    this.sampleSolution = <Exclude<SubmissionType<QT>, typeof BLANK_SUBMISSION>>spec.response.sample_solution;
+    this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
     this.media_dir = spec.media_dir;
   }
 
   public renderResponse(uuid: string, skin?: ExamComponentSkin) {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, this.question_id, uuid, skin)}</div>`;
+  }
+
+  public renderResponseSolution(uuid: string, solution: ViableSubmissionType<QT>, skin?: ExamComponentSkin) {
+    return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_solution(this.response, solution, this.question_id, uuid, skin)}</div>`;
   }
 
   public renderDescription(skin: ExamComponentSkin) {

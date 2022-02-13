@@ -3,6 +3,7 @@ import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrade
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { ResponseHandler, ViableSubmission } from "./responses";
 
 /**
  * ## Code Editor Response Element Specification
@@ -88,7 +89,7 @@ export type CodeEditorSpecification = {
   starter: string,
   header?: string,
   footer?: string,
-  sample_solution?: Exclude<CodeEditorSubmission, typeof BLANK_SUBMISSION>,
+  sample_solution?: ViableSubmission<CodeEditorSubmission>,
   default_grader?: GraderSpecificationFor<"code_editor">
 };
 
@@ -137,6 +138,10 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
   `;
 }
 
+function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: ViableSubmission<CodeEditorSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  return "<div>not yet implemented</div>";
+}
+
 
 function CODE_EDITOR_EXTRACTOR(responseElem: JQuery) {
   
@@ -153,9 +158,10 @@ function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
 }
 
 
-export const CODE_EDITOR_HANDLER = {
+export const CODE_EDITOR_HANDLER : ResponseHandler<"code_editor"> = {
   parse: CODE_EDITOR_PARSER,
   render: CODE_EDITOR_RENDERER,
+  render_sample_solution: CODE_EDITOR_SOLUTION_RENDERER, 
   extract: CODE_EDITOR_EXTRACTOR,
   fill: CODE_EDITOR_FILLER
 };

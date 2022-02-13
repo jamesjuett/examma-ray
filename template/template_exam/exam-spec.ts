@@ -16,7 +16,7 @@ export const EXAM = Exam.create({
 export const EXAM_GENERATOR_INDIVIDUAL = new ExamGenerator(EXAM, {
   uuid_strategy: "uuidv5",
   uuidv5_namespace: readFileSync("secret", "utf-8"),
-  frontend_js_path: "js/frontend.js"
+  frontend_js_path: "js/"
 });
 
 export const EXAM_GENERATOR_PREVIEW = new ExamGenerator(EXAM, {

@@ -2,14 +2,14 @@ import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { AssignedExam, AssignedQuestion, AssignedSection } from './core/assigned_exams';
-import { OriginalExamRenderer } from './core/exam_renderer';
+import { ExamRenderer, OriginalExamRenderer } from './core/exam_renderer';
 import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer, CHOOSE_ALL } from "./core/randomization";
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
 import del from 'del';
 import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
-import { createStudentUuid, writeFrontendJS, copyFrontendMedia, ExamUtils } from './ExamUtils';
+import { createStudentUuid, writeFrontendJS, ExamUtils } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 
@@ -37,7 +37,7 @@ export type ExamGeneratorOptions = {
 };
 
 const DEFAULT_OPTIONS = {
-  frontend_js_path: "js/frontend.js",
+  frontend_js_path: "js/",
   frontend_media_dir: "media",
   uuid_strategy: "plain",
   allow_duplicates: false,
@@ -64,8 +64,6 @@ export class ExamGenerator {
   private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
 
   private options: ExamGeneratorOptions;
-
-  private renderer = new OriginalExamRenderer();
 
   private onStatus?: (status: string) => void;
   private totalExams: number;
@@ -232,15 +230,15 @@ export class ExamGenerator {
     return this.assignedExams.map(ex => ex.createManifest());
   }
 
-  public renderExams() {
+  public renderExams(exam_renderer: ExamRenderer) {
     return this.assignedExams.map((ex, i) => {
       console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
       this.onStatus && this.onStatus(`Phase 2/3: Rendering exams... (${i + 1}/${this.totalExams})`);
-      return this.renderer.renderAll(ex, this.options.frontend_js_path);
+      return exam_renderer.renderAll(ex, this.options.frontend_js_path);
     });
   }
 
-  public writeAll(examDir: string = "out", manifestDir: string = "data") {
+  public writeAll(exam_renderer: ExamRenderer, examDir: string = "out", manifestDir: string = "data") {
     this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
     // Write exam specification as JSON
@@ -260,6 +258,7 @@ export class ExamGenerator {
     del.sync(`${manifestDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend.js");
+    writeFrontendJS(`${examDir}/js`, "frontend-sample-solution.js");
     this.writeMedia(`${examDir}`);
 
     this.writeStats();
@@ -267,7 +266,7 @@ export class ExamGenerator {
     let filenames : string[][] = [];
 
     let manifests = this.createManifests();
-    let renderedExams = this.renderExams();
+    let renderedExams = this.renderExams(exam_renderer);
 
     let toWrite = manifests
       .map((m, i) => ({

@@ -126,7 +126,7 @@ export type ExamGraderOptions = {
 };
 
 const DEFAULT_OPTIONS = {
-  frontend_js_path: "js/frontend.js",
+  frontend_js_path: "js/",
   frontend_media_dir: "media",
   uuid_strategy: "plain",
 };

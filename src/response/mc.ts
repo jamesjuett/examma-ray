@@ -3,7 +3,7 @@ import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
-import { ResponseHandler } from "./responses";
+import { ResponseHandler, ViableSubmission } from "./responses";
 
 /**
  * ## Multiple Choice Response Element Specification 
@@ -87,7 +87,7 @@ export type MCSpecification = {
   /**
    * A sample solution, which may not be blank or invalid.
    */
-  sample_solution?: Exclude<MCSubmission, typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION>;
+  sample_solution?: ViableSubmission<MCSubmission>;
 
   /**
    * A default grader, used to evaluate submissions for this response.
@@ -160,12 +160,34 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
   `;
 }
 
+function MC_SOLUTION_RENDERER(response: MCSpecification, solution: ViableSubmission<MCSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+
+  return `
+    ${solution.length === 0 ? "The correct solution is to leave all options unselected." : ""}
+    <form>
+    ${(response.multiple && response.limit !== undefined) ? `<div><span class="examma-ray-mc-num-selected">${solution.length}</span> out of ${response.limit} allowed choices are selected.</div>`: ""}
+    ${response.choices.map((item,i) => `
+      <div class="form-check" style="${response.spacing ? ` margin-bottom: ${response.spacing};` : ""}">
+        <input id="${question_uuid}_choice_${i}" class="form-check-input" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}" style="pointer-events: none" ${solution.indexOf(i) !== -1 ? "checked" : "disabled"}/>
+        <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
+      </div>`
+    ).join("")}
+    </form>
+  `;
+}
+
 function getCheckboxLimit(responseElem: JQuery) : number | undefined {
   let limitElem = responseElem.find("*[data-examma-ray-mc-limit]");
   return limitElem.length > 0 ? parseInt(limitElem.data("examma-ray-mc-limit")) : undefined;
 }
 
-function MC_ACTIVATE(responseElem: JQuery) {
+function MC_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
+
+  if (is_sample_solution) {
+    // If this is a sample solution, no need for checkbox limit code
+    // (they can't check stuff in a sample solution anyway)
+    return;
+  }
 
   // frontend code to enforce checkbox limit. note that this won't absolutely prevent
   // someone from messing with the front end to check extra boxes, but the limit is
@@ -222,6 +244,7 @@ export const MC_HANDLER : ResponseHandler<"multiple_choice"> = {
   parse: MC_PARSER,
   validate: MC_VALIDATOR,
   render: MC_RENDERER,
+  render_sample_solution: MC_SOLUTION_RENDERER,
   activate: MC_ACTIVATE,
   extract: MC_EXTRACTOR,
   fill: MC_FILLER

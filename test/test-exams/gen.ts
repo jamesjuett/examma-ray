@@ -6,6 +6,7 @@ import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
+import { OriginalExamRenderer } from "../../src/core";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
@@ -29,13 +30,13 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
 function genTestExam(exam: Exam) {
   let gen = new ExamGenerator(exam, {
     uuid_strategy: "plain",
-    frontend_js_path: "js/frontend.js"
+    frontend_js_path: "js/"
   });
   gen.assignExam({
     name: "Test Student",
     uniqname: "test"
   });
-  gen.writeAll(path.join(__dirname, "out"), path.join(__dirname, "data"));
+  gen.writeAll(new OriginalExamRenderer(), path.join(__dirname, "out"), path.join(__dirname, "data"));
 }
 
 
