@@ -143,7 +143,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <div class="examma-ray-code-editor-header">
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
-        <div class="examma-ray-code-editor-graded-submission">
+        <div class="examma-ray-code-editor-submission">
           ${`<pre><code>${highlightCode(aq.submission as string, response.code_language)}</code></pre>`}
         </div>
         <div class="examma-ray-code-editor-footer">
@@ -156,7 +156,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
           <div class="examma-ray-code-editor-header">
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
-          <div class="examma-ray-code-editor-graded-submission">
+          <div class="examma-ray-code-editor-submission">
             ${`<pre><code>${highlightCode(""+applySkin(question.sampleSolution as string, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">

@@ -411,6 +411,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
         <div class="badge badge-primary">
           ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible, "badge-success")}
         </div>
+        <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold; color: red;">Sample Solution</span>
       </div>
     `;
   }
