@@ -18,10 +18,11 @@ import 'katex/dist/katex.min.css';
 import "./frontend.css";
 import { activateBank } from "../src/response/fitb-drop";
 import { activateExamComponents } from "./common";
+import { ResponseKind } from "../src/response/common";
 
 function activateResponse(this: HTMLElement) {
   let response = $(this);
-  activate_response(response.data("response-kind"), response);
+  activate_response(<ResponseKind>response.data("response-kind"), false, response);
 }
 
 function activateExam() {
