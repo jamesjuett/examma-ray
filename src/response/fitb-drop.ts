@@ -97,7 +97,10 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
 }
 
 function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ViableSubmission<FITBDropSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  return "<div>not yet implemented</div>";
+  let group_id = response.group_id ?? question_id;
+  return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, solution);
+
+  // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
 function FITB_DROP_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
@@ -374,7 +377,7 @@ export function createFilledFITBDrop(
   if (submission && submission !== BLANK_SUBMISSION) {
     submission.forEach(sub => content = content.replace(submission_placeholder,
       typeof sub === "string"
-       ? encoder(sub)
+       ? encoder(applySkin(sub, skin))
        : sub.map(s => {
           let droppable = dropOriginals.find(d => d.id === s.id);
           assert(droppable, `Cannot find drop item with ID ${s.id}.`);
