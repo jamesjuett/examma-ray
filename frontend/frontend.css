@@ -180,6 +180,7 @@ code {
 
 .examma-ray-question .card-body {
   padding-bottom: 1em;
+  overflow-x: auto;
 }
 
 .examma-ray-instructions {
