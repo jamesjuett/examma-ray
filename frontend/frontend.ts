@@ -130,7 +130,7 @@ function updateExamSaverModal() {
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
-      .attr("download", `${answers.student.uniqname}-answers.json`)
+      .attr("download", `${answers.student.uniqname}-${answers.exam_id}-answers.json`)
       .attr("href", url)
       .removeClass("disabled");
 
