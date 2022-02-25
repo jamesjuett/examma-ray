@@ -169,7 +169,6 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
 type SimpleDropEvaluatorSpecification = {
   readonly kind: "simple_drop_evaluator",
   readonly index: number,
-  readonly allow_multiple?: boolean,
   readonly evaluations: {
     [index: string]: FITBDropRubricItemEvaluation
   }
