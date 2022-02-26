@@ -61,7 +61,7 @@ Describe changes from user perspective and list all potential break changes or o
 
 Please review your source code and check the boxes below to initiate a code review:
 
-- [ ] Documentation has been updated/provided or not needed
+- [ ] Documentation has been updated/provided or not needed.
 - [ ] Development/Staging environment has been prepared for deployment or will not be effected.
-- [ ] TypeScript definition has been updated, provided, or not needed,
+- [ ] TypeScript definitions has been updated, provided, or not needed.
 - [ ] Changelog has been provided.
