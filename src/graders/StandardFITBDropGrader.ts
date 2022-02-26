@@ -201,12 +201,12 @@ function simpleDropEvaluation(spec: SimpleDropEvaluatorSpecification, submission
 type TargetDropEvaluatorSpecification = {
   readonly kind: "target_drop_evaluator",
   readonly index: number,
-  readonly evaluations: readonly [{
+  readonly evaluations: readonly {
     readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none",
     readonly targets: readonly string[],
     readonly prohibited?: readonly string[]
     readonly evaluation: FITBDropRubricItemEvaluation
-  }],
+  }[],
   readonly global_prohibited?: readonly string[]
 };
 
@@ -241,7 +241,7 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
     
     let num_matched_targets = evaluation.targets.filter(inBox).length;
 
-    return evaluation.criteria === "at_least_one" ? num_matched_targets > 1
+    return evaluation.criteria === "at_least_one" ? num_matched_targets >= 1
       : evaluation.criteria === "exactly_one" ? num_matched_targets === 1
       : evaluation.criteria === "require_all" ? num_matched_targets === evaluation.targets.length
       : evaluation.criteria === "require_none" ? true
