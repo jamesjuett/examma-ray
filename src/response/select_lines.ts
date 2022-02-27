@@ -333,7 +333,7 @@ function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
 export const SL_HANDLER : ResponseHandler<"select_lines"> = {
   parse: SL_PARSER,
   render: SL_RENDERER,
-  render_sample_solution: SL_SOLUTION_RENDERER,
+  render_solution: SL_SOLUTION_RENDERER,
   activate: SL_ACTIVATE,
   extract: SL_EXTRACTOR,
   fill: SL_FILLER

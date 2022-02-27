@@ -186,7 +186,7 @@ function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
 export const FITB_HANDLER : ResponseHandler<"fill_in_the_blank"> = {
   parse: FITB_PARSER,
   render: FITB_RENDERER,
-  render_sample_solution: FITB_SOLUTION_RENDERER,
+  render_solution: FITB_SOLUTION_RENDERER,
   extract: FITB_EXTRACTOR,
   fill: FITB_FILLER
 };
