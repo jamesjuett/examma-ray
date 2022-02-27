@@ -70,7 +70,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, this.question_id, uuid, skin)}</div>`;
   }
 
-  public renderResponseSolution(uuid: string, solution: ViableSubmissionType<QT>, skin?: ExamComponentSkin) {
+  public renderResponseSolution(uuid: string, solution: SubmissionType<QT>, skin?: ExamComponentSkin) {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_solution(this.response, solution, this.question_id, uuid, skin)}</div>`;
   }
 
