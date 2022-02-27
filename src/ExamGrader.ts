@@ -106,7 +106,7 @@ import { unparse } from 'papaparse';
 import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
 import { createCompositeSkin, DEFAULT_SKIN } from './core/skins';
 import del from 'del';
-import { average } from 'simple-statistics';
+import { average, mean, sum } from 'simple-statistics';
 import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
 import { GradedStats } from "./core/GradedStats";
 import { ExamCurve } from "./core/ExamCurve";
@@ -416,11 +416,23 @@ export class ExamGrader {
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;
 
+    // Predict an overall mean based on an assumption that each
+    // individual student exam scored the question mean on its questions
+    let predicted_mean = mean(this.submittedExams.map(
+      ex => sum(ex.assignedQuestions.map(q => this.stats.questionMean(q.question.question_id) ?? NaN))
+    ));
+
     let main_overview = `<div>
-      Out of ${this.stats.numFullyGraded} fully graded exams:
-      <div>Mean: ${this.stats.mean}</div>
-      <div>Std Dev: ${this.stats.stddev}</div>
+      <p>
+        Out of ${this.stats.numFullyGraded} fully graded exams:<br />
+        Mean: ${this.stats.mean}<br />
+        Std Dev: ${this.stats.stddev}<br />
+      </p>
+      <p>
+        Predicted Mean: ${predicted_mean}
+      </p>
     </div>`
+
 
     let students_overview = this.submittedExams.slice().sort((a, b) => (b.pointsEarned ?? 0) - (a.pointsEarned ?? 0)).map(ex => {
       let score = ex.pointsEarned ?? 0;
