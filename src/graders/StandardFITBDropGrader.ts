@@ -222,10 +222,6 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
     return {pointsEarned: 0, explanation: "Your submission appears to be invalid or corrupted."};
   }
 
-  if (box.length === 0) {
-    return {pointsEarned: 0, explanation: "Your submission for this box was blank."};
-  }
-
   const inBox = (id:string) => !!box.find(item => item.id === id);
 
   if (spec.global_prohibited?.some(inBox)) {
