@@ -29,13 +29,19 @@ export type SubmissionType<QT extends ResponseKind> =
  * are e.g. valid to specify as a sample solution.
  */
 export type ViableSubmission<ST> = Exclude<ST, typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION>;
+
+/**
+ * A helper type that gives the type representing viable submissions for a given
+ * response kind.
+ */
 export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
+
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
   validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => SubmissionType<QT>,
   render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
-  render_sample_solution: (response: ResponseSpecification<QT>, solution: ViableSubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
+  render_sample_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery, is_sample_solution: boolean) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
@@ -64,7 +70,7 @@ export function render_response<QT extends ResponseKind>(response: ResponseSpeci
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, question_uuid, skin);
 }
 
-export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: ViableSubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
+export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render_sample_solution(response, solution, question_id, question_uuid, skin);
 }
 

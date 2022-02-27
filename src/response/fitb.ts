@@ -154,8 +154,11 @@ function FITB_RENDERER(response: FITBSpecification, question_id: string, questio
   return createFilledFITB(applySkin(response.content, skin));
 }
 
-function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ViableSubmission<FITBSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  return createFilledFITB(applySkin(response.content, skin), solution.map(s => applySkin(s, skin)));
+function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: FITBSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  if (solution !== BLANK_SUBMISSION) {
+    solution = solution.map(s => applySkin(s, skin))
+  }
+  return createFilledFITB(applySkin(response.content, skin), solution);
 }
 
 function FITB_EXTRACTOR(responseElem: JQuery) {

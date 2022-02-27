@@ -160,10 +160,23 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
   `;
 }
 
-function MC_SOLUTION_RENDERER(response: MCSpecification, solution: ViableSubmission<MCSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function MC_SOLUTION_RENDERER(response: MCSpecification, orig_solution: MCSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  
+  const was_invalid = orig_solution === INVALID_SUBMISSION;
+
+  if (orig_solution === BLANK_SUBMISSION || orig_solution === INVALID_SUBMISSION) {
+    orig_solution = [];
+  }
+
+  const solution = orig_solution; // Allow type inference within the map() below
 
   return `
-    ${solution.length === 0 ? "The correct solution is to leave all options unselected." : ""}
+    ${was_invalid
+      ? "<p>This solution was invalid (i.e. was outside the space of allowed answer choices - this should not normally happen).</p>"
+      : solution.length === 0
+        ? "<p>All options left unselected.</p>"
+        : ""
+    }
     <form>
     ${(response.multiple && response.limit !== undefined) ? `<div><span class="examma-ray-mc-num-selected">${solution.length}</span> out of ${response.limit} allowed choices are selected.</div>`: ""}
     ${response.choices.map((item,i) => `
