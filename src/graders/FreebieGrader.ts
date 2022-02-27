@@ -62,10 +62,13 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
     
     const message = !this.spec.allow_blanks && aq.gradingResult.wasBlankSubmission
       ? `You did not select an answer for this question.`
-      : `<span class="examma-ray-grading-annotation">You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.</span>`;
+      : `You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.`;
 
     return `
-      <p>${message}</p>
+      <p class="examma-ray-grading-annotation">
+        ${message}
+      </p>
+      ${this.spec.message ? `<p class="examma-ray-grading-annotation">${this.spec.message}</p>` : ""}
       <p>${aq.question.renderResponseSolution(aq.uuid, submission, aq.skin)}</p>
     `;
   }
