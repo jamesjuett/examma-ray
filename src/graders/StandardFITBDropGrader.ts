@@ -202,7 +202,7 @@ type TargetDropEvaluatorSpecification = {
   readonly kind: "target_drop_evaluator",
   readonly index: number,
   readonly evaluations: readonly {
-    readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none",
+    readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none" | "require_blank",
     readonly targets: readonly string[],
     readonly prohibited?: readonly string[]
     readonly evaluation: FITBDropRubricItemEvaluation
@@ -211,12 +211,10 @@ type TargetDropEvaluatorSpecification = {
 };
 
 export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, submission: FITBDropSubmission) {
-
-  if (submission === BLANK_SUBMISSION) {
-    return {pointsEarned: 0, explanation: "Your submission was blank."};
-  }
-
-  const box = submission[spec.index];
+  
+  const box = submission !== BLANK_SUBMISSION
+    ? submission[spec.index]
+    : [];
   
   if (typeof box === "string") {
     return {pointsEarned: 0, explanation: "Your submission appears to be invalid or corrupted."};
@@ -227,7 +225,6 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
   if (spec.global_prohibited?.some(inBox)) {
     return FITBDropEvaluations.no_credit();
   }
-
 
   let match = spec.evaluations.find(evaluation => {
     
@@ -241,6 +238,7 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
       : evaluation.criteria === "exactly_one" ? num_matched_targets === 1
       : evaluation.criteria === "require_all" ? num_matched_targets === evaluation.targets.length
       : evaluation.criteria === "require_none" ? true
+      : evaluation.criteria === "require_blank" ? box.length === 0
       : assertNever(evaluation.criteria);
   });
 
