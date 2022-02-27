@@ -138,7 +138,11 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
   `;
 }
 
-function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: ViableSubmission<CodeEditorSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: CodeEditorSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  if (solution === BLANK_SUBMISSION) {
+    solution = "";
+  }
+  
   return `
     <div class="examma-ray-code-editor-header">
       ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}

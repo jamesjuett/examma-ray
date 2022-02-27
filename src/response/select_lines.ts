@@ -225,7 +225,14 @@ function renderSLItem(item: SLItem, question_id: string, item_index: number, cod
     </div>`;
 }
 
-function SL_SOLUTION_RENDERER(response: SLSpecification, solution: ViableSubmission<SLSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  
+  if (orig_solution === BLANK_SUBMISSION) {
+    orig_solution = [];
+  }
+
+  const solution = orig_solution; // Allow type inference within the map() below
+  
   let item_index = 0;
   return `
     <div style="text-align: right; margin-bottom: 5px;">

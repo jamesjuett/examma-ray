@@ -96,7 +96,8 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
-function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ViableSubmission<FITBDropSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: FITBDropSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+
   let group_id = response.group_id ?? question_id;
   return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, solution);
 
