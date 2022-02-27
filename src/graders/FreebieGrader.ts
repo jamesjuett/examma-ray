@@ -66,7 +66,7 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
 
     return `
       <p>${message}</p>
-      ${aq.question.renderResponseSolution(aq.uuid, submission, aq.skin)}
+      <p>${aq.question.renderResponseSolution(aq.uuid, submission, aq.skin)}</p>
     `;
   }
 
