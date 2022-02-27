@@ -175,7 +175,7 @@ function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
 export const CODE_EDITOR_HANDLER : ResponseHandler<"code_editor"> = {
   parse: CODE_EDITOR_PARSER,
   render: CODE_EDITOR_RENDERER,
-  render_sample_solution: CODE_EDITOR_SOLUTION_RENDERER, 
+  render_solution: CODE_EDITOR_SOLUTION_RENDERER, 
   extract: CODE_EDITOR_EXTRACTOR,
   fill: CODE_EDITOR_FILLER
 };

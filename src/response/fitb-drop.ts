@@ -244,7 +244,7 @@ function FITB_DROP_FILLER(responseElem: JQuery, submission: FITBDropSubmission) 
 export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   parse: FITB_DROP_PARSER,
   render: FITB_DROP_RENDERER,
-  render_sample_solution: FITB_DROP_SOLUTION_RENDERER,
+  render_solution: FITB_DROP_SOLUTION_RENDERER,
   activate: FITB_DROP_ACTIVATE,
   extract: FITB_DROP_EXTRACTOR,
   fill: FITB_DROP_FILLER

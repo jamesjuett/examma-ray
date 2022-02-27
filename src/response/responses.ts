@@ -41,7 +41,7 @@ export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
   validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => SubmissionType<QT>,
   render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
-  render_sample_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
+  render_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery, is_sample_solution: boolean) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
   fill: (elem: JQuery, submission: SubmissionType<QT>) => void
@@ -71,7 +71,7 @@ export function render_response<QT extends ResponseKind>(response: ResponseSpeci
 }
 
 export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render_sample_solution(response, solution, question_id, question_uuid, skin);
+  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render_solution(response, solution, question_id, question_uuid, skin);
 }
 
 export function activate_response<QT extends ResponseKind>(kind: QT, is_sample_solution: boolean, responseElem: JQuery) : void {

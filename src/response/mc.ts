@@ -257,7 +257,7 @@ export const MC_HANDLER : ResponseHandler<"multiple_choice"> = {
   parse: MC_PARSER,
   validate: MC_VALIDATOR,
   render: MC_RENDERER,
-  render_sample_solution: MC_SOLUTION_RENDERER,
+  render_solution: MC_SOLUTION_RENDERER,
   activate: MC_ACTIVATE,
   extract: MC_EXTRACTOR,
   fill: MC_FILLER
