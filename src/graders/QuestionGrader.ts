@@ -1,6 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { assertNever } from "../core/util";
-import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind } from "../response/common";
 import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingRubricResult } from "./CodeWritingGrader";
 import { FITBRegexGrader, FITBRegexGraderSpecification } from "./FITBRegexGrader";
