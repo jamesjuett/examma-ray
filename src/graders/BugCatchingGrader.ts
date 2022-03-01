@@ -2,7 +2,6 @@ import { encode } from "he";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { mk2html } from "../core/render";
-import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { INVALID_SUBMISSION } from "../response/common";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -68,7 +67,7 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
     return responseKind === "multiple_choice";
   }
 
-  public prepare(exam_id: string, question_id: string, manual_grading: GradingAssignmentSpecification<"multiple_choice", GradingResult>[]): void {
+  public prepare(exam_id: string, question_id: string, grader_data: any) {
     // do nothing
   }
 

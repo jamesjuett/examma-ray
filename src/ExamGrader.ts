@@ -274,7 +274,7 @@ export class ExamGrader {
   protected prepareGradingData(question: Question, grader: QuestionGrader) : any {
     return {
       rubric: [],
-      submission_results: ExamUtils.readGradingAssignments(this.exam.exam_id, question.question_id)
+      submission_results: []
     };
   }
 
