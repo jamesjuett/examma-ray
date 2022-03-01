@@ -4,9 +4,11 @@ import expected_download from "./expected_download.json";
 import chaiSubset from "chai-subset";
 chai.use(chaiSubset);
 
-function loadFreshPage() {
+const EXAM_ID = "full_test_exam";
+const ANSWERS_FILE_DOWNLOAD_NAME = `test-${EXAM_ID}-answers.json`;
 
-  const EXAM_URL = "full_test_exam/exams/test-test-full_test_exam.html";
+function loadFreshPage() {
+  const EXAM_URL = `${EXAM_ID}/exams/test-test-${EXAM_ID}.html`;
   
   cy.clearLocalStorage();
 
@@ -20,15 +22,15 @@ function loadFreshPage() {
 }
 
 function singleResponseElem() {
-  return cy.get('#question-test-full_test_exam-q-test_question_mc_single .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
+  return cy.get(`#question-test-${EXAM_ID}-q-test_question_mc_single .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]`);
 }
 
 function multipleResponseElem() {
-  return cy.get('#question-test-full_test_exam-q-test_question_mc_multiple .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
+  return cy.get(`#question-test-${EXAM_ID}-q-test_question_mc_multiple .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]`);
 }
 
 function multipleResponseLimitElem() {
-  return cy.get('#question-test-full_test_exam-q-test_question_mc_multiple_limit_3 .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]');
+  return cy.get(`#question-test-${EXAM_ID}-q-test_question_mc_multiple_limit_3 .examma-ray-question-response.examma-ray-question-response-multiple_choice[data-response-kind="multiple_choice"]`);
 }
 
 describe('MC Response', () => {
@@ -54,8 +56,8 @@ describe('MC Response', () => {
 
     singleResponseElem().find('input[type=radio]').should("have.length", 5);
     singleResponseElem().find('input[type=radio]').each((jq, i) => {
-      expect(jq.attr("id")).to.equal(`test-full_test_exam-q-test_question_mc_single_choice_${i}`);
-      expect(jq.attr("name")).to.equal("test-full_test_exam-q-test_question_mc_single_choice");
+      expect(jq.attr("id")).to.equal(`test-${EXAM_ID}-q-test_question_mc_single_choice_${i}`);
+      expect(jq.attr("name")).to.equal(`test-${EXAM_ID}-q-test_question_mc_single_choice`);
       expect(jq.attr("value")).to.equal(`${i}`);
     });
 
@@ -64,7 +66,7 @@ describe('MC Response', () => {
   it('Render Single Choice Labels', () => {
     singleResponseElem().find('label.examma-ray-mc-option').should("have.length", 5);
     singleResponseElem().find('label.examma-ray-mc-option').each((jq, i) => {
-      expect(jq.attr("for")).to.equal(`test-full_test_exam-q-test_question_mc_single_choice_${i}`);
+      expect(jq.attr("for")).to.equal(`test-${EXAM_ID}-q-test_question_mc_single_choice_${i}`);
       expect(jq.html()).to.contain(choices_text[i]);
     });
 
@@ -74,8 +76,8 @@ describe('MC Response', () => {
 
     multipleResponseElem().find('input[type=checkbox]').should("have.length", 5);
     multipleResponseElem().find('input[type=checkbox]').each((jq, i) => {
-      expect(jq.attr("id")).to.equal(`test-full_test_exam-q-test_question_mc_multiple_choice_${i}`);
-      expect(jq.attr("name")).to.equal("test-full_test_exam-q-test_question_mc_multiple_choice");
+      expect(jq.attr("id")).to.equal(`test-${EXAM_ID}-q-test_question_mc_multiple_choice_${i}`);
+      expect(jq.attr("name")).to.equal(`test-${EXAM_ID}-q-test_question_mc_multiple_choice`);
       expect(jq.attr("value")).to.equal(`${i}`);
     });
   });
@@ -83,7 +85,7 @@ describe('MC Response', () => {
   it('Render Multiple Choice Labels', () => {
     singleResponseElem().find('label.examma-ray-mc-option').should("have.length", 5);
     singleResponseElem().find('label.examma-ray-mc-option').each((jq, i) => {
-      expect(jq.attr("for")).to.equal(`test-full_test_exam-q-test_question_mc_single_choice_${i}`);
+      expect(jq.attr("for")).to.equal(`test-${EXAM_ID}-q-test_question_mc_single_choice_${i}`);
       expect(jq.html()).to.contain(choices_text[i]);
     });
 
@@ -324,7 +326,7 @@ describe('MC Response', () => {
 
     // Wait for autosave
     cy.wait(7000);
-    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+    cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("not.be.null");
 
     // Compare current state of response element to state after page reload
     cy.reload();
@@ -333,7 +335,7 @@ describe('MC Response', () => {
     cy.get("#exam-welcome-restored-modal button").click();
     cy.get("#exam-welcome-restored-modal button").should("not.be.visible");
 
-    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+    cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("not.be.null");
     
     singleResponseElem().find('input').eq(0).should("be.checked");
     [1,2].forEach(i => multipleResponseElem().find('input').eq(i).should("be.checked"));
@@ -353,7 +355,7 @@ describe('MC Response', () => {
     multipleResponseLimitElem().find('input').eq(3).click({force: true});
     multipleResponseLimitElem().find('input').eq(4).click({force: true});
 
-    let filepath = downloadAnswersFile("test-answers.json");
+    let filepath = downloadAnswersFile(ANSWERS_FILE_DOWNLOAD_NAME);
 
     cy.readFile(filepath, { timeout: 10000 }).should(json => {
       expect(json).to.containSubset(expected_download);
@@ -369,18 +371,17 @@ describe('MC Response', () => {
     
     // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.
       
-    const filename = "test-answers.json";
-    const filepath = downloadAnswersFile(filename);
+    const filepath = downloadAnswersFile(ANSWERS_FILE_DOWNLOAD_NAME);
 
     loadFreshPage();
 
     // sanity check no local storage
-    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("be.null");
+    cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("be.null");
 
     cy.readFile(filepath, { timeout: 10000 }).then(json => {
 
       uploadAnswersFile({
-        fileName: filename,
+        fileName: ANSWERS_FILE_DOWNLOAD_NAME,
         fileContent: json,
         encoding: "utf8",
       });
