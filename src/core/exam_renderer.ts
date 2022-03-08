@@ -376,7 +376,7 @@ export class OriginalExamRenderer extends ExamRenderer {
 export class SampleSolutionExamRenderer extends ExamRenderer {
 
   public renderScripts(frontendPath: string): string {
-    return `<script src="${path.join(frontendPath, "frontend-sample-solution.js")}"></script>`
+    return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
   }
 
   public renderBody(ae: AssignedExam) {

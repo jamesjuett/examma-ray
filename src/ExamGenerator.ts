@@ -258,7 +258,7 @@ export class ExamGenerator {
     del.sync(`${manifestDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend.js");
-    writeFrontendJS(`${examDir}/js`, "frontend-sample-solution.js");
+    writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
     this.writeMedia(`${examDir}`);
 
     this.writeStats();
