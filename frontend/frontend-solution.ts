@@ -8,7 +8,7 @@ import { ResponseKind } from "../src/response/common";
 import { activate_response } from "../src/response/responses";
 import './codemirror-modes';
 import { activateExamComponents } from "./common";
-import "./frontend-sample-solution.css";
+import "./frontend-solution.css";
 import "./frontend.css";
 
 
@@ -24,14 +24,14 @@ function activateExam() {
 }
 
 function main() {
-  console.log("Attempting to activate sample solution...");
+  console.log("Attempting to activate solution...");
 
   activateExamComponents();
 
   activateExam();
   
 
-  console.log("Sample solution activated!");
+  console.log("Solution activated!");
 
 }
 
