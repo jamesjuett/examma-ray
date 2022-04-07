@@ -98,7 +98,7 @@ For now, refer to examples of existing graders. More thorough documentation comi
 import { writeFileSync, mkdirSync } from 'fs';
 import { TrustedExamSubmission } from './core/submissions';
 import { AssignedExam, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
-import { GradedExamRenderer } from './core/exam_renderer';
+import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
 import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
 import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
 import { asMutable, assert, assertFalse, Mutable } from './core/util';
@@ -161,6 +161,7 @@ export class ExamGrader {
   private options: ExamGraderOptions;
 
   private renderer = new GradedExamRenderer();
+  private submission_renderer = new SubmittedExamRenderer();
 
   private onStatus?: (status: string) => void;
 
@@ -337,6 +338,27 @@ export class ExamGrader {
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
         writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+      });
+  }
+
+  public writeSubmissions() {
+    const examDir = `out/${this.exam.exam_id}/submitted/`;
+
+    // Create output directories and clear previous contents
+    mkdirSync(examDir, { recursive: true });
+    del.sync(`${examDir}/*`);
+
+    writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
+    this.writeMedia(`${examDir}`);
+
+    // Write out graded exams for all, sorted by uniqname
+    [...this.submittedExams]
+      .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
+      .forEach((ex, i, arr) => {
+        let filenameBase = this.createGradedFilenameBase(ex);
+        this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
+        console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
+        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 

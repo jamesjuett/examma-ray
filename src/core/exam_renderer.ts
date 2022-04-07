@@ -433,6 +433,64 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
   
 }
 
+export class SubmittedExamRenderer extends ExamRenderer {
+
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
+  }
+
+  public renderBody(ae: AssignedExam) {
+    return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+      <div class="row">
+        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+          <span style="font-size: large; font-weight: bold;">${ae.student.uniqname}</span>
+          <br />
+          <span style="font-size: large; font-weight: bold;">Exam Submission</span>
+          <h5 style="margin-bottom: 0;">${renderPointsWorthBadge(ae.pointsPossible)}</h5>
+          </div>
+          ${this.renderNav(ae)}
+        </div>
+        <div style="margin-left: 210px; width: calc(100% - 220px);">
+          ${this.renderHeader(ae, ae.student)}
+          ${this.renderSections(ae)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  public renderNavBadge(s: AssignedSection) {
+    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return `
+      <h6>${student.name} (${student.uniqname})</h6>
+      <h6>Exam Submission</h6>
+    `;
+  }
+  
+  protected renderSectionHeader(as: AssignedSection) {
+    return `
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">
+          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible)}
+        </div>
+        <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold;">Submitted Answers</span>
+      </div>
+    `;
+  }
+
+  protected renderQuestionHeader(aq: AssignedQuestion) {
+    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+  }
+  
+  protected renderQuestionContent(aq: AssignedQuestion) {
+    return aq.question.renderResponseSolution(aq.uuid, aq.submission, aq.skin);
+  }
+  
+}
+
 export class GradedExamRenderer extends ExamRenderer {
 
   public renderScripts(frontendPath: string): string {
