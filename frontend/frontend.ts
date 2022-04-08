@@ -18,10 +18,11 @@ import 'katex/dist/katex.min.css';
 import "./frontend.css";
 import { activateBank } from "../src/response/fitb-drop";
 import { activateExamComponents } from "./common";
+import { ResponseKind } from "../src/response/common";
 
 function activateResponse(this: HTMLElement) {
   let response = $(this);
-  activate_response(response.data("response-kind"), response);
+  activate_response(<ResponseKind>response.data("response-kind"), false, response);
 }
 
 function activateExam() {
@@ -129,7 +130,7 @@ function updateExamSaverModal() {
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
-      .attr("download", `${answers.student.uniqname}-answers.json`)
+      .attr("download", `${answers.student.uniqname}-${answers.exam_id}-answers.json`)
       .attr("href", url)
       .removeClass("disabled");
 

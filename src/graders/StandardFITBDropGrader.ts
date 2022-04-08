@@ -4,7 +4,6 @@ import { GradedQuestion } from "../core/assigned_exams";
 import { mk2html, mk2html_unwrapped, applySkin } from "../core/render";
 import { renderScoreBadge } from "../core/ui_components";
 import { assertNever } from "../core/util";
-import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission } from "../response/fitb-drop";
 import { GradingResult } from "./QuestionGrader";
@@ -52,7 +51,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     return responseKind === "fitb_drop";
   }
 
-  public prepare(exam_id: string, question_id: string, manual_grading: GradingAssignmentSpecification<"fitb_drop", GradingResult>[]): void {
+  public prepare() {
     // do nothing
   }
 
@@ -169,7 +168,6 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
 type SimpleDropEvaluatorSpecification = {
   readonly kind: "simple_drop_evaluator",
   readonly index: number,
-  readonly allow_multiple?: boolean,
   readonly evaluations: {
     [index: string]: FITBDropRubricItemEvaluation
   }
@@ -202,29 +200,23 @@ function simpleDropEvaluation(spec: SimpleDropEvaluatorSpecification, submission
 type TargetDropEvaluatorSpecification = {
   readonly kind: "target_drop_evaluator",
   readonly index: number,
-  readonly evaluations: readonly [{
-    readonly exactly_one?: boolean,
+  readonly evaluations: readonly {
+    readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none" | "require_blank",
     readonly targets: readonly string[],
     readonly prohibited?: readonly string[]
     readonly evaluation: FITBDropRubricItemEvaluation
-  }],
+  }[],
   readonly global_prohibited?: readonly string[]
 };
 
 export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, submission: FITBDropSubmission) {
-
-  if (submission === BLANK_SUBMISSION) {
-    return {pointsEarned: 0, explanation: "Your submission was blank."};
-  }
-
-  const box = submission[spec.index];
+  
+  const box = submission !== BLANK_SUBMISSION
+    ? submission[spec.index]
+    : [];
   
   if (typeof box === "string") {
     return {pointsEarned: 0, explanation: "Your submission appears to be invalid or corrupted."};
-  }
-
-  if (box.length === 0) {
-    return {pointsEarned: 0, explanation: "Your submission for this box was blank."};
   }
 
   const inBox = (id:string) => !!box.find(item => item.id === id);
@@ -233,13 +225,21 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
     return FITBDropEvaluations.no_credit();
   }
 
-  let match = spec.evaluations.find(evaluation =>
-    (evaluation.exactly_one
-      ? evaluation.targets.filter(inBox).length === 1
-      : evaluation.targets.some(inBox)
-    )
-    && !evaluation.prohibited?.some(inBox)
-  )
+  let match = spec.evaluations.find(evaluation => {
+    
+    if (evaluation.prohibited?.some(inBox)) {
+      return false;
+    }
+    
+    let num_matched_targets = evaluation.targets.filter(inBox).length;
+
+    return evaluation.criteria === "at_least_one" ? num_matched_targets >= 1
+      : evaluation.criteria === "exactly_one" ? num_matched_targets === 1
+      : evaluation.criteria === "require_all" ? num_matched_targets === evaluation.targets.length
+      : evaluation.criteria === "require_none" ? true
+      : evaluation.criteria === "require_blank" ? box.length === 0
+      : assertNever(evaluation.criteria);
+  });
 
   return match?.evaluation ?? FITBDropEvaluations.no_credit();
 }

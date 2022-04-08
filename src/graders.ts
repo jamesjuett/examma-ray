@@ -102,11 +102,5 @@ export {
 export {
   CodeWritingGrader,
   CodeWritingRubricItem,
-  CodeWritingGradingResult
+  CodeWritingRubricResult as CodeWritingGradingResult
 } from "./graders/CodeWritingGrader";
-
-export {
-  GradingAssignmentSpecification,
-  QuestionGradingRecords,
-  QuestionGradingRecord
-} from "./grading_interface/common";

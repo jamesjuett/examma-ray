@@ -29,3 +29,10 @@ export {
 export {
   QuestionGrader
 } from "./graders/QuestionGrader";
+
+export {
+  ExamRenderer,
+  OriginalExamRenderer,
+  SampleSolutionExamRenderer,
+  GradedExamRenderer
+} from "./core/exam_renderer";

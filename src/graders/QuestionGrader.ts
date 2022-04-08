@@ -1,8 +1,7 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { assertNever } from "../core/util";
-import { GradingAssignmentSpecification } from "../grading_interface/common";
 import { ResponseKind } from "../response/common";
-import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingGradingResult } from "./CodeWritingGrader";
+import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingRubricResult } from "./CodeWritingGrader";
 import { FITBRegexGrader, FITBRegexGraderSpecification } from "./FITBRegexGrader";
 import { FreebieGrader, FreebieGraderSpecification } from "./FreebieGrader";
 import { SimpleMCGrader, SimpleMCGraderSpecification } from "./SimpleMCGrader";
@@ -136,7 +135,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param question_id 
    * @param manual_grading
    */
-  prepare(exam_id: string, question_id: string, manual_grading: GradingAssignmentSpecification<RK, GR>[]): void;
+  prepare(exam_id: string, question_id: string, grader_data: any): void;
 
   /**
    * Grades the given assigned question and returns the grading result. This function

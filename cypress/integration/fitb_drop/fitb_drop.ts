@@ -4,9 +4,12 @@ import expected_download from "./expected_download.json";
 import chaiSubset from "chai-subset";
 chai.use(chaiSubset);
 
+const EXAM_ID = "full_test_exam";
+const ANSWERS_FILE_DOWNLOAD_NAME = `test-${EXAM_ID}-answers.json`;
+
 function loadFreshPage() {
 
-  const EXAM_URL = "full_test_exam/exams/test-test-full_test_exam.html";
+  const EXAM_URL = `${EXAM_ID}/exams/test-test-${EXAM_ID}.html`;
   
   cy.clearLocalStorage();
 
@@ -20,7 +23,7 @@ function loadFreshPage() {
 }
 
 function responseElem() {
-  return cy.get('#question-test-full_test_exam-q-fitb_drop_test .examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]');
+  return cy.get(`#question-test-${EXAM_ID}-q-fitb_drop_test .examma-ray-question-response.examma-ray-question-response-fitb_drop[data-response-kind="fitb_drop"]`);
 }
 
 function checkOriginals() {
@@ -185,7 +188,7 @@ describe('FITB-Drop Response', () => {
 
     // Wait for autosave
     cy.wait(7000);
-    cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+    cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("not.be.null");
 
     // Compare current state of response element to state after page reload
     responseElem().then((original) => {
@@ -195,7 +198,7 @@ describe('FITB-Drop Response', () => {
       cy.get("#exam-welcome-restored-modal button").click();
       cy.get("#exam-welcome-restored-modal button").should("not.be.visible");
   
-      cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("not.be.null");
+      cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("not.be.null");
       
       responseElem().should((restored) => restored.html().trim() === original.html().trim());
     })
@@ -204,7 +207,7 @@ describe('FITB-Drop Response', () => {
 
   it("Downloads to Answers File", () => {
 
-    let filepath = downloadAnswersFile("test-answers.json");
+    let filepath = downloadAnswersFile(ANSWERS_FILE_DOWNLOAD_NAME);
 
     cy.readFile(filepath, { timeout: 10000 }).should(json => {
       expect(json).to.containSubset(expected_download);
@@ -227,19 +230,18 @@ describe('FITB-Drop Response', () => {
     
     // Compare current state of response element to state after clearing local storage, reloading page, uploading exam.
     responseElem().then((original) => {
-      
-      const filename = "test-answers.json";
-      const filepath = downloadAnswersFile(filename);
+
+      const filepath = downloadAnswersFile(ANSWERS_FILE_DOWNLOAD_NAME);
 
       loadFreshPage();
   
       // sanity check no local storage
-      cy.getLocalStorage("full_test_exam-test-test-full_test_exam").should("be.null");
+      cy.getLocalStorage(`${EXAM_ID}-test-test-${EXAM_ID}`).should("be.null");
 
       cy.readFile(filepath, { timeout: 10000 }).then(json => {
 
         uploadAnswersFile({
-          fileName: filename,
+          fileName: ANSWERS_FILE_DOWNLOAD_NAME,
           fileContent: json,
           encoding: "utf8",
         });

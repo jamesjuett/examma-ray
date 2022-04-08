@@ -3,6 +3,7 @@ import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
+import { ResponseHandler, ViableSubmission } from "./responses";
 
 /**
  * One of the "lines" of code that may be toggled on/off in a select lines response.
@@ -146,7 +147,7 @@ export type SLSpecification = {
   /**
    * A sample solution for this response.
    */
-  sample_solution?: Exclude<SLSubmission, typeof BLANK_SUBMISSION>,
+  sample_solution?: ViableSubmission<SLSubmission>,
 
   /**
    * A default grader for this response.
@@ -214,7 +215,7 @@ function SL_RENDERER(response: SLSpecification, question_id: string, question_uu
   `;
 }
 
-function renderSLItem(item: SLItem, question_id: string, item_index: number, code_language: string, skin?: ExamComponentSkin) {
+function renderSLItem(item: SLItem, question_id: string, item_index: number, code_language: string, skin: ExamComponentSkin | undefined) {
   return `
     <div class="examma-ray-sl-line">
       <input type="checkbox" id="${question_id}-sl-choice-${item_index}" value="${item_index}" class="sl-select-input"${item.forced ? " checked=\"checked\" disabled=\"disabled\"" : ""}></input> 
@@ -224,8 +225,60 @@ function renderSLItem(item: SLItem, question_id: string, item_index: number, cod
     </div>`;
 }
 
+function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  
+  if (orig_solution === BLANK_SUBMISSION) {
+    orig_solution = [];
+  }
+
+  const solution = orig_solution; // Allow type inference within the map() below
+  
+  let item_index = 0;
+  return `
+    <div style="text-align: right; margin-bottom: 5px;">
+      <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-outline-primary btn-sm active">
+          <input class="examma-ray-sl-show-choices-button" type="radio" name="options" autocomplete="off" checked> All Choices
+        </label>
+        <label class="btn btn-outline-primary btn-sm">
+          <input class="examma-ray-sl-show-preview-button" type="radio" name="options" autocomplete="off"> Selected Only
+        </label>
+      </div>
+    </div>
+    <div class="examma-ray-sl-header">
+      ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+    </div>
+    <div class="examma-ray-sl-choices sl-view-choices">
+      ${response.choices.map(
+        group => group.kind === "item"
+          ? renderSolutionSLItem(group, solution, question_uuid, item_index++, response.code_language, skin)
+          : group.items.map(item => renderSolutionSLItem(item, solution, question_uuid, item_index++, response.code_language, skin)).join("\n")
+      ).join("\n")}
+    </div>
+    <div class="examma-ray-sl-footer">
+      ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+    </div>
+  `;
+}
+
+function renderSolutionSLItem(item: SLItem, solution: ViableSubmission<SLSubmission>, question_id: string, item_index: number, code_language: string, skin: ExamComponentSkin | undefined) {
+  const in_solution = solution.indexOf(item_index) !== -1;
+  return `
+    <div class="examma-ray-sl-line">
+      <input type="checkbox" id="${question_id}-sl-choice-${item_index}" value="${item_index}" class="sl-select-input" style="pointer-events: none;" ${item.forced ? "checked disabled" : in_solution ? "checked" : "disabled"}></input> 
+      <label for="${question_id}-sl-choice-${item_index}" class="sl-select-label">
+        <pre><code>${highlightCode(applySkin(item.text, skin), code_language)}</code></pre>
+      </label><br />
+    </div>`;
+}
+
 
 function SL_ACTIVATE(responseElem: JQuery) {
+
+  // Note that this activation occurs for either a regular exam or for
+  // a displayed sample solution (you might want to toggle views in
+  // either case).
+
   responseElem.data("sl-view", "choices");
   responseElem.find(".examma-ray-sl-show-choices-button").on("click",
     () => {
@@ -277,9 +330,10 @@ function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
   }
 }
 
-export const SL_HANDLER = {
+export const SL_HANDLER : ResponseHandler<"select_lines"> = {
   parse: SL_PARSER,
   render: SL_RENDERER,
+  render_solution: SL_SOLUTION_RENDERER,
   activate: SL_ACTIVATE,
   extract: SL_EXTRACTOR,
   fill: SL_FILLER

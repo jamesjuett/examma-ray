@@ -1,9 +1,9 @@
 import { sum } from "simple-statistics";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { applySkin, highlightCode, mk2html } from "../core/render";
+import { ICON_INFO } from "../core/icons";
+import { applySkin, highlightCode, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
-import { CodeWritingGradingAssignment } from "../grading_interface/code-grader";
 import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
@@ -14,41 +14,61 @@ export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
 
 export type CodeWritingRubricItem = {
-  id: string,
+  rubric_item_uuid: string,
   points: number,
   title: string,
-  description: string
+  description: string,
+  sort_index?: string,
+  active: boolean
 };
-
-export type CodeWritingRubricItemGradingResult = {
-  // manual_override_status?: ManualOverrideRubricItemStatus,
-  status: CodeWritingRubricItemStatus,
-  // verified: boolean
-};
-
-export type CodeWritingGradingResult = GradingResult & {
-  /** Maps rubric item ID to result*/
-  itemResults: {
-    [index: string]: CodeWritingRubricItemGradingResult | undefined
-  },
-  verified: boolean
-};
-
 
 
 export type CodeWritingGraderSpecification = {
   readonly grader_kind: "manual_code_writing",
-  readonly rubric: readonly CodeWritingRubricItem[],
 }
 
-export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWritingGradingResult> {
+export type CodeWritingRubricItemResult = {
+  status?: "on" | "off" | "unknown",
+  notes?: string
+};
+
+export type CodeWritingRubricResult = {
+  [index: string]: CodeWritingRubricItemResult | undefined
+}
+
+export type CodeWritingGraderSubmissionResult = {
+  submission_uuid: string,
+  finished?: boolean,
+  grader?: string,
+  rubric_items: CodeWritingRubricResult
+}
+
+export type CodeWritingGraderGradingResult = CodeWritingGraderSubmissionResult & {
+  wasBlankSubmission: boolean
+};
+
+export type CodeWritingGraderData = {
+  rubric: CodeWritingRubricItem[],
+  submission_results: CodeWritingGraderSubmissionResult[]
+};
+
+function isMeaningfulRubricItemGradingResult(ri: CodeWritingRubricItemResult | undefined) {
+  return ri && (ri.status !== undefined && ri.status !== "off" || ri.notes)
+}
+
+function isMeaningfulManualGradingResult(gr: CodeWritingGraderSubmissionResult) {
+  return gr.finished || Object.values(gr.rubric_items).some(ri => isMeaningfulRubricItemGradingResult(ri));
+}
+
+export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWritingGraderGradingResult> {
 
   public readonly t_response_kinds!: ResponseKind;
 
   public readonly spec: CodeWritingGraderSpecification;
 
-  private manualGrading?: readonly CodeWritingGradingAssignment[];
-  private manualGradingMap?: {[index: string]: CodeWritingGradingResult | undefined};
+  private rubric: CodeWritingRubricItem[] = [];
+  private grading_data?: CodeWritingGraderData;
+  private submission_results: {[index: string]: CodeWritingGraderSubmissionResult | undefined} = {};
 
   public constructor(spec: CodeWritingGraderSpecification) {
     this.spec = spec;
@@ -58,21 +78,13 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
     return true;
   }
 
-  public prepare(exam_id: string, question_id: string, manual_grading: any[]/*readonly CodeWritingGradingAssignment[]*/) {
-    if (this.manualGrading) {
-      return;
-    }
+  public prepare(exam_id: string, question_id: string, grading_data: CodeWritingGraderData) {
+    assert(!this.grading_data);
 
-    this.manualGrading = manual_grading;
-
-    this.manualGradingMap = {};
-    this.manualGrading.forEach(
-      assn => assn.groups.forEach(
-        group => group.submissions.forEach(
-          sub => this.manualGradingMap![sub.question_uuid] = group.grading_result
-        )
-      )
-    );
+    this.grading_data = grading_data;
+    this.rubric = grading_data.rubric;
+    this.submission_results = {};
+    grading_data.submission_results.forEach(sub => this.submission_results[sub.submission_uuid] = sub);
   }
   
   // public prepareManualGrading(aqs: readonly AssignedQuestion[]) {
@@ -83,25 +95,37 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   //   this.writeGradingAssignments(aqs[0].exam.exam_id, aqs[0].question.question_id, assns);
   // }
 
-  public grade(aq: AssignedQuestion<ResponseKind>) : CodeWritingGradingResult | undefined {
-    assert(this.manualGradingMap, "Grader prepare() function must be called before attempting grading.");
+  public grade(aq: AssignedQuestion<ResponseKind>) : CodeWritingGraderGradingResult | undefined {
+    assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
     let submission = aq.submission;
     if (submission === BLANK_SUBMISSION || submission === "") {
       return {
+        submission_uuid: aq.uuid,
         wasBlankSubmission: true,
-        itemResults: {},
-        verified: true
+        finished: true,
+        rubric_items: {},
       };
     }
 
-    return this.manualGradingMap[aq.uuid];
+    let manual_grading_result = this.submission_results[aq.uuid];
+
+    if (manual_grading_result && isMeaningfulManualGradingResult(manual_grading_result)) {
+      return {
+        ...manual_grading_result,
+        wasBlankSubmission: false
+      };
+    }
+    else {
+      return undefined;
+    }
+
   }
 
-  public pointsEarned(gr: CodeWritingGradingResult) {
-    return Object.values(this.spec.rubric).reduce((p, ri) => p + (gr.itemResults[ri.id]?.status === "on" ? ri.points : 0), 0);
+  public pointsEarned(gr: CodeWritingGraderGradingResult) {
+    return Object.values(this.rubric).reduce((p, ri) => p + (gr.rubric_items[ri.rubric_item_uuid]?.status === "on" ? ri.points : 0), 0);
   }
 
-  public renderReport(aq: GradedQuestion<ResponseKind, CodeWritingGradingResult>) {
+  public renderReport(aq: GradedQuestion<ResponseKind, CodeWritingGraderGradingResult>) {
     let gr = aq.gradingResult;
 
     if (aq.submission === BLANK_SUBMISSION || gr.wasBlankSubmission) {
@@ -119,7 +143,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <div class="examma-ray-code-editor-header">
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
-        <div class="examma-ray-code-editor-graded-submission">
+        <div class="examma-ray-code-editor-submission">
           ${`<pre><code>${highlightCode(aq.submission as string, response.code_language)}</code></pre>`}
         </div>
         <div class="examma-ray-code-editor-footer">
@@ -132,7 +156,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
           <div class="examma-ray-code-editor-header">
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
-          <div class="examma-ray-code-editor-graded-submission">
+          <div class="examma-ray-code-editor-submission">
             ${`<pre><code>${highlightCode(""+applySkin(question.sampleSolution as string, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">
@@ -184,6 +208,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
 
     
     return `
+      ${Object.values(res.rubric_items).some(r => r?.notes) ? `${ICON_INFO} This icon appears on rubric items with notes form the grader. Hover over the icon to view them.` : ""}
       <table>
         <tr style="text-align: center;">
           <th>Rubric</th>
@@ -193,8 +218,8 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <tr>
           <td>
             <ul class="list-group examma-ray-manual-graded-rubric">
-              ${this.spec.rubric.map(ri => {
-                let itemResult = res.itemResults[ri.id];
+              ${this.rubric.sort((a,b) => (a.sort_index ?? "")?.localeCompare(b.sort_index ?? "")).map(ri => {
+                let itemResult = res.rubric_items[ri.rubric_item_uuid];
                 let statusClass = "";
                 if (itemResult?.status === "on") {
                   if (ri.points > 0) {
@@ -210,7 +235,10 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
                 return `
                 <li class="list-group-item examma-ray-manual-graded-rubric-item ${statusClass}">
                   ${renderShortPointsWorthBadge(ri.points)}
-                  <b>${mk2html(ri.title, skin)}</b>
+                  <b><p>
+                    ${itemResult?.notes ? `<span data-toggle="tooltip" data-placement="top" title="${itemResult.notes}">${ICON_INFO}</span>` : ""}
+                    ${mk2html_unwrapped(ri.title, skin)}
+                  </p></b>
                   ${mk2html(ri.description, skin)}
                 </li>
               `}).join("")}
@@ -234,16 +262,10 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   }
 
   public renderOverview() {
-    assert(this.manualGrading, "Grader prepare() function must be called before attempting grading.");
-    return `
-      ${this.manualGrading.map(assn => {
-        let name = assn.name ?? "unnamed_grading_assignemnt";
-        let numGroups = assn.groups.length;
-        let numSubmissions = sum(assn.groups.map(g => g.submissions.length));
-        let numGraded = sum(assn.groups.filter(g => g.grading_result).map(g => g.submissions.length));
-        return `<div>${renderGradingProgressBar(numGraded, numSubmissions)} ${renderWideNumBadge(`${numGroups} groups`)} ${name}</div>`;
-      }).join("")}
-    `;
+    assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
+    let numGraded = this.grading_data.submission_results.filter(sub => sub.finished).length;
+    let numSubmissions = this.grading_data.submission_results.length;
+    return `<div>${renderGradingProgressBar(numGraded, numSubmissions)}</div>`;
   }
 
 

@@ -1,5 +1,6 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
+import { ResponseKind, BLANK_SUBMISSION, INVALID_SUBMISSION } from "../response/common";
+import { render_solution } from "../response/responses";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;
@@ -13,9 +14,15 @@ export type FreebieGraderSpecification = {
   readonly points: number,
 
   /**
-   * Whether or not blank submissions earn points.
+   * Whether or not blank submissions earn points. If this option is
+   * not specified, it is interpreted as false.
    */
   readonly allow_blanks?: boolean
+
+  /**
+   * An optional message that will be shown to students.
+   */
+  readonly message?: string
 };
 
 /**
@@ -51,12 +58,19 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   }
 
   public renderReport(aq: GradedQuestion<ResponseKind, FreebieGradingResult>) {
-    if (!this.spec.allow_blanks && aq.gradingResult.wasBlankSubmission) {
-      return "You did not select an answer for this question.";
-    }
-    else {
-      return `<span class="examma-ray-grading-annotation">You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.</span>`;
-    }
+    const submission = aq.submission;
+    
+    const message = !this.spec.allow_blanks && aq.gradingResult.wasBlankSubmission
+      ? `You did not select an answer for this question.`
+      : `You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.`;
+
+    return `
+      <p class="examma-ray-grading-annotation">
+        ${message}
+      </p>
+      ${this.spec.message ? `<p class="examma-ray-grading-annotation">${this.spec.message}</p>` : ""}
+      <p>${aq.question.renderResponseSolution(aq.uuid, submission, aq.skin)}</p>
+    `;
   }
 
   public renderStats(aqs: readonly AssignedQuestion[]) {

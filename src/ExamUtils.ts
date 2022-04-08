@@ -6,7 +6,6 @@ import path from "path";
 import { asMutable, assert, assertNever } from "./core/util";
 import { chunk } from "simple-statistics";
 import { stringify_response } from "./response/responses";
-import { GradingAssignmentSpecification } from "./grading_interface/common";
 import { v4 as uuidv4, v5 as uuidv5} from 'uuid';
 
 import glob from "glob";
@@ -103,98 +102,6 @@ export namespace ExamUtils {
     return students;
   }
 
-  
-  export function createGradingAssignments(aqs: readonly AssignedQuestion[], numChunks: number) : GradingAssignmentSpecification[] {
-    assert(aqs.length > 0, "Cannot create grading assignments for an empty array of assigned questions.")
-    let exam_id = aqs[0].exam.exam_id;
-    let question_id = aqs[0].question.question_id;
-
-    let initialAssn : GradingAssignmentSpecification = {
-      exam_id: exam_id,
-      question_id: question_id,
-      groups: aqs.map((aq, i) => ({
-        submissions: [{
-          question_uuid: aq.uuid,
-          skin_replacements: aq.skin.replacements,
-          student: aq.student,
-          response: stringify_response(aq.submission)
-        }],
-        name: "group_" + i,
-        representative_index: 0,
-        grading_result: undefined
-      }))
-    };
-
-    return rechunkGradingAssignments([initialAssn], numChunks);
-  }
-  
-  export function rechunkGradingAssignments(assns: GradingAssignmentSpecification[], numChunks: number) : GradingAssignmentSpecification[] {
-    
-    assert(assns.length > 0, "Grading assignments to rechunk must contain at least one assignment.");
-    assert(Number.isInteger(numChunks), "Number of chunks must be an integer.");
-
-    let { exam_id, question_id } = getAssnIds(assns);
-    
-    let groups = assns.flatMap(assn => assn.groups);
-    groups.forEach((group, i) => group.name = `group_${i}`);
-
-    let chunkSize = Math.ceil(groups.length / numChunks);
-
-    let groupChunks = chunk(asMutable(groups), chunkSize);
-
-    return groupChunks.map((c, i) => ({
-      exam_id: exam_id,
-      question_id: question_id,
-      groups: c
-    }));
-  }
-
-  export function gradingAssignmentDir(exam_id: string, question_id: string) {
-    return `data/${exam_id}/manual_grading/${question_id}`;
-  }
-
-  /**
-   * Loads any manual grading assignments (and results) for the given exam/question.
-   * If there are no such results, returns an empty array.
-   * @param exam_id 
-   * @param question_id 
-   * @returns 
-   */
-  export function readGradingAssignments(exam_id: string, question_id: string) {
-    let files = glob.sync(`${gradingAssignmentDir(exam_id, question_id)}/*.json`);
-    return files.map(filename => {
-      let assn = <GradingAssignmentSpecification>JSON.parse(readFileSync(filename, "utf8"));
-      if (!assn.name) {
-        assn.name = path.basename(filename).replace(".json", "");
-      }
-      return assn;
-    });
-  }
-
-  export function clearGradingAssignments(exam_id: string, question_id: string) {
-    del.sync(`${gradingAssignmentDir(exam_id, question_id)}/*`);
-  }
-
-  export function writeGradingAssignments(assns: GradingAssignmentSpecification[]) {
-
-    if (assns.length === 0) {
-      return;
-    }
-
-    let { exam_id, question_id } = getAssnIds(assns);
-
-    assns.forEach(assn => {
-      let name = uniqueNamesGenerator({dictionaries: [adjectives, colors, animals], separator: "-"});
-      let dir = gradingAssignmentDir(exam_id, question_id);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(
-        `${dir}/${name}.json`,
-        JSON.stringify(Object.assign({}, assn, {name: name}), null, 2),
-        { flag: "wx" } // Refuse to overwrite previous files (which could lose manual grading data)
-      )
-    });
-  }
-
   export function writeExamMedia(media_out_dir: string, exam: Exam, all_sections: readonly Section[], all_questions: readonly Question[]) {
     
     // Copy overall exam media
@@ -210,15 +117,6 @@ export namespace ExamUtils {
       q => q?.media_dir && copyFrontendMedia(q.media_dir, path.join(media_out_dir, "question", q.question_id))
     );
   }
-}
-
-function getAssnIds(assns: GradingAssignmentSpecification[]) {
-  let exam_id = assns[0].exam_id;
-  assert(assns.every(assn => assn.exam_id === exam_id), "All grading assignments to rechunk must have the same exam id.");
-
-  let question_id = assns[0].question_id;
-  assert(assns.every(assn => assn.question_id === question_id), "All grading assignments to rechunk must have the same question id.");
-  return { exam_id, question_id };
 }
 
 export function writeFrontendJS(outDir: string, filename: string) {

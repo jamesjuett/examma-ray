@@ -1,3 +1,4 @@
+import path from 'path';
 import { AssignedSection } from '../core';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
@@ -58,6 +59,8 @@ export abstract class ExamRenderer {
     </div>`;
   }
 
+  public abstract renderScripts(frontendPath: string): string;
+
   public abstract renderBody(ae: AssignedExam): string;
 
   public renderSections(ae: AssignedExam) {
@@ -74,7 +77,7 @@ export abstract class ExamRenderer {
         <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-        <script src="${frontendPath}"></script>
+        ${this.renderScripts(frontendPath)}
       </head>
       <body>
         ${this.renderBody(ae)}
@@ -93,7 +96,7 @@ export abstract class ExamRenderer {
       <div class="examma-ray-header">
         <div class="text-center mb-3 border-bottom">
           <h2>${ae.exam.title}</h2>
-          <h6>${student.name} (${student.uniqname})</h6>
+          ${this.renderStudentHeader(student)}
         </div>
         <div>
           ${this.renderInstructions(ae)}
@@ -102,6 +105,8 @@ export abstract class ExamRenderer {
       </div>
     `;
   }
+
+  protected abstract renderStudentHeader(student: StudentInfo): string;
 
   public renderInstructions(ae: AssignedExam) {
     return `<div class="container examma-ray-instructions">
@@ -311,13 +316,17 @@ export abstract class ExamRenderer {
 
 export class OriginalExamRenderer extends ExamRenderer {
 
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend.js")}"></script>`
+  }
+
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
         <div class="bg-light" style="display: flex; flex-direction: column; position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           ${this.renderTimer()}
           <h3 class="text-center pb-1 border-bottom">
-            ${renderPointsWorthBadge(ae.pointsPossible, "btn-secondary")}
+            ${renderPointsWorthBadge(ae.pointsPossible, "badge-secondary")}
           </h3>
           ${this.renderNav(ae)}
           ${this.renderSaverButton(ae)}
@@ -354,7 +363,11 @@ export class OriginalExamRenderer extends ExamRenderer {
   }
 
   public renderNavBadge(s: AssignedSection) {
-    return renderPointsWorthBadge(s.pointsPossible, "btn-secondary", true);
+    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return `<h6>${student.name} (${student.uniqname})</h6>`;
   }
   
   protected renderSectionHeader(as: AssignedSection) {
@@ -377,7 +390,131 @@ export class OriginalExamRenderer extends ExamRenderer {
   
 }
 
+
+
+export class SampleSolutionExamRenderer extends ExamRenderer {
+
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
+  }
+
+  public renderBody(ae: AssignedExam) {
+    return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+      <div class="row">
+        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+            <h5>${renderPointsWorthBadge(ae.pointsPossible, "badge-success")}</h5>
+            <span style="font-size: large; font-weight: bold; color: red;">Sample Solution</span>
+          </div>
+          ${this.renderNav(ae)}
+        </div>
+        <div style="margin-left: 210px; width: calc(100% - 220px);">
+          ${this.renderHeader(ae, ae.student)}
+          ${this.renderSections(ae)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  public renderNavBadge(s: AssignedSection) {
+    return renderPointsWorthBadge(s.pointsPossible, "badge-success", true);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return `<h6 style="color: red; font-weight: bold;">Sample Solution</h6>`;
+  }
+  
+  protected renderSectionHeader(as: AssignedSection) {
+    return `
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">
+          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible, "badge-success")}
+        </div>
+        <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold; color: red;">Sample Solution</span>
+      </div>
+    `;
+  }
+
+  protected renderQuestionHeader(aq: AssignedQuestion) {
+    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible, "badge-success")}`;
+  }
+  
+  protected renderQuestionContent(aq: AssignedQuestion) {
+    if (aq.question.sampleSolution) {
+      return aq.question.renderResponseSolution(aq.uuid, aq.question.sampleSolution, aq.skin);
+    }
+    else {
+      return `
+        <div class="examma-ray-no-sample-solution-message">No sample solution has been specified for this question.</div>
+      `;
+    }
+  }
+  
+}
+
+export class SubmittedExamRenderer extends ExamRenderer {
+
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
+  }
+
+  public renderBody(ae: AssignedExam) {
+    return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+      <div class="row">
+        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+          <span style="font-size: large; font-weight: bold;">${ae.student.uniqname}</span>
+          <br />
+          <span style="font-size: large; font-weight: bold;">Exam Submission</span>
+          <h5 style="margin-bottom: 0;">${renderPointsWorthBadge(ae.pointsPossible)}</h5>
+          </div>
+          ${this.renderNav(ae)}
+        </div>
+        <div style="margin-left: 210px; width: calc(100% - 220px);">
+          ${this.renderHeader(ae, ae.student)}
+          ${this.renderSections(ae)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  public renderNavBadge(s: AssignedSection) {
+    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return `
+      <h6>${student.name} (${student.uniqname})</h6>
+      <h6>Exam Submission</h6>
+    `;
+  }
+  
+  protected renderSectionHeader(as: AssignedSection) {
+    return `
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">
+          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible)}
+        </div>
+        <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold;">Submitted Answers</span>
+      </div>
+    `;
+  }
+
+  protected renderQuestionHeader(aq: AssignedQuestion) {
+    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+  }
+  
+  protected renderQuestionContent(aq: AssignedQuestion) {
+    return aq.question.renderResponseSolution(aq.uuid, aq.submission, aq.skin);
+  }
+  
+}
+
 export class GradedExamRenderer extends ExamRenderer {
+
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend-graded.js")}"></script>`
+  }
 
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
@@ -400,6 +537,10 @@ export class GradedExamRenderer extends ExamRenderer {
   public renderNavBadge(s: AssignedSection) {
     return s.isGraded() ? renderScoreBadge(s.pointsEarned, s.pointsPossible) :
     renderUngradedBadge(s.pointsPossible);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return `<h6>${student.name} (${student.uniqname})</h6>`;
   }
   
   public renderGrade(ae: AssignedExam) {
