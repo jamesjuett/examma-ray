@@ -191,6 +191,16 @@ code {
   font-size: 90%;
 }
 
+/* When scrolling to a question, use this anchor which
+   is positioned far enough above the question to ensure
+   the sticky section header doesn't cover the top of the
+   question.
+*/
+.examma-ray-question-anchor {
+  position: relative;
+  top: -50px;
+}
+
 .examma-ray-question-description {
   font-size: 90%;
 }

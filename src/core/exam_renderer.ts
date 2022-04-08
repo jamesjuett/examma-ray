@@ -160,7 +160,7 @@ export abstract class ExamRenderer {
   public renderQuestion(aq: AssignedQuestion) {
     return `
       <div id="question-${aq.uuid}" data-question-uuid="${aq.uuid}" data-question-display-index="${aq.displayIndex}" class="examma-ray-question card-group">
-        <div id="question-anchor-${aq.uuid}" style="position: relative; top: -50px"></div>
+        <div id="question-anchor-${aq.uuid}" class="examma-ray-question-anchor"></div>
         <div class="card">
           <div class="card-header">
             ${this.renderQuestionHeader(aq)}
