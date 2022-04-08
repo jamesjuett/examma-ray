@@ -258,6 +258,13 @@ class QuestionStarList {
 }
 
 class QuestionStar {
+
+  private readonly question_id: string
+  private marked: boolean
+
+  // keeps track of every element issued by newStarElement()
+  private readonly star_elements: JQuery<HTMLElement>[]
+  
   constructor(question_id: string, marked: boolean) {
     this.question_id = question_id;
     this.marked = marked;
@@ -301,12 +308,6 @@ class QuestionStar {
       $("#starred-question-" + this.question_id).hide();
     }
   }
-
-  private readonly question_id: string
-  private marked: boolean
-
-  // keeps track of every element issued by newStarElement()
-  private readonly star_elements: JQuery<HTMLElement>[]
 }
 
 function setupQuestionStars() {
