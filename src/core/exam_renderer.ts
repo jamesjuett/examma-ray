@@ -25,7 +25,7 @@ export abstract class ExamRenderer {
 
   public renderNav(ae: AssignedExam) {
     return `
-      <ul class = "nav" style="display: unset; font-weight: 500">
+      <ul class="nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<li class = "nav-item">
           <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
         </li>`).join("")}
@@ -36,7 +36,7 @@ export abstract class ExamRenderer {
 
   public renderSaverButton(ae: AssignedExam) {
     return `
-      <div class="examma-ray-exam-saver-status">
+      <div class="examma-ray-exam-saver-status border-top">
         <div>
           ${mk2html_unwrapped(ae.exam.mk_questions_message)}
         </div>
@@ -165,6 +165,7 @@ export abstract class ExamRenderer {
   public renderQuestion(aq: AssignedQuestion) {
     return `
       <div id="question-${aq.uuid}" data-question-uuid="${aq.uuid}" data-question-display-index="${aq.displayIndex}" class="examma-ray-question card-group">
+        <div id="question-anchor-${aq.uuid}" class="examma-ray-question-anchor"></div>
         <div class="card">
           <div class="card-header">
             ${this.renderQuestionHeader(aq)}
@@ -322,7 +323,7 @@ export class OriginalExamRenderer extends ExamRenderer {
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
-        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+        <div class="bg-light" style="display: flex; flex-direction: column; position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           ${this.renderTimer()}
           <h3 class="text-center pb-1 border-bottom">
             ${renderPointsWorthBadge(ae.pointsPossible, "badge-secondary")}
@@ -341,6 +342,24 @@ export class OriginalExamRenderer extends ExamRenderer {
         </div>
       </div>
     </div>`;
+  }
+
+  public override renderNav(ae: AssignedExam): string {
+    return `<ul class="nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+        ${ae.assignedSections.map(s => `
+          <li class="nav-item">
+            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
+          </li>
+          ${s.assignedQuestions.map(q => `
+            <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
+              ${renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true)}
+              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+                Question ${q.displayIndex}
+              </a>
+            </li>
+          `).join("")}
+        `).join("")}
+      </ul>`
   }
 
   public renderNavBadge(s: AssignedSection) {

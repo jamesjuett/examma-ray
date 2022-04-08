@@ -203,6 +203,16 @@ code {
   font-size: 90%;
 }
 
+/* When scrolling to a question, use this anchor which
+   is positioned far enough above the question to ensure
+   the sticky section header doesn't cover the top of the
+   question.
+*/
+.examma-ray-question-anchor {
+  position: relative;
+  top: -50px;
+}
+
 .examma-ray-question-description {
   font-size: 90%;
 }
@@ -355,7 +365,7 @@ code {
 }
 
 .examma-ray-exam-saver-status {
-  position: absolute;
+  margin-top: auto;
   bottom: 5px;
   width: 190px;
   text-align: center;
@@ -592,4 +602,25 @@ pre .examma-ray-fitb-droppable pre {
   padding-right: 0.4em;
   font-weight: 600;
   text-align: left;
+}
+
+/* 
+SCROLL BAR 
+The show-small-scrollbar class will force a scrollbar to show at all times if content is scrollable
+*/
+
+.show-small-scrollbar {
+  /* This keeps the scrollbar off the edge of the element */
+  margin-right: 2px;
+}
+
+.show-small-scrollbar::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 5px;
+}
+
+.show-small-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: rgba(0,0,0,.5);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
 }
