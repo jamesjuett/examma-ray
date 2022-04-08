@@ -232,7 +232,10 @@ else {
 }
 
 class QuestionStarList {
-  constructor() {
+
+  private readonly starMarkedMap: { [question_uuid: string]: QuestionStar };
+
+  public constructor() {
     this.starMarkedMap = {};
   }
 
@@ -242,31 +245,29 @@ class QuestionStarList {
    * Like with QuestionStar.newStarElement(), the stars produced from the same UUID
    * are all connected and will toggle on and off together.
    *
-   * @param question_id The corresponding question's UUID
+   * @param question_uuid The corresponding question's UUID
    */
-  public newStarElementForQuestion(question_id: string): JQuery<HTMLElement> {
-    if (question_id in this.starMarkedMap) {
-      return this.starMarkedMap[question_id].newStarElement();
+  public newStarElementForQuestion(question_uuid: string): JQuery<HTMLElement> {
+    if (question_uuid in this.starMarkedMap) {
+      return this.starMarkedMap[question_uuid].newStarElement();
     } else {
-      let star = new QuestionStar(question_id, false);
-      this.starMarkedMap[question_id] = star;
+      let star = new QuestionStar(question_uuid, false);
+      this.starMarkedMap[question_uuid] = star;
       return star.newStarElement();
     }
   }
-
-  private readonly starMarkedMap: { [question_id: string]: QuestionStar }
 }
 
 class QuestionStar {
 
-  private readonly question_id: string
-  private marked: boolean
+  private readonly question_uuid: string;
+  private marked: boolean;
 
   // keeps track of every element issued by newStarElement()
-  private readonly star_elements: JQuery<HTMLElement>[]
-  
-  constructor(question_id: string, marked: boolean) {
-    this.question_id = question_id;
+  private readonly star_elements: JQuery<HTMLElement>[];
+
+  public constructor(question_uuid: string, marked: boolean) {
+    this.question_uuid = question_uuid;
     this.marked = marked;
     this.star_elements = [];
   }
@@ -303,9 +304,9 @@ class QuestionStar {
 
     // Show/hide the corresponding question in the section outline
     if (this.marked) {
-      $("#starred-question-" + this.question_id).show();
+      $("#starred-question-" + this.question_uuid).show();
     } else {
-      $("#starred-question-" + this.question_id).hide();
+      $("#starred-question-" + this.question_uuid).hide();
     }
   }
 }
@@ -316,15 +317,15 @@ function setupQuestionStars() {
   $(".examma-ray-question > .card > .card-header").each(function() {
     // Add a star after each question header
     let question = $(this).closest(".examma-ray-question");
-    let question_id = question.data("question-uuid");
-    let starElement = starList.newStarElementForQuestion(question_id);
+    let question_uuid = question.data("question-uuid");
+    let starElement = starList.newStarElementForQuestion(question_uuid);
     $(this).append(starElement);
   });
 
   $(".examma-ray-starred-nav").each(function () {
     // Add a star before each (initially hidden) question in the section navigation
-    let question_id = $(this).data("question-uuid");
-    let starElement = starList.newStarElementForQuestion(question_id);
+    let question_uuid = $(this).data("question-uuid");
+    let starElement = starList.newStarElementForQuestion(question_uuid);
     $(this).prepend(starElement);
   });
 }
