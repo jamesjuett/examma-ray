@@ -470,6 +470,11 @@ code {
   background-color: rgba(0, 0, 255, 0.05);
 }
 
+/* Vertical align bottom looks better for code drag/drop */
+pre code .examma-ray-fitb-drop-location {
+  vertical-align: bottom;
+}
+
 .examma-ray-fitb-drop-bank > * {
   border: solid 1px rgba(0, 0, 255, 0.2);
   border-radius: 4px;
