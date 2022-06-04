@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.306",
+  "version": "1.0.307",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
