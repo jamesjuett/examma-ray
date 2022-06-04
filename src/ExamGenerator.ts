@@ -238,15 +238,19 @@ export class ExamGenerator {
     });
   }
 
-  public writeAll(exam_renderer: ExamRenderer, examDir: string = "out", manifestDir: string = "data") {
-    this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
-
+  public writeExamSpec() {
     // Write exam specification as JSON
     mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
     ExamUtils.saveExamSpecification(
       `data/${this.exam.exam_id}/exam-spec.json`,
       this.exam.spec
     );
+  }
+
+  public writeAll(exam_renderer: ExamRenderer, examDir: string = "out", manifestDir: string = "data") {
+    this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
+
+    this.writeExamSpec();
 
     examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
     manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);

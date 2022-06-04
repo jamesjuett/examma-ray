@@ -71,7 +71,7 @@ html {
 }
 
 .examma-ray-mc-option {
-  vertical-align: middle;
+  /* vertical-align: middle; */
 }
 
 .examma-ray-mc-option pre {
@@ -470,10 +470,21 @@ code {
   background-color: rgba(0, 0, 255, 0.05);
 }
 
-/* Vertical align bottom looks better for code drag/drop */
+/* Styling that looks better for code drag/drop */
 pre code .examma-ray-fitb-drop-location {
-  vertical-align: bottom;
+  margin: 0;
+  padding: 0;
 }
+
+pre code .examma-ray-fitb-droppable .examma-ray-fitb-droppable {
+  margin: 0;
+}
+
+.examma-ray-fitb-droppable .hljs {
+  padding: 1px;
+}
+
+
 
 .examma-ray-fitb-drop-bank > * {
   border: solid 1px rgba(0, 0, 255, 0.2);
@@ -496,6 +507,11 @@ pre code .examma-ray-fitb-drop-location {
 
 .examma-ray-fitb-droppable pre {
   margin: 0;
+  overflow: visible;
+}
+
+.examma-ray-fitb-droppable pre code {
+  overflow: visible;
 }
 
 pre .examma-ray-fitb-droppable pre {

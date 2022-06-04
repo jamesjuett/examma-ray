@@ -66,9 +66,16 @@ export function createFilledFITB(
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
-    submission.forEach(
-      sub => content = content.replace(submission_placeholder, encoder(sub))
-    );
+    submission.forEach(sub => {
+      let submission_replacement = encoder(sub);
+      
+      // The replacement might contain $, but $ has special meaning in that context, so we
+      // need to escape each $ as $$. And because we're doing that itself with replace as
+      // well, we get this monstrosity with $$$$ as the escaped $$ replacement for $:
+      submission_replacement = submission_replacement.replace(/\$/g, '$$$$');
+
+      content = content.replace(submission_placeholder, submission_replacement);
+    });
   }
 
   // Replace any remaining placeholders that weren't filled (or all of them if there was no submission)

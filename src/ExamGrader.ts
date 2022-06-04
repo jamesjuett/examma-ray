@@ -355,7 +355,8 @@ export class ExamGrader {
     [...this.submittedExams]
       .sort((a, b) => a.student.uniqname.localeCompare(b.student.uniqname))
       .forEach((ex, i, arr) => {
-        let filenameBase = this.createGradedFilenameBase(ex);
+        // let filenameBase = this.createGradedFilenameBase(ex);
+        let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
         writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
@@ -440,7 +441,7 @@ export class ExamGrader {
 
     // Predict an overall mean based on an assumption that each
     // individual student exam scored the question mean on its questions
-    let predicted_mean = mean(this.submittedExams.map(
+    let predicted_mean = this.submittedExams.length === 0 ? 0 : mean(this.submittedExams.map(
       ex => sum(ex.assignedQuestions.map(q => this.stats.questionMean(q.question.question_id) ?? NaN))
     ));
 

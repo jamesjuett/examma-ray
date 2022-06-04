@@ -376,16 +376,25 @@ export function createFilledFITBDrop(
 
   // Replace placeholders with submission values
   if (submission && submission !== BLANK_SUBMISSION) {
-    submission.forEach(sub => content = content.replace(submission_placeholder,
-      typeof sub === "string"
-       ? encoder(applySkin(sub, skin))
-       : sub.map(s => {
+    submission.forEach(sub => {
+      let submission_replacement = typeof sub === "string"
+        ? encoder(applySkin(sub, skin))
+        : sub.map(s => {
           let droppable = dropOriginals.find(d => d.id === s.id);
           assert(droppable, `Cannot find drop item with ID ${s.id}.`);
           return createDroppableElement(s.id, createFilledFITBDrop(droppable.content, dropOriginals, group_id, skin, s.children, blankRenderer, boxRenderer, dropLocationRenderer))
-       }).join("")
-      )
-    );
+        }).join("");
+      
+      // The replacement might contain $, but $ has special meaning in that context, so we
+      // need to escape each $ as $$. And because we're doing that itself with replace as
+      // well, we get this monstrosity with $$$$ as the escaped $$ replacement for $:
+      submission_replacement = submission_replacement.replace(/\$/g, '$$$$');
+      
+      content = content.replace(
+        submission_placeholder,
+        submission_replacement
+      );
+    });
   }
 
   // Replace any remaining placeholders that weren't filled (or all of them if there was no submission)

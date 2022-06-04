@@ -1,7 +1,8 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { CodeWritingGrader, CodeWritingGraderSpecification, CodeWritingRubricResult } from "./CodeWritingGrader";
+import { CodeWritingGrader, CodeWritingGraderSpecification } from "./CodeWritingGrader";
+import { ManualGenericGrader, ManualGenericGraderSpecification } from "./ManualGenericGrader";
 import { FITBRegexGrader, FITBRegexGraderSpecification } from "./FITBRegexGrader";
 import { FreebieGrader, FreebieGraderSpecification } from "./FreebieGrader";
 import { SimpleMCGrader, SimpleMCGraderSpecification } from "./SimpleMCGrader";
@@ -174,6 +175,7 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
 
 type GraderKind = 
   | "manual_code_writing"
+  | "manual_generic"
   | "manual_regex_fill_in_the_blank"
   | "freebie"
   | "simple_multiple_choice"
@@ -184,6 +186,7 @@ type GraderKind =
 
 export type GraderSpecification<GK extends GraderKind = GraderKind> =
   GK extends "manual_code_writing" ? CodeWritingGraderSpecification :
+  GK extends "manual_generic" ? ManualGenericGraderSpecification :
   GK extends "manual_regex_fill_in_the_blank" ? FITBRegexGraderSpecification :
   GK extends "freebie" ? FreebieGraderSpecification :
   GK extends "simple_multiple_choice" ? SimpleMCGraderSpecification :
@@ -195,6 +198,7 @@ export type GraderSpecification<GK extends GraderKind = GraderKind> =
 
 export type Grader<GK extends GraderKind = GraderKind> =
   GK extends "manual_code_writing" ? CodeWritingGrader :
+  GK extends "manual_generic" ? ManualGenericGrader :
   GK extends "manual_regex_fill_in_the_blank" ? FITBRegexGrader :
   GK extends "freebie" ? FreebieGrader :
   GK extends "simple_multiple_choice" ? SimpleMCGrader :
@@ -212,6 +216,7 @@ export type GraderFor<RK extends ResponseKind> = ExtractViableGraders<Grader, RK
 export function realizeGrader<GK extends GraderKind>(spec: GraderSpecification<GK>) : Grader<GK> {
   return <Grader<GK>>(
     spec.grader_kind === "manual_code_writing" ? new CodeWritingGrader(spec) :
+    spec.grader_kind === "manual_generic" ? new ManualGenericGrader(spec) :
     spec.grader_kind === "manual_regex_fill_in_the_blank" ? new FITBRegexGrader(spec) :
     spec.grader_kind === "freebie" ? new FreebieGrader(spec) :
     spec.grader_kind === "simple_multiple_choice" ? new SimpleMCGrader(spec) :
