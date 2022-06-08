@@ -99,26 +99,54 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     assert(selections.length === choices.length);
 
     return `
-      <form class="examma-ray-summation-grader">
-      ${choices.map((item, i) => {
-        const ri = this.spec.rubric[i];
-        const res = selections[i];
+      <table class="examma-ray-summation-grader" >
+        <tr>
+          <th></th>
+          <th class="examma-ray-rotated-header"><span>You</span></th>
+          ${question.sampleSolution ? `<th class="examma-ray-rotated-header"><span>Solution</span></th>` : ""}
+        </tr>
+        ${choices.map((item, i) => {
+          const ri = this.spec.rubric[i];
+          const res = selections[i];
 
-        const match = res.selected === ri.selected || ri.ignore_selection;
+          const match = res.selected === ri.selected || ri.ignore_selection;
 
-        // If the # of points is positive, a match is good.
-        // If the # of points is negative
+          // If the # of points is positive, a match is good.
+          // If the # of points is negative
 
-        return `
-          <div class="form-check" style="padding-left: 5rem;${question.response.spacing ? ` margin-bottom: ${question.response.spacing};` : ""}">
-            <span>${renderPointAdjustmentBadge(res.selected, ri)}</span>
-            <input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
-            <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
-          </div>
-        `;
-      }).join("")}
-      </form>
+          return `
+            <tr style="${question.response.spacing ? `margin-bottom: ${question.response.spacing};` : ""}">
+              <td style="padding-right: 0.5em; text-align: right;">${renderPointAdjustmentBadge(res.selected, ri)}</td>
+              <td><input type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" /></td>
+              ${question.sampleSolution ? `<td>${renderRubricImpliedSolutionCheckbox(ri)}</td>` : ""}
+              <td><label class="examma-ray-mc-option">${mk2html(item, skin)}</label></td>
+            </tr>
+          `;
+        }).join("")}
+      </table>
     `;
+
+    // return `
+    //   <form class="examma-ray-summation-grader">
+    //   ${choices.map((item, i) => {
+    //     const ri = this.spec.rubric[i];
+    //     const res = selections[i];
+
+    //     const match = res.selected === ri.selected || ri.ignore_selection;
+
+    //     // If the # of points is positive, a match is good.
+    //     // If the # of points is negative
+
+    //     return `
+    //       <div class="form-check" style="padding-left: 5rem;${question.response.spacing ? ` margin-bottom: ${question.response.spacing};` : ""}">
+    //         <span>${renderPointAdjustmentBadge(res.selected, ri)}</span>
+    //         <input class="form-check-input" type="checkbox" ${selections[i].selected ? "checked" : ""} style="pointer-events: none;" />
+    //         <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
+    //       </div>
+    //     `;
+    //   }).join("")}
+    //   </form>
+    // `;
   }
 
   public renderStats() {
@@ -156,5 +184,14 @@ function renderPointAdjustmentBadge(selected: boolean, rubric_item: { selected: 
          !match && rubric_item.points > 0 ? `<span class="badge badge-danger examma-ray-point-adjustment-badge">0</span>` : // missed out on earning points
          !match && rubric_item.points < 0 ? `<span class="badge badge-success examma-ray-point-adjustment-badge">ok</span>` : // dodged a penalty
          rubric_item.points === 0 ? `<span class="badge badge-secondary examma-ray-point-adjustment-badge">n/a</span>` : // matched a 0 point item
+         assertFalse();
+}
+
+function renderRubricImpliedSolutionCheckbox(rubric_item: { selected: boolean, points: number, ignore_selected?: boolean }) {
+
+  return rubric_item.selected && rubric_item.points >= 0 ? `<input type="checkbox" checked style="pointer-events: none;" />` : // positive points if selected, desired to be checked
+         rubric_item.selected && rubric_item.points < 0 ? `<input type="checkbox" style="pointer-events: none;" />` : // negative points if selected, desired to be unchecked
+         !rubric_item.selected && rubric_item.points >= 0 ? `<input type="checkbox" style="pointer-events: none;" />` : // positive points if NOT selected, desired to be unchecked
+         !rubric_item.selected && rubric_item.points < 0 ? `<input type="checkbox" checked style="pointer-events: none;" />` : // negative points if NOT selected, desired to be checked
          assertFalse();
 }
