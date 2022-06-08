@@ -126,6 +126,7 @@ $ tree
 │       │   ├── student5-126075dd-f725-5468-8ce3-331ce6eecb5a.json
 │       ├── stats.json
 │       └── student-ids.csv
+│       └── exam-spec.json
 ├── out
 │   └── eecs280f21_final
 │       └── exams
@@ -143,6 +144,7 @@ To view a student's exam, just open the corresponding html file in a web browser
 Note that `eecs280f21_final` folder in each - this matches the configured exam `id` in your `exam-spec.ts`.
 
 In the `data` folder, you'll find
+- `exam-spec.json`, a specification of the entire exam as a JSON file. This encodes the complete specification of the entire exam, sufficient to regenerate it in the future. It also includes an encoding of any default grader specifications. This is useful for e.g. uploading the exam specification to a grading server.
 - `stats.json`, with an accounting of which questions were assigned how many times
 - `student-ids.csv`, with each student's uniqname and a unique ID for them composed of their uniqname and a V5 UUID
 - `manifests`, which contains a manifest for each student showing the structure of their individual exam (i.e. which questions were assigned)
@@ -188,6 +190,7 @@ $ tree
 │       │   └── preview-preview-template_exam.json
 │       ├── stats.json
 │       └── student-ids.csv
+│       └── exam-spec.json
 ├── out
 │   └── template_exam
 │       └── exams
@@ -198,21 +201,12 @@ $ tree
 
 To view the preview exam, just open the html file in a web browser.
 
-## Version Control
+## Generating ONLY a JSON exam specification file
 
-If you're using `git`, you'll want a `.gitignore` file that includes the following:
-
-#### **`.gitignore`**
-```
-node_modules/
-data/
-out/
-```
-
-When you're developing an exam and often generating new files, it would be annoying to have `data` in version control. Eventually, you may want to check in the final versions of the exam manifests generated for each student, as well as their answer file submissions. For example, if your exam ID is `eecs280f21_final`, you could optionally add it once you've locked down the content:
+If you only need to generate an exam specification file, you can run:
 
 ```bash
-git add eecs280f21_final/data
+npx ts-node scripts/gen.ts --spec-only
 ```
 
 ## Administering an Exam
