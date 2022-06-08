@@ -311,7 +311,31 @@ code {
   padding: unset;
 }
 
-.examma-ray-summation-grader .examma-ray-point-adjustment-badge {
+.examma-ray-summation-grader td {
+  vertical-align: middle;
+}
+
+.examma-ray-summation-grader th.examma-ray-rotated-header {
+  position: relative;
+  width: 2em;
+  height: 3em;
+  font-size: 8pt;
+}
+
+.examma-ray-summation-grader th.examma-ray-rotated-header > span {
+  position: absolute;
+  left: 0;
+  bottom: -0.5em;
+  text-align: left;
+  width: 5em;
+  transform: rotate(-45deg) translate(1em, -1em);
+}
+
+.examma-ray-summation-grader th > span {
+  position: absolute;
+}
+
+/* .examma-ray-summation-grader .examma-ray-point-adjustment-badge {
   min-width: 3em;
   margin-left: -5rem;
   margin-right: 1.5rem;
@@ -328,7 +352,7 @@ code {
 
 .examma-ray-summation-grader .examma-ray-mc-option pre {
   vertical-align: text-top;
-}
+} */
 
 .examma-ray-question-overview {
   margin: 0.3em;
