@@ -13,4 +13,4 @@ Documentation is available at
 
 ## Contributing
 
-TODO
+See the [Contributing Guide](CONTRIBUTING.md).
