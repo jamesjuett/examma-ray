@@ -25,7 +25,9 @@ Make sure you have Node 11 or greater:
 node --version
 ```
 
-Create a local development clone of this repository. From the base directory of the repo, install dependencies using `npm`:
+Create a local development clone of this repository.
+
+From the base directory of the repo, install dependencies using `npm`:
 
 ```console
 npm install
@@ -43,7 +45,7 @@ To compile everything (initially and any time you make contributions), run:
 npm run prepublish
 ```
 
-You'll want some sample exams to test things out. Clone the sample exam repository at [https://github.com/jamesjuett/examma-ray-sample](https://github.com/jamesjuett/examma-ray-sample).
+You'll want some sample exams to test things out. Clone the sample exam repository at [https://github.com/jamesjuett/examma-ray-sample](https://github.com/jamesjuett/examma-ray-sample). This should exist separately from your original `examma-ray` repo.
 
 From the base directory of that repository, install dependencies and then link your development version of `examma-ray`.
 
@@ -54,6 +56,7 @@ npm link examma-ray
 
 Now the sample exams will use your local development version of `examma-ray`.
 
+See the README.md in the sample exams repo if you're new to using `examma-ray`, or the general documentation at [https://jamesjuett.github.io/examma-ray/](https://jamesjuett.github.io/examma-ray/).
 
 ## Editor
 
