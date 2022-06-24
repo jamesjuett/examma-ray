@@ -4,9 +4,10 @@ import { ICON_INFO } from "../core/icons";
 import { applySkin, highlightCode, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
+import { render_solution } from "../response/responses";
 import { createFilledFITB } from "../response/util-fitb";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -203,7 +204,12 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
       
     }
     else {
-      return assertFalse();
+      const submission = aq.submission;
+      assert(submission !== INVALID_SUBMISSION);
+      studentSubmission_html = question.renderResponseSolution(aq.uuid, submission, skin);
+      if (question.sampleSolution) {
+        sampleSolution_html = question.renderResponseSolution(aq.uuid, question.sampleSolution, skin);
+      }
     }
 
     
