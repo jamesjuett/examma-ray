@@ -22,7 +22,7 @@ import { createFilledFITB } from "../response/util-fitb";
 import { assert } from "../core/util";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
-import { ICON_INFO } from "../core/icons";
+import { ICON_BOX_CHECK, ICON_INFO } from "../core/icons";
 
 
 export type FITBRegexGradingResult = ImmutableGradingResult & {
@@ -119,19 +119,23 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
     let itemResults = this.spec.rubric.map((rubricItem, i) => {
       assert(rubricItem.blankIndex === i + 1, "Mismatched blank index on FITB rubric.");
-
-      let match = FITBRubricItemMatch(rubricItem, submission[i]);
-      return {
-        matched: !!match,
-        pointsEarned: match?.points ?? 0,
-        explanation: match?.explanation
-      };
+      return this.single_blank_grade_helper(submission[i], rubricItem);
     });
 
     return {
       wasBlankSubmission: false,
       pointsEarned: itemResults.reduce((p, r) => p + r.pointsEarned, 0),
       itemResults: itemResults
+    };
+  }
+
+  private single_blank_grade_helper(submission: string, rubric_item: FITBRegexRubricItem) {
+
+    let match = FITBRubricItemMatch(rubric_item, submission);
+    return {
+      matched: !!match,
+      pointsEarned: match?.points ?? 0,
+      explanation: match?.explanation
     };
   }
 
@@ -206,6 +210,8 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let submissions = aqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
 
+    let allMatched = gradedBlankSubmissions.every(subs => subs.every(s => s.grading_result.matched));
+
     let sampleSolution = question.sampleSolution;
     // let solutionFilled = createFilledFITB(question.response.content, sampleSolution);
     const gqs = aqs.filter((aq: AssignedQuestion) : aq is GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult> => aq.isGraded());
@@ -220,7 +226,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${this.renderOverview(gqs)}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.slice().map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${renderScoreBadge(s.points, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
+            ${blankSubs.slice().map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${s.grading_result.matched ? ICON_BOX_CHECK : ""} ${renderScoreBadge(s.grading_result.pointsEarned, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
           </td>`
     ).join("")}
       </tr>
@@ -238,7 +244,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       <script src="../js/grader-page-fitb.js"></script>
       <body>
         <div style="margin: 2em">
-          ${question.question_id}
+          ${question.question_id} ${allMatched ? "(ALL MATCHED)" : ""}
         </div>
         ${table}
         <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
@@ -279,18 +285,20 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let gradedBlankSubmissions = uniqueSubmissions.map(
       (bs, blankIndex) => bs.map(
         b => ({
-          points: FITBRubricItemMatch(this.spec.rubric[blankIndex], b)?.points ?? 0,
+          grading_result: this.single_blank_grade_helper(b, this.spec.rubric[blankIndex]),
           sub: b,
           num: blankSubmissions[blankIndex].reduce((prev, s) => prev + (s === b ? 1 : 0), 0)
         })
       )
     );
 
-    // sort by points earned, then number
+    // sort by points earned, then by whether they have been matched, then by number
     gradedBlankSubmissions = gradedBlankSubmissions.map(
-      bs => bs.sort((a, b) => b.points - a.points === 0
-        ? b.num - a.num
-        : b.points - a.points
+      bs => bs.sort((a, b) => b.grading_result.pointsEarned - a.grading_result.pointsEarned === 0
+        ? b.grading_result.matched == a.grading_result.matched
+          ? b.num - a.num
+          : a.grading_result.matched ? -1 : 1 // if a is match and b isn't
+        : b.grading_result.pointsEarned - a.grading_result.pointsEarned
       )
     );
     return gradedBlankSubmissions;
@@ -301,7 +309,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let submissions = gqs.map(aq => aq.submission);
     let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
     let blankAverages = gradedBlankSubmissions.map(
-      gradedSubmissions => sum(gradedSubmissions.map(s => s.points * s.num)) / sum(gradedSubmissions.map(s => s.num)));
+      gradedSubmissions => sum(gradedSubmissions.map(s => s.grading_result.pointsEarned * s.num)) / sum(gradedSubmissions.map(s => s.num)));
     let blankPoints = this.spec.rubric.map(ri => ri.points);
     let blankSolutions : string[] = question.sampleSolution?.map(s => encode(s)) ?? [];
     let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));

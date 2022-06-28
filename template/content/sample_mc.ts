@@ -18,7 +18,11 @@ This is a sample question. Which of the following is NOT an heirloom variety of 
       "Brandywine"
     ],
     multiple: false,
-    default_grader: new SimpleMCGrader(1)
+    sample_solution: [1],
+    default_grader: {
+      grader_kind: "simple_multiple_choice",
+      correct_index: 1
+    },
   }
 }
 
