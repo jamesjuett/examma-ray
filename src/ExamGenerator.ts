@@ -241,7 +241,7 @@ export class ExamGenerator {
   public writeExamSpec() {
     // Write exam specification as JSON
     mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
-    ExamUtils.saveExamSpecification(
+    ExamUtils.writeExamSpecificationToFileSync(
       `data/${this.exam.exam_id}/exam-spec.json`,
       this.exam.spec
     );
