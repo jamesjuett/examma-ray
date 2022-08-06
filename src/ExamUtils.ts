@@ -1,60 +1,21 @@
-import { readdirSync, readFileSync, copyFileSync, mkdirSync, existsSync, writeFileSync } from "fs";
-import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./core/submissions";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import Papa from "papaparse";
-import { AssignedQuestion } from "./core/assigned_exams";
 import path from "path";
-import { asMutable, assert, assertNever } from "./core/util";
-import { chunk } from "simple-statistics";
-import { stringify_response } from "./response/responses";
-import { v4 as uuidv4, v5 as uuidv5} from 'uuid';
+import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
+import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./core/submissions";
+import { assert, assertNever } from "./core/util";
 
-import glob from "glob";
-import del from "del";
 import "colors";
 
-import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
-import { ExamSpecification, StudentInfo } from "./core/exam_specification";
-import { UUID_Strategy } from "./ExamGenerator";
 import { ncp } from "ncp";
 import { Exam, Question, Section } from "./core";
+import { ExamSpecification, parseExamSpecification, stringifyExamSpecification, StudentInfo } from "./core/exam_specification";
+import { UUID_Strategy } from "./ExamGenerator";
 
 export namespace ExamUtils {
 
-  export function parseExamSpecification(str: string) : ExamSpecification {
-    return JSON.parse(
-      str,
-      (key: string, value: any) => {
-        if (typeof value === "object" && typeof value["examma_ray_serialized_regex"] === "object") {
-          return new RegExp(
-            value["examma_ray_serialized_regex"]["source"],
-            value["examma_ray_serialized_regex"]["flags"]
-          );
-        }
-        return value;
-      }
-    );
-  }
-
   export function readExamSpecificationFromFileSync(filename: string) : ExamSpecification {
     return parseExamSpecification(readFileSync(filename, "utf8"));
-  }
-
-  export function stringifyExamSpecification(spec: ExamSpecification) : string {
-    return JSON.stringify(
-      spec,
-      (key: string, value: any) => {
-        if (value instanceof RegExp) {
-          return {
-            examma_ray_serialized_regex: {
-              source: value.source,
-              flags: value.flags
-            }
-          }
-        }
-        return value;
-      },
-      2
-    );
   }
 
   export function writeExamSpecificationToFileSync(filename: string, spec: ExamSpecification) {
