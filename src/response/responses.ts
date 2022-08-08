@@ -37,6 +37,19 @@ export type ViableSubmission<ST> = Exclude<ST, typeof BLANK_SUBMISSION | typeof 
 export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
 
 
+/**
+ * A type used to represent differences between two response specifications.
+ */
+export type ResponseSpecificationDiff = {
+  incompatible?: boolean,
+  structure?: boolean,
+  content?: boolean,
+  sample_solution?: boolean,
+  default_grader?: boolean,
+  format?: boolean,
+}
+
+
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
   validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => SubmissionType<QT>,
@@ -44,7 +57,8 @@ export type ResponseHandler<QT extends ResponseKind> = {
   render_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery, is_sample_solution: boolean) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
-  fill: (elem: JQuery, submission: SubmissionType<QT>) => void
+  fill: (elem: JQuery, submission: SubmissionType<QT>) => void,
+  diff: (response1: ResponseSpecification<QT>, response2: ResponseSpecification<QT>) => ResponseSpecificationDiff;
 };
 
 export const RESPONSE_HANDLERS : {
@@ -91,4 +105,16 @@ export function stringify_response<QT extends ResponseKind>(submission: Submissi
 
 export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, response: SubmissionType<QT>) : void {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).fill(elem, response);
+}
+
+export function diff_response_specifications(response1: ResponseSpecification<ResponseKind>, response2: ResponseSpecification<ResponseKind>) : ResponseSpecificationDiff | undefined {
+  if (response1.kind !== response2.kind) {
+    return { incompatible: true };
+  }
+  const diff = RESPONSE_HANDLERS[response1.kind].diff(<any>response1, <any>response2);
+  return is_empty_response_diff(diff) ? undefined : diff;
+}
+
+function is_empty_response_diff(diff: ResponseSpecificationDiff) {
+  return !Object.values(diff).some(v => v);
 }

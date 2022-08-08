@@ -9,17 +9,17 @@ import "colors";
 
 import { ncp } from "ncp";
 import { Exam, Question, Section } from "./core";
-import { ExamSpecification, parseExamSpecification, stringifyExamSpecification, StudentInfo } from "./core/exam_specification";
+import { ExamSpecification, parseExamComponentSpecification, stringifyExamComponentSpecification, StudentInfo } from "./core/exam_specification";
 import { UUID_Strategy } from "./ExamGenerator";
 
 export namespace ExamUtils {
 
   export function readExamSpecificationFromFileSync(filename: string) : ExamSpecification {
-    return parseExamSpecification(readFileSync(filename, "utf8"));
+    return <ExamSpecification>parseExamComponentSpecification(readFileSync(filename, "utf8"));
   }
 
   export function writeExamSpecificationToFileSync(filename: string, spec: ExamSpecification) {
-    writeFileSync(filename, stringifyExamSpecification(spec), "utf8");
+    writeFileSync(filename, stringifyExamComponentSpecification(spec), "utf8");
   }
 
   export function loadExamAnswers(filename: string) : ExamSubmission {

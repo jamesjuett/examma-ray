@@ -1,11 +1,12 @@
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import deepEqual from "deep-equal";
 import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
+import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { createFilledFITB } from "./util-fitb";
+import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
 import { isStringArray } from "./util";
-import { ResponseHandler, ViableSubmission } from "./responses";
+import { createFilledFITB, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
 
 /**
  * ## Fill-In-The-Blank (FITB) Response Element Specification
@@ -183,11 +184,30 @@ function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   }
 }
 
+
+function FITB_DIFF(r1: FITBSpecification, r2: FITBSpecification) : ResponseSpecificationDiff {
+  if (r1.kind !== r2.kind) {
+    return { incompatible: true };
+  }
+
+  return {
+    structure:
+      numFITBBlanksAndBoxes(r1.content) !== numFITBBlanksAndBoxes(r2.content),
+    content:
+      r1.content !== r2.content,
+    default_grader:
+      !deepEqual(r1.default_grader, r2.default_grader, {strict: true}),
+    sample_solution:
+      !deepEqual(r1.sample_solution, r2.sample_solution, {strict: true})
+  };
+}
+
 export const FITB_HANDLER : ResponseHandler<"fill_in_the_blank"> = {
   parse: FITB_PARSER,
   render: FITB_RENDERER,
   render_solution: FITB_SOLUTION_RENDERER,
   extract: FITB_EXTRACTOR,
-  fill: FITB_FILLER
+  fill: FITB_FILLER,
+  diff: FITB_DIFF,
 };
 

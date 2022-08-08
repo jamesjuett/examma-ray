@@ -54,11 +54,13 @@
 import { CHOOSE_ALL, Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "../response/common";
-import { ResponseSpecification } from "../response/responses";
+import { diff_response_specifications as response_specification_diff, ResponseSpecification, ResponseSpecificationDiff } from "../response/responses";
 import { ExamComponentSkin } from "./skins";
 import { assert, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
 import { quantileSorted } from "simple-statistics";
+import { GraderSpecification } from "../graders/QuestionGrader";
+import deepEqual from "deep-equal";
 
 
 
@@ -158,7 +160,7 @@ export type SectionSpecification = {
   /**
    * The initial width, in percent 0-100, of the reference material for this section.
    */
-  reference_width?: number,
+  readonly reference_width?: number,
 
 
   /**
@@ -259,7 +261,10 @@ export function isValidID(id: string) {
 
 
 
-
+export type ExamComponentSpecification =
+  | QuestionSpecification
+  | SectionSpecification
+  | ExamSpecification;
 
 
 
@@ -575,8 +580,11 @@ export interface StudentInfo {
 
 
 
+export function parseExamSpecification(str: string) : ExamSpecification { return <ExamSpecification>parseExamComponentSpecification(str); }
+export function parseSectionSpecification(str: string) : SectionSpecification { return <SectionSpecification>parseExamComponentSpecification(str); }
+export function parseQuestionSpecification(str: string) : QuestionSpecification { return <QuestionSpecification>parseExamComponentSpecification(str); }
 
-export function parseExamSpecification(str: string) : ExamSpecification {
+export function parseExamComponentSpecification(str: string) : ExamComponentSpecification | ResponseSpecification<ResponseKind> | GraderSpecification {
   return JSON.parse(
     str,
     (key: string, value: any) => {
@@ -591,7 +599,7 @@ export function parseExamSpecification(str: string) : ExamSpecification {
   );
 }
 
-export function stringifyExamSpecification(spec: ExamSpecification) : string {
+export function stringifyExamComponentSpecification(spec: ExamComponentSpecification | ResponseSpecification<ResponseKind> | GraderSpecification) : string {
   return JSON.stringify(
     spec,
     (key: string, value: any) => {
@@ -607,4 +615,178 @@ export function stringifyExamSpecification(spec: ExamSpecification) : string {
     },
     2
   );
+}
+
+
+
+export type ExamSpecificationDiff = {
+  exam_id?: boolean,
+  title?: boolean,
+  instructions?: boolean,
+  meta?: boolean,
+  sections?: (SectionSpecificationDiff | ExamComponentChooserSpecificationDiff | undefined)[],
+  format?: boolean,
+}
+
+export function exam_specification_diff(spec1: ExamSpecification, spec2: ExamSpecification) : ExamSpecificationDiff | undefined {
+  const sections_diff = spec1.sections.map((q1, i) => {
+    const q2 = spec2.sections[i];
+    if (q1.component_kind === "chooser_specification" || q2.component_kind === "chooser_specification") {
+      if (q1.component_kind !== "chooser_specification" || q2.component_kind !== "chooser_specification") {
+        return <ExamComponentChooserSpecificationDiff>{
+          choices: true,
+          strategy: true,
+        };
+      }
+      else {
+        return exam_component_chooser_specification_diff(q1, q2);
+      }
+    }
+    else {
+      return section_specification_diff(q1, q2);
+    }
+  });
+
+  const diff : ExamSpecificationDiff = {
+    exam_id:
+      spec1.exam_id !== spec2.exam_id,
+    title:
+      spec1.title !== spec2.title,
+    instructions:
+      spec1.mk_intructions !== spec2.mk_intructions,
+    meta:
+      spec1.mk_announcements !== spec2.mk_announcements ||
+      spec1.mk_bottom_message !== spec2.mk_bottom_message ||
+      spec1.mk_download_message !== spec2.mk_download_message ||
+      spec1.mk_questions_message !== spec2.mk_questions_message ||
+      spec1.mk_saver_message !== spec2.mk_saver_message,
+    sections:
+      sections_diff.some(d => d) ? sections_diff: undefined,
+  };
+
+  return Object.values(diff).some(v => v) ? diff : undefined;
+}
+
+
+
+export type SectionSpecificationDiff = {
+  section_id?: boolean,
+  title?: boolean,
+  description?: boolean,
+  reference?: boolean,
+  questions?: (QuestionSpecificationDiff | ExamComponentChooserSpecificationDiff | undefined)[],
+  skin?: boolean,
+  format?: boolean,
+}
+
+export function section_specification_diff(spec1: SectionSpecification, spec2: SectionSpecification) : SectionSpecificationDiff | undefined {
+
+  const questions_diff = spec1.questions.map((q1, i) => {
+    const q2 = spec2.questions[i];
+    if (q1.component_kind === "chooser_specification" || q2.component_kind === "chooser_specification") {
+      if (q1.component_kind !== "chooser_specification" || q2.component_kind !== "chooser_specification") {
+        return <ExamComponentChooserSpecificationDiff>{
+          choices: true,
+          strategy: true,
+        };
+      }
+      else {
+        return exam_component_chooser_specification_diff(q1, q2);
+      }
+    }
+    else {
+      return question_specification_diff(q1, q2);
+    }
+  });
+
+  const diff : SectionSpecificationDiff = {
+    section_id:
+      spec1.section_id !== spec2.section_id,
+    title:
+      spec1.title !== spec2.title,
+    description:
+      spec1.mk_description !== spec2.mk_description,
+    reference:
+      spec1.mk_reference !== spec1.mk_reference,
+    questions:
+      questions_diff.some(d => d) ? questions_diff: undefined,
+    skin:
+      !deepEqual(spec1.skin, spec2.skin, { strict: true }),
+    format:
+      spec1.reference_width !== spec2.reference_width
+  };
+
+  return Object.values(diff).some(v => v) ? diff : undefined;
+}
+
+
+export type QuestionSpecificationDiff = {
+  question_id?: boolean,
+  response?: ResponseSpecificationDiff,
+  description?: boolean,
+  points: boolean,
+  skin?: boolean,
+  tags: boolean,
+}
+
+export function question_specification_diff(spec1: QuestionSpecification, spec2: QuestionSpecification) : QuestionSpecificationDiff | undefined {
+  const diff = {
+    question_id:
+      spec1.question_id !== spec2.question_id,
+    response:
+      response_specification_diff(spec1.response, spec2.response),
+    description:
+      spec1.mk_description !== spec2.mk_description,
+    points:
+      spec1.points !== spec2.points,
+    skin:
+      !deepEqual(spec1.skin, spec2.skin, { strict: true }),
+    tags:
+      !deepEqual(spec1.tags, spec2.tags)
+  };
+  
+  return Object.values(diff).some(v => v) ? diff : undefined;
+}
+
+
+
+export type ExamComponentChooserSpecificationDiff = {
+  choices?: boolean,
+  strategy?: boolean
+}
+
+function exam_component_chooser_specification_diff<CK extends ChooserKind>(spec1: ExamComponentChooserSpecification<CK>, spec2: ExamComponentChooserSpecification<CK>) : ExamComponentChooserSpecificationDiff | undefined {
+  
+  let diff : ExamComponentChooserSpecificationDiff = {
+    strategy: !deepEqual(spec1.strategy, spec2.strategy, { strict: true }),
+  };
+
+  spec1.choices.forEach((cs1, i) => {
+    const cs2 = spec2.choices[i];
+    if (Array.isArray(cs1) || Array.isArray(cs2)) {
+      diff.choices ||= !Array.isArray(cs1) || !Array.isArray(cs2) || cs1.some((c1, i) => choice_id_diff(spec1.chooser_kind, c1, cs2[i]));
+    }
+    else if (cs1.component_kind === "chooser_specification" || cs2.component_kind === "chooser_specification") {
+      if (cs1.component_kind !== "chooser_specification" || cs2.component_kind !== "chooser_specification") {
+        diff.choices = true;
+      }
+      else {
+        const rec_diff = exam_component_chooser_specification_diff(cs1, cs2);
+        diff.choices ||= rec_diff?.choices;
+        diff.strategy ||= rec_diff?.strategy;
+      }
+    }
+    else {
+      diff.choices ||= choice_id_diff(spec1.chooser_kind, cs1, cs2);
+    }
+  });
+
+  return Object.values(diff).some(v => v) ? diff : undefined;
+}
+
+function choice_id_diff<CK extends ChooserKind>(chooser_kind: CK, choice1: ChoiceKind[CK], choice2: ChoiceKind[CK]) {
+  return chooser_kind === "question" ? (<QuestionSpecification>choice1).question_id !== (<QuestionSpecification>choice2).question_id :
+    chooser_kind === "section" ? (<SectionSpecification>choice1).section_id !== (<SectionSpecification>choice2).section_id :
+    chooser_kind === "skin" ? (<ExamComponentSkin>choice1).skin_id !== (<ExamComponentSkin>choice2).skin_id :
+    assertNever(chooser_kind);
 }
