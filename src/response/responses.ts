@@ -107,7 +107,7 @@ export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, r
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).fill(elem, response);
 }
 
-export function diff_response_specifications(response1: ResponseSpecification<ResponseKind>, response2: ResponseSpecification<ResponseKind>) : ResponseSpecificationDiff | undefined {
+export function response_specification_diff(response1: ResponseSpecification<ResponseKind>, response2: ResponseSpecification<ResponseKind>) : ResponseSpecificationDiff | undefined {
   if (response1.kind !== response2.kind) {
     return { incompatible: true };
   }
