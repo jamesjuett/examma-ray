@@ -3,9 +3,6 @@ import { shuffle } from 'shuffle-seed';
 import { Exam, Question, Section } from './exam_components';
 import { assert } from './util';
 
-
-export const CHOOSE_ALL = Symbol("choose_all");
-
 export class SeededRandomizer {
 
   private rng: RandomSeed;
@@ -43,7 +40,7 @@ export class SeededRandomizer {
 
 }
 
-export type Randomizer = SeededRandomizer | typeof CHOOSE_ALL;
+export type Randomizer = SeededRandomizer;
 
 export function createSectionChoiceRandomizer(student_randomization_seed: string, exam: Exam) : SeededRandomizer {
   return new SeededRandomizer(student_randomization_seed + "-" + exam.exam_id);

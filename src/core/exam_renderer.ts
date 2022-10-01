@@ -1,5 +1,5 @@
 import path from 'path';
-import { AssignedSection } from '../core';
+import { AssignedSection, Exam } from '../core';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
@@ -7,6 +7,40 @@ import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 
 const NO_REFERNECE_MATERIAL = "This section has no reference material."
+
+export function renderHead(scripts: string) {
+  return (
+`<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+  ${scripts}
+</head>`
+  );
+  
+}
+
+export function renderInstructions(exam: Exam) {
+  return `<div class="container examma-ray-instructions">
+    ${exam.html_instructions}
+  </div>`
+}
+
+export function renderAnnouncements(exam: Exam) {
+  return `<div class="examma-ray-announcements">
+    ${exam.html_announcements.map(a => `
+      <div class="alert alert-warning alert-dismissible fade show" style="display: inline-block; max-width: 40rem;" role="alert">
+        ${a}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>`
+    )}
+  </div>`;
+}
 
 export abstract class ExamRenderer {
 
@@ -71,15 +105,7 @@ export abstract class ExamRenderer {
     return `
       <!DOCTYPE html>
       <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="referrer" content="strict-origin-when-cross-origin" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-        ${this.renderScripts(frontendPath)}
-      </head>
+      ${renderHead(this.renderScripts(frontendPath))}
       <body>
         ${this.renderBody(ae)}
         ${this.renderModals(ae)}
@@ -100,34 +126,14 @@ export abstract class ExamRenderer {
           ${this.renderStudentHeader(student)}
         </div>
         <div>
-          ${this.renderInstructions(ae)}
-          ${this.renderAnnouncements(ae)}
+          ${renderInstructions(ae.exam)}
+          ${renderAnnouncements(ae.exam)}
         </div>
       </div>
     `;
   }
 
   protected abstract renderStudentHeader(student: StudentInfo): string;
-
-  public renderInstructions(ae: AssignedExam) {
-    return `<div class="container examma-ray-instructions">
-      ${ae.exam.html_instructions}
-    </div>`
-  }
-
-  public renderAnnouncements(ae: AssignedExam) {
-    return `<div class="examma-ray-announcements">
-      ${ae.exam.html_announcements.map(a => `
-        <div class="alert alert-warning alert-dismissible fade show" style="display: inline-block; max-width: 40rem;" role="alert">
-          ${a}
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>`
-      )}
-    </div>`;
-  }
-
   
   protected abstract renderSectionHeader(as: AssignedSection): string;
 
@@ -318,7 +324,7 @@ export abstract class ExamRenderer {
 export class OriginalExamRenderer extends ExamRenderer {
 
   public renderScripts(frontendPath: string): string {
-    return `<script src="${path.join(frontendPath, "frontend.js")}"></script>`
+    return `<script src="${path.join(frontendPath, "frontend.js")}"></script>`;
   }
 
   public renderBody(ae: AssignedExam) {
@@ -529,7 +535,7 @@ export class GradedExamRenderer extends ExamRenderer {
         <div style="margin-left: 210px; width: calc(100% - 220px);">
           ${this.renderGradingSummary(ae)}
           ${this.renderHeader(ae, ae.student)}
-          ${ae.assignedSections.map(as => this.renderSection(as)).join("<br />")}
+          ${this.renderSections(ae)}
         </div>
       </div>
     </div>`;

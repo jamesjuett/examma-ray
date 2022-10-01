@@ -95,26 +95,24 @@ For now, refer to examples of existing graders. More thorough documentation comi
  * @module
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
-import { TrustedExamSubmission } from './core/submissions';
-import { AssignedExam, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
-import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
-import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
-import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
-import { asMutable, assert, assertFalse, Mutable } from './core/util';
-import { unparse } from 'papaparse';
-import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
-import { createCompositeSkin, DEFAULT_SKIN } from './core/skins';
 import del from 'del';
+import { mkdirSync, writeFileSync } from 'fs';
+import { unparse } from 'papaparse';
+import path from 'path';
 import { average, mean, sum } from 'simple-statistics';
-import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
-import { GradedStats } from "./core/GradedStats";
+import { AssignedExam, AssignedQuestion, isGradedQuestion } from './core/assigned_exams';
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
-import { CHOOSE_ALL } from './core/randomization';
-import { UUID_Strategy } from './ExamGenerator';
-import path from 'path';
+import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
+import { chooseAllQuestions, chooseAllSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
+import { GradedStats } from "./core/GradedStats";
 import { ICON_BOX_CHECK } from './core/icons';
+import { TrustedExamSubmission } from './core/submissions';
+import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
+import { asMutable, assert } from './core/util';
+import { UUID_Strategy } from './ExamGenerator';
+import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
+import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
 
 
 
@@ -173,12 +171,11 @@ export class ExamGrader {
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
-    let ignore: StudentInfo = { uniqname: "", name: "" };
 
-    this.allSections = exam.sections.flatMap(chooser => realizeSections(chooseSections(chooser, exam, ignore, CHOOSE_ALL)));
+    this.allSections = exam.sections.flatMap(chooser => realizeSections(chooseAllSections(chooser)));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseQuestions(chooser, exam, ignore, CHOOSE_ALL)));
+    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
     this.stats = new GradedStats();

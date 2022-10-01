@@ -1,8 +1,7 @@
-import { GraderFor, QuestionGrader, realizeGrader } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
+import { ResponseKind } from "../response/common";
 import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
-import { chooseQuestions, chooseSections, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser, StudentInfo } from "./exam_specification";
-import { CHOOSE_ALL } from "./randomization";
+import { chooseAllQuestions, chooseAllSections, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
@@ -266,12 +265,10 @@ export class Exam {
 
     this.spec = spec;
 
-    let ignore: StudentInfo = { uniqname: "", name: "" };
-
-    this.allSections = this.sections.flatMap(chooser => realizeSections(chooseSections(chooser, this, ignore, CHOOSE_ALL)));
+    this.allSections = this.sections.flatMap(chooser => realizeSections(chooseAllSections(chooser)));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseQuestions(chooser, this, ignore, CHOOSE_ALL)));
+    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
   }
 

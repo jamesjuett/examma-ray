@@ -51,7 +51,7 @@
  * @module
  */
 
-import { CHOOSE_ALL, Randomizer } from "./randomization";
+import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "../response/common";
 import { ResponseSpecification } from "../response/responses";
@@ -297,6 +297,7 @@ export type SkinChooserSpecification = ExamComponentChooserSpecification<"skin">
 interface ExamComponentChooser<CK extends ChooserKind> {
   readonly component_kind: "chooser";
   readonly chooser_kind: CK;
+  all_choices: readonly ChoiceKind[CK][];
   choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly ChoiceKind[CK][];
   getById(id: string): ChoiceKind[CK] | undefined;
 }
@@ -316,28 +317,26 @@ export function realizeChooser<CK extends ChooserKind>(spec: ExamComponentChoose
   return {
     component_kind: "chooser",
     chooser_kind: spec.chooser_kind,
+    all_choices: chooseAll(spec),
     choose: createChooseFunction(spec),
     getById: createGetByIdFunction(spec)
   }
 }
 
-// choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-//   let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
-//   return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
-// },
-// getById: (question_id: string) => {
-//   return questions
-//     .map(q => realizeQuestion(q))
-//     .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
-//     .find(q => q?.question_id === question_id);
-// }
+function chooseAll<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) : readonly ChoiceKind[CK][]{
+  return spec.choices.flatMap(c =>
+    Array.isArray(c) ? c : 
+    c.component_kind === "chooser_specification" ? chooseAll(c) : c
+  );
+}
 
 function localChoose<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return rand === CHOOSE_ALL ? spec.choices :
+  return (
     spec.strategy.kind === "random_1" ? [rand.choose_one(spec.choices)] :
     spec.strategy.kind === "random_n" ? rand.chooseN(spec.choices, spec.strategy.n) :
     spec.strategy.kind === "shuffle" ? rand.shuffle(spec.choices) :
-    assertNever(spec.strategy);
+    assertNever(spec.strategy)
+  );
 }
 
 function createChooseFunction<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>)
@@ -378,6 +377,10 @@ export function realizeQuestions(questions: readonly (QuestionSpecification | Qu
 
 export function chooseQuestions(chooser: Question | QuestionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
   return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
+}
+
+export function chooseAllQuestions(chooser: Question | QuestionChooser) {
+  return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
 // export function BY_ID(id: string, questionBank: QuestionBank) {
@@ -477,6 +480,10 @@ export function chooseSections(chooser: Section | SectionChooser, exam: Exam, st
   return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
 }
 
+export function chooseAllSections(chooser: Section | SectionChooser) {
+  return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
+}
+
 /**
  * 
  * @param n 
@@ -534,16 +541,6 @@ function SHUFFLE_QUESTIONS(questions: readonly(QuestionSpecification | QuestionC
     strategy: {
       kind: "shuffle"
     }
-    // choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    //   let qs = questions.map(q => realizeQuestion(q)).flatMap(q => chooseQuestions(q, exam, student, rand));
-    //   return rand === CHOOSE_ALL ? qs : rand.shuffle(qs);
-    // },
-    // getById: (question_id: string) => {
-    //   return questions
-    //     .map(q => realizeQuestion(q))
-    //     .map(q => q.component_kind === "chooser" ? q.getById(question_id) : q)
-    //     .find(q => q?.question_id === question_id);
-    // }
   }
 }
 

@@ -2,7 +2,7 @@ import 'colors';
 import { writeFileSync, mkdirSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { AssignedExam, AssignedQuestion, AssignedSection } from './core/assigned_exams';
-import { ExamRenderer, OriginalExamRenderer } from './core/exam_renderer';
+import { ExamRenderer, OriginalExamRenderer, renderAnnouncements, renderHead, renderInstructions } from './core/exam_renderer';
 import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./core/randomization";
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
@@ -12,95 +12,38 @@ import { createCompositeSkin, ExamComponentSkin } from './core/skins';
 import { createStudentUuid, writeFrontendJS, ExamUtils } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
+import { renderPointsWorthBadge } from './core/ui_components';
 
-type SectionStats = {
-  section: Section,
-  n: number
-};
-
-type QuestionStats = {
-  question: Question,
-  n: number
-};
-
-export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
-
-export type ExamGeneratorOptions = {
+export type ExamPreviewOptions = {
   frontend_js_path: string,
   frontend_media_dir: string,
-  uuid_strategy: UUID_Strategy,
-  uuidv5_namespace?: string,
-  allow_duplicates: boolean,
-  consistent_randomization?: boolean
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
-  frontend_media_dir: "media",
-  uuid_strategy: "plain",
-  allow_duplicates: false
+  frontend_media_dir: "media"
 };
 
-function verifyOptions(options: Partial<ExamGeneratorOptions>) {
-  assert(options.uuid_strategy !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
-  assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
-}
+export type ExamPreviewSpecification = Partial<ExamPreviewOptions>;
 
-export type ExamGeneratorSpecification = Partial<ExamGeneratorOptions>;
-
-export class ExamGenerator {
+export class ExamPreview {
 
   public readonly exam: Exam;
-  public readonly assignedExams: AssignedExam[] = [];
-  public readonly assignedExamsByUniqname: { [index: string]: AssignedExam | undefined; } = {};
 
   private readonly sectionsMap: { [index: string]: Section | undefined } = {};
   private readonly questionsMap: { [index: string]: Question | undefined } = {};
 
-  private readonly sectionStatsMap: { [index: string]: SectionStats; } = {};
-  private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
-
-  private options: ExamGeneratorOptions;
+  private options: ExamPreviewOptions;
 
   private onStatus?: (status: string) => void;
-  private totalExams: number;
 
-  public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}, onStatus?: (status: string) => void) {
+  public constructor(exam: Exam, options: Partial<ExamPreviewOptions> = {}, onStatus?: (status: string) => void) {
     this.exam = exam;
-    verifyOptions(options);
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
     this.onStatus = onStatus;
-    this.totalExams = 0
   }
 
-  public assignExams(students: readonly StudentInfo[]) {
-    this.totalExams += students.length;
-    students.forEach(s => this.assignExam_impl(s));
-  }
-
-  public assignExam(student: StudentInfo) {
-    this.totalExams += 1;
-    this.assignExam_impl(student);
-  }
-
-  private assignExam_impl(student: StudentInfo) {
-
-    console.log(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
-    this.onStatus && this.onStatus(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
-    let ae = this.createRandomizedExam(student);
-
-    this.assignedExams.push(ae);
-    this.assignedExamsByUniqname[student.uniqname] = ae;
-
-    assert(ae.pointsPossible === this.assignedExams[0].pointsPossible, `Error: Inconsistent total point values. ${this.assignedExams[0].student.uniqname}=${this.assignedExams[0].pointsPossible}, ${ae.student.uniqname}=${ae.pointsPossible}.`.red);
-
-    return ae;
-  }
-
-  private createRandomizedExam(
-    student: StudentInfo,
-    rand: Randomizer = createSectionChoiceRandomizer(this.makeSeed(student), this.exam))
-  {
+  private createRandomizedExam() {
     let ae = new AssignedExam(
       createStudentUuid(this.options, student, this.exam.exam_id),
       this.exam,
@@ -215,83 +158,83 @@ export class ExamGenerator {
   }
 
   private writeMedia(outDir: string) {
-
     let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
-    
     ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
-  public createManifests() {
-    return this.assignedExams.map(ex => ex.createManifest());
+  public renderPreview() {
+    return `
+      <!DOCTYPE html>
+      <html>
+      ${renderHead(
+        `<script src="${path.join(this.options.frontend_js_path, "frontend.js")}"></script>`
+      )}
+      <body>
+        ${this.renderBody()}
+      </body>
+      </html>
+    `;
   }
 
-  public renderExams(exam_renderer: ExamRenderer) {
-    return this.assignedExams.map((ex, i) => {
-      console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
-      this.onStatus && this.onStatus(`Phase 2/3: Rendering exams... (${i + 1}/${this.totalExams})`);
-      return exam_renderer.renderAll(ex, this.options.frontend_js_path);
-    });
+  protected renderBody() {
+    return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${this.exam.exam_id}">
+      <div class="row">
+        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+          <div class="text-center pb-1 border-bottom">
+            <h5>${renderPointsWorthBadge(-1, "badge-success")}</h5>
+            <span style="font-size: large; font-weight: bold; color: red;">Sample Solution</span>
+          </div>
+          ${this.renderNav()}
+        </div>
+        <div style="margin-left: 210px; width: calc(100% - 220px);">
+          ${this.renderHeader()}
+          ${this.renderSections(ae)}
+        </div>
+      </div>
+    </div>`;
   }
 
-  public writeExamSpec() {
-    // Write exam specification as JSON
-    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
-    ExamUtils.writeExamSpecificationToFileSync(
-      `data/${this.exam.exam_id}/exam-spec.json`,
-      this.exam.spec
-    );
+  protected renderNav() {
+    return `
+      <ul class="nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+        ${this.exam.sections.map(s => `<li class = "nav-item">
+          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
+        </li>`).join("")}
+      </ul>`
   }
 
-  public writeAll(exam_renderer: ExamRenderer, examDir: string = "out", manifestDir: string = "data") {
+  protected renderNavBadge(s: AssignedSection) {
+    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  }
+  
+  protected renderHeader() {
+    return `
+      <div class="examma-ray-header">
+        <div class="text-center mb-3 border-bottom">
+          <h2>${this.exam.title}</h2>
+          <h6 style="color: purple; font-weight: bold;">Exam Preview</h6>
+        </div>
+        <div>
+          ${renderInstructions(this.exam)}
+          ${renderAnnouncements(this.exam)}
+        </div>
+      </div>
+    `;
+  }
+
+  public writeAll(exam_renderer: ExamRenderer, previewDir: string = "preview") {
     this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
-    this.writeExamSpec();
-
-    examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
-    manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);
-
+    previewDir = path.join(previewDir, `${this.exam.exam_id}`);
     // Create output directories and clear previous contents
-    mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
-    mkdirSync(manifestDir, { recursive: true });
-    del.sync(`${manifestDir}/*`);
+    mkdirSync(previewDir, { recursive: true });
+    del.sync(`${previewDir}/*`);
 
-    writeFrontendJS(`${examDir}/js`, "frontend.js");
-    writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
-    this.writeMedia(`${examDir}`);
+    writeFrontendJS(`${previewDir}/js`, "frontend.js");
+    writeFrontendJS(`${previewDir}/js`, "frontend-solution.js");
+    this.writeMedia(`${previewDir}`);
 
-    this.writeStats();
-
-    let filenames : string[][] = [];
-
-    let manifests = this.createManifests();
-    let renderedExams = this.renderExams(exam_renderer);
-
-    let toWrite = manifests
-      .map((m, i) => ({
-        manifest: m,
-        renderedHtml: renderedExams[i]
-      }))
-      .sort((a, b) => a.manifest.student.uniqname.localeCompare(b.manifest.student.uniqname));
-      
-    // Write out manifests and exams for all, sorted by uniqname
-    toWrite.forEach((ex, i, arr) => {
-      let manifest = ex.manifest;
-      // Create filename, add to list
-      let filenameBase = manifest.student.uniqname + "-" + manifest.uuid;
-      filenames.push([manifest.student.uniqname, filenameBase])
-
-      console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
-      writeFileSync(`${manifestDir}/${filenameBase}.json`, JSON.stringify(manifest, null, 2), {encoding: "utf-8"});
-      console.log(`${i + 1}/${arr.length} Saving assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
-      writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
-
-    });
-
-    writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
-      fields: ["uniqname", "filenameBase"],
-      data: filenames 
-    }));
+    writeFileSync(`${previewDir}/preview.html`, this.renderPreview(), {encoding: "utf-8"});
 
   }
 
