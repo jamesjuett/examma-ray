@@ -1,41 +1,12 @@
-import { stringify_response, extract_response, fill_response, parse_submission, activate_response } from "../src/response/responses";
-import "highlight.js/styles/github.css";
+import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import storageAvailable from "storage-available";
 import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
 
-import CodeMirror from 'codemirror';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/theme/monokai.css';
-import './codemirror-modes';
-import 'codemirror/addon/comment/comment.js';
-import 'codemirror/keymap/sublime.js';
-import { decode } from "he";
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 
-import 'katex/dist/katex.min.css';
+import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
 
-import "./frontend.css";
-import { activateBank } from "../src/response/fitb-drop";
-import { activateExamComponents } from "./common";
-import { ResponseKind } from "../src/response/common";
-
-function activateResponse(this: HTMLElement) {
-  let response = $(this);
-  activate_response(<ResponseKind>response.data("response-kind"), false, response);
-}
-
-function activateExam() {
-
-  // Activate any FITB Drop banks in reference material
-  $(".examma-ray-section-reference .examma-ray-fitb-drop-bank").each(function() {
-    let bank = $(this);
-    let group_id = bank.data("examma-ray-fitb-drop-group-id")
-    activateBank(bank, group_id);
-  });
-
-  $(".examma-ray-question-response").map(activateResponse).get()
-}
 
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   let question = $(this);
@@ -217,7 +188,7 @@ function main() {
 
   activateExam();
 
-  setupCodeEditors();
+  setupCodeEditors(onUnsavedChanges);
   
   startExam();
 
@@ -428,39 +399,6 @@ function setupChangeListeners() {
   });
 
   // Note that change listeners for CodeMirror editors are set up elsewhere
-}
-
-function setupCodeEditors() {
-  // Set up code editor and CodeMirror instances
-  let codeMirrors : CodeMirror.Editor[] = [];
-  $(".examma-ray-code-editor").each(function() {
-
-    let cmElem = $(this).find(".examma-ray-codemirror");
-    let starterCode = decode(cmElem.html());
-    let mime_type = cmElem.data("codemirror-mime-type");
-    cmElem.html("");
-    let cm = CodeMirror(cmElem[0], {
-      mode: mime_type,
-      theme: "default",
-      lineNumbers: false,
-      tabSize: 2,
-      keyMap: "sublime",
-      extraKeys: {
-          "Ctrl-/" : (editor) => editor.execCommand('toggleComment')
-      },
-      value: starterCode
-    });
-    codeMirrors.push(cm);
-    cm.on("change", onUnsavedChanges);
-
-    cmElem.data("examma-ray-codemirror", cm);
-  });
-
-  $(".examma-ray-theme-button").on("click", function() {
-    $(".examma-ray-theme-button").removeClass("active");
-    $(`.examma-ray-theme-button[data-codemirror-theme="${$(this).data("codemirror-theme")}"]`).addClass("active");
-    codeMirrors.forEach(cm => cm.setOption("theme", $(this).data("codemirror-theme")));
-  })
 }
 
 function startExam() {

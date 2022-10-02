@@ -295,6 +295,7 @@ export type QuestionChooserSpecification = ExamComponentChooserSpecification<"qu
 export type SkinChooserSpecification = ExamComponentChooserSpecification<"skin">;
 
 interface ExamComponentChooser<CK extends ChooserKind> {
+  readonly spec: ExamComponentChooserSpecification<CK>;
   readonly component_kind: "chooser";
   readonly chooser_kind: CK;
   all_choices: readonly ChoiceKind[CK][];
@@ -315,6 +316,7 @@ export type SkinChooser = ExamComponentChooser<"skin">;
 
 export function realizeChooser<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) : ExamComponentChooser<CK> {
   return {
+    spec: spec,
     component_kind: "chooser",
     chooser_kind: spec.chooser_kind,
     all_choices: chooseAll(spec),
@@ -360,6 +362,33 @@ function createGetByIdFunction<CK extends ChooserKind>(spec: ExamComponentChoose
 
 
 
+
+
+export function realizeSection(s: SectionSpecification | Section) : Section;
+export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) : Section | SectionChooser;
+export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) {
+  return s.component_kind === "chooser_specification" ? realizeChooser(s) :
+    s.component_kind === "chooser" ? s :
+    s.component_kind === "component" ? s :
+    Section.create(s);
+}
+
+export function realizeSections(sections: readonly (SectionSpecification | Section)[]) : readonly Section[];
+export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) : readonly (Section | SectionChooser)[];
+export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) {
+  return <readonly Section[]>sections.map(realizeSection);
+}
+
+export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
+}
+
+export function chooseAllSections(chooser: Section | SectionChooser) {
+  return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
+}
+
+
+
 export function realizeQuestion(q: QuestionSpecification | Question) : Question;
 export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser) : Question | QuestionChooser;
 export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser) {
@@ -383,13 +412,35 @@ export function chooseAllQuestions(chooser: Question | QuestionChooser) {
   return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
-// export function BY_ID(id: string, questionBank: QuestionBank) {
-//   return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-//     let q = questionBank.getQuestionById(id);
-//     assert(q, `No question with ID: ${id}.`);
-//     return [q];
-//   }
-// }
+
+
+export function chooseSkins(chooser: ExamComponentSkin | SkinChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
+  return chooser.component_kind === "chooser" ? chooser.choose(exam, student, rand) : [chooser];
+}
+
+export function chooseAllSkins(chooser: ExamComponentSkin | SkinChooser) {
+  return chooser.component_kind === "chooser" ? chooser.all_choices : [chooser];
+}
+
+/**
+ * 
+ * @param n 
+ * @param sections 
+ * @returns 
+ */
+export function RANDOM_SECTION(n: number, sections: readonly SectionSpecification[]): SectionChooserSpecification {
+  return {
+    component_kind: "chooser_specification",
+    chooser_kind: "section",
+    choices: sections,
+    strategy: {
+      kind: "random_n",
+      n: n
+    }
+  };
+}
+
+
 
 /**
  * This factory function returns a [[QuestionChooser]] that will randomly select a set
@@ -400,7 +451,7 @@ export function chooseAllQuestions(chooser: Question | QuestionChooser) {
  * @param questionBank The bank to choose questions from
  * @returns 
  */
-export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
+ export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
   return {
     component_kind: "chooser_specification",
@@ -448,53 +499,6 @@ export function RANDOM_QUESTION_SEQUENCE(n: number, questions: readonly Question
     component_kind: "chooser_specification",
     chooser_kind: "question",
     choices: qs,
-    strategy: {
-      kind: "random_n",
-      n: n
-    }
-  };
-}
-
-
-
-
-
-
-
-export function realizeSection(s: SectionSpecification | Section) : Section;
-export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) : Section | SectionChooser;
-export function realizeSection(s: SectionSpecification | Section | SectionChooserSpecification | SectionChooser) {
-  return s.component_kind === "chooser_specification" ? realizeChooser(s) :
-    s.component_kind === "chooser" ? s :
-    s.component_kind === "component" ? s :
-    Section.create(s);
-}
-
-export function realizeSections(sections: readonly (SectionSpecification | Section)[]) : readonly Section[];
-export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) : readonly (Section | SectionChooser)[];
-export function realizeSections(sections: readonly (SectionSpecification | Section | SectionChooserSpecification | SectionChooser)[]) {
-  return <readonly Section[]>sections.map(realizeSection);
-}
-
-export function chooseSections(chooser: Section | SectionChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return chooser.component_kind === "component" ? [chooser] : chooser.choose(exam, student, rand);
-}
-
-export function chooseAllSections(chooser: Section | SectionChooser) {
-  return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
-}
-
-/**
- * 
- * @param n 
- * @param sections 
- * @returns 
- */
-export function RANDOM_SECTION(n: number, sections: readonly SectionSpecification[]): SectionChooserSpecification {
-  return {
-    component_kind: "chooser_specification",
-    chooser_kind: "section",
-    choices: sections,
     strategy: {
       kind: "random_n",
       n: n

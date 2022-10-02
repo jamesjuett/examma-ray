@@ -2,6 +2,7 @@
   "include": [
     "src/core.ts",
     "src/ExamGenerator.ts",
+    "src/ExamPreview.ts",
     "src/ExamGrader.ts",
     "src/ExamUtils.ts",
     "src/response.ts",

@@ -5,6 +5,7 @@ module.exports = {
   mode: "production",
   entry: {
     'frontend': './frontend/frontend',
+    'frontend-preview': './frontend/frontend-preview',
     'frontend-solution': './frontend/frontend-solution',
     'frontend-graded': './frontend/frontend-graded',
     'grader-page-fitb': './frontend/grader-page-fitb',
