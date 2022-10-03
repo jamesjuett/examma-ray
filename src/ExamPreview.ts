@@ -83,11 +83,17 @@ export class ExamPreview {
   protected renderNav() {
     return `<ul class="nav show-small-scrollbar" style="display: block; flex-grow: 1; font-weight: 500; overflow-y: scroll">
       ${this.exam.sections.map((s, i) => 
-        s.component_kind === "component" ? this.renderSectionNav(s, i+1, true) :
-        s.component_kind === "chooser" ? this.renderSectionChooserNav(s, i+1, true) :
-        assertNever(s)
+        this.renderSectionOrChooserNav(s, i+1, true)
       ).join("")}
     </ul>`;
+  }
+
+  protected renderSectionOrChooserNav(s: Section | SectionChooser, section_index: number, show_index: boolean) : string {
+    return (
+      s.component_kind === "component" ? this.renderSectionNav(s, section_index, show_index) :
+      s.component_kind === "chooser" ? this.renderSectionChooserNav(s, section_index, show_index) :
+      assertNever(s)
+    );
   }
 
   protected renderSectionNav(s: Section, section_index: number, show_index: boolean) {
@@ -97,9 +103,7 @@ export class ExamPreview {
       </a>
       <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
         ${s.questions.map((q, i) => 
-          q.component_kind === "component" ? this.renderQuestionNav(q, section_index, i+1, true) :
-          q.component_kind === "chooser" ? this.renderQuestionChooserNav(q, section_index, i+1, true) :
-          assertNever(q)
+          this.renderQuestionOrChooserNav(q, section_index, i+1, true)
         ).join("")}
       </ul>
     </li>`;
@@ -109,11 +113,19 @@ export class ExamPreview {
     return `<li class = "nav-item">
       ${this.renderChooserHeader(s, `${show_index ? section_index : ""}` )}
       <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
-        ${s.all_choices.map(
-          (s, i) => this.renderSectionNav(realizeSection(s), section_index, false)
+        ${s.spec.choices.map(
+          (s, i) => this.renderSectionOrChooserNav(realizeSection(s), section_index, false)
         ).join("")}
       </ul>
     </li>`;
+  }
+
+  protected renderQuestionOrChooserNav(q: Question | QuestionChooser, section_index: number, question_index: number, show_index: boolean) : string {
+    return (
+      q.component_kind === "component" ? this.renderQuestionNav(q, section_index, question_index, show_index) :
+      q.component_kind === "chooser" ? this.renderQuestionChooserNav(q, section_index, question_index, show_index) :
+      assertNever(q)
+    );
   }
 
   protected renderQuestionNav(q: Question, section_index: number, question_index: number, show_index: boolean) {
@@ -128,8 +140,8 @@ export class ExamPreview {
     return `<li class = "nav-item">
       ${this.renderChooserHeader(q, `${show_index ? section_index+"."+question_index : ""}`)}
       <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
-        ${q.all_choices.map(
-          (s, i) => this.renderQuestionNav(realizeQuestion(s), section_index, question_index, false)
+        ${q.spec.choices.map(
+          (s, i) => this.renderQuestionOrChooserNav(realizeQuestion(s), section_index, question_index, false)
         ).join("")}
       </ul>
     </li>`;
@@ -138,7 +150,7 @@ export class ExamPreview {
   protected renderChooserHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: string) {
     const strategy = chooser.spec.strategy;
     return `<div>${display_index} ${(
-      strategy.kind === "group" ? '<i class="bi bi-collection"></i> grouped' :
+      strategy.kind === "group" ? '<i class="bi bi-collection"></i> group' :
       strategy.kind === "random_1" ? '<i class="bi bi-dice-6"></i> choose 1' :
       strategy.kind === "random_n" ? `<i class="bi bi-dice-6"></i> choose ${strategy.n}` :
       strategy.kind === "shuffle" ? '<i class="bi bi-shuffle"></i> shuffle' :
@@ -273,19 +285,9 @@ export class ExamPreview {
   }
 
   protected renderQuestionChooser(chooser: QuestionChooser, section_index: number, question_index: number, section_skin: ExamComponentSkin) {
-
     return chooser.all_choices.map(
       (q, i) => this.renderQuestion(realizeQuestion(q), section_index, question_index, section_skin)
     ).join("<br />");
-
-    // return `<li class = "nav-item">
-    //   ${this.renderChooserHeader(q, `${show_index ? section_index+"."+question_index : ""}`)}
-    //   <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
-    //     ${q.all_choices.map(
-    //       (s, i) => this.renderQuestion(realizeQuestion(s), section_index, question_index, false)
-    //     ).join("")}
-    //   </ul>
-    // </li>`;
   }
 
   public writeAll(previewDir: string = "preview") {

@@ -309,14 +309,23 @@ class ExamComponentChooser<CK extends ChooserKind> {
   }
 
   public choose(exam: Exam, student: StudentInfo, rand: Randomizer) {
-    return (
-      this.spec.strategy.kind === "group" ? this.spec.choices :
-      this.spec.strategy.kind === "random_1" ? [rand.choose_one(this.spec.choices)] :
-      this.spec.strategy.kind === "random_n" ? rand.chooseN(this.spec.choices, this.spec.strategy.n) :
-      this.spec.strategy.kind === "shuffle" ? rand.shuffle(this.spec.choices) :
-      assertNever(this.spec.strategy)
-    );
+    return choose_impl(this.spec, exam, student, rand);
   }
+}
+
+function choose_impl<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>, exam: Exam, student: StudentInfo, rand: Randomizer) : readonly ChoiceKind[CK][] {
+  const strategy = spec.strategy;
+  const choices = spec.choices;
+  return (
+    strategy.kind === "group" ? choices :
+    strategy.kind === "random_1" ? [rand.choose_one(choices)] :
+    strategy.kind === "random_n" ? rand.chooseN(choices, strategy.n) :
+    strategy.kind === "shuffle" ? rand.shuffle(choices) :
+    assertNever(strategy)
+  ).flatMap(c =>
+    Array.isArray(c) ? c : 
+    c.component_kind === "chooser_specification" ? choose_impl(c, exam, student, rand) : [c]
+  );
 }
 
 /**
@@ -418,7 +427,7 @@ export function uniqueSkins(skins: ExamComponentSkin[]) {
  * @param sections 
  * @returns 
  */
-export function RANDOM_SECTION(n: number, sections: readonly SectionSpecification[]): SectionChooserSpecification {
+export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | SectionChooserSpecification)[]): SectionChooserSpecification {
   return {
     component_kind: "chooser_specification",
     chooser_kind: "section",
@@ -462,7 +471,7 @@ export function RANDOM_SECTION(n: number, sections: readonly SectionSpecificatio
  * @param questions 
  * @returns 
  */
-export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
+export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (QuestionSpecification | QuestionChooserSpecification)[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
   return {
     component_kind: "chooser_specification",
