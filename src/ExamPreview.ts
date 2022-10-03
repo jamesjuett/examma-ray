@@ -97,11 +97,12 @@ export class ExamPreview {
   }
 
   protected renderSectionNav(s: Section, section_index: number, show_index: boolean) {
-    return `<li class = "nav-item">
-      <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.section_id}">
-        ${show_index ? section_index : ""} ${s.title}
+    return `<li class = "nav-item text-truncate">
+      ${show_index ? section_index : ""}
+      <a style="padding: 0.1rem" href="#section-${s.section_id}">
+        ${s.title}
       </a>
-      <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
+      <ul class="nav er-preview-nav-chooser-group">
         ${s.questions.map((q, i) => 
           this.renderQuestionOrChooserNav(q, section_index, i+1, true)
         ).join("")}
@@ -109,12 +110,15 @@ export class ExamPreview {
     </li>`;
   }
 
-  protected renderSectionChooserNav(s: SectionChooser, section_index: number, show_index: boolean) {
-    return `<li class = "nav-item">
-      ${this.renderChooserHeader(s, `${show_index ? section_index : ""}` )}
-      <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
-        ${s.spec.choices.map(
-          (s, i) => this.renderSectionOrChooserNav(realizeSection(s), section_index, false)
+  protected renderSectionChooserNav(section: SectionChooser, section_index: number, show_index: boolean) {
+    return `<li class = "nav-item text-truncate">
+    ${this.renderChooserHeader(section, (offset) => `${section_index+offset}`)}
+      <ul class="nav er-preview-nav-chooser-group">
+        ${section.spec.choices.map(
+          (s, i) => this.renderSectionOrChooserNav(
+            realizeSection(s), section_index,
+            section.spec.strategy.kind === "group" || section.spec.strategy.kind === "shuffle"
+          )
         ).join("")}
       </ul>
     </li>`;
@@ -129,31 +133,35 @@ export class ExamPreview {
   }
 
   protected renderQuestionNav(q: Question, section_index: number, question_index: number, show_index: boolean) {
-    return `<li class = "nav-item">
-      <a class="nav-link text-truncate" style="padding: 0.1rem" href="#question-anchor-${q.question_id}">
-      ${show_index ? section_index+"."+question_index : ""} ${q.question_id}
+    return `<li class = "nav-item text-truncate">
+      ${show_index ? section_index+"."+question_index : ""} 
+      <a style="padding: 0.1rem" href="#question-anchor-${q.question_id}">
+        ${q.question_id}
       </a>
     </li>`;
   }
 
-  protected renderQuestionChooserNav(q: QuestionChooser, section_index: number, question_index: number, show_index: boolean) {
-    return `<li class = "nav-item">
-      ${this.renderChooserHeader(q, `${show_index ? section_index+"."+question_index : ""}`)}
-      <ul class="ml-1 pl-1 border-left border-primary nav" style="display: block; flex-grow: 1;">
-        ${q.spec.choices.map(
-          (s, i) => this.renderQuestionOrChooserNav(realizeQuestion(s), section_index, question_index, false)
+  protected renderQuestionChooserNav(question: QuestionChooser, section_index: number, question_index: number, show_index: boolean) {
+    return `<li class = "nav-item text-truncate">
+      ${this.renderChooserHeader(question, (offset) => `${section_index}.${question_index+offset}`)}
+      <ul class="nav er-preview-nav-chooser-group">
+        ${question.spec.choices.map(
+          (q, i) => this.renderQuestionOrChooserNav(
+            realizeQuestion(q), section_index, question_index,
+            question.spec.strategy.kind === "group" || question.spec.strategy.kind === "shuffle"
+          )
         ).join("")}
       </ul>
     </li>`;
   }
 
-  protected renderChooserHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: string) {
+  protected renderChooserHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: (offset: number) => string) {
     const strategy = chooser.spec.strategy;
-    return `<div>${display_index} ${(
-      strategy.kind === "group" ? '<i class="bi bi-collection"></i> Group' :
-      strategy.kind === "random_1" ? '<i class="bi bi-dice-6"></i> Random 1' :
-      strategy.kind === "random_n" ? `<i class="bi bi-dice-6"></i> Random ${strategy.n}` :
-      strategy.kind === "shuffle" ? '<i class="bi bi-shuffle"></i> shuffle' :
+    return `<div>${(
+      strategy.kind === "group" ? `<i class="bi bi-collection"></i> Group` :
+      strategy.kind === "random_1" ? `${display_index(0)} <i class="bi bi-dice-6"></i> Random 1` :
+      strategy.kind === "random_n" ? `${display_index(0)}-${display_index(strategy.n)} {<i class="bi bi-dice-6"></i> Random ${strategy.n}` :
+      strategy.kind === "shuffle" ? `<i class="bi bi-shuffle"></i> shuffle` :
       assertNever(strategy)
     )}</div>`;
   }
@@ -265,7 +273,7 @@ export class ExamPreview {
       </div>
     `;
 
-    // return `<li class = "nav-item">
+    // return `<li class = "nav-item text-truncate">
     //   <a class="nav-link text-truncate" style="padding: 0.1rem" href="#question-${q.question_id}">
     //   ${show_index ? section_index+"."+question_index : ""} ${q.question_id}
     //   </a>

@@ -669,3 +669,14 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   background-color: rgba(0,0,0,.5);
   -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
 }
+
+
+.er-preview-nav-chooser-group {
+  display: block;
+  flex-grow: 1;
+  margin-left: 0.25rem;
+  padding-left: 0.25rem;
+  border-left: solid 1px;
+  border-color: var(--primary);
+  border-radius: 0 0 0 7px;
+}

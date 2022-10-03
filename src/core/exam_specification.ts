@@ -432,10 +432,7 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
     component_kind: "chooser_specification",
     chooser_kind: "section",
     choices: sections,
-    strategy: {
-      kind: "random_n",
-      n: n
-    }
+    strategy: n === 1 ? { kind: "random_1" } : { kind: "random_n", n: n }
   };
 }
 
@@ -456,10 +453,7 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
     component_kind: "chooser_specification",
     chooser_kind: "question",
     choices: qs.filter(q => q.tags?.indexOf(tag) !== -1),
-    strategy: {
-      kind: "random_n",
-      n: n
-    }
+    strategy: n === 1 ? { kind: "random_1" } : { kind: "random_n", n: n }
   };
 }
 
@@ -477,10 +471,7 @@ export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (Q
     component_kind: "chooser_specification",
     chooser_kind: "question",
     choices: qs,
-    strategy: {
-      kind: "random_n",
-      n: n
-    }
+    strategy: n === 1 ? { kind: "random_1" } : { kind: "random_n", n: n }
   };
 }
 
