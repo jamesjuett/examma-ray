@@ -265,6 +265,8 @@ export function isValidID(id: string) {
 
 
 type ChooserStrategySpecification = {
+  kind: "group";
+} | {
   kind: "random_1";
 } | {
   kind: "random_n";
@@ -281,12 +283,12 @@ type ChoiceKind = {
   "skin": ExamComponentSkin
 };
 
-interface ExamComponentChooserSpecification<CK extends ChooserKind> {
+type ExamComponentChooserSpecification<CK extends ChooserKind> = {
   readonly component_kind: "chooser_specification";
   readonly chooser_kind: CK;
-  readonly choices: readonly (ChoiceKind[CK] | ChoiceKind[CK][] | ExamComponentChooserSpecification<CK>)[];
   readonly strategy: ChooserStrategySpecification;
-}
+  readonly choices: readonly (ChoiceKind[CK] | ExamComponentChooserSpecification<CK>)[];
+};
 
 export type SectionChooserSpecification = ExamComponentChooserSpecification<"section">;
 
@@ -294,13 +296,27 @@ export type QuestionChooserSpecification = ExamComponentChooserSpecification<"qu
 
 export type SkinChooserSpecification = ExamComponentChooserSpecification<"skin">;
 
-interface ExamComponentChooser<CK extends ChooserKind> {
+class ExamComponentChooser<CK extends ChooserKind> {
   readonly spec: ExamComponentChooserSpecification<CK>;
-  readonly component_kind: "chooser";
+  readonly component_kind = "chooser";
   readonly chooser_kind: CK;
-  all_choices: readonly ChoiceKind[CK][];
-  choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly ChoiceKind[CK][];
-  getById(id: string): ChoiceKind[CK] | undefined;
+  readonly all_choices: readonly ChoiceKind[CK][];
+
+  public constructor(spec: ExamComponentChooserSpecification<CK>) {
+    this.spec = spec;
+    this.chooser_kind = spec.chooser_kind;
+    this.all_choices = chooseAll(spec);
+  }
+
+  public choose(exam: Exam, student: StudentInfo, rand: Randomizer) {
+    return (
+      this.spec.strategy.kind === "group" ? this.spec.choices :
+      this.spec.strategy.kind === "random_1" ? [rand.choose_one(this.spec.choices)] :
+      this.spec.strategy.kind === "random_n" ? rand.chooseN(this.spec.choices, this.spec.strategy.n) :
+      this.spec.strategy.kind === "shuffle" ? rand.shuffle(this.spec.choices) :
+      assertNever(this.spec.strategy)
+    );
+  }
 }
 
 /**
@@ -314,50 +330,12 @@ export type QuestionChooser = ExamComponentChooser<"question">;
 
 export type SkinChooser = ExamComponentChooser<"skin">;
 
-export function realizeChooser<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) : ExamComponentChooser<CK> {
-  return {
-    spec: spec,
-    component_kind: "chooser",
-    chooser_kind: spec.chooser_kind,
-    all_choices: chooseAll(spec),
-    choose: createChooseFunction(spec),
-    getById: createGetByIdFunction(spec)
-  }
+export function realizeChooser<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) {
+  return new ExamComponentChooser<CK>(spec);
 }
 
 function chooseAll<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) : readonly ChoiceKind[CK][]{
-  return spec.choices.flatMap(c =>
-    Array.isArray(c) ? c : 
-    c.component_kind === "chooser_specification" ? chooseAll(c) : c
-  );
-}
-
-function localChoose<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>, exam: Exam, student: StudentInfo, rand: Randomizer) {
-  return (
-    spec.strategy.kind === "random_1" ? [rand.choose_one(spec.choices)] :
-    spec.strategy.kind === "random_n" ? rand.chooseN(spec.choices, spec.strategy.n) :
-    spec.strategy.kind === "shuffle" ? rand.shuffle(spec.choices) :
-    assertNever(spec.strategy)
-  );
-}
-
-function createChooseFunction<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>)
-  : (exam: Exam, student: StudentInfo, rand: Randomizer) => readonly ChoiceKind[CK][] {
-  return (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-    return localChoose(spec, exam, student, rand).flatMap(c =>
-      Array.isArray(c) ? c : 
-      c.component_kind === "chooser_specification" ? createChooseFunction(c)(exam, student, rand) : c
-    );
-  };
-};
-
-function createGetByIdFunction<CK extends ChooserKind>(spec: ExamComponentChooserSpecification<CK>) {
-  return (
-    spec.chooser_kind === "section" ? (id: string) => (spec.choices as readonly SectionSpecification[]).find(c => c.section_id === id) :
-    spec.chooser_kind === "question" ? (id: string) => (spec.choices as readonly QuestionSpecification[]).find(c => c.question_id === id) :
-    spec.chooser_kind === "skin" ? (id: string) => (spec.choices as readonly ExamComponentSkin[]).find(c => c.skin_id === id) :
-    assertNever(spec.chooser_kind)
-  ) as (id: string) => ChoiceKind[CK] | undefined;
+  return spec.choices.flatMap(c => c.component_kind === "chooser_specification" ? chooseAll(c) : c);
 }
 
 
@@ -387,6 +365,10 @@ export function chooseAllSections(chooser: Section | SectionChooser) {
   return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
+export function uniqueSections(sections: Section[]) {
+  return Array.from(new Map<string, Section>(sections.map(s => [s.section_id, s])).values());
+}
+
 
 
 export function realizeQuestion(q: QuestionSpecification | Question) : Question;
@@ -412,6 +394,10 @@ export function chooseAllQuestions(chooser: Question | QuestionChooser) {
   return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
+export function uniqueQuestions(questions: Question[]) {
+  return Array.from(new Map<string, Question>(questions.map(q => [q.question_id, q])).values());
+}
+
 
 
 export function chooseSkins(chooser: ExamComponentSkin | SkinChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -420,6 +406,10 @@ export function chooseSkins(chooser: ExamComponentSkin | SkinChooser, exam: Exam
 
 export function chooseAllSkins(chooser: ExamComponentSkin | SkinChooser) {
   return chooser.component_kind === "chooser" ? chooser.all_choices : [chooser];
+}
+
+export function uniqueSkins(skins: ExamComponentSkin[]) {
+  return Array.from(new Map<string, ExamComponentSkin>(skins.map(s => [s.skin_id, s])).values());
 }
 
 /**
@@ -485,27 +475,6 @@ export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly Qu
   };
 }
 
-/**
- * This factory function returns a [[QuestionChooser]] that will randomly select a set
- * of n sequences of questions from the given set of question sequences. If there are not enough
- * to choose n of them, the chooser will throw an exception.
- * @param n 
- * @param questions 
- * @returns 
- */
-export function RANDOM_QUESTION_SEQUENCE(n: number, questions: readonly QuestionSpecification[][]): QuestionChooserSpecification {
-  let qs = questions instanceof QuestionBank ? questions.questions : questions;
-  return {
-    component_kind: "chooser_specification",
-    chooser_kind: "question",
-    choices: qs,
-    strategy: {
-      kind: "random_n",
-      n: n
-    }
-  };
-}
-
 export function CUSTOMIZE(spec: QuestionSpecification, customizations: Partial<Omit<QuestionSpecification, "response">>) : QuestionSpecification;
 export function CUSTOMIZE(spec: SectionSpecification, customizations: Partial<Omit<SectionSpecification, "response">>) : SectionSpecification;
 export function CUSTOMIZE(spec: ExamSpecification, customizations: Partial<Omit<ExamSpecification, "response">>) : ExamSpecification;
@@ -514,6 +483,62 @@ export function CUSTOMIZE<T extends keyof SectionSpecification>(spec: Omit<Secti
 export function CUSTOMIZE<T extends keyof ExamSpecification>(spec: Omit<ExamSpecification, T>, customizations: Partial<Omit<ExamSpecification, "response">> & Pick<ExamSpecification, T>): ExamSpecification;
 export function CUSTOMIZE(spec: any, customizations: any) {
   return Object.assign({}, spec, customizations);
+}
+
+
+
+/**
+ * This factory function returns a chooser that simply selects all its choices. The
+ * intended use is to ensure they are grouped together when nested within other
+ * randomization constructs.
+ * @param questions 
+ */
+export function GROUP(questions: QuestionSpecification | QuestionChooserSpecification | readonly(QuestionSpecification | QuestionChooserSpecification)[]) : QuestionChooserSpecification;
+/**
+ * This factory function returns a chooser that simply selects all its choices. The
+ * intended use is to ensure they are grouped together when nested within other
+ * randomization constructs.
+ * @param sections 
+ */
+export function GROUP(sections: SectionSpecification | SectionChooserSpecification | readonly(SectionSpecification | SectionChooserSpecification)[]) : SectionChooserSpecification;
+export function GROUP(sectionsOrQuestions: QuestionSpecification | QuestionChooserSpecification | SectionSpecification | SectionChooserSpecification | readonly(QuestionSpecification | QuestionChooserSpecification)[] | readonly(SectionSpecification | SectionChooserSpecification)[]) : QuestionChooserSpecification | SectionChooserSpecification {
+  if(!Array.isArray(sectionsOrQuestions)) {
+    // If not an array, it's a single specification or chooser.
+    // Pack it in an array and cast to make the type system happy.
+    return GROUP(<any[]>[sectionsOrQuestions]);
+  }
+  
+  assert(sectionsOrQuestions.length > 0);
+  let first = sectionsOrQuestions[0];
+  if (first.component_kind === "specification" && (<QuestionSpecification & SectionSpecification>first).question_id
+    || first.component_kind === "chooser" && first.chooser_kind === "question") {
+      return GROUP_QUESTIONS(<readonly(QuestionSpecification | QuestionChooserSpecification)[]>sectionsOrQuestions);
+  }
+  else {
+    return GROUP_SECTIONS(<readonly(SectionSpecification | SectionChooserSpecification)[]>sectionsOrQuestions);
+  }
+}
+
+function GROUP_QUESTIONS(questions: readonly(QuestionSpecification | QuestionChooserSpecification)[]) : QuestionChooserSpecification {
+  return {
+    component_kind: "chooser_specification",
+    chooser_kind: "question",
+    choices: questions,
+    strategy: {
+      kind: "group"
+    }
+  }
+}
+
+function GROUP_SECTIONS(sections: readonly(SectionSpecification | SectionChooserSpecification)[]) : SectionChooserSpecification {
+  return {
+    component_kind: "chooser_specification",
+    chooser_kind: "section",
+    choices: sections,
+    strategy: {
+      kind: "group"
+    }
+  }
 }
 
 

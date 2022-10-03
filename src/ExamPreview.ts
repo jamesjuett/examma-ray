@@ -138,6 +138,7 @@ export class ExamPreview {
   protected renderChooserHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: string) {
     const strategy = chooser.spec.strategy;
     return `<div>${display_index} ${(
+      strategy.kind === "group" ? '<i class="bi bi-collection"></i> grouped' :
       strategy.kind === "random_1" ? '<i class="bi bi-dice-6"></i> choose 1' :
       strategy.kind === "random_n" ? `<i class="bi bi-dice-6"></i> choose ${strategy.n}` :
       strategy.kind === "shuffle" ? '<i class="bi bi-shuffle"></i> shuffle' :
@@ -260,7 +261,11 @@ export class ExamPreview {
   }
   
   protected renderQuestionHeader(question: Question, section_index: number, question_index: number) {
-    return `<b>${section_index}.${question_index}</b> ${renderPointsWorthBadge(-1)}`;
+    return `
+      <b>${section_index}.${question_index}</b>
+      ${renderPointsWorthBadge(-1)}
+      <span class="badge badge-info" style="font-family: monospace;">${question.question_id}</span>
+    `;
   }
   
   protected renderQuestionContent(question: Question, q_id: string, skin: ExamComponentSkin) {
@@ -292,6 +297,7 @@ export class ExamPreview {
     del.sync(`${previewDir}/*`);
 
     writeFrontendJS(`${previewDir}/js`, "frontend.js");
+    writeFrontendJS(`${previewDir}/js`, "frontend-preview.js");
     writeFrontendJS(`${previewDir}/js`, "frontend-solution.js");
     this.writeMedia(`${previewDir}`);
 

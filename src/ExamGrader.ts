@@ -142,8 +142,6 @@ export class ExamGrader {
   public readonly submittedExams: AssignedExam[] = [];
   public readonly submittedExamsByUniqname: { [index: string]: AssignedExam | undefined; } = {};
 
-  public readonly allSections: readonly Section[];
-  public readonly allQuestions: readonly Question[];
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
 
   public readonly stats: GradedStats;
@@ -171,12 +169,6 @@ export class ExamGrader {
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
-
-    this.allSections = exam.sections.flatMap(chooser => realizeSections(chooseAllSections(chooser)));
-    this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
-
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
-    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
     this.stats = new GradedStats();
   }
@@ -239,7 +231,7 @@ export class ExamGrader {
   public gradeAll() {
 
     // Prepare all graders (e.g. load manual grading data)
-    this.allQuestions.forEach(question => {
+    this.exam.allQuestions.forEach(question => {
       let grader = this.getGrader(question);
       if (grader) {
         let grading_data = this.prepareGradingData(question, grader);
@@ -314,7 +306,7 @@ export class ExamGrader {
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
-    this.allQuestions.forEach(q => this.renderStatsToFile(q));
+    this.exam.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
   public writeReports() {
@@ -397,7 +389,7 @@ export class ExamGrader {
         ...(this.curve ? ["curved_total"] : []),
         "individual_exam_mean",
         "individual_exam_stddev",
-        ...this.allQuestions.map(q => q.question_id)],
+        ...this.exam.allQuestions.map(q => q.question_id)],
       data: data
     }));
   }
@@ -459,7 +451,7 @@ export class ExamGrader {
       return `<div>${renderPointsProgressBar(score, ex.pointsPossible)} <a href="exams/${this.createGradedFilenameBase(ex)}.html">${ex.student.uniqname}</a></div>`
     }).join("");
 
-    let questions_overview = this.allQuestions.map(question => {
+    let questions_overview = this.exam.allQuestions.map(question => {
 
       let grader = this.getGrader(question);
       let assignedQuestions = this.getAllAssignedQuestionsById(question.question_id);
