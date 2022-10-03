@@ -150,9 +150,9 @@ export class ExamPreview {
   protected renderChooserHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: string) {
     const strategy = chooser.spec.strategy;
     return `<div>${display_index} ${(
-      strategy.kind === "group" ? '<i class="bi bi-collection"></i> group' :
-      strategy.kind === "random_1" ? '<i class="bi bi-dice-6"></i> choose 1' :
-      strategy.kind === "random_n" ? `<i class="bi bi-dice-6"></i> choose ${strategy.n}` :
+      strategy.kind === "group" ? '<i class="bi bi-collection"></i> Group' :
+      strategy.kind === "random_1" ? '<i class="bi bi-dice-6"></i> Random 1' :
+      strategy.kind === "random_n" ? `<i class="bi bi-dice-6"></i> Random ${strategy.n}` :
       strategy.kind === "shuffle" ? '<i class="bi bi-shuffle"></i> shuffle' :
       assertNever(strategy)
     )}</div>`;
