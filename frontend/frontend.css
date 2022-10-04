@@ -578,7 +578,7 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-.nav .badge {
+.nav.er-exam-nav .badge {
   width: 5em;
 }
 
@@ -674,6 +674,7 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 .er-preview-nav-group {
   display: block;
   flex-grow: 1;
+  margin-top: 0.25rem;
   margin-left: 0.15rem;
 }
 
@@ -699,4 +700,9 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   margin-bottom: 0.25rem;
   border-bottom: solid 1px #edce73;
   border-left: solid 2px #ecbd30;
+}
+
+.er-preview-nav-skin-icon {
+  border-right: solid 1px #282828;
+  margin-right: 4px;
 }

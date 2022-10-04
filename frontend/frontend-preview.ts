@@ -1,7 +1,6 @@
 import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
 
 function main() {
-  console.log("Attempting to start exam...");
 
   activateExamComponents();
 
@@ -9,7 +8,7 @@ function main() {
 
   setupCodeEditors(() => {});
 
-  console.log("Exam Started!");
+  $('[data-toggle="tooltip"]').tooltip();
 
 }
 

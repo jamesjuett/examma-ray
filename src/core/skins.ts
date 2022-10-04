@@ -16,6 +16,10 @@ export const DEFAULT_SKIN: ExamComponentSkin = {
   replacements: { }
 }
 
+export function isDefaultSkin(skin: ExamComponentSkin) {
+  return skin.skin_id === DEFAULT_SKIN.skin_id || skin.skin_id === DEFAULT_SKIN.skin_id + "-" + DEFAULT_SKIN.skin_id;
+}
+
 export function createCompositeSkin(sectionSkin: ExamComponentSkin, questionSkin: ExamComponentSkin) : ExamComponentSkin{
   return {
     skin_id: sectionSkin.skin_id + "-" + questionSkin.skin_id,

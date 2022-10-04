@@ -59,7 +59,7 @@ export abstract class ExamRenderer {
 
   public renderNav(ae: AssignedExam) {
     return `
-      <ul class="nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+      <ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<li class = "nav-item">
           <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
         </li>`).join("")}
@@ -352,7 +352,7 @@ export class OriginalExamRenderer extends ExamRenderer {
   }
 
   public override renderNav(ae: AssignedExam): string {
-    return `<ul class="nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `
           <li class="nav-item">
             <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
