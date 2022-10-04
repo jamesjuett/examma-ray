@@ -97,12 +97,12 @@ export class ExamPreview {
   }
 
   protected renderSectionNav(s: Section, section_index: number, show_index: boolean) {
-    return `<li class = "nav-item text-truncate">
+    return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-section">
       ${show_index ? section_index : ""}
       <a style="padding: 0.1rem" href="#section-${s.section_id}">
         ${s.title}
       </a>
-      <ul class="nav er-preview-nav-chooser-group">
+      <ul class="nav er-preview-nav-group">
         ${s.questions.map((q, i) => 
           this.renderQuestionOrChooserNav(q, section_index, i+1, true)
         ).join("")}
@@ -111,9 +111,9 @@ export class ExamPreview {
   }
 
   protected renderSectionChooserNav(section: SectionChooser, section_index: number, show_index: boolean) {
-    return `<li class = "nav-item text-truncate">
+    return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-section-chooser">
     ${this.renderChooserHeader(section, (offset) => `${section_index+offset}`)}
-      <ul class="nav er-preview-nav-chooser-group">
+      <ul class="nav er-preview-nav-group">
         ${section.spec.choices.map(
           (s, i) => this.renderSectionOrChooserNav(
             realizeSection(s), section_index,
@@ -133,7 +133,7 @@ export class ExamPreview {
   }
 
   protected renderQuestionNav(q: Question, section_index: number, question_index: number, show_index: boolean) {
-    return `<li class = "nav-item text-truncate">
+    return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-question">
       ${show_index ? section_index+"."+question_index : ""} 
       <a style="padding: 0.1rem" href="#question-anchor-${q.question_id}">
         ${q.question_id}
@@ -142,9 +142,9 @@ export class ExamPreview {
   }
 
   protected renderQuestionChooserNav(question: QuestionChooser, section_index: number, question_index: number, show_index: boolean) {
-    return `<li class = "nav-item text-truncate">
+    return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-question-chooser">
       ${this.renderChooserHeader(question, (offset) => `${section_index}.${question_index+offset}`)}
-      <ul class="nav er-preview-nav-chooser-group">
+      <ul class="nav er-preview-nav-group">
         ${question.spec.choices.map(
           (q, i) => this.renderQuestionOrChooserNav(
             realizeQuestion(q), section_index, question_index,
@@ -272,12 +272,6 @@ export class ExamPreview {
         </div>
       </div>
     `;
-
-    // return `<li class = "nav-item text-truncate">
-    //   <a class="nav-link text-truncate" style="padding: 0.1rem" href="#question-${q.question_id}">
-    //   ${show_index ? section_index+"."+question_index : ""} ${q.question_id}
-    //   </a>
-    // </li>`;
   }
   
   protected renderQuestionHeader(question: Question, section_index: number, question_index: number) {
