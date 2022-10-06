@@ -703,6 +703,10 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 }
 
 .er-preview-nav-skin-icon {
-  border-right: solid 1px #282828;
-  margin-right: 4px;
+  /* border-right: solid 1px #282828;
+  margin-right: 4px; */
+}
+
+.er-skin-picker-link {
+  font-family: monospace;
 }

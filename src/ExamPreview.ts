@@ -176,14 +176,14 @@ export class ExamPreview {
     }
     
     return `<span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="1 skin">
-      <i class="bi bi-sunglasses"></i> 1
+      <i class="bi bi-sunglasses"></i><sub>1</sub>
     </span>`;
   }
 
   private renderSkinChooserNavIcon(chooser: SkinChooser) {
-    let n = chooser.spec.choices.length;
+    let n = chooser.all_choices.length;
     return `<span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="${n} skin${n > 1 ? "s" : ""} ">
-      <i class="bi bi-sunglasses"></i> ${n}
+      <i class="bi bi-sunglasses"></i><sub>${n}</sub>
     </span>`;
   }
 
@@ -258,18 +258,43 @@ export class ExamPreview {
     `;
   }
   
-  private renderSectionHeader(s: Section, section_index: number) {
+  private renderSectionHeader(section: Section, section_index: number) {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${section_index}: ${s.title} ${renderPointsWorthBadge(-1, "badge-light")}
+          ${section_index}: ${section.title} ${renderPointsWorthBadge(-1, "badge-light")}
         </div>
+        ${this.renderSectionHeaderSkin(section.skin)}
       </div>
     `;
   }
+  
+  private renderSectionHeaderSkin(skin: ExamComponentSkin | SkinChooser) {
+    if (skin.component_kind === "chooser") {
+      return this.renderSectionHeaderSkinPicker(skin);
+    }
+    else {
+      return this.renderSkinNavIcon(skin);
+    }
+  }
 
-  private renderSectionChooser(s: SectionChooser, section_index: number) {
-    return s.all_choices.map(
+  private renderSectionHeaderSkinPicker(chooser: SkinChooser) {
+    return `<div class="btn-group">
+      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="" data-original-title="1 skin ">
+        <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
+        </span>
+        <span style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
+      </button>
+      <div class="dropdown-menu">
+        ${chooser.all_choices.map(skin => `
+          <a class="er-skin-picker-link dropdown-item" href="#">${skin.skin_id}</a>
+        `).join("\n")}
+      </div>
+    </div>`;
+  }
+
+  private renderSectionChooser(section: SectionChooser, section_index: number) {
+    return section.all_choices.map(
       (s, i) => this.renderSection(realizeSection(s), section_index)
     ).join("<br />");
   }
