@@ -225,37 +225,40 @@ export class ExamPreview {
 
   private renderSection(section: Section, section_index: number) {
     const sectionSkins = chooseAllSkins(section.skin);
-    const skin = sectionSkins[0];
     return `
-      <div id="section-${section.section_id}" class="examma-ray-section">
-        <hr />
-        <table class="examma-ray-section-contents">
-          <tr>
-            <td class="examma-ray-questions-container">
-              ${this.renderSectionHeader(section, section_index)}
-              <div class="examma-ray-section-description">${section.renderDescription(skin)}</div>
-              ${section.questions.map((q, i) => 
-                q.component_kind === "component" ? this.renderQuestion(q, section_index, i+1, skin) :
-                q.component_kind === "chooser" ? this.renderQuestionChooser(q, section_index, i+1, skin) :
-                assertNever(q)
-              ).join("<br />")}
-            </td>
-            <td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
-              <div class="examma-ray-section-reference-container">
-                <div class="examma-ray-section-reference">
-                  <div class = "examma-ray-section-reference-width-slider-container">
-                    <div class = "examma-ray-section-reference-width-value">${section.reference_width}%</div>
-                    <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+      <div id="section-${section.section_id}">
+        ${sectionSkins.map((skin, i) =>`
+          <div data-skin-id="${skin.skin_id}" class="examma-ray-section" style="display: ${i === 0 ? "block" : "none"};">
+            <hr />
+            <table class="examma-ray-section-contents">
+              <tr>
+                <td class="examma-ray-questions-container">
+                  ${this.renderSectionHeader(section, section_index)}
+                  <div class="examma-ray-section-description">${section.renderDescription(skin)}</div>
+                  ${section.questions.map((q, i) => 
+                    q.component_kind === "component" ? this.renderQuestion(q, section_index, i+1, skin) :
+                    q.component_kind === "chooser" ? this.renderQuestionChooser(q, section_index, i+1, skin) :
+                    assertNever(q)
+                  ).join("<br />")}
+                </td>
+                <td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
+                  <div class="examma-ray-section-reference-container">
+                    <div class="examma-ray-section-reference">
+                      <div class = "examma-ray-section-reference-width-slider-container">
+                        <div class = "examma-ray-section-reference-width-value">${section.reference_width}%</div>
+                        <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+                      </div>
+                      <h6>Reference Material (Section ${section_index})</h6>
+                      ${section.renderReference(skin) ?? NO_REFERNECE_MATERIAL}
+                    </div>
                   </div>
-                  <h6>Reference Material (Section ${section_index})</h6>
-                  ${section.renderReference(skin) ?? NO_REFERNECE_MATERIAL}
-                </div>
-              </div>
-            </td>
-          </tr>
-        </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+        `).join("\n")}
       </div>
-    `;
+      `;
   }
   
   private renderSectionHeader(section: Section, section_index: number) {
@@ -264,21 +267,21 @@ export class ExamPreview {
         <div class="badge badge-primary">
           ${section_index}: ${section.title} ${renderPointsWorthBadge(-1, "badge-light")}
         </div>
-        ${this.renderSectionHeaderSkin(section.skin)}
+        ${this.renderSectionHeaderSkin(section.section_id, section.skin)}
       </div>
     `;
   }
   
-  private renderSectionHeaderSkin(skin: ExamComponentSkin | SkinChooser) {
+  private renderSectionHeaderSkin(section_id: string, skin: ExamComponentSkin | SkinChooser) {
     if (skin.component_kind === "chooser") {
-      return this.renderSectionHeaderSkinPicker(skin);
+      return this.renderSectionHeaderSkinPicker(section_id, skin);
     }
     else {
       return this.renderSkinNavIcon(skin);
     }
   }
 
-  private renderSectionHeaderSkinPicker(chooser: SkinChooser) {
+  private renderSectionHeaderSkinPicker(section_id: string, chooser: SkinChooser) {
     return `<div class="btn-group">
       <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="" data-original-title="1 skin ">
         <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
@@ -287,7 +290,7 @@ export class ExamPreview {
       </button>
       <div class="dropdown-menu">
         ${chooser.all_choices.map(skin => `
-          <a class="er-skin-picker-link dropdown-item" href="#">${skin.skin_id}</a>
+          <button class="er-section-skin-picker-link dropdown-item" data-section-id="${section_id}" data-skin-id="${skin.skin_id}">${skin.skin_id}</button>
         `).join("\n")}
       </div>
     </div>`;

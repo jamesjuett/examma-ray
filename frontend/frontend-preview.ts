@@ -1,5 +1,15 @@
 import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
 
+function setupSkinPickers() {
+  $(".er-section-skin-picker-link").on("click", function() {
+    const section_id = $(this).data("section-id");
+    const skin_id = $(this).data("skin-id");
+
+    $(`#section-${section_id} .examma-ray-section`).hide();
+    $(`#section-${section_id} .examma-ray-section[data-skin-id="${skin_id}"]`).show();
+  })
+}
+
 function main() {
 
   activateExamComponents();
@@ -7,6 +17,8 @@ function main() {
   activateExam();
 
   setupCodeEditors(() => {});
+
+  setupSkinPickers();
 
   $('[data-toggle="tooltip"]').tooltip();
 
