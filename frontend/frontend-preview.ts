@@ -7,7 +7,21 @@ function setupSkinPickers() {
 
     $(`#section-${section_id} .examma-ray-section`).hide();
     $(`#section-${section_id} .examma-ray-section[data-skin-id="${skin_id}"]`).show();
-  })
+
+    // All dropdown buttons should show the current skin ID now
+    $(`#section-${section_id} .er-current-section-skin-id`).html(skin_id);
+  });
+  
+  $(".er-question-skin-picker-link").on("click", function() {
+    const question_id = $(this).data("question-id");
+    const skin_id = $(this).data("skin-id");
+
+    $(`#question-${question_id} .examma-ray-question`).hide();
+    $(`#question-${question_id} .examma-ray-question[data-skin-id="${skin_id}"]`).show();
+
+    // All dropdown buttons should show the current skin ID now
+    $(`#question-${question_id} .er-current-question-skin-id`).html(skin_id);
+  });
 }
 
 function main() {

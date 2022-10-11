@@ -167,22 +167,22 @@ export class ExamPreview {
   }
   
   private renderSkinOrChooserNavIcon(skin: ExamComponentSkin | SkinChooser) {
-    return skin.component_kind === "chooser" ? this.renderSkinChooserNavIcon(skin) : this.renderSkinNavIcon(skin);
+    return skin.component_kind === "chooser" ? this.renderSkinChooserNavIcon(skin) : this.renderSkinIcon(skin);
   }
   
-  private renderSkinNavIcon(skin: ExamComponentSkin) {
+  private renderSkinIcon(skin: ExamComponentSkin) {
     if (isDefaultSkin(skin)) {
       return "";
     }
     
-    return `<span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="1 skin">
+    return `<span class="er-preview-skin-icon" data-toggle="tooltip" data-placement="top" title="1 skin">
       <i class="bi bi-sunglasses"></i><sub>1</sub>
     </span>`;
   }
 
   private renderSkinChooserNavIcon(chooser: SkinChooser) {
     let n = chooser.all_choices.length;
-    return `<span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="${n} skin${n > 1 ? "s" : ""} ">
+    return `<span class="er-preview-skin-icon" data-toggle="tooltip" data-placement="top" title="${n} skin${n > 1 ? "s" : ""} ">
       <i class="bi bi-sunglasses"></i><sub>${n}</sub>
     </span>`;
   }
@@ -277,16 +277,17 @@ export class ExamPreview {
       return this.renderSectionHeaderSkinPicker(section_id, skin);
     }
     else {
-      return this.renderSkinNavIcon(skin);
+      return this.renderSkinIcon(skin);
     }
   }
 
   private renderSectionHeaderSkinPicker(section_id: string, chooser: SkinChooser) {
-    return `<div class="btn-group">
-      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="er-preview-nav-skin-icon" data-toggle="tooltip" data-placement="top" title="" data-original-title="1 skin ">
-        <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
+    return `<div class="btn-group" style="float: right;">
+      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="er-preview-skin-icon" >
+          <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
         </span>
-        <span style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
+        <span class="er-current-section-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
       </button>
       <div class="dropdown-menu">
         ${chooser.all_choices.map(skin => `
@@ -303,23 +304,26 @@ export class ExamPreview {
   }
 
   private renderQuestion(question: Question, section_index: number, question_index: number, section_skin: ExamComponentSkin) {
-    const questionSkins = chooseAllSkins(question.skin);
-    const skin = section_skin ? createCompositeSkin(section_skin, questionSkins[0]) : questionSkins[0];
+    const questionSkins = chooseAllSkins(question.skin).map(q_skin => createCompositeSkin(section_skin, q_skin));
     const q_id = question.question_id;
     return `
-      <div id="question-${q_id}" class="examma-ray-question card-group">
-        <div id="question-anchor-${q_id}" class="examma-ray-question-anchor"></div>
-        <div class="card">
-          <div class="card-header">
-            ${this.renderQuestionHeader(question, section_index, question_index)}
-          </div>
-          <div class="card-body">
-            <div class="examma-ray-question-description">
-              ${question.renderDescription(skin)}
+      <div id="question-${q_id}" >
+        ${questionSkins.map((skin, i) =>`
+          <div data-skin-id="${skin.non_composite_skin_id}" class="examma-ray-question card-group" style="display: ${i === 0 ? "block" : "none"};">
+            <div id="question-anchor-${q_id}" class="examma-ray-question-anchor"></div>
+            <div class="card">
+              <div class="card-header">
+                ${this.renderQuestionHeader(question, section_index, question_index)}
+              </div>
+              <div class="card-body">
+                <div class="examma-ray-question-description">
+                  ${question.renderDescription(skin)}
+                </div>
+                ${this.renderQuestionContent(question, q_id, skin)}
+              </div>
             </div>
-            ${this.renderQuestionContent(question, q_id, skin)}
           </div>
-        </div>
+        `).join("\n")}
       </div>
     `;
   }
@@ -329,7 +333,33 @@ export class ExamPreview {
       <b>${section_index}.${question_index}</b>
       ${renderPointsWorthBadge(-1)}
       <span class="badge badge-info" style="font-family: monospace;">${question.question_id}</span>
+      ${this.renderQuestionHeaderSkin(question.question_id, question.skin)}
     `;
+  }
+  
+  private renderQuestionHeaderSkin(question_id: string, skin: ExamComponentSkin | SkinChooser) {
+    if (skin.component_kind === "chooser") {
+      return this.renderQuestionHeaderSkinPicker(question_id, skin);
+    }
+    else {
+      return this.renderSkinIcon(skin);
+    }
+  }
+
+  private renderQuestionHeaderSkinPicker(question_id: string, chooser: SkinChooser) {
+    return `<div class="btn-group" style="float: right;">
+      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="er-preview-skin-icon">
+          <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
+        </span>
+        <span class="er-current-question-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
+      </button>
+      <div class="dropdown-menu">
+        ${chooser.all_choices.map(skin => `
+          <button class="er-question-skin-picker-link dropdown-item" data-question-id="${question_id}" data-skin-id="${skin.skin_id}">${skin.skin_id}</button>
+        `).join("\n")}
+      </div>
+    </div>`;
   }
   
   private renderQuestionContent(question: Question, q_id: string, skin: ExamComponentSkin) {
