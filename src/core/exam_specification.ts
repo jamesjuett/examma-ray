@@ -318,7 +318,7 @@ function choose_impl<CK extends ChooserKind>(spec: ExamComponentChooserSpecifica
   const choices = spec.choices;
   return (
     strategy.kind === "group" ? choices :
-    strategy.kind === "random_1" ? [rand.choose_one(choices)] :
+    strategy.kind === "random_1" ? [rand.chooseOne(choices)] :
     strategy.kind === "random_n" ? rand.chooseN(choices, strategy.n) :
     strategy.kind === "shuffle" ? rand.shuffle(choices) :
     assertNever(strategy)

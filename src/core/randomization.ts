@@ -19,13 +19,35 @@ export class SeededRandomizer {
     return this.rng.range(n);
   };
 
-  public choose_one<T>(choices: readonly T[]) {
+  /**
+   * An old method for randomly choosing one element from an array. Does not
+   * produce behavior consistent with `chooseN(choices, 1)`.
+   * @deprecated Do not use in new code. Use `chooseOne(choices)` instead.
+   */
+  public legacyChooseOne<T>(choices: readonly T[]) {
     assert(choices.length > 0, "No choices available.");
     return choices[this.rng.range(choices.length)];
   };
 
+  public chooseOne<T>(choices: readonly T[]) {
+    assert(choices.length > 0, "No choices available.");
+
+    // Implemented in terms of chooseN to ensure randomization is
+    // deterministic regardless of whether you use chooseOne(choices)
+    // or chooseN(choices, 1)
+    return this.chooseN(choices, 1)[0];
+  };
+
   public chooseN<T>(choices: readonly T[], n: number) {
     assert(choices.length >= n, "Number to randomly choose is larger than number of choices.");
+
+    // Prefer not to consume any randomness when it's not necessary.
+    // That way, the use of a superfulous randomization like chooseN([x], 1)
+    // will be deterministically equivalent to not using that randomization.
+    if (choices.length === 1) {
+      return choices;
+    }
+    
     return choices
       .slice()
       .map(c => ({ i: this.rng.random(), c: c }))
