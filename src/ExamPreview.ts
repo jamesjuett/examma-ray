@@ -290,13 +290,13 @@ export class ExamPreview {
     return `<div class="btn-group" style="float: right;">
       <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="er-preview-skin-icon" >
-          <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
+          <i class="bi bi-sunglasses"></i><sub><span class="er-current-section-skin-num">1</span>/${chooser.all_choices.length}</sub>
         </span>
         <span class="er-current-section-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
       </button>
       <div class="dropdown-menu">
-        ${chooser.all_choices.map(skin => `
-          <button class="er-section-skin-picker-link dropdown-item" data-section-id="${section_id}" data-skin-id="${skin.skin_id}">${skin.skin_id}</button>
+        ${chooser.all_choices.map((skin, i) => `
+          <button class="er-section-skin-picker-link dropdown-item" data-section-id="${section_id}" data-skin-id="${skin.skin_id}" data-skin-num="${i+1}">${skin.skin_id}</button>
         `).join("\n")}
       </div>
     </div>`;
@@ -355,13 +355,13 @@ export class ExamPreview {
     return `<div class="btn-group" style="float: right;">
       <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="er-preview-skin-icon">
-          <i class="bi bi-sunglasses"></i><sub>1/${chooser.all_choices.length}</sub>
+          <i class="bi bi-sunglasses"></i><sub><span class="er-current-question-skin-num">1</span>/${chooser.all_choices.length}</sub>
         </span>
         <span class="er-current-question-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
       </button>
       <div class="dropdown-menu">
-        ${chooser.all_choices.map(skin => `
-          <button class="er-question-skin-picker-link dropdown-item" data-question-id="${question_id}" data-skin-id="${skin.skin_id}">${skin.skin_id}</button>
+        ${chooser.all_choices.map((skin, i) => `
+          <button class="er-question-skin-picker-link dropdown-item" data-question-id="${question_id}" data-skin-id="${skin.skin_id}" data-skin-num="${i+1}">${skin.skin_id}</button>
         `).join("\n")}
       </div>
     </div>`;
