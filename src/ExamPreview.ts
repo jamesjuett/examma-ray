@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 import { renderAnnouncements, renderHead, renderInstructions } from './core/exam_renderer';
-import { chooseAllSkins, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
+import { chooseAllSkins, MinMaxPoints, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin, isDefaultSkin } from './core/skins';
 import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
@@ -67,7 +67,7 @@ export class ExamPreview {
       <div class="row">
         <div class="bg-light" style="position: fixed; width: 300px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <div class="text-center pb-1 border-bottom">
-            <h5>${renderPointsWorthBadge(-1, "badge-success")}</h5>
+            <h5>${this.renderMinMaxPointsBadge(this.exam.points, "badge-secondary")}</h5>
             <span style="font-size: large; font-weight: bold; color: red;">Sample Solution</span>
           </div>
           ${this.renderNav()}
@@ -195,8 +195,13 @@ export class ExamPreview {
   //     </ul>`
   // }
 
-  private renderNavBadge(s: Section) {
-    return renderPointsWorthBadge(-1, "badge-secondary", true);
+  private renderMinMaxPointsBadge(points: MinMaxPoints, cssClass?: string) {
+    if (points.min_points === points.max_points) {
+      return renderPointsWorthBadge(points.min_points, cssClass);
+    }
+    else {
+      return renderPointsWorthBadge(points.min_points, cssClass) + renderPointsWorthBadge(points.max_points, cssClass);
+    }
   }
   
   private renderHeader() {
@@ -265,7 +270,7 @@ export class ExamPreview {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${section_index}: ${section.title} ${renderPointsWorthBadge(-1, "badge-light")}
+          ${section_index}: ${section.title} ${this.renderMinMaxPointsBadge(section.points, "badge-light")}
         </div>
         ${this.renderSectionHeaderSkin(section.section_id, section.skin)}
       </div>
@@ -331,7 +336,7 @@ export class ExamPreview {
   private renderQuestionHeader(question: Question, section_index: number, question_index: number) {
     return `
       <b>${section_index}.${question_index}</b>
-      ${renderPointsWorthBadge(-1)}
+      ${renderPointsWorthBadge(question.pointsPossible)}
       <span class="badge badge-info" style="font-family: monospace;">${question.question_id}</span>
       ${this.renderQuestionHeaderSkin(question.question_id, question.skin)}
     `;

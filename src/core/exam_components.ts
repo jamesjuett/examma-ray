@@ -1,7 +1,7 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
 import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
-import { chooseAllQuestions, chooseAllSections, ExamSpecification, isValidID, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
+import { chooseAllQuestions, chooseAllSections, ExamSpecification, isValidID, MinMaxPoints, minMaxPoints, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
@@ -96,6 +96,7 @@ export class Section {
   public readonly title: string;
   public readonly mk_description: string;
   public readonly mk_reference?: string;
+  public readonly points: MinMaxPoints;
   public readonly questions: readonly (Question | QuestionChooser)[];
   public readonly skin: ExamComponentSkin | SkinChooser;
 
@@ -139,6 +140,7 @@ export class Section {
     this.title = spec.title;
     this.mk_description = spec.mk_description;
     this.mk_reference = spec.mk_reference;
+    this.points = minMaxPoints(spec);
     this.questions = spec.questions.map(q => realizeQuestion(q));
     this.skin = spec.skin ? (
       spec.skin.component_kind === "chooser_specification"
@@ -219,6 +221,7 @@ export class Exam {
   public readonly mk_saver_message: string;
   public readonly media_dir?: string;
 
+  public readonly points: MinMaxPoints;
   public readonly sections: readonly (Section | SectionChooser)[];
 
   public readonly enable_regrades: boolean;
@@ -259,6 +262,7 @@ export class Exam {
     this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
     this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
+    this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
     this.media_dir = spec.media_dir;
