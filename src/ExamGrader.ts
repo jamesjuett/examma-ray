@@ -104,7 +104,7 @@ import { AssignedExam, AssignedQuestion, isGradedQuestion } from './core/assigne
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
-import { chooseAllQuestions, chooseAllSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
+import { StudentInfo } from './core/exam_specification';
 import { GradedStats } from "./core/GradedStats";
 import { ICON_BOX_CHECK } from './core/icons';
 import { TrustedExamSubmission } from './core/submissions';

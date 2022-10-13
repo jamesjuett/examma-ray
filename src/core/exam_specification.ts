@@ -257,9 +257,36 @@ export function isValidID(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
 }
 
+export type ExamComponentSpecification =
+  | ExamSpecification
+  | SectionSpecification
+  | QuestionSpecification
+  | ExamComponentSkin;
 
 
+export function isExamSpecification(spec: ExamComponentSpecification) : spec is ExamSpecification {
+  return !!(spec as ExamSpecification).exam_id;
+}
 
+export function isSectionSpecification(spec: ExamComponentSpecification) : spec is SectionSpecification {
+  return !!(spec as SectionSpecification).section_id;
+}
+
+export function isQuestionSpecification(spec: ExamComponentSpecification) : spec is QuestionSpecification {
+  return !!(spec as QuestionSpecification).question_id;
+}
+
+export function isSkinSpecificatoin(spec: ExamComponentSpecification) : spec is ExamComponentSkin {
+  return !!(spec as ExamComponentSkin).skin_id;
+}
+
+export function getExamComponentSpecificationID(spec: ExamComponentSpecification) {
+  if(isExamSpecification(spec)) { return spec.exam_id; }
+  if(isSectionSpecification(spec)) { return spec.section_id; }
+  if(isQuestionSpecification(spec)) { return spec.question_id; }
+  if(isSkinSpecificatoin(spec)) { return spec.skin_id; }
+  return assertNever(spec);
+}
 
 
 
@@ -305,7 +332,7 @@ class ExamComponentChooser<CK extends ChooserKind> {
   public constructor(spec: ExamComponentChooserSpecification<CK>) {
     this.spec = spec;
     this.chooser_kind = spec.chooser_kind;
-    this.all_choices = chooseAll(spec);
+    this.all_choices = uniqueChoices(chooseAll(spec));
   }
 
   public choose(exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -347,6 +374,10 @@ function chooseAll<CK extends ChooserKind>(spec: ExamComponentChooserSpecificati
   return spec.choices.flatMap(c => c.component_kind === "chooser_specification" ? chooseAll(c) : c);
 }
 
+function uniqueChoices<CK extends ChooserKind>(choices: readonly ChoiceKind[CK][]) {
+  return Array.from(new Map<string, ChoiceKind[CK]>(choices.map(c => [getExamComponentSpecificationID(c), c])).values());
+}
+
 
 
 
@@ -374,11 +405,6 @@ export function chooseAllSections(chooser: Section | SectionChooser) {
   return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
-export function uniqueSections(sections: Section[]) {
-  return Array.from(new Map<string, Section>(sections.map(s => [s.section_id, s])).values());
-}
-
-
 
 export function realizeQuestion(q: QuestionSpecification | Question) : Question;
 export function realizeQuestion(q: QuestionSpecification | Question | QuestionChooserSpecification | QuestionChooser) : Question | QuestionChooser;
@@ -403,10 +429,6 @@ export function chooseAllQuestions(chooser: Question | QuestionChooser) {
   return chooser.component_kind === "component" ? [chooser] : chooser.all_choices;
 }
 
-export function uniqueQuestions(questions: Question[]) {
-  return Array.from(new Map<string, Question>(questions.map(q => [q.question_id, q])).values());
-}
-
 
 
 export function chooseSkins(chooser: ExamComponentSkin | SkinChooser, exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -417,9 +439,6 @@ export function chooseAllSkins(chooser: ExamComponentSkin | SkinChooser) {
   return chooser.component_kind === "chooser" ? chooser.all_choices : [chooser];
 }
 
-export function uniqueSkins(skins: ExamComponentSkin[]) {
-  return Array.from(new Map<string, ExamComponentSkin>(skins.map(s => [s.skin_id, s])).values());
-}
 
 /**
  * 
