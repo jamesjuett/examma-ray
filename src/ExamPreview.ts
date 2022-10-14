@@ -65,7 +65,7 @@ export class ExamPreview {
         <div class="bg-light" style="position: fixed; width: 300px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <div class="text-center pb-1 border-bottom">
             <h5>${this.renderMinMaxPointsBadge(this.exam.points, "badge-secondary")}</h5>
-            <span style="font-size: large; font-weight: bold; color: red;">Sample Solution</span>
+            <span style="font-size: large; font-weight: bold; color: purple;">Exam Preview</span>
           </div>
           ${this.renderNav()}
         </div>
