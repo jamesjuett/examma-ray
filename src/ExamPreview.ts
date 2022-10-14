@@ -29,9 +29,6 @@ export class ExamPreview {
 
   public readonly exam: Exam;
 
-  private readonly sectionsMap: { [index: string]: Section | undefined } = {};
-  private readonly questionsMap: { [index: string]: Question | undefined } = {};
-
   private options: ExamPreviewOptions;
 
   private onStatus?: (status: string) => void;
@@ -44,7 +41,7 @@ export class ExamPreview {
 
   private writeMedia(outDir: string) {
     let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
-    ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    ExamUtils.writeExamMedia(mediaOutDir, this.exam, this.exam.allSections, this.exam.allQuestions);
   }
 
   public renderPreview() {
