@@ -680,6 +680,7 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 
 .er-preview-nav {
   padding: 0.25rem;
+  margin-left: 2px;
 }
 
 .er-preview-nav-section {
@@ -689,6 +690,7 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 }
 
 .er-preview-nav-section-chooser {
+  margin-left: 0px;
   background-color: #d3c4ed;
   margin-bottom: 0.25rem;
   border-bottom: solid 1px #ab7efe;
@@ -696,6 +698,7 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 }
 
 .er-preview-nav-question-chooser {
+  margin-left: 0px;
   background-color: #f2e4b9;
   margin-bottom: 0.25rem;
   border-bottom: solid 1px #edce73;

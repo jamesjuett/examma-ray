@@ -328,11 +328,13 @@ class ExamComponentChooser<CK extends ChooserKind> {
   readonly component_kind = "chooser";
   readonly chooser_kind: CK;
   readonly all_choices: readonly ChoiceKind[CK][];
+  readonly n_chosen: MinMax;
 
   public constructor(spec: ExamComponentChooserSpecification<CK>) {
     this.spec = spec;
     this.chooser_kind = spec.chooser_kind;
     this.all_choices = uniqueChoices(chooseAll(spec));
+    this.n_chosen = minMaxChoosenItems(<QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification>this.spec);
   }
 
   public choose(exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -373,44 +375,63 @@ function uniqueChoices<CK extends ChooserKind>(choices: readonly ChoiceKind[CK][
   return Array.from(new Map<string, ChoiceKind[CK]>(choices.map(c => [getExamComponentSpecificationID(c), c])).values());
 }
 
-export type MinMaxPoints = {
-  readonly min_points: number,
-  readonly max_points: number,
+type MinMax = {
+  readonly min: number,
+  readonly max: number,
 };
+
+export type MinMaxPoints = MinMax & { _t_min_max_points?: never};
+export type MinMaxItems = MinMax & { _t_min_max_items?: never};
 
 export function minMaxPoints(component: QuestionChooserSpecification | SectionChooserSpecification | SectionSpecification | QuestionSpecification | ExamSpecification) : MinMaxPoints {
   return (
     component.component_kind === "chooser_specification" ? minMaxChooserPoints(component) :
-    isQuestionSpecification(component) ? { min_points: component.points, max_points: component.points } :
-    isSectionSpecification(component) ? minMaxReduce(component.questions.map(q => minMaxPoints(q))) :
-    isExamSpecification(component) ? minMaxReduce(component.sections.map(s => minMaxPoints(s))) :
+    isQuestionSpecification(component) ? { min: component.points, max: component.points } :
+    isSectionSpecification(component) ? minMaxPointsReduce(component.questions.map(q => minMaxPoints(q))) :
+    isExamSpecification(component) ? minMaxPointsReduce(component.sections.map(s => minMaxPoints(s))) :
     assertNever(component)
   );
 }
 
-function minMaxReduce(mm: readonly MinMaxPoints[]) : MinMaxPoints {
+function minMaxPointsReduce(mm: readonly MinMax[]) : MinMaxPoints {
   return {
-    min_points: mm.map(mm => mm.min_points).reduce((p, c) => p + c, 0),
-    max_points: mm.map(mm => mm.max_points).reduce((p, c) => p + c, 0),
+    min: mm.map(mm => mm.min).reduce((p, c) => p + c, 0),
+    max: mm.map(mm => mm.max).reduce((p, c) => p + c, 0),
   };
 }
 
 function minMaxChooserPoints(chooser_spec: QuestionChooserSpecification | SectionChooserSpecification) : MinMaxPoints {
   const strategy = chooser_spec.strategy;
   const choiceMinMaxs = chooser_spec.choices.map(c => minMaxPoints(c));
+  return minMaxChooserHelper(strategy, choiceMinMaxs);
+}
 
+
+export function minMaxChoosenItems(chooser_spec: QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification) : MinMaxItems {
+  const strategy = chooser_spec.strategy;
+  const choiceMinMaxs = chooser_spec.choices.map(component => (
+    component.component_kind === "chooser_specification" ? minMaxChoosenItems(component) :
+    isQuestionSpecification(component) ? { min: 1, max: 1 } :
+    isSectionSpecification(component) ? { min: 1, max: 1 } :
+    isSkinSpecificatoin(component) ? { min: 1, max: 1 } :
+    assertNever(component)
+  ));
+  return minMaxChooserHelper(strategy, choiceMinMaxs);
+}
+
+function minMaxChooserHelper(strategy: ChooserStrategySpecification, choiceMinMaxs: MinMax[]) : MinMax {
   // If we're only choosing one
   if (strategy.kind === "random_1") {
     return {
-      min_points: Math.min(...choiceMinMaxs.map(mm => mm.min_points)),
-      max_points: Math.max(...choiceMinMaxs.map(mm => mm.max_points))
+      min: Math.min(...choiceMinMaxs.map(mm => mm.min)),
+      max: Math.max(...choiceMinMaxs.map(mm => mm.max))
     };
   }
 
   // Add the list of questions
   if (strategy.kind === "group" || strategy.kind === "shuffle" || strategy.kind === "random_n" ) {  
-    let choiceMins = choiceMinMaxs.map(mm => mm.min_points);
-    let choiceMaxs = choiceMinMaxs.map(mm => mm.max_points);
+    let choiceMins = choiceMinMaxs.map(mm => mm.min);
+    let choiceMaxs = choiceMinMaxs.map(mm => mm.max);
     
     // If the strategy was random_n, only add best/worst case subsets
     if (strategy.kind === "random_n") {
@@ -419,13 +440,15 @@ function minMaxChooserPoints(chooser_spec: QuestionChooserSpecification | Sectio
     }
 
     return {
-      min_points: choiceMins.reduce((p, c) => p + c, 0),
-      max_points: choiceMaxs.reduce((p, c) => p + c, 0),
+      min: choiceMins.reduce((p, c) => p + c, 0),
+      max: choiceMaxs.reduce((p, c) => p + c, 0),
     };
   }
-  
+
   return assertNever(strategy);
 }
+
+
 
 
 export function realizeSection(s: SectionSpecification | Section) : Section;

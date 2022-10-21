@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 import { renderAnnouncements, renderHead, renderInstructions } from './core/exam_renderer';
-import { chooseAllSkins, MinMaxPoints, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
+import { chooseAllSkins, minMaxChoosenItems, minMaxPoints, MinMaxPoints, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin, isDefaultSkin } from './core/skins';
 import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
@@ -95,7 +95,7 @@ export class ExamPreview {
 
   private renderSectionNav(section: Section, section_index: number, show_index: boolean) {
     return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-section">
-      ${show_index ? section_index : ""} ${this.renderSkinOrChooserNavIcon(section.skin)}
+      ${show_index ? `${this.renderMinMaxPointsBadge(section.points, "badge-success", true)} ${section_index}` : ""} ${this.renderSkinOrChooserNavIcon(section.skin)}
       <a style="padding: 0.1rem" href="#section-${section.section_id}">
         ${section.title}
       </a>
@@ -113,8 +113,9 @@ export class ExamPreview {
       <ul class="nav er-preview-nav-group">
         ${section.spec.choices.map(
           (s, i) => this.renderSectionOrChooserNav(
-            realizeSection(s), section_index,
-            section.spec.strategy.kind === "group" || section.spec.strategy.kind === "shuffle"
+            realizeSection(s),
+            section.spec.strategy.kind === "group" ? section_index + i : section_index,
+            section.spec.strategy.kind === "group"
           )
         ).join("")}
       </ul>
@@ -131,7 +132,7 @@ export class ExamPreview {
 
   private renderQuestionNav(question: Question, section_index: number, question_index: number, show_index: boolean) {
     return `<li class = "nav-item text-truncate er-preview-nav er-preview-nav-question">
-      ${show_index ? section_index+"."+question_index : ""} ${this.renderSkinOrChooserNavIcon(question.skin)}
+      ${show_index ? `${renderPointsWorthBadge(question.pointsPossible, "badge-secondary", true)} ${section_index}.${question_index}` : ""} ${this.renderSkinOrChooserNavIcon(question.skin)}
       <a style="padding: 0.1rem" href="#question-anchor-${question.question_id}">
         ${question.question_id}
       </a>
@@ -144,21 +145,24 @@ export class ExamPreview {
       <ul class="nav er-preview-nav-group">
         ${question.spec.choices.map(
           (q, i) => this.renderQuestionOrChooserNav(
-            realizeQuestion(q), section_index, question_index,
-            question.spec.strategy.kind === "group" || question.spec.strategy.kind === "shuffle"
+            realizeQuestion(q),
+            section_index,
+            question.spec.strategy.kind === "group" ? question_index + i : question_index,
+            question.spec.strategy.kind === "group"
           )
         ).join("")}
       </ul>
     </li>`;
   }
 
-  private renderChooserNavHeader(chooser: SectionChooser | QuestionChooser | SkinChooser, display_index: (offset: number) => string) {
+  private renderChooserNavHeader(chooser: SectionChooser | QuestionChooser, display_index: (offset: number) => string) {
     const strategy = chooser.spec.strategy;
+    const pointsBadge = this.renderMinMaxPointsBadge(minMaxPoints(chooser.spec), "badge-success", true);
     return `<div>${(
       strategy.kind === "group" ? `<i class="bi bi-collection"></i> Group` :
-      strategy.kind === "random_1" ? `${display_index(0)} <i class="bi bi-dice-6"></i> Random 1` :
-      strategy.kind === "random_n" ? `${display_index(0)}-${display_index(strategy.n-1)} <i class="bi bi-dice-6"></i> Random ${strategy.n}` :
-      strategy.kind === "shuffle" ? `<i class="bi bi-shuffle"></i> shuffle` :
+      strategy.kind === "random_1" ? `${pointsBadge} ${display_index(0)} <i class="bi bi-dice-6"></i> Random 1` :
+      strategy.kind === "random_n" ? `${pointsBadge} ${display_index(0)}-${display_index(chooser.n_chosen.max-1)} <i class="bi bi-dice-6"></i> Random ${strategy.n}` :
+      strategy.kind === "shuffle" ? `${pointsBadge} ${display_index(0)}-${display_index(chooser.n_chosen.max-1)} <i class="bi bi-shuffle"></i> shuffle` :
       assertNever(strategy)
     )}</div>`;
   }
@@ -192,12 +196,12 @@ export class ExamPreview {
   //     </ul>`
   // }
 
-  private renderMinMaxPointsBadge(points: MinMaxPoints, cssClass?: string) {
-    if (points.min_points === points.max_points) {
-      return renderPointsWorthBadge(points.min_points, cssClass);
+  private renderMinMaxPointsBadge(points: MinMaxPoints, cssClass?: string, short?: boolean) {
+    if (points.min === points.max) {
+      return renderPointsWorthBadge(points.min, cssClass, short);
     }
     else {
-      return renderPointsWorthBadge(points.min_points, cssClass) + renderPointsWorthBadge(points.max_points, cssClass);
+      return renderPointsWorthBadge(points.min, cssClass, short) + renderPointsWorthBadge(points.max, cssClass, short);
     }
   }
   
@@ -217,11 +221,15 @@ export class ExamPreview {
   }
   
   private renderSections() {
-    return this.exam.sections.map((s, i) => 
-      s.component_kind === "component" ? this.renderSection(s, i+1) :
-      s.component_kind === "chooser" ? this.renderSectionChooser(s, i+1) :
-      assertNever(s)
-    ).join("<br />");
+    return this.exam.sections.map((s, i) => this.renderSectionOrChooser(s, i+1)).join("<br />");
+  }
+
+  private renderSectionOrChooser(section: Section | SectionChooser, section_index: number) : string {
+    return (
+      section.component_kind === "component" ? this.renderSection(section, section_index) :
+      section.component_kind === "chooser" ? this.renderSectionChooser(section, section_index) :
+      assertNever(section)
+    );
   }
 
 
@@ -237,11 +245,7 @@ export class ExamPreview {
                 <td class="examma-ray-questions-container">
                   ${this.renderSectionHeader(section, section_index)}
                   <div class="examma-ray-section-description">${section.renderDescription(skin)}</div>
-                  ${section.questions.map((q, i) => 
-                    q.component_kind === "component" ? this.renderQuestion(q, section_index, i+1, skin) :
-                    q.component_kind === "chooser" ? this.renderQuestionChooser(q, section_index, i+1, skin) :
-                    assertNever(q)
-                  ).join("<br />")}
+                  ${section.questions.map((q, i) => this.renderQuestionOrChooser(q, section_index, i+1, skin)).join("<br />")}
                 </td>
                 <td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
                   <div class="examma-ray-section-reference-container">
@@ -267,7 +271,7 @@ export class ExamPreview {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${section_index}: ${section.title} ${this.renderMinMaxPointsBadge(section.points, "badge-light")}
+        ${this.renderMinMaxPointsBadge(section.points, "badge-success")} ${section_index}: ${section.title}
         </div>
         ${this.renderSectionHeaderSkin(section.section_id, section.skin)}
       </div>
@@ -299,10 +303,21 @@ export class ExamPreview {
     </div>`;
   }
 
-  private renderSectionChooser(section: SectionChooser, section_index: number) {
-    return section.all_choices.map(
-      (s, i) => this.renderSection(realizeSection(s), section_index)
+  private renderSectionChooser(chooser: SectionChooser, section_index: number) {
+    return chooser.all_choices.map(
+      (s, i) => this.renderSectionOrChooser(
+        realizeSection(s),
+        chooser.spec.strategy.kind === "group" ? section_index + i : section_index,
+      )
     ).join("<br />");
+  }
+
+  private renderQuestionOrChooser(question: Question | QuestionChooser, section_index: number, question_index: number, section_skin: ExamComponentSkin) : string {
+    return ( 
+      question.component_kind === "component" ? this.renderQuestion(question, section_index, question_index, section_skin) :
+      question.component_kind === "chooser" ? this.renderQuestionChooser(question, section_index, question_index, section_skin) :
+      assertNever(question)
+    );
   }
 
   private renderQuestion(question: Question, section_index: number, question_index: number, section_skin: ExamComponentSkin) {
@@ -369,8 +384,13 @@ export class ExamPreview {
   }
 
   private renderQuestionChooser(chooser: QuestionChooser, section_index: number, question_index: number, section_skin: ExamComponentSkin) {
-    return chooser.all_choices.map(
-      (q, i) => this.renderQuestion(realizeQuestion(q), section_index, question_index, section_skin)
+    return chooser.spec.choices.map(
+      (q, i) => this.renderQuestionOrChooser(
+        realizeQuestion(q),
+        section_index,
+        chooser.spec.strategy.kind === "group" ? question_index + i : question_index,
+        section_skin
+      )
     ).join("<br />");
   }
 
