@@ -65,7 +65,15 @@ export class ExamPreview {
         <div class="bg-light" style="position: fixed; width: 300px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
           <div class="text-center pb-1 border-bottom">
             <h5>${this.renderMinMaxPointsBadge(this.exam.points, "badge-secondary")}</h5>
-            <span style="font-size: large; font-weight: bold; color: purple;">Exam Preview</span>
+            <div style="font-size: large; font-weight: bold; color: purple;">Exam Preview</div>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-outline-primary btn-sm active">
+                <input id="er-preview-show-originals-button" type="radio" name="show-solutions" autocomplete="off" checked> Show Questions
+              </label>
+              <label class="btn btn-outline-danger btn-sm">
+                <input id="er-preview-show-solutions-button" type="radio" name="show-solutions" autocomplete="off"> Show Solutions
+              </label>
+            </div>
           </div>
           ${this.renderNav()}
         </div>
@@ -176,7 +184,7 @@ export class ExamPreview {
       return "";
     }
     
-    return `<span class="er-preview-skin-icon" data-toggle="tooltip" data-placement="top" title="1 skin">
+    return `<span class="er-preview-skin-icon" data-toggle="tooltip" data-placement="top" title="${skin.skin_id}">
       <i class="bi bi-sunglasses"></i><sub>1</sub>
     </span>`;
   }
@@ -350,6 +358,7 @@ export class ExamPreview {
       <b>${section_index}.${question_index}</b>
       ${renderPointsWorthBadge(question.pointsPossible)}
       <span class="badge badge-info" style="font-family: monospace;">${question.question_id}</span>
+      <span class="question-content-solution-header" style="display: none; color: red; font-weight: bold;">Sample Solution</span>
       ${this.renderQuestionHeaderSkin(question.question_id, question.skin)}
     `;
   }
@@ -380,7 +389,15 @@ export class ExamPreview {
   }
   
   private renderQuestionContent(question: Question, q_id: string, skin: ExamComponentSkin) {
-    return question.renderResponse(q_id, skin);
+    return `
+      <div class="question-content-original">${question.renderResponse(q_id, skin)}</div>
+      <div class="question-content-solution" style="display: none;">
+        ${question.sampleSolution
+          ? question.renderResponseSolution(q_id + "solution", question.sampleSolution, skin)
+          : `<div class="examma-ray-no-sample-solution-message">No sample solution has been specified for this question.</div>`
+        }
+      </div>
+    `;
   }
 
   private renderQuestionChooser(chooser: QuestionChooser, section_index: number, question_index: number, section_skin: ExamComponentSkin) {

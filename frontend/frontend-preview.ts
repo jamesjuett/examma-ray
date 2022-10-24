@@ -28,9 +28,30 @@ function setupSkinPickers() {
   });
 }
 
+function activatePreviewComponents() {
+
+  $("#er-preview-show-originals-button").on("click",
+    () => {
+      $(".question-content-original").show();
+      $(".question-content-solution").hide();
+      $(".question-content-solution-header").hide();
+    }
+  );
+  $("#er-preview-show-solutions-button").on("click",
+    () => {
+      $(".question-content-solution").show();
+      $(".question-content-solution-header").show();
+      $(".question-content-original").hide();
+    }
+  );
+
+}
+
 function main() {
 
   activateExamComponents();
+
+  activatePreviewComponents();
 
   activateExam();
 
