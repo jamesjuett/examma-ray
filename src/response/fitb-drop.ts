@@ -3,7 +3,7 @@ import { encode } from "he";
 import Sortable from "sortablejs";
 import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { assert } from "../core/util";
+import { assert, assertFalse } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
@@ -86,6 +86,17 @@ function renderDroppables(droppables: DroppableSpecification, group_id: string, 
 }
 
 function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+
+  // Ensure droppable IDs are unique
+  if(!(new Set<string>(response.droppables.map(d => d.id)).size === response.droppables.length)) {
+    response.droppables.forEach(d1 => {
+      if (response.droppables.filter(d2 => d2.id === d1.id).length > 1) {
+        console.log("Duplicate droppable ID: " + d1.id);
+      }
+    })
+    assertFalse("Error: duplicate droppable ID detected (see above)");
+  }
+
   let group_id = response.group_id ?? question_id;
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${group_id}">
