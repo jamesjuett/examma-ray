@@ -15,6 +15,13 @@ export const BLANK_PATTERN = /_+ *(BLANK|Blank|blank) *_+/g;
  */
 export const BOX_PATTERN = /\[\[[ _]*(BOX|Box|box)[ _]*( *\n)+ *\]\]/g;
 
+export function numBlanksAndBoxes(content: string) {
+  let n = 0;
+  n += content.match(BLANK_PATTERN)?.length ?? 0;
+  n += content.match(BOX_PATTERN)?.length ?? 0;
+  return n;
+}
+
 export function count_char(str: string, c: string) {
   let count = 0;
   for(let i = 0; i < str.length; ++i) {

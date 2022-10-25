@@ -1,9 +1,10 @@
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import deepEqual from "deep-equal";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
+import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
 import { isNumericArray } from "./util";
-import { ResponseHandler, ViableSubmission } from "./responses";
 
 /**
  * ## Multiple Choice Response Element Specification 
@@ -253,6 +254,27 @@ function MC_FILLER(responseElem: JQuery, submission: MCSubmission) {
   }
 }
 
+function MC_DIFF(r1: MCSpecification, r2: MCSpecification) : ResponseSpecificationDiff {
+  if (r1.kind !== r2.kind) {
+    return { incompatible: true };
+  }
+
+  return {
+    structure:
+      r1.multiple !== r2.multiple ||
+      r1.limit !== r2.limit ||
+      r1.choices.length !== r2.choices.length,
+    content:
+      r1.choices.length !== r2.choices.length || !r1.choices.every((e, i) => e === r2.choices[i]),
+    default_grader:
+      !deepEqual(r1.default_grader, r2.default_grader, {strict: true}),
+    sample_solution:
+      !deepEqual(r1.sample_solution, r2.sample_solution, {strict: true}),
+    format:
+      r1.spacing !== r2.spacing,
+  };
+}
+
 export const MC_HANDLER : ResponseHandler<"multiple_choice"> = {
   parse: MC_PARSER,
   validate: MC_VALIDATOR,
@@ -260,5 +282,6 @@ export const MC_HANDLER : ResponseHandler<"multiple_choice"> = {
   render_solution: MC_SOLUTION_RENDERER,
   activate: MC_ACTIVATE,
   extract: MC_EXTRACTOR,
-  fill: MC_FILLER
+  fill: MC_FILLER,
+  diff: MC_DIFF
 };

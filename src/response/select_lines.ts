@@ -3,7 +3,8 @@ import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
-import { ResponseHandler, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import deepEqual from "deep-equal";
 
 /**
  * One of the "lines" of code that may be toggled on/off in a select lines response.
@@ -330,11 +331,49 @@ function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
   }
 }
 
+function equivalent_choice(c1: SLItem | SLGroup, c2: SLItem | SLGroup) : boolean {
+  return c1.kind === "item"
+    ? c2.kind === "item" && c1.forced === c2.forced
+    : c2.kind === "group" && c1.items.every((c,i) => equivalent_choice(c, c2.items[i]));
+}
+
+function equivalent_structure(r1: SLSpecification, r2: SLSpecification) {
+  const cs1 = r1.choices;
+  const cs2 = r2.choices;
+
+  return cs1.length === cs2.length && cs1.every((c,i) => equivalent_choice(c, cs2[i]));
+}
+
+
+function SL_DIFF(r1: SLSpecification, r2: SLSpecification) : ResponseSpecificationDiff {
+  if (r1.kind !== r2.kind) {
+    return { incompatible: true };
+  }
+
+  const es = equivalent_structure(r1, r2);
+
+  return {
+    structure:
+      !es,
+    content:
+      es && !deepEqual(r1.choices, r2.choices, {strict: true}) ||
+      r1.footer !== r2.footer ||
+      r1.header !== r2.header,
+    default_grader:
+      !deepEqual(r1.default_grader, r2.default_grader, {strict: true}),
+    sample_solution:
+      !deepEqual(r1.sample_solution, r2.sample_solution, {strict: true}),
+    format:
+      r1.code_language !== r2.code_language,
+  };
+}
+
 export const SL_HANDLER : ResponseHandler<"select_lines"> = {
   parse: SL_PARSER,
   render: SL_RENDERER,
   render_solution: SL_SOLUTION_RENDERER,
   activate: SL_ACTIVATE,
   extract: SL_EXTRACTOR,
-  fill: SL_FILLER
+  fill: SL_FILLER,
+  diff: SL_DIFF,
 };
