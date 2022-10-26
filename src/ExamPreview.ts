@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 import { renderAnnouncements, renderHead, renderInstructions } from './core/exam_renderer';
-import { chooseAllSkins, minMaxChoosenItems, minMaxPoints, MinMaxPoints, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
+import { chooseAllSkins, minMaxChosenItems, minMaxPoints, MinMaxPoints, QuestionChooser, realizeQuestion, realizeSection, SectionChooser, SkinChooser } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin, isDefaultSkin } from './core/skins';
 import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
@@ -242,7 +242,7 @@ export class ExamPreview {
 
 
   private renderSection(section: Section, section_index: number) {
-    const sectionSkins = chooseAllSkins(section.skin);
+    const sectionSkins = addEmptySkin(chooseAllSkins(section.skin));
     return `
       <div id="section-${section.section_id}">
         ${sectionSkins.map((skin, i) =>`
@@ -304,7 +304,7 @@ export class ExamPreview {
         <span class="er-current-section-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
       </button>
       <div class="dropdown-menu">
-        ${chooser.all_choices.map((skin, i) => `
+        ${addEmptySkin(chooser.all_choices).map((skin, i) => `
           <button class="er-section-skin-picker-link dropdown-item" data-section-id="${section_id}" data-skin-id="${skin.skin_id}" data-skin-num="${i+1}">${skin.skin_id}</button>
         `).join("\n")}
       </div>
@@ -329,7 +329,7 @@ export class ExamPreview {
   }
 
   private renderQuestion(question: Question, section_index: number, question_index: number, section_skin: ExamComponentSkin) {
-    const questionSkins = chooseAllSkins(question.skin).map(q_skin => createCompositeSkin(section_skin, q_skin));
+    const questionSkins = addEmptySkin(chooseAllSkins(question.skin)).map(q_skin => createCompositeSkin(section_skin, q_skin));
     const q_id = question.question_id;
     return `
       <div id="question-${q_id}" >
@@ -381,7 +381,7 @@ export class ExamPreview {
         <span class="er-current-question-skin-id" style="font-family: monospace;">${chooser.all_choices[0].skin_id}</span>
       </button>
       <div class="dropdown-menu">
-        ${chooser.all_choices.map((skin, i) => `
+        ${addEmptySkin(chooser.all_choices).map((skin, i) => `
           <button class="er-question-skin-picker-link dropdown-item" data-question-id="${question_id}" data-skin-id="${skin.skin_id}" data-skin-num="${i+1}">${skin.skin_id}</button>
         `).join("\n")}
       </div>
@@ -428,5 +428,14 @@ export class ExamPreview {
 
   }
 
+}
+
+function addEmptySkin(skins: readonly ExamComponentSkin[]) {
+  return skins.length === 0
+    ? skins
+    : [...skins, <ExamComponentSkin>{
+      skin_id: "__EMPTY",
+      replacements: Object.fromEntries(Object.entries(skins[0].replacements).map(([k,v]) => [k, "---"]))
+    }];
 }
 

@@ -341,7 +341,7 @@ class ExamComponentChooser<CK extends ChooserKind> {
     this.spec = spec;
     this.chooser_kind = spec.chooser_kind;
     this.all_choices = uniqueChoices(chooseAll(spec));
-    this.n_chosen = minMaxChoosenItems(<QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification>this.spec);
+    this.n_chosen = minMaxChosenItems(<QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification>this.spec);
   }
 
   public choose(exam: Exam, student: StudentInfo, rand: Randomizer) {
@@ -392,15 +392,16 @@ export type MinMaxItems = MinMax & { _t_min_max_items?: never};
 
 export function minMaxPoints(component: QuestionChooserSpecification | SectionChooserSpecification | SectionSpecification | QuestionSpecification | ExamSpecification) : MinMaxPoints {
   return (
+    Array.isArray(component) ? minMaxReduce(component.map(elt => minMaxPoints(elt))) : // for compatibility with older specs that could contain arrays
     component.component_kind === "chooser_specification" ? minMaxChooserPoints(component) :
     isQuestionSpecification(component) ? { min: component.points, max: component.points } :
-    isSectionSpecification(component) ? minMaxPointsReduce(component.questions.map(q => minMaxPoints(q))) :
-    isExamSpecification(component) ? minMaxPointsReduce(component.sections.map(s => minMaxPoints(s))) :
+    isSectionSpecification(component) ? minMaxReduce(component.questions.map(q => minMaxPoints(q))) :
+    isExamSpecification(component) ? minMaxReduce(component.sections.map(s => minMaxPoints(s))) :
     assertNever(component)
   );
 }
 
-function minMaxPointsReduce(mm: readonly MinMax[]) : MinMaxPoints {
+function minMaxReduce(mm: readonly MinMax[]) : MinMax {
   return {
     min: mm.map(mm => mm.min).reduce((p, c) => p + c, 0),
     max: mm.map(mm => mm.max).reduce((p, c) => p + c, 0),
@@ -414,10 +415,11 @@ function minMaxChooserPoints(chooser_spec: QuestionChooserSpecification | Sectio
 }
 
 
-export function minMaxChoosenItems(chooser_spec: QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification) : MinMaxItems {
+export function minMaxChosenItems(chooser_spec: QuestionChooserSpecification | SectionChooserSpecification | SkinChooserSpecification) : MinMaxItems {
   const strategy = chooser_spec.strategy;
   const choiceMinMaxs = chooser_spec.choices.map(component => (
-    component.component_kind === "chooser_specification" ? minMaxChoosenItems(component) :
+    Array.isArray(component) ? { min: 1, max: 1 } : // for compatibility with older specs that could contain arrays
+    component.component_kind === "chooser_specification" ? minMaxChosenItems(component) :
     isQuestionSpecification(component) ? { min: 1, max: 1 } :
     isSectionSpecification(component) ? { min: 1, max: 1 } :
     isSkinSpecificatoin(component) ? { min: 1, max: 1 } :

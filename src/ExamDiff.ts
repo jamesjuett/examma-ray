@@ -14,7 +14,7 @@ export namespace ExamDiff {
     T extends ExamSpecification ? { exam_id: string } :
     ShallowSpecification<T>;
 
-  type ShallowSpecification<T extends {}> = {
+  type ShallowSpecification<T> = {
     [P in keyof T]: ShallowSpecProperty<T[P]>
   };
 
