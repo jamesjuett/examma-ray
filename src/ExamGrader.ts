@@ -117,8 +117,13 @@ import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/Qu
 
 
 export type ExamGraderOptions = {
+  /**
+   * @deprecated This is ignored
+   */
   frontend_js_path: string,
+
   frontend_media_dir: string,
+  
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 };
@@ -326,7 +331,7 @@ export class ExamGrader {
         let filenameBase = this.createGradedFilenameBase(ex);
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
       });
   }
 
@@ -348,7 +353,7 @@ export class ExamGrader {
         let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
       });
   }
 

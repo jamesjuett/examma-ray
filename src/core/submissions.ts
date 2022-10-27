@@ -51,11 +51,11 @@ export function fillManifest(manifest: ExamSubmission, submitted: ExamSubmission
   assert(manifest.uuid === submitted.uuid, "Mismatch between manifest UUID and submitted UUID.");
 
   // Map of submitted UUIDs to responses
-  let submittedMap : {[index: string]: string} = {};
+  let submittedMap : {[index: string]: string | undefined} = {};
   submitted.sections.forEach(s => s.questions.forEach(q => submittedMap[q.uuid] = q.response));
 
   // Go through questions in the manifest and look for a response that matches the uuid
-  manifest.sections.forEach(s => s.questions.forEach(q => q.response = submittedMap[q.uuid]));
+  manifest.sections.forEach(s => s.questions.forEach(q => q.response = submittedMap[q.uuid] ?? ""));
   manifest.trusted = true;
   return <TrustedExamSubmission>manifest;
 }
