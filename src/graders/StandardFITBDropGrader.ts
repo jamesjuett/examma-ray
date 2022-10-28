@@ -200,6 +200,7 @@ function simpleDropEvaluation(spec: SimpleDropEvaluatorSpecification, submission
 type TargetDropEvaluatorSpecification = {
   readonly kind: "target_drop_evaluator",
   readonly index: number,
+  readonly include_children?: boolean,
   readonly evaluations: readonly {
     readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none" | "require_blank",
     readonly targets: readonly string[],
@@ -208,6 +209,15 @@ type TargetDropEvaluatorSpecification = {
   }[],
   readonly global_prohibited?: readonly string[]
 };
+
+function child_contains(container: (string | DropSubmission)[] | undefined, item_id: string) : boolean {
+  if (container === undefined) {
+    return false;
+  }
+  return container.some(item => {
+    return typeof item !== "string" && item.some(x => x.id === item_id || child_contains(x.children, item_id));
+  })
+}
 
 export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, submission: FITBDropSubmission) {
   
@@ -219,7 +229,7 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
     return {pointsEarned: 0, explanation: "Your submission appears to be invalid or corrupted."};
   }
 
-  const inBox = (id:string) => !!box.find(item => item.id === id);
+  const inBox = (id:string) => !!box.find(item => item.id === id || spec.include_children && child_contains(item.children, id));
 
   if (spec.global_prohibited?.some(inBox)) {
     return FITBDropEvaluations.no_credit();
