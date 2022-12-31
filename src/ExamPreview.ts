@@ -10,9 +10,6 @@ import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
 import { ExamUtils, writeFrontendJS } from './ExamUtils';
 
-
-const NO_REFERNECE_MATERIAL = "This section has no reference material."
-
 export type ExamPreviewOptions = {
   frontend_js_path: string,
   frontend_media_dir: string,
@@ -255,18 +252,20 @@ export class ExamPreview {
                   <div class="examma-ray-section-description">${section.renderDescription(skin)}</div>
                   ${section.questions.map((q, i) => this.renderQuestionOrChooser(q, section_index, i+1, skin)).join("<br />")}
                 </td>
-                <td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
-                  <div class="examma-ray-section-reference-container">
-                    <div class="examma-ray-section-reference">
-                      <div class = "examma-ray-section-reference-width-slider-container">
-                        <div class = "examma-ray-section-reference-width-value">${section.reference_width}%</div>
-                        <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+                ${!section.mk_reference ? "" :
+                  `<td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
+                    <div class="examma-ray-section-reference-container">
+                      <div class="examma-ray-section-reference">
+                        <div class = "examma-ray-section-reference-width-slider-container">
+                          <div class = "examma-ray-section-reference-width-value">${section.reference_width}%</div>
+                          <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+                        </div>
+                        <h6>Reference Material (Section ${section_index})</h6>
+                        ${section.renderReference(skin)}
                       </div>
-                      <h6>Reference Material (Section ${section_index})</h6>
-                      ${section.renderReference(skin) ?? NO_REFERNECE_MATERIAL}
                     </div>
-                  </div>
-                </td>
+                  </td>`
+                }
               </tr>
             </table>
           </div>

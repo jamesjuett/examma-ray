@@ -6,8 +6,6 @@ import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 
-const NO_REFERNECE_MATERIAL = "This section has no reference material."
-
 export function renderHead(extra: string) {
   return (
 `<head>
@@ -148,7 +146,8 @@ export abstract class ExamRenderer {
               <div class="examma-ray-section-description">${as.html_description}</div>
               ${as.assignedQuestions.map(aq => this.renderQuestion(aq)).join("<br />")}
             </td>
-            <td class="examma-ray-section-reference-column" style="width: ${as.section.reference_width}%;">
+            ${!as.html_reference ? "" :
+            `<td class="examma-ray-section-reference-column" style="width: ${as.section.reference_width}%;">
               <div class="examma-ray-section-reference-container">
                 <div class="examma-ray-section-reference">
                   <div class = "examma-ray-section-reference-width-slider-container">
@@ -156,10 +155,11 @@ export abstract class ExamRenderer {
                     <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
                   </div>
                   <h6>Reference Material (Section ${as.displayIndex})</h6>
-                  ${as.html_reference ?? NO_REFERNECE_MATERIAL}
+                  ${as.html_reference}
                 </div>
               </div>
             </td>
+            `}
           </tr>
         </table>
       </div>
