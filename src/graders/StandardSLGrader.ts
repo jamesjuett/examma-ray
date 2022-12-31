@@ -76,7 +76,8 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
   }
 
   public renderReport(aq: GradedQuestion<"select_lines", StandardSLGradingResult>) {
-    let question = aq.question;
+    const question = aq.question;
+    const response = question.response;
     let orig_submission = aq.submission;
     let submission: readonly number[];
     let gr = aq.gradingResult;
@@ -96,11 +97,20 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     return `
     <table class="examma-ray-sl-diff table table-sm">
       <tr><th>Rubric</th><th>Your Code</th><th>Solution</th></tr>
+      <tr>
+        <td></td>
+        <td style="padding-left: 2em;">
+          ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+        </td>
+        <td>
+          ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
+        </td>
+      </tr>
       ${itemResults.map((itemResult, i) => {
         let rubricItem = this.spec.rubric[i];
         let relevant_lines = rubricItem.required.concat(rubricItem.prohibited).concat(rubricItem.optional ?? []).sort((a, b) => a - b);
         let student_selected = relevant_lines.filter(line => submission.indexOf(line) !== -1);
-        let riScore = itemResult.applied ? rubricItem.points : 0;
+        let riScore: number = itemResult.applied ? rubricItem.points : 0;
 
         // let details: string;
         // if (missing.length === 0 && extra.length === 0) {
@@ -116,7 +126,7 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
         // if (missing.length === 0 && extra.length === 0) {
         // details = `Your code contains these lines:<ul>${rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1).map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
         // details += `<br />The solution should contain these lines (and these lines only):<ul>${rubricItem.required.map(line => `<li><code>${question.data.lines[line].text}</code></li>`).join("")}</ul>`;
-        let elem_id = `question-${aq.uuid}-item-${i}`;
+        let elem_id: string = `question-${aq.uuid}-item-${i}`;
 
         return `
           <tr>
@@ -143,6 +153,16 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
             </td>
           </tr>`;
     }).join("")}
+    
+    <tr>
+      <td></td>
+      <td style="padding-left: 2em;">
+        ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+      </td>
+      <td>
+        ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
+      </td>
+    </tr>
     </table>`;
   }
   // TODO ^^^ make this handle groups as well

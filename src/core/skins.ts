@@ -16,6 +16,10 @@ export const DEFAULT_SKIN: ExamComponentSkin = {
   replacements: { }
 }
 
+export function isDefaultSkin(skin: ExamComponentSkin) {
+  return skin.skin_id === DEFAULT_SKIN.skin_id || skin.skin_id === DEFAULT_SKIN.skin_id + "-" + DEFAULT_SKIN.skin_id;
+}
+
 export function createCompositeSkin(sectionSkin: ExamComponentSkin, questionSkin: ExamComponentSkin) : ExamComponentSkin{
   return {
     skin_id: sectionSkin.skin_id + "-" + questionSkin.skin_id,
@@ -46,23 +50,3 @@ export function RANDOM_SKIN(skins: readonly ExamComponentSkin[]) : SkinChooserSp
     }
   };
 }
-
-// export interface SkinChooser {
-//   readonly component_kind: "chooser";
-//   readonly chooser_kind: "skin";
-//   choose(exam: Exam, student: StudentInfo, rand: Randomizer): readonly ExamComponentSkin[];
-//   getById(id: string): ExamComponentSkin | undefined;
-// };
-
-// export function RANDOM_SKIN(skins: readonly ExamComponentSkin[]) : SkinChooser {
-//   let skinMap : {[index: string]: ExamComponentSkin | undefined} = {};
-//   skins.forEach(s => skinMap[s.skin_id] = s);
-//   return {
-//     component_kind: "chooser",
-//     choose: (exam: Exam, student: StudentInfo, rand: Randomizer) => {
-//       assert(skins.length > 0, `Error - array of skin choices is empty.`);
-//       return rand === CHOOSE_ALL ? skins : [rand.choose(skins)]
-//     },
-//     getById: (id: string) => skinMap[id]
-//   };
-// }

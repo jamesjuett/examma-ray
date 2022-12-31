@@ -226,7 +226,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
         <div style="position: sticky; top: 65px; white-space: pre; font-size: 0.8rem; max-height: 90vh; overflow: auto;">${this.renderOverview(gqs)}</div>
       </td>
         ${gradedBlankSubmissions.map((blankSubs, i) => `<td style="vertical-align: top; border-top: none;">
-            ${blankSubs.slice().map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${s.grading_result.matched ? ICON_BOX_CHECK : ""} ${renderScoreBadge(s.grading_result.pointsEarned, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</li>`).join("")}
+            ${blankSubs.slice().map(s => `<div style="white-space: pre"><input type="checkbox" data-blank-num="${i}" data-blank-submission="${encode(s.sub)}"> ${s.grading_result.matched ? ICON_BOX_CHECK : ""} ${renderScoreBadge(s.grading_result.pointsEarned, this.spec.rubric[i].points)} ${renderNumBadge(s.num)} "<code style="white-space: pre">${encode(s.sub)}</code>"</div>`).join("")}
           </td>`
     ).join("")}
       </tr>

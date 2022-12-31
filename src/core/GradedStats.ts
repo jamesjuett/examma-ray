@@ -36,7 +36,7 @@ export class GradedStats {
     _this.mean = this.numFullyGraded > 0 ? mean(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
     _this.stddev = this.numFullyGraded > 0 ? standardDeviation(fullyGradedExams.map(ex => ex.pointsEarned!)) : 0;
 
-    examGrader.allQuestions.forEach(question => {
+    examGrader.exam.allQuestions.forEach(question => {
       let assignedQuestions = examGrader.getAllAssignedQuestionsById(question.question_id);
       let gradedQuestions = assignedQuestions.filter(isGradedQuestion);
       if (gradedQuestions.length > 0) {
@@ -45,11 +45,11 @@ export class GradedStats {
     });
 
     // Find covariance matrix for all questions
-    examGrader.allQuestions.forEach(q1 => {
+    examGrader.exam.allQuestions.forEach(q1 => {
 
       this.gradedQuestionCovarianceMatrix[q1.question_id] = {};
       
-      examGrader.allQuestions.forEach(q2 => {
+      examGrader.exam.allQuestions.forEach(q2 => {
 
         // console.log(`computing covariance for ${q1.question_id} and ${q2.question_id}`);
         // Only calculate covariance based on cases where the questions appeared together and are graded

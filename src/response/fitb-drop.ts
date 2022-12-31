@@ -1,11 +1,12 @@
+import deepEqual from "deep-equal";
 import { encode } from "he";
 import Sortable from "sortablejs";
 import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { assert } from "../core/util";
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import { assert, assertFalse } from "../core/util";
+import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
 
 export type DroppableSpecification = {
   id: string,
@@ -85,6 +86,17 @@ function renderDroppables(droppables: DroppableSpecification, group_id: string, 
 }
 
 function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+
+  // Ensure droppable IDs are unique
+  if(!(new Set<string>(response.droppables.map(d => d.id)).size === response.droppables.length)) {
+    response.droppables.forEach(d1 => {
+      if (response.droppables.filter(d2 => d2.id === d1.id).length > 1) {
+        console.log("Duplicate droppable ID: " + d1.id);
+      }
+    })
+    assertFalse("Error: duplicate droppable ID detected (see above)");
+  }
+
   let group_id = response.group_id ?? question_id;
   return `
     <div class="examma-ray-fitb-drop-originals" data-examma-ray-fitb-drop-group-id="${group_id}">
@@ -241,13 +253,35 @@ function FITB_DROP_FILLER(responseElem: JQuery, submission: FITBDropSubmission) 
   fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-originals"));
 }
 
+
+function FITB_DROP_DIFF(r1: FITBDropSpecification, r2: FITBDropSpecification) : ResponseSpecificationDiff {
+  if (r1.kind !== r2.kind) {
+    return { incompatible: true };
+  }
+
+  return {
+    structure:
+      false, // TODO - implement this diff
+    content:
+      r1.content !== r2.content ||
+      !deepEqual(r1.droppables, r2.droppables, {strict: true}) ||
+      r1.group_id !== r2.group_id ||
+      !deepEqual(r1.starter, r2.starter, {strict: true}),
+    default_grader:
+      !deepEqual(r1.default_grader, r2.default_grader, {strict: true}),
+    sample_solution:
+      !deepEqual(r1.sample_solution, r2.sample_solution, {strict: true})
+  };
+}
+
 export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   parse: FITB_DROP_PARSER,
   render: FITB_DROP_RENDERER,
   render_solution: FITB_DROP_SOLUTION_RENDERER,
   activate: FITB_DROP_ACTIVATE,
   extract: FITB_DROP_EXTRACTOR,
-  fill: FITB_DROP_FILLER
+  fill: FITB_DROP_FILLER,
+  diff: FITB_DROP_DIFF,
 };
 
 function fillerHelper(elem: JQuery, submission: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>, originalsElem: JQuery) {

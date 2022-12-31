@@ -1,9 +1,10 @@
+import deepEqual from "deep-equal";
 import { encode } from "he";
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ViableSubmission } from "./responses";
+import { GraderSpecificationFor } from "../graders/QuestionGrader";
+import { BLANK_SUBMISSION } from "./common";
+import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
 
 /**
  * ## Code Editor Response Element Specification
@@ -172,10 +173,32 @@ function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
 }
 
 
+
+function CODE_EDITOR_DIFF(r1: CodeEditorSpecification, r2: CodeEditorSpecification) : ResponseSpecificationDiff {
+  if (r1.kind !== r2.kind) {
+    return { incompatible: true };
+  }
+
+  return {
+    content:
+      r1.header !== r2.header ||
+      r1.starter !== r2.starter ||
+      r1.footer !== r2.footer,
+    default_grader:
+      !deepEqual(r1.default_grader, r2.default_grader, {strict: true}),
+    sample_solution:
+      !deepEqual(r1.sample_solution, r2.sample_solution, {strict: true}),
+    format:
+      r1.code_language !== r2.code_language ||
+      r1.codemirror_mime_type !== r2.codemirror_mime_type
+  };
+}
+
 export const CODE_EDITOR_HANDLER : ResponseHandler<"code_editor"> = {
   parse: CODE_EDITOR_PARSER,
   render: CODE_EDITOR_RENDERER,
   render_solution: CODE_EDITOR_SOLUTION_RENDERER, 
   extract: CODE_EDITOR_EXTRACTOR,
-  fill: CODE_EDITOR_FILLER
+  fill: CODE_EDITOR_FILLER,
+  diff: CODE_EDITOR_DIFF,
 };

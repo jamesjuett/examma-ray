@@ -235,7 +235,7 @@ export class AssignedExam {
         let sectionSkins = [
           section.skin.component_kind !== "chooser"
             ? section.skin
-            : section.skin.getById(s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+            : section.skin.all_choices.find(skin => skin.skin_id === s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
         ];
         return sectionSkins.map(sectionSkin => new AssignedSection(
           s.uuid,
@@ -247,7 +247,7 @@ export class AssignedExam {
             let questionSkins = [
               question.skin.component_kind !== "chooser"
                 ? question.skin
-                : question.skin.getById(q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
+                : question.skin.all_choices.find(skin => skin.skin_id === q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
             ].map(
               qSkin => createCompositeSkin(sectionSkin, qSkin)
             );

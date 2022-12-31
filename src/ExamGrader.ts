@@ -95,32 +95,35 @@ For now, refer to examples of existing graders. More thorough documentation comi
  * @module
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
-import { TrustedExamSubmission } from './core/submissions';
-import { AssignedExam, AssignedQuestion, AssignedSection, isGradedQuestion } from './core/assigned_exams';
-import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
-import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
-import { chooseQuestions, chooseSections, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
-import { asMutable, assert, assertFalse, Mutable } from './core/util';
-import { unparse } from 'papaparse';
-import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
-import { createCompositeSkin, DEFAULT_SKIN } from './core/skins';
 import del from 'del';
+import { mkdirSync, writeFileSync } from 'fs';
+import { unparse } from 'papaparse';
+import path from 'path';
 import { average, mean, sum } from 'simple-statistics';
-import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
-import { GradedStats } from "./core/GradedStats";
+import { AssignedExam, AssignedQuestion, isGradedQuestion } from './core/assigned_exams';
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
-import { CHOOSE_ALL } from './core/randomization';
-import { UUID_Strategy } from './ExamGenerator';
-import path from 'path';
+import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
+import { StudentInfo } from './core/exam_specification';
+import { GradedStats } from "./core/GradedStats";
 import { ICON_BOX_CHECK } from './core/icons';
+import { TrustedExamSubmission } from './core/submissions';
+import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
+import { asMutable, assert } from './core/util';
+import { UUID_Strategy } from './ExamGenerator';
+import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
+import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
 
 
 
 export type ExamGraderOptions = {
+  /**
+   * @deprecated This is ignored
+   */
   frontend_js_path: string,
+
   frontend_media_dir: string,
+  
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 };
@@ -144,8 +147,6 @@ export class ExamGrader {
   public readonly submittedExams: AssignedExam[] = [];
   public readonly submittedExamsByUniqname: { [index: string]: AssignedExam | undefined; } = {};
 
-  public readonly allSections: readonly Section[];
-  public readonly allQuestions: readonly Question[];
   public readonly allAssignedQuestions: readonly AssignedQuestion[] = [];
 
   public readonly stats: GradedStats;
@@ -173,13 +174,6 @@ export class ExamGrader {
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
-    let ignore: StudentInfo = { uniqname: "", name: "" };
-
-    this.allSections = exam.sections.flatMap(chooser => realizeSections(chooseSections(chooser, exam, ignore, CHOOSE_ALL)));
-    this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
-
-    this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseQuestions(chooser, exam, ignore, CHOOSE_ALL)));
-    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
 
     this.stats = new GradedStats();
   }
@@ -242,7 +236,7 @@ export class ExamGrader {
   public gradeAll() {
 
     // Prepare all graders (e.g. load manual grading data)
-    this.allQuestions.forEach(question => {
+    this.exam.allQuestions.forEach(question => {
       let grader = this.getGrader(question);
       if (grader) {
         let grading_data = this.prepareGradingData(question, grader);
@@ -317,7 +311,7 @@ export class ExamGrader {
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
-    this.allQuestions.forEach(q => this.renderStatsToFile(q));
+    this.exam.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
   public writeReports() {
@@ -337,7 +331,7 @@ export class ExamGrader {
         let filenameBase = this.createGradedFilenameBase(ex);
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
       });
   }
 
@@ -359,7 +353,7 @@ export class ExamGrader {
         let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
       });
   }
 
@@ -400,7 +394,7 @@ export class ExamGrader {
         ...(this.curve ? ["curved_total"] : []),
         "individual_exam_mean",
         "individual_exam_stddev",
-        ...this.allQuestions.map(q => q.question_id)],
+        ...this.exam.allQuestions.map(q => q.question_id)],
       data: data
     }));
   }
@@ -462,7 +456,7 @@ export class ExamGrader {
       return `<div>${renderPointsProgressBar(score, ex.pointsPossible)} <a href="exams/${this.createGradedFilenameBase(ex)}.html">${ex.student.uniqname}</a></div>`
     }).join("");
 
-    let questions_overview = this.allQuestions.map(question => {
+    let questions_overview = this.exam.allQuestions.map(question => {
 
       let grader = this.getGrader(question);
       let assignedQuestions = this.getAllAssignedQuestionsById(question.question_id);

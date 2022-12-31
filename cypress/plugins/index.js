@@ -12,7 +12,7 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
-const { rmdir } = require('fs');
+const { rm } = require('fs');
 
 /**
  * @type {Cypress.PluginConfig}
@@ -25,10 +25,10 @@ module.exports = (on, config) => {
   on('task', {
     // From https://github.com/cypress-io/cypress-example-recipes/blob/2c2b85badeff8d9daff9e4fbdd0f22a3777643f0/examples/testing-dom__download/cypress/plugins/index.js
     deleteFolder (folderName) {
-      console.log('deleting folder %s', folderName)
+      // console.log('deleting folder %s', folderName)
 
       return new Promise((resolve, reject) => {
-        rmdir(folderName, { maxRetries: 10, recursive: true }, (err) => {
+        rm(folderName, { recursive: true, force: true }, (err) => {
           if (err) {
             console.error(err)
 

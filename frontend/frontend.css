@@ -578,7 +578,7 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-.nav .badge {
+.nav.er-exam-nav .badge {
   width: 5em;
 }
 
@@ -668,4 +668,48 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   border-radius: 5px;
   background-color: rgba(0,0,0,.5);
   -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+
+.er-preview-nav-group {
+  display: block;
+  flex-grow: 1;
+  margin-top: 0.25rem;
+  margin-left: 0.15rem;
+}
+
+.er-preview-nav {
+  padding: 0.25rem;
+  margin-left: 2px;
+}
+
+.er-preview-nav-section {
+  margin-bottom: 0.25rem;
+  border-bottom: solid 1px #9f9f9f;
+  border-left: solid 2px #282828;
+}
+
+.er-preview-nav-section-chooser {
+  margin-left: 0px;
+  background-color: #d3c4ed;
+  margin-bottom: 0.25rem;
+  border-bottom: solid 1px #ab7efe;
+  border-left: solid 2px #6b21f5;
+}
+
+.er-preview-nav-question-chooser {
+  margin-left: 0px;
+  background-color: #f2e4b9;
+  margin-bottom: 0.25rem;
+  border-bottom: solid 1px #edce73;
+  border-left: solid 2px #ecbd30;
+}
+
+.er-preview-skin-icon {
+  /* border-right: solid 1px #282828;
+  margin-right: 4px; */
+}
+
+.er-skin-picker-link {
+  font-family: monospace;
 }
