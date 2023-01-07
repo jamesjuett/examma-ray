@@ -26,6 +26,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   public readonly displayIndex;
 
   public readonly html_description: string;
+  public readonly html_postscript: string;
 
   public constructor(
     public readonly uuid: string,
@@ -41,6 +42,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     this.submission = parse_submission(question.kind, rawSubmission);
 
     this.html_description = question.renderDescription(this.skin);
+    this.html_postscript = question.renderPostscript(this.skin);
   }
 
   public grade(grader: QuestionGrader<QT>) {

@@ -1,6 +1,5 @@
 import "highlight.js/styles/github.css";
 import 'katex/dist/katex.min.css';
-import "./frontend.css";
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';

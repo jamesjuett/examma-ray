@@ -122,7 +122,7 @@ export type ExamGraderOptions = {
    */
   frontend_js_path: string,
 
-  frontend_media_dir: string,
+  frontend_assets_dir: string,
   
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
@@ -130,7 +130,7 @@ export type ExamGraderOptions = {
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
-  frontend_media_dir: "media",
+  frontend_assets_dir: "assets",
   uuid_strategy: "plain",
 };
 
@@ -301,9 +301,9 @@ export class ExamGrader {
     }
   }
 
-  private writeMedia(outDir: string) {
-    let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
-    ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+  private writeAssets(outDir: string) {
+    let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
+    ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
   public writeGraderPages() {
@@ -322,7 +322,7 @@ export class ExamGrader {
     del.sync(`${examDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend-graded.js");
-    this.writeMedia(`${examDir}`);
+    this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -343,7 +343,7 @@ export class ExamGrader {
     del.sync(`${examDir}/*`);
 
     writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
-    this.writeMedia(`${examDir}`);
+    this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -498,6 +498,7 @@ export class ExamGrader {
               <div><a href="questions/${question.question_id}.html">Question Analysis Page</a></div>
               ${question.renderDescription(assignedQuestions[0].skin)}
               ${question_overview}
+              ${question.renderPostscript(assignedQuestions[0].skin)}
             </div>
           </div>
         </div>

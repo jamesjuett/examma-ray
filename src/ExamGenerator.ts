@@ -27,7 +27,7 @@ export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
 
 export type ExamGeneratorOptions = {
   frontend_js_path: string,
-  frontend_media_dir: string,
+  frontend_assets_dir: string,
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
   allow_duplicates: boolean,
@@ -36,7 +36,7 @@ export type ExamGeneratorOptions = {
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
-  frontend_media_dir: "media",
+  frontend_assets_dir: "assets",
   uuid_strategy: "plain",
   allow_duplicates: false
 };
@@ -212,11 +212,11 @@ export class ExamGenerator {
 
   }
 
-  private writeMedia(outDir: string) {
+  private writeAssets(outDir: string) {
 
-    let mediaOutDir = path.join(outDir, this.options.frontend_media_dir);
+    let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
     
-    ExamUtils.writeExamMedia(mediaOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
   public createManifests() {
@@ -256,7 +256,8 @@ export class ExamGenerator {
 
     writeFrontendJS(`${examDir}/js`, "frontend.js");
     writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
-    this.writeMedia(`${examDir}`);
+    writeFrontendJS(`${examDir}/js`, "frontend-doc.js");
+    this.writeAssets(`${examDir}`);
 
     this.writeStats();
 

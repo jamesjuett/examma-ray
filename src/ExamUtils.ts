@@ -69,19 +69,19 @@ export namespace ExamUtils {
     return students;
   }
 
-  export function writeExamMedia(media_out_dir: string, exam: Exam, all_sections: readonly Section[], all_questions: readonly Question[]) {
+  export function writeExamAssets(asset_out_dir: string, exam: Exam, all_sections: readonly Section[], all_questions: readonly Question[]) {
     
-    // Copy overall exam media
-    exam.media_dir && copyFrontendMedia(exam.media_dir, path.join(media_out_dir, "exam", exam.exam_id));
+    // Copy overall exam assets
+    exam.assets_dir && copyFrontendAssets(exam.assets_dir, asset_out_dir);
 
-    // Copy media for all sections
+    // Copy assets for all sections
     all_sections.forEach(
-      s => s?.media_dir && copyFrontendMedia(s.media_dir, path.join(media_out_dir, "section", s.section_id))
+      s => s?.assets_dir && copyFrontendAssets(s.assets_dir, path.join(asset_out_dir, "section", s.section_id))
     );
 
-    // Copy media for all questions
+    // Copy assets for all questions
     all_questions.forEach(
-      q => q?.media_dir && copyFrontendMedia(q.media_dir, path.join(media_out_dir, "question", q.question_id))
+      q => q?.assets_dir && copyFrontendAssets(q.assets_dir, path.join(asset_out_dir, "question", q.question_id))
     );
   }
 }
@@ -125,18 +125,18 @@ export function writeFrontendJS(outDir: string, filename: string) {
   }
 }
 
-export function copyFrontendMedia(media_source_dir: string, frontend_media_dir: string) {
-  mkdirSync(frontend_media_dir, { recursive: true });
+export function copyFrontendAssets(asset_source_dir: string, frontend_assets_dir: string) {
+  mkdirSync(frontend_assets_dir, { recursive: true });
 
   ncp(
-    media_source_dir,
-    frontend_media_dir,
+    asset_source_dir,
+    frontend_assets_dir,
     (err) => { // callback
       if (!err) {
-        console.log("Copied exam media.")
+        console.log("Copied exam assets.")
       }
       else {
-        console.error("ERROR copying frontend media".red);
+        console.error("ERROR copying frontend assets".red);
       }
     }
   )

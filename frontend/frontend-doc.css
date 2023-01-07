@@ -176,7 +176,6 @@ code {
 
 .examma-ray-questions-container {
   padding-top: 0;
-  padding-bottom: 30vh;
 }
 
 .examma-ray-question .card-body {
@@ -272,6 +271,8 @@ code {
   vertical-align: middle;
   width: 75px;
 }
+
+
 
 .examma-ray-question-description p,
 .examma-ray-question-postscript p {
@@ -693,7 +694,7 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   display: flex;
   flex-direction: column;
   position: fixed;
-  width: 200px;
+  width: 250px;
   top: 0;
   left: 0;
   bottom: 0;
@@ -706,6 +707,12 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 }
 
 .examma-ray-main-panel {
-  margin-left: 210px;
-  width: calc(100% - 220px);
+  margin-left: 260px;
+  width: calc(100% - 270px);
+}
+
+.examma-ray-section-no-reference {
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
 }

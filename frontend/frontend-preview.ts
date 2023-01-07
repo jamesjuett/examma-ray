@@ -1,4 +1,5 @@
 import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
+import "./frontend.css";
 
 function setupSkinPickers() {
   $(".er-section-skin-picker-link").on("click", function() {

@@ -137,7 +137,7 @@ export abstract class ExamRenderer {
 
   public renderSection(as: AssignedSection) {
     return `
-      <div id="section-${as.uuid}" class="examma-ray-section" data-section-uuid="${as.uuid}" data-section-display-index="${as.displayIndex}">
+      <div id="section-${as.uuid}" class="examma-ray-section ${as.html_reference ? "" : "examma-ray-section-no-reference"}" data-section-uuid="${as.uuid}" data-section-display-index="${as.displayIndex}">
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
@@ -182,6 +182,9 @@ export abstract class ExamRenderer {
               ${aq.html_description}
             </div>
             ${this.renderQuestionContent(aq)}
+            <div class="examma-ray-question-postscript">
+              ${aq.html_postscript}
+            </div>
           </div>
         </div>
       </div>
@@ -199,15 +202,17 @@ export abstract class ExamRenderer {
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
-            <div class="modal-body" style="text-align: center;">
+            <div class="modal-body">
               <div class="alert alert-info">${mk2html(ae.exam.mk_saver_message)}</div>
-              <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
-              <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
-              <br />
-              <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file.<br /><b>WARNING!</b> This will overwrite ALL answers on this page.</div>
-              <div>
-                <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
-                <input id="exam-saver-file-input" type="file"></a>
+              <div style="text-align: center;">
+                <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
+                <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
+                <br />
+                <div style="margin-bottom: 5px;">Or, you may restore answers you previously saved to a file.<br /><b>WARNING!</b> This will overwrite ALL answers on this page.</div>
+                <div>
+                  <button id="exam-saver-load-button" class="btn btn-danger disabled" disabled>${FILE_UPLOAD} Load Answers</button>
+                  <input id="exam-saver-file-input" type="file"></a>
+                </div>
               </div>
             </div>
           </div>
@@ -309,7 +314,7 @@ export abstract class ExamRenderer {
               <h5 class="modal-title">WARNING</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-danger">It appears you have your exam open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
+              <div class="alert alert-danger">It appears you have this page open in multiple tabs/windows. That's a bad idea. Close whichever one you just opened.</div>
               <div>
                 <button class="btn btn-primary" data-dismiss="modal">OK</button>
               </div>
@@ -330,7 +335,7 @@ export class OriginalExamRenderer extends ExamRenderer {
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
-        <div class="bg-light" style="display: flex; flex-direction: column; position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+        <div class="bg-light examma-ray-left-panel">
           ${this.renderTimer()}
           <h3 class="text-center pb-1 border-bottom">
             ${renderPointsWorthBadge(ae.pointsPossible, "badge-secondary")}
@@ -338,7 +343,7 @@ export class OriginalExamRenderer extends ExamRenderer {
           ${this.renderNav(ae)}
           ${this.renderSaverButton(ae)}
         </div>
-        <div style="margin-left: 210px; width: calc(100% - 220px);">
+        <div class="examma-ray-main-panel">
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
           <div class="container examma-ray-bottom-message">
@@ -361,7 +366,7 @@ export class OriginalExamRenderer extends ExamRenderer {
             <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               ${renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true)}
               <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-                Question ${q.displayIndex}
+                ${q.question.title ? `${q.displayIndex}: ${q.question.title}` : `Question ${q.displayIndex}`}
               </a>
             </li>
           `).join("")}
@@ -388,7 +393,7 @@ export class OriginalExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -408,14 +413,14 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
-        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+        <div class="bg-light examma-ray-left-panel">
           <div class="text-center pb-1 border-bottom">
             <h5>${renderPointsWorthBadge(ae.pointsPossible, "badge-success")}</h5>
             <span style="font-size: large; font-weight: bold; color: red;">Sample Solution</span>
           </div>
           ${this.renderNav(ae)}
         </div>
-        <div style="margin-left: 210px; width: calc(100% - 220px);">
+        <div class="examma-ray-main-panel">
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
         </div>
@@ -443,7 +448,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible, "badge-success")}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible, "badge-success")}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -468,7 +473,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
-        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+        <div class="bg-light examma-ray-left-panel">
           <div class="text-center pb-1 border-bottom">
           <span style="font-size: large; font-weight: bold;">${ae.student.uniqname}</span>
           <br />
@@ -477,7 +482,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
           </div>
           ${this.renderNav(ae)}
         </div>
-        <div style="margin-left: 210px; width: calc(100% - 220px);">
+        <div class="examma-ray-main-panel">
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
         </div>
@@ -508,7 +513,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -526,13 +531,13 @@ export class GradedExamRenderer extends ExamRenderer {
   public renderBody(ae: AssignedExam) {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
       <div class="row">
-        <div class="bg-light" style="position: fixed; width: 200px; top: 0; left: 0; bottom: 0; padding-left: 5px; z-index: 10; overflow-y: auto; border-right: solid 1px #dedede; font-size: 85%">
+        <div class="bg-light examma-ray-left-panel">
           <h3 class="text-center pb-1 border-bottom">
             ${this.renderGrade(ae)}
           </h3>
           ${this.renderNav(ae)}
         </div>
-        <div style="margin-left: 210px; width: calc(100% - 220px);">
+        <div class="examma-ray-main-panel">
           ${this.renderGradingSummary(ae)}
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
@@ -569,7 +574,7 @@ export class GradedExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}</b> ${aq.isGraded()
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${aq.isGraded()
       ? renderScoreBadge(aq.pointsEarned, aq.question.pointsPossible)
       : renderUngradedBadge(aq.question.pointsPossible)
     }`;
@@ -625,4 +630,78 @@ export class GradedExamRenderer extends ExamRenderer {
       ${mk2html(aq.exception.explanation)}
     </div>`;
   }
+}
+
+export class DocRenderer extends ExamRenderer {
+
+  public renderScripts(frontendPath: string): string {
+    return `<script src="${path.join(frontendPath, "frontend-doc.js")}"></script>`;
+  }
+
+  public renderBody(ae: AssignedExam) {
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+      <div class="row">
+        <div class="bg-light examma-ray-left-panel">
+          <div class="text-center pb-1 pl-4 pr-4 border-bottom">
+            <b>${ae.exam.title}</b>
+          </div>
+          ${this.renderNav(ae)}
+          ${this.renderSaverButton(ae)}
+        </div>
+        <div class="examma-ray-main-panel">
+          ${this.renderHeader(ae, ae.student)}
+          ${this.renderSections(ae)}
+          <div class="container examma-ray-bottom-message">
+            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+              ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  public override renderNav(ae: AssignedExam): string {
+    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+        ${ae.assignedSections.map(s => `
+          <li class="nav-item">
+            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${s.displayIndex + ": " + s.section.title}</a>
+          </li>
+          ${s.assignedQuestions.map(q => `
+            <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
+              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+              ${q.question.title ? `${q.displayIndex}: ${q.question.title}` : `Question ${q.displayIndex}`}
+              </a>
+            </li>
+          `).join("")}
+        `).join("")}
+      </ul>`
+  }
+
+  public renderNavBadge(s: AssignedSection) {
+    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  }
+
+  protected renderStudentHeader(student: StudentInfo) {
+    return "";
+  }
+  
+  protected renderSectionHeader(as: AssignedSection) {
+    return `
+      <div class="examma-ray-section-heading">
+        <div class="badge badge-primary">
+          ${as.displayIndex}: ${as.section.title}
+        </div>
+      </div>
+    `;
+  }
+
+  protected renderQuestionHeader(aq: AssignedQuestion) {
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b>`;
+  }
+  
+  protected renderQuestionContent(aq: AssignedQuestion) {
+    return aq.question.renderResponse(aq.uuid, aq.skin);
+  }
+  
 }
