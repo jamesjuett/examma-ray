@@ -61,7 +61,7 @@ import { isNumericArray } from "./util";
 export type MCSpecification = {
 
   /**
-   * The discriminant `"multiple_choice"` is used to distinguish FITB specifications.
+   * The discriminant `"multiple_choice"` is used to distinguish MC specifications.
    */
   kind: "multiple_choice";
 

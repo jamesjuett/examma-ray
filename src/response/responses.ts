@@ -4,6 +4,7 @@ import { MCSpecification, MCSubmission, MC_HANDLER } from "./mc";
 import { SLSpecification, SLSubmission, SL_HANDLER } from "./select_lines";
 import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
 import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
+import { IFrameResponseSpecification, IFrameSubmission, IFRAME_HANDLER } from "./iframe";
 import { ExamComponentSkin } from "../core/skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
@@ -12,6 +13,7 @@ export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "select_lines" ? SLSpecification :
   QT extends "code_editor" ? CodeEditorSpecification :
   QT extends "fitb_drop" ? FITBDropSpecification :
+  QT extends "iframe" ? IFrameResponseSpecification :
   never;
 
 export type SubmissionType<QT extends ResponseKind> =
@@ -20,6 +22,7 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "select_lines" ? SLSubmission :
   QT extends "code_editor" ? CodeEditorSubmission :
   QT extends "fitb_drop" ? FITBDropSubmission :
+  QT extends "iframe" ? IFrameSubmission :
   never;
 
 /**
@@ -68,7 +71,8 @@ export const RESPONSE_HANDLERS : {
   "fill_in_the_blank": FITB_HANDLER,
   "select_lines": SL_HANDLER,
   "code_editor": CODE_EDITOR_HANDLER,
-  "fitb_drop": FITB_DROP_HANDLER
+  "fitb_drop": FITB_DROP_HANDLER,
+  "iframe": IFRAME_HANDLER,
 };
 
 export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {

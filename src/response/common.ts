@@ -6,7 +6,8 @@ export type ResponseKind =
   "fill_in_the_blank" |
   "select_lines" |
   "code_editor" |
-  "fitb_drop";
+  "fitb_drop" |
+  "iframe";
 
 /**
  * Represents a blank submission. For example, if a student does not select
