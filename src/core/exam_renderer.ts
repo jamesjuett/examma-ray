@@ -59,7 +59,7 @@ export abstract class ExamRenderer {
     return `
       <ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<li class = "nav-item">
-          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
+          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
         </li>`).join("")}
       </ul>`
   }
@@ -360,13 +360,13 @@ export class OriginalExamRenderer extends ExamRenderer {
     return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `
           <li class="nav-item">
-            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + s.section.title}</a>
+            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
           </li>
           ${s.assignedQuestions.map(q => `
             <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               ${renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true)}
               <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-                ${q.question.title ? `${q.displayIndex}: ${q.question.title}` : `Question ${q.displayIndex}`}
+                ${q.question.title ? `${q.displayIndex}: ${mk2html(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </li>
           `).join("")}
@@ -386,14 +386,14 @@ export class OriginalExamRenderer extends ExamRenderer {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible, "badge-light")}
+          ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)} ${renderPointsWorthBadge(as.pointsPossible, "badge-light")}
         </div>
       </div>
     `;
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -440,7 +440,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible, "badge-success")}
+          ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)} ${renderPointsWorthBadge(as.pointsPossible, "badge-success")}
         </div>
         <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold; color: red;">Sample Solution</span>
       </div>
@@ -448,7 +448,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible, "badge-success")}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible, "badge-success")}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -505,7 +505,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${as.displayIndex}: ${as.section.title} ${renderPointsWorthBadge(as.pointsPossible)}
+          ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)} ${renderPointsWorthBadge(as.pointsPossible)}
         </div>
         <span style="display: inline-block; vertical-align: middle; font-size: large; font-weight: bold;">Submitted Answers</span>
       </div>
@@ -513,7 +513,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -568,13 +568,13 @@ export class GradedExamRenderer extends ExamRenderer {
 
     return `
       <div class="examma-ray-section-heading">
-        <div class="badge badge-primary">${badge} ${as.displayIndex}: ${as.section.title}</div>
+        <div class="badge badge-primary">${badge} ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)}</div>
       </div>
     `;
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b> ${aq.isGraded()
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b> ${aq.isGraded()
       ? renderScoreBadge(aq.pointsEarned, aq.question.pointsPossible)
       : renderUngradedBadge(aq.question.pointsPossible)
     }`;
@@ -665,12 +665,12 @@ export class DocRenderer extends ExamRenderer {
     return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `
           <li class="nav-item">
-            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${s.displayIndex + ": " + s.section.title}</a>
+            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
           </li>
           ${s.assignedQuestions.map(q => `
             <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-              ${q.question.title ? `${q.displayIndex}: ${q.question.title}` : `Question ${q.displayIndex}`}
+              ${q.question.title ? `${q.displayIndex}: ${mk2html(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </li>
           `).join("")}
@@ -690,14 +690,14 @@ export class DocRenderer extends ExamRenderer {
     return `
       <div class="examma-ray-section-heading">
         <div class="badge badge-primary">
-          ${as.displayIndex}: ${as.section.title}
+          ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)}
         </div>
       </div>
     `;
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + aq.question.title : ""}</b>`;
+    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>`;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
