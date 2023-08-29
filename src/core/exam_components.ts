@@ -14,17 +14,23 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly component_kind = "component";
   public readonly spec: QuestionSpecification<QT>;
   public readonly question_id: string;
+  public readonly title?: string;
   public readonly tags: readonly string[];
   public readonly mk_description: string;
+  public readonly mk_postscript: string;
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
-  public readonly media_dir?: string;
+  public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
+    [index:string] : string | undefined
+  } = {};
+
+  private readonly postscriptCache: {
     [index:string] : string | undefined
   } = {};
 
@@ -50,8 +56,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.spec = spec;
     assert(isValidID(spec.question_id), `Invalid question ID: ${spec.question_id}`);
     this.question_id = spec.question_id;
+    if(spec.title) { this.title = spec.title; }
     this.tags = spec.tags ?? [];
     this.mk_description = spec.mk_description;
+    this.mk_postscript = spec.mk_postscript ?? "";
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
@@ -62,7 +70,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     ) : DEFAULT_SKIN;
     this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
-    this.media_dir = spec.media_dir;
+    this.assets_dir = spec.assets_dir;
   }
 
   public renderResponse(uuid: string, skin?: ExamComponentSkin) {
@@ -75,6 +83,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
 
   public renderDescription(skin: ExamComponentSkin) {
     return this.descriptionCache[skin.skin_id] ??= mk2html(this.mk_description, skin);
+  }
+
+  public renderPostscript(skin: ExamComponentSkin) {
+    return this.postscriptCache[skin.skin_id] ??= mk2html(this.mk_postscript, skin);
   }
 
   public isKind<RK extends QT>(kind: RK) : this is Question<RK> {
@@ -105,7 +117,7 @@ export class Section {
    * Guaranteed to be an integral value.
    */
   public readonly reference_width: number;
-  public readonly media_dir?: string;
+  public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -149,7 +161,7 @@ export class Section {
     ) : DEFAULT_SKIN;
 
     this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
-    this.media_dir = spec.media_dir;
+    this.assets_dir = spec.assets_dir;
 
     assert(
       Number.isInteger(this.reference_width) && 0 <= this.reference_width && this.reference_width <= 100,
@@ -219,7 +231,7 @@ export class Exam {
   public readonly mk_download_message: string;
   public readonly mk_bottom_message: string;
   public readonly mk_saver_message: string;
-  public readonly media_dir?: string;
+  public readonly assets_dir?: string;
 
   public readonly points: MinMaxPoints;
   public readonly sections: readonly (Section | SectionChooser)[];
@@ -265,7 +277,7 @@ export class Exam {
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
-    this.media_dir = spec.media_dir;
+    this.assets_dir = spec.assets_dir;
 
     this.spec = spec;
 

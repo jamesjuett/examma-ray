@@ -152,7 +152,7 @@ In the `data` folder, you'll find
 In the `out` folder, you'll find
 - `exams`, which contains the actual HTML files for each student's exam
 - `exams/js/frontend.js`, which is the javascript bundle for the exam frontend
-- `exams/media/`, media files (e.g. images) included in the exam
+- `exams/assets/`, files (e.g. images) to be included in the exam
 
 The UUIDs you see will be different from the ones shown here. They depend on:
 - The namespace generated in your `secret` file when you initialized your exam
@@ -211,7 +211,7 @@ npx ts-node scripts/gen.ts --spec-only
 
 ## Administering an Exam
 
-Essentially, you just need to distribute each student's `.html` file, the common `js/frontend.js`, and any media files. A reasonable way to do this is set up a simple http file server somewhere that serves these files. Just copy over the whole `out/eecs280f21_final/exams` directory and point students to their URL.
+Essentially, you just need to distribute each student's `.html` file, the common `js/frontend.js`, and any asset files. A reasonable way to do this is set up a simple http file server somewhere that serves these files. Just copy over the whole `out/eecs280f21_final/exams` directory and point students to their URL.
 
 Because the URL for each student (i.e. based on the name of their `.html` file) is deterministic, you can send out links ahead of time via a mailmerge or some other mechanism. Of course, you'll want to make sure you don't actually put the files up on your http file server until the exam starts. Ideally, you don't want to dump all the URLs publicly, since students could take each others exams and/or see more questions than they should by peeking at others' exams. But you can evaluate that tradeoff vs. the complexity of distributing students' URLs privately.
 

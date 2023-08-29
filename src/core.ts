@@ -34,5 +34,6 @@ export {
   ExamRenderer,
   OriginalExamRenderer,
   SampleSolutionExamRenderer,
-  GradedExamRenderer
+  GradedExamRenderer,
+  DocRenderer
 } from "./core/exam_renderer";

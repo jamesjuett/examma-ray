@@ -6,7 +6,7 @@ import { Blob } from 'blob-polyfill';
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 
 import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
-import "./frontend.css";
+import "./frontend-doc.css";
 
 
 function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
@@ -373,19 +373,18 @@ function setupSaverModal() {
 
 function setupChangeListeners() {
   // https://stackoverflow.com/questions/7317273/warn-user-before-leaving-web-page-with-unsaved-changes
-  window.addEventListener("beforeunload", function (e) {
-    // EDITED - show the warning always, even if they don't have unsaved changes
-    // if (!HAS_UNSAVED_CHANGES) {
-    //     return undefined;
-    // }
+  // window.addEventListener("beforeunload", function (e) {
+  //   if (!HAS_UNSAVED_CHANGES) {
+  //       return undefined;
+  //   }
 
-    // Note many browsers will ignore this message and just show a
-    // default one for security purposes. That's ok.
-    let msg = "You've made changes to you answers since the last time you downloaded an answers file. Are you sure you want to leave the page?";
+  //   // Note many browsers will ignore this message and just show a
+  //   // default one for security purposes. That's ok.
+  //   let msg = "You've made changes to you answers since the last time you downloaded an answers file. Are you sure you want to leave the page?";
 
-    (e || window.event).returnValue = msg; //Gecko + IE
-    return msg; //Gecko + Webkit, Safari, Chrome etc.
-  });
+  //   (e || window.event).returnValue = msg; //Gecko + IE
+  //   return msg; //Gecko + Webkit, Safari, Chrome etc.
+  // });
 
   // Any change to an input element within a question response
   // triggers unsaved changes
@@ -415,22 +414,22 @@ function startExam() {
     if (autosavedAnswers) {
       try {
         fillExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
-        $("#exam-welcome-restored-modal").modal("show");
+        // $("#exam-welcome-restored-modal").modal("show");
       }
       catch (e: unknown) {
-        $("#exam-welcome-restored-error-modal").modal("show");
+        // $("#exam-welcome-restored-error-modal").modal("show");
         throw e;
       }
     }
     else {
-      $("#exam-welcome-normal-modal").modal("show");
+      // $("#exam-welcome-normal-modal").modal("show");
     }
 
     // Interval to autosave to local storage every 5 seconds
     setInterval(autosaveToLocalStorage, 5000);
   }
   else {
-    $("#exam-welcome-no-autosave-modal").modal("show");
+    // $("#exam-welcome-no-autosave-modal").modal("show");
   }
 
   // Consider work to be saved when exam is started

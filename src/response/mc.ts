@@ -61,7 +61,7 @@ import { isNumericArray } from "./util";
 export type MCSpecification = {
 
   /**
-   * The discriminant `"multiple_choice"` is used to distinguish FITB specifications.
+   * The discriminant `"multiple_choice"` is used to distinguish MC specifications.
    */
   kind: "multiple_choice";
 
@@ -215,7 +215,6 @@ function MC_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
       responseElem.find(".examma-ray-mc-num-selected").html(""+numSelected);
     });
   }
-  responseElem.data("sl-view", "choices");
 }
 
 function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {

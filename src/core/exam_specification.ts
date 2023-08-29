@@ -73,6 +73,11 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * by an [[ExamGenerator]] using the `"plain"` or "uuidv5" strategies.
    */
   readonly question_id: string,
+  
+  /**
+   * An optional question title.
+   */
+  readonly title?: string,
 
   /**
    * The number of points the question is worth overall.
@@ -83,6 +88,11 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * Markdown-formatted question description.
    */
   readonly mk_description: string,
+
+  /**
+   * Optional, markdown-formatted question postscript. Appears below the response element.
+   */
+  readonly mk_postscript?: string,
 
   /**
    * The response for this question, which is the part of the question students interact with to enter their answer.
@@ -103,14 +113,14 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   readonly skin?: ExamComponentSkin | SkinChooserSpecification
 
   /**
-   * An absolute path to a directory containing media for this question. Media will be
-   * available to the frontend at {{frontend_media_dir}}/question/{{question_id}}/ where
-   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
-   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * An absolute path to a directory containing assets for this question. Assets will be
+   * available to the frontend at {{frontend_assets_dir}}/question/{{question_id}}/ where
+   * {{frontend_assets_dir}} is configured by the exam generator (defaults to "assets").
+   * Tip: Use `__dirname` to get an absolute path to an assets folder located in the
    * same directory as the file in which you define your specification. For example,
-   * `__dirname + "/media"`.
+   * `__dirname + "/assets"`.
    */
-  readonly media_dir?: string;
+  readonly assets_dir?: string;
 };
 
 export type SectionSpecification = {
@@ -164,14 +174,14 @@ export type SectionSpecification = {
 
 
   /**
-   * An absolute path to a directory containing media for this section. Media will be
-   * available to the frontend at {{frontend_media_dir}}/section/{{section_id}}/ where
-   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
-   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * An absolute path to a directory containing assets for this section. Assets will be
+   * available to the frontend at {{frontend_assets_dir}}/section/{{section_id}}/ where
+   * {{frontend_assets_dir}} is configured by the exam generator (defaults to "assets").
+   * Tip: Use `__dirname` to get an absolute path to an assets folder located in the
    * same directory as the file in which you define your specification. For example,
-   * `__dirname + "/media"`.
+   * `__dirname + "/assets"`.
    */
-  readonly media_dir?: string;
+  readonly assets_dir?: string;
 }
 
 export type ExamSpecification = {
@@ -245,14 +255,14 @@ export type ExamSpecification = {
   readonly enable_regrades?: boolean
 
   /**
-   * An absolute path to a directory containing media for this exam. Media will be
-   * available to the frontend at {{frontend_media_dir}}/exam/{{exam_id}}/ where
-   * {{frontend_media_dir}} is configured by the exam generator (defaults to "media").
-   * Tip: Use `__dirname` to get an absolute path to a media folder located in the
+   * An absolute path to a directory containing assets for this exam. Assets will be
+   * available to the frontend at {{frontend_assets_dir}}/exam/{{exam_id}}/ where
+   * {{frontend_assets_dir}} is configured by the exam generator (defaults to "assets").
+   * Tip: Use `__dirname` to get an absolute path to an assets folder located in the
    * same directory as the file in which you define your specification. For example,
-   * `__dirname + "/media"`.
+   * `__dirname + "/assets"`.
    */
-  readonly media_dir?: string;
+  readonly assets_dir?: string;
 };
 
 export function isValidID(id: string) {
