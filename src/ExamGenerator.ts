@@ -231,19 +231,18 @@ export class ExamGenerator {
     });
   }
 
-  public writeExamSpec() {
-    // Write exam specification as JSON
-    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
-    ExamUtils.writeExamSpecificationToFileSync(
-      `data/${this.exam.exam_id}/exam-spec.json`,
-      this.exam.spec
-    );
+  private writeExamSpec() {
   }
 
   public writeAll(exam_renderer: ExamRenderer, examDir: string = "out", manifestDir: string = "data") {
     this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
-    this.writeExamSpec();
+    // Write exam specification as JSON to data folder
+    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
+    ExamUtils.writeExamSpecificationToFileSync(
+      `data/${this.exam.exam_id}/exam-spec.json`,
+      this.exam.spec
+    );
 
     examDir = path.join(examDir, `${this.exam.exam_id}/exams`);
     manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);
@@ -257,7 +256,18 @@ export class ExamGenerator {
     writeFrontendJS(`${examDir}/js`, "frontend.js");
     writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
     writeFrontendJS(`${examDir}/js`, "frontend-doc.js");
+
     this.writeAssets(`${examDir}`);
+
+    if (this.exam.allow_clientside_spec) {
+      // If client side spec is allowed, write it to output folder
+      const specDir = path.join(examDir, "spec");
+      mkdirSync(specDir, { recursive: true });
+      ExamUtils.writeExamSpecificationToFileSync(
+        path.join(specDir,"exam-spec.json"),
+        this.exam.spec
+      );
+    }
 
     this.writeStats();
 

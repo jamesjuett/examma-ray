@@ -23,7 +23,8 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
         mk_reference: "[Section Reference]",
         questions: questions
       }
-    ]
+    ],
+    allow_clientside_spec: true,
   });
 }
 
