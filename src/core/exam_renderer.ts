@@ -333,7 +333,7 @@ export class OriginalExamRenderer extends ExamRenderer {
   }
 
   public renderBody(ae: AssignedExam) {
-    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}" data-clientside-spec="${ae.exam.allow_clientside_spec ? "yes" : "no"}">
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
           ${this.renderTimer()}
@@ -639,7 +639,7 @@ export class DocRenderer extends ExamRenderer {
   }
 
   public renderBody(ae: AssignedExam) {
-    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}">
+    return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}" data-clientside-spec="${ae.exam.allow_clientside_spec ? "yes" : "no"}">
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
           <div class="text-center pb-1 pl-4 pr-4 border-bottom">

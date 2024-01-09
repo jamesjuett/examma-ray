@@ -41,6 +41,7 @@
     "@types/minimist": "^1.2.2",
     "@types/node": "^14.17.9",
     "@types/shuffle-seed": "^1.1.0",
+    "axios": "^1.6.5",
     "blob-polyfill": "^5.0.20210201",
     "chart.js": "^2.9.4",
     "chroma-js": "^2.1.0",
