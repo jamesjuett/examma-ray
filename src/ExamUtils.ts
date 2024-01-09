@@ -71,6 +71,10 @@ export namespace ExamUtils {
 
   export function writeExamAssets(asset_out_dir: string, exam: Exam, all_sections: readonly Section[], all_questions: readonly Question[]) {
     
+    if (exam.allow_clientside_spec) {
+      writeExamSpecificationToFileSync(`${asset_out_dir}/exam_spec.json`, exam.spec);
+    }
+
     // Copy overall exam assets
     exam.assets_dir && copyFrontendAssets(exam.assets_dir, asset_out_dir);
 

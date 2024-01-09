@@ -289,7 +289,7 @@ export class AssignedExam {
     (<Mutable<GradedExam>>this).curve = curve.applyTo(this);
   }
 
-  public renderGrade() {
+  public renderGrade() : string {
     return this.isGraded() ?
       maxPrecisionString(this.curve?.adjustedScore ?? this.pointsEarned, 2) + "/" + this.pointsPossible :
       "?/" + this.pointsPossible;

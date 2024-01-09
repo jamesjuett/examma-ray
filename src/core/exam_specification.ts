@@ -263,6 +263,21 @@ export type ExamSpecification = {
    * `__dirname + "/assets"`.
    */
   readonly assets_dir?: string;
+
+  /**
+   * Whether or not the exam specification is available to the client. If set
+   * to true, the exam specification is written to exam_spec.json in the
+   * exam assets directory. Defaults to undefined (interpreted as false).
+   * 
+   * Enabling this is required for certain client-side features, for example, local
+   * grading of questions.
+   * 
+   * CAUTION! This should NOT be enabled unless you are OK with the
+   * full specification, including the exam structure and randomization details
+   * being potentially available to savvy users. If the exam specification contains
+   * sample solutions or encodings of graders, those would also be accessible.
+   */
+  readonly allow_clientside_spec?: boolean;
 };
 
 export function isValidID(id: string) {

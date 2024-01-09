@@ -238,6 +238,8 @@ export class Exam {
 
   public readonly enable_regrades: boolean;
 
+  public readonly allow_clientside_spec: boolean;
+
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
   public readonly spec: ExamSpecification;
@@ -277,6 +279,7 @@ export class Exam {
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
+    this.allow_clientside_spec = !!spec.allow_clientside_spec;
     this.assets_dir = spec.assets_dir;
 
     this.spec = spec;
