@@ -68,8 +68,9 @@ export abstract class ExamRenderer {
 
   public renderSignInButton() {
     return `
-      <button id="examma-ray-exam-sign-in-button btn btn-primary" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
-      ${ICON_USER}Sign In
+      <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
+      ${ICON_USER}
+      <span style="vertical-align: middle">Sign In</span>
       </button>
     `;
   }
@@ -345,7 +346,7 @@ export class OriginalExamRenderer extends ExamRenderer {
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
           ${ae.exam.credentials_strategy || ae.exam.verifier ?
-            `<div class="text-center pb-1 border-bottom">
+            `<div class="text-center pt-1 pb-1 border-bottom">
               ${this.renderSignInButton()}
             </div>` :
             ""
@@ -660,7 +661,7 @@ export class DocRenderer extends ExamRenderer {
             <b>${ae.exam.title}</b>
           </div>
           ${ae.exam.credentials_strategy || ae.exam.verifier ?
-            `<div class="text-center pb-1 border-bottom">
+            `<div class="text-center pt-1 pb-1 border-bottom">
               ${this.renderSignInButton()}
             </div>` :
             ""

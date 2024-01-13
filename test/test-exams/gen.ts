@@ -25,6 +25,10 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
       }
     ],
     allow_clientside_content: true,
+    credentials_strategy: "google",
+    verifier: {
+      verification_strategy: "all_verified"
+    }
   });
 }
 

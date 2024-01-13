@@ -104,7 +104,7 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   /**
    * Optional, a verifier for this question used to check the answer on the clientside.
    */
-  readonly verifier: QuestionVerifierSpecification,
+  readonly verifier?: QuestionVerifierSpecification,
 
   /**
    * Tags for this question that may be used to pick it out of a question bank.
