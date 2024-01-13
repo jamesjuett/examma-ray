@@ -1,15 +1,21 @@
 
 
-type GraderSelectionStrategy = 
+export type GraderSelectionStrategy = 
   | "default_grader";
 
-type QuestionVerificationStrategy = 
-  | "full_points";
+export type QuestionVerifierSpecification = 
+  | FullPoints;
 
-export type QuestionVerifierSpecification = {
+type FullPoints = {
+  verification_strategy: "full_points";
+  grader_selection_strategy?: GraderSelectionStrategy;
+};
 
-  grader_selection_strategy: GraderSelectionStrategy;
+export type ExamVerifierSpecification = 
+  | AllVerified;
 
-  verification_strategy: QuestionVerificationStrategy;
 
+
+type AllVerified = {
+  verification_strategy: "all_verified";
 };

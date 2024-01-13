@@ -66,7 +66,7 @@ export abstract class ExamRenderer {
 
   public abstract renderNavBadge(s: AssignedSection): string;
 
-  public renderSignInButton(ae: AssignedExam) {
+  public renderSignInButton() {
     return `
       <button id="examma-ray-exam-sign-in-button btn btn-primary" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
       ${ICON_USER}Sign In
@@ -344,10 +344,12 @@ export class OriginalExamRenderer extends ExamRenderer {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}" data-clientside-content="${ae.exam.allow_clientside_content ? "yes" : "no"}">
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
-          ${ae.exam.credentials_strategy || ae.exam.}
-          <div class="text-center pb-1 border-bottom">
-            
-          </div>
+          ${ae.exam.credentials_strategy || ae.exam.verifier ?
+            `<div class="text-center pb-1 border-bottom">
+              ${this.renderSignInButton()}
+            </div>` :
+            ""
+          }
           ${this.renderTimer()}
           <h3 class="text-center pb-1 border-bottom">
             ${renderPointsWorthBadge(ae.pointsPossible, "badge-secondary")}
@@ -657,6 +659,12 @@ export class DocRenderer extends ExamRenderer {
           <div class="text-center pb-1 pl-4 pr-4 border-bottom">
             <b>${ae.exam.title}</b>
           </div>
+          ${ae.exam.credentials_strategy || ae.exam.verifier ?
+            `<div class="text-center pb-1 border-bottom">
+              ${this.renderSignInButton()}
+            </div>` :
+            ""
+          }
           ${this.renderNav(ae)}
           ${this.renderSaverButton(ae)}
         </div>

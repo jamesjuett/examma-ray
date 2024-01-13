@@ -60,7 +60,7 @@ import { assert, assertFalse, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
 import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
-import { QuestionVerifierSpecification } from "./verifiers";
+import { ExamVerifierSpecification, QuestionVerifierSpecification } from "./verifiers";
 import deepEqual from "deep-equal";
 
 
@@ -102,9 +102,9 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
   readonly response: ResponseSpecification<QT>,
 
   /**
-   * Optional, a local verifier for this question used to check the answer on the clientside.
+   * Optional, a verifier for this question used to check the answer on the clientside.
    */
-  readonly local_verifier: QuestionVerifierSpecification,
+  readonly verifier: QuestionVerifierSpecification,
 
   /**
    * Tags for this question that may be used to pick it out of a question bank.
@@ -220,6 +220,11 @@ export type ExamSpecification = {
    * @see [[SectionChooser]]
    */
   readonly sections: readonly (SectionSpecification | SectionChooserSpecification)[],
+
+  /**
+   * A verifier for this exam.
+   */
+  readonly verifier?: ExamVerifierSpecification;
 
   /**
    * Markdown-formatted announcements that will be shown in an "alert" style box at the top of the exam,

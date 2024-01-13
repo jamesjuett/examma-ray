@@ -5,7 +5,7 @@ import { chooseAllQuestions, chooseAllSections, CredentialsStrategy, ExamSpecifi
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
-import { QuestionVerifierSpecification } from "./verifiers";
+import { ExamVerifierSpecification, QuestionVerifierSpecification } from "./verifiers";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
 
@@ -25,7 +25,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
-  public readonly localVerifier?: QuestionVerifierSpecification;
+  public readonly verifier?: QuestionVerifierSpecification;
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
@@ -72,7 +72,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     ) : DEFAULT_SKIN;
     this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
-    this.localVerifier = spec.local_verifier;
+    this.verifier = spec.verifier;
     this.assets_dir = spec.assets_dir;
   }
 
@@ -238,6 +238,7 @@ export class Exam {
 
   public readonly points: MinMaxPoints;
   public readonly sections: readonly (Section | SectionChooser)[];
+  public readonly verifier?: ExamVerifierSpecification;
 
   public readonly enable_regrades: boolean;
   public readonly allow_clientside_content: boolean;
@@ -280,6 +281,7 @@ export class Exam {
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
+    this.verifier = spec.verifier;
     this.enable_regrades = !!spec.enable_regrades;
     this.allow_clientside_content = !!spec.allow_clientside_content;
     this.credentials_strategy = spec.credentials_strategy;
