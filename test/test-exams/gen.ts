@@ -27,7 +27,8 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
     allow_clientside_content: true,
     credentials_strategy: {
       strategy: "google_local",
-      client_id: "444801118749-099920plmkl1s5n5u563pbmu71lo4bot.apps.googleusercontent.com"
+      client_id: "444801118749-099920plmkl1s5n5u563pbmu71lo4bot.apps.googleusercontent.com",
+      message: "Sign in with your @umich.edu Google account to earn participation credit for completing embedded exercises."
     },
     verifier: {
       verification_strategy: "all_verified"

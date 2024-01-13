@@ -192,7 +192,9 @@ export type SectionSpecification = {
 
 export type CredentialsStrategy = {
   strategy: "google_local",
-  client_id: string
+  client_id: string,
+  message?: string,
+  header?: string,
 };
 
 export type ExamSpecification = {

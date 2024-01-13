@@ -352,31 +352,36 @@ abstract class TakenExamRenderer extends ExamRenderer {
         <div class="modal-dialog modal-sm" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Sign In</h5>
+              <h5 class="modal-title">${ae.exam.credentials_strategy.header ?? "Sign In"}</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
+              <div style="font-size: 11pt;">
+                <p>${ae.exam.credentials_strategy.message ?? ""}</p>
+              </div>
+              <div style="text-align: center">
+                <div class="g_id_signin"
+                  data-type="standard"
+                  data-shape="rectangular"
+                  data-theme="outline"
+                  data-text="signin_with"
+                  data-size="large"
+                  data-logo_alignment="left"
+                  style="display: inline-block"
+                ></div>
+              </div>
+
               <div id="g_id_onload"
-              data-client_id="${ae.exam.credentials_strategy.client_id}"
-              data-context="signin"
-              data-ux_mode="popup"
-              data-callback="on_google_sign_in"
-              data-auto_select="true"
-              data-itp_support="true"
-              data-close_on_tap_outside="false"
-              >
-            </div>
-        
-            <div class="g_id_signin"
-              data-type="standard"
-              data-shape="rectangular"
-              data-theme="outline"
-              data-text="signin_with"
-              data-size="large"
-              data-logo_alignment="left">
-            </div>
+                data-client_id="${ae.exam.credentials_strategy.client_id}"
+                data-context="signin"
+                data-ux_mode="popup"
+                data-callback="on_google_sign_in"
+                data-auto_select="true"
+                data-itp_support="true"
+                data-close_on_tap_outside="false"
+              ></div>
             </div>
           </div>
         </div>
