@@ -5,7 +5,7 @@ import { Blob } from 'blob-polyfill';
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 
-import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
+import { activateExamContent, activateExamComponents, setupCodeEditors } from "./common";
 import axios from "axios";
 import { parseExamSpecification } from "../src/core/exam_specification";
 import { Exam } from "../src/core/exam_components";
@@ -174,7 +174,7 @@ function onSaved() {
   HAS_UNSAVED_CHANGES = false;
 }
 
-async function setupClientsideSpec() {
+async function activateClientsideExam() {
     
   const exam_spec_response = await axios({
     url: `./spec/exam-spec.json`,
@@ -187,7 +187,6 @@ async function setupClientsideSpec() {
 
   const exam = Exam.create(exam_spec);
   alert(exam.exam_id);
-
 }
 
 function main() {
@@ -206,7 +205,7 @@ function main() {
 
   activateExamComponents();
 
-  activateExam();
+  activateExamContent();
 
   setupCodeEditors(onUnsavedChanges);
   
@@ -215,7 +214,7 @@ function main() {
   console.log("Exam Started!");
 
   // This doesn't block, will happen async
-  setupClientsideSpec();
+  activateClientsideExam();
 }
 
 if (typeof $ === "function") {

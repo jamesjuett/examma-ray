@@ -5,6 +5,7 @@ import { chooseAllQuestions, chooseAllSections, CredentialsStrategy, ExamSpecifi
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
+import { QuestionVerifierSpecification } from "./verifiers";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
 
@@ -24,6 +25,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
+  public readonly localVerifier?: QuestionVerifierSpecification;
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
@@ -70,6 +72,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     ) : DEFAULT_SKIN;
     this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
+    this.localVerifier = spec.local_verifier;
     this.assets_dir = spec.assets_dir;
   }
 

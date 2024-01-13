@@ -60,6 +60,7 @@ import { assert, assertFalse, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
 import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
+import { QuestionVerifierSpecification } from "./verifiers";
 import deepEqual from "deep-equal";
 
 
@@ -99,6 +100,11 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * Depending on the kind of response, this may also contain a significant amount of content as well.
    */
   readonly response: ResponseSpecification<QT>,
+
+  /**
+   * Optional, a local verifier for this question used to check the answer on the clientside.
+   */
+  readonly local_verifier: QuestionVerifierSpecification,
 
   /**
    * Tags for this question that may be used to pick it out of a question bank.

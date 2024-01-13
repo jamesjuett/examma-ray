@@ -2,7 +2,7 @@ import path from 'path';
 import { AssignedSection, Exam } from '../core';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_USER } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 
@@ -65,6 +65,14 @@ export abstract class ExamRenderer {
   }
 
   public abstract renderNavBadge(s: AssignedSection): string;
+
+  public renderSignInButton(ae: AssignedExam) {
+    return `
+      <button id="examma-ray-exam-sign-in-button btn btn-primary" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
+      ${ICON_USER}Sign In
+      </button>
+    `;
+  }
 
   public renderSaverButton(ae: AssignedExam) {
     return `
@@ -336,6 +344,10 @@ export class OriginalExamRenderer extends ExamRenderer {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}" data-clientside-content="${ae.exam.allow_clientside_content ? "yes" : "no"}">
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
+          ${ae.exam.credentials_strategy || ae.exam.}
+          <div class="text-center pb-1 border-bottom">
+            
+          </div>
           ${this.renderTimer()}
           <h3 class="text-center pb-1 border-bottom">
             ${renderPointsWorthBadge(ae.pointsPossible, "badge-secondary")}
