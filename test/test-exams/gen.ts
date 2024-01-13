@@ -24,7 +24,7 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
         questions: questions
       }
     ],
-    allow_clientside_spec: true,
+    allow_clientside_content: true,
   });
 }
 

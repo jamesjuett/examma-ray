@@ -184,6 +184,8 @@ export type SectionSpecification = {
   readonly assets_dir?: string;
 }
 
+export type CredentialsStrategy = "google";
+
 export type ExamSpecification = {
 
   readonly component_kind?: "specification",
@@ -265,23 +267,36 @@ export type ExamSpecification = {
   readonly assets_dir?: string;
 
   /**
-   * Whether or not the exam specification is available to the client. If set
-   * to true, the exam specification is written to exam_spec.json in the
-   * exam assets directory. Defaults to undefined (interpreted as false).
+   * Whether or not the exam content is available in the clienside exam spec,
+   * which is written to spec/exam_spec.json. Defaults to undefined (interpreted as false).
    * 
    * Enabling this is required for certain client-side features, for example, local
    * grading of questions.
    * 
    * CAUTION! This should NOT be enabled unless you are OK with the
-   * full specification, including the exam structure and randomization details
+   * full content, including the exam structure, randomization details, and all questions
    * being potentially available to savvy users. If the exam specification contains
    * sample solutions or encodings of graders, those would also be accessible.
    */
-  readonly allow_clientside_spec?: boolean;
+  readonly allow_clientside_content?: boolean;
+
+  /**
+   * Enable login on the clientside to retrieve credentials that may be used
+   * to authenticate requests to a backend server.
+   */
+  readonly credentials_strategy?: CredentialsStrategy;
 };
 
 export function isValidID(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
+}
+
+export function without_content(spec: ExamSpecification) : ExamSpecification {
+  const {sections, ...others} = spec;
+  return {
+    ...others,
+    sections: []
+  };
 }
 
 export type ExamComponentSpecification =

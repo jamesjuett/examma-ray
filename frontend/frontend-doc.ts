@@ -175,21 +175,19 @@ function onSaved() {
 }
 
 async function setupClientsideSpec() {
-  if ($("#examma-ray-exam").data("clientside-spec") === "yes") {
     
-    const exam_spec_response = await axios({
-      url: `./spec/exam-spec.json`,
-      method: "GET",
-      data: {},
-      responseType: "text",
-      transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
-    });
-    const exam_spec = parseExamSpecification(exam_spec_response.data);
+  const exam_spec_response = await axios({
+    url: `./spec/exam-spec.json`,
+    method: "GET",
+    data: {},
+    responseType: "text",
+    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+  });
+  const exam_spec = parseExamSpecification(exam_spec_response.data);
 
-    const exam = Exam.create(exam_spec);
-    alert(exam.exam_id);
+  const exam = Exam.create(exam_spec);
+  alert(exam.exam_id);
 
-  }
 }
 
 function main() {

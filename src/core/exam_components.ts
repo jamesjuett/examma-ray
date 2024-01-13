@@ -1,7 +1,7 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
 import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
-import { chooseAllQuestions, chooseAllSections, ExamSpecification, isValidID, MinMaxPoints, minMaxPoints, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
+import { chooseAllQuestions, chooseAllSections, CredentialsStrategy, ExamSpecification, isValidID, MinMaxPoints, minMaxPoints, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
@@ -237,9 +237,8 @@ export class Exam {
   public readonly sections: readonly (Section | SectionChooser)[];
 
   public readonly enable_regrades: boolean;
-
-  public readonly allow_clientside_spec: boolean;
-
+  public readonly allow_clientside_content: boolean;
+  public readonly credentials_strategy?: CredentialsStrategy;
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
   public readonly spec: ExamSpecification;
@@ -279,7 +278,9 @@ export class Exam {
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.enable_regrades = !!spec.enable_regrades;
-    this.allow_clientside_spec = !!spec.allow_clientside_spec;
+    this.allow_clientside_content = !!spec.allow_clientside_content;
+    this.credentials_strategy = spec.credentials_strategy;
+
     this.assets_dir = spec.assets_dir;
 
     this.spec = spec;

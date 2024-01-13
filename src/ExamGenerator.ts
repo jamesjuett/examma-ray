@@ -7,7 +7,7 @@ import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQues
 import { assert } from './core/util';
 import { unparse } from 'papaparse';
 import del from 'del';
-import { chooseQuestions, chooseSections, chooseSkins, realizeQuestions, realizeSections, StudentInfo } from './core/exam_specification';
+import { chooseQuestions, chooseSections, chooseSkins, realizeQuestions, realizeSections, StudentInfo, without_content } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
 import { createStudentUuid, writeFrontendJS, ExamUtils } from './ExamUtils';
 import path from 'path';
@@ -259,15 +259,15 @@ export class ExamGenerator {
 
     this.writeAssets(`${examDir}`);
 
-    if (this.exam.allow_clientside_spec) {
-      // If client side spec is allowed, write it to output folder
-      const specDir = path.join(examDir, "spec");
-      mkdirSync(specDir, { recursive: true });
-      ExamUtils.writeExamSpecificationToFileSync(
-        path.join(specDir,"exam-spec.json"),
-        this.exam.spec
-      );
-    }
+    const specDir = path.join(examDir, "spec");
+    mkdirSync(specDir, { recursive: true });
+    ExamUtils.writeExamSpecificationToFileSync(
+      path.join(specDir,"exam-spec.json"),
+      (this.exam.spec.allow_clientside_content
+        ? this.exam.spec
+        : without_content(this.exam.spec)
+      )
+    );
 
     this.writeStats();
 
