@@ -66,7 +66,7 @@ export abstract class ExamRenderer {
 
   public abstract renderNavBadge(s: AssignedSection): string;
 
-  public renderSignInButton() {
+  protected renderSignInButton() {
     return `
       <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
       ${ICON_USER}
@@ -200,7 +200,7 @@ export abstract class ExamRenderer {
     `;
   }
 
-  public renderModals(ae: AssignedExam) {
+  protected renderModals(ae: AssignedExam) {
     return `
       <div id="exam-saver" class="exam-saver-modal modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
@@ -335,10 +335,62 @@ export abstract class ExamRenderer {
   }
 }
 
-export class OriginalExamRenderer extends ExamRenderer {
+abstract class TakenExamRenderer extends ExamRenderer {
 
-  public renderScripts(frontendPath: string): string {
-    return `<script src="${path.join(frontendPath, "frontend.js")}"></script>`;
+
+  public override renderScripts(frontendPath: string): string {
+    return `<script src="https://accounts.google.com/gsi/client" async></script>`;
+  }
+
+  protected override renderModals(ae: AssignedExam) {
+    if (!ae.exam.credentials_strategy) {
+      return super.renderModals(ae);
+    }
+
+    return super.renderModals(ae) + `
+      <div id="exam-sign-in-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Sign In</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div id="g_id_onload"
+              data-client_id="${ae.exam.credentials_strategy.client_id}"
+              data-context="signin"
+              data-ux_mode="popup"
+              data-callback="on_google_sign_in"
+              data-auto_select="true"
+              data-itp_support="true"
+              data-close_on_tap_outside="false"
+              >
+            </div>
+        
+            <div class="g_id_signin"
+              data-type="standard"
+              data-shape="rectangular"
+              data-theme="outline"
+              data-text="signin_with"
+              data-size="large"
+              data-logo_alignment="left">
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+export class OriginalExamRenderer extends TakenExamRenderer {
+
+  public override renderScripts(frontendPath: string): string {
+    return super.renderScripts(frontendPath) + `
+      <script src="${path.join(frontendPath, "frontend.js")}"></script>
+    `;
   }
 
   public renderBody(ae: AssignedExam) {
@@ -647,10 +699,12 @@ export class GradedExamRenderer extends ExamRenderer {
   }
 }
 
-export class DocRenderer extends ExamRenderer {
+export class DocRenderer extends TakenExamRenderer {
 
-  public renderScripts(frontendPath: string): string {
-    return `<script src="${path.join(frontendPath, "frontend-doc.js")}"></script>`;
+  public override renderScripts(frontendPath: string): string {
+    return super.renderScripts(frontendPath) + `
+      <script src="${path.join(frontendPath, "frontend-doc.js")}"></script>
+    `;
   }
 
   public renderBody(ae: AssignedExam) {

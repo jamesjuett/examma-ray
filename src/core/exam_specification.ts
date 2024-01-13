@@ -190,7 +190,10 @@ export type SectionSpecification = {
   readonly assets_dir?: string;
 }
 
-export type CredentialsStrategy = "google";
+export type CredentialsStrategy = {
+  strategy: "google_local",
+  client_id: string
+};
 
 export type ExamSpecification = {
 
