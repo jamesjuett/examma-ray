@@ -12,6 +12,7 @@ import { createCompositeSkin, ExamComponentSkin } from './core/skins';
 import { createStudentUuid, writeFrontendJS, ExamUtils } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
+import { createManifestFilenameBase, makeOpaque, stringifyExamContent } from './core/submissions';
 
 type SectionStats = {
   section: Section,
@@ -219,19 +220,12 @@ export class ExamGenerator {
     ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
   }
 
-  public createManifests() {
-    return this.assignedExams.map(ex => ex.createManifest());
-  }
-
   public renderExams(exam_renderer: ExamRenderer) {
     return this.assignedExams.map((ex, i) => {
       console.log(`${i + 1}/${this.assignedExams.length} Rendering assigned exam html for ${ex.student.uniqname}`);
       this.onStatus && this.onStatus(`Phase 2/3: Rendering exams... (${i + 1}/${this.totalExams})`);
       return exam_renderer.renderAll(ex, this.options.frontend_js_path);
     });
-  }
-
-  private writeExamSpec() {
   }
 
   public writeAll(exam_renderer: ExamRenderer, outDir: string = "out", manifestDir: string = "data") {
@@ -274,7 +268,7 @@ export class ExamGenerator {
 
     let filenames : string[][] = [];
 
-    let manifests = this.createManifests();
+    let manifests = this.assignedExams.map(ex => ex.createManifest());
     let renderedExams = this.renderExams(exam_renderer);
 
     let toWrite = manifests
@@ -284,7 +278,7 @@ export class ExamGenerator {
       }))
       .sort((a, b) => a.manifest.student.uniqname.localeCompare(b.manifest.student.uniqname));
     
-    const clientside_manifest_dir = path.join(outDir, "manifests");
+    const clientside_manifest_dir = path.join(outDir, this.exam.exam_id, "manifests");
     if (this.exam.allow_clientside_content) {
       
       mkdirSync(clientside_manifest_dir, { recursive: true });
@@ -295,10 +289,10 @@ export class ExamGenerator {
     toWrite.forEach((ex, i, arr) => {
       let manifest = ex.manifest;
       // Create filename, add to list
-      let filenameBase = manifest.student.uniqname + "-" + manifest.uuid;
+      let filenameBase = createManifestFilenameBase(manifest.student.uniqname, manifest.uuid);
       filenames.push([manifest.student.uniqname, filenameBase])
 
-      const manifest_str = JSON.stringify(manifest, null, 2);
+      const manifest_str = stringifyExamContent(manifest);
 
       console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
       writeFileSync(`${manifestDir}/${filenameBase}.json`, manifest_str, {encoding: "utf-8"});
@@ -306,10 +300,10 @@ export class ExamGenerator {
       console.log(`${i + 1}/${arr.length} Saving assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
       writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
 
+      const clientside_manifest_str = this.exam.allow_clientside_content ? manifest_str : stringifyExamContent(makeOpaque(manifest));
       if (this.exam.allow_clientside_content) {
-        
         console.log(`${i + 1}/${arr.length} Saving clientside exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
-        writeFileSync(`${clientside_manifest_dir}/${filenameBase}.json`, manifest_str, {encoding: "utf-8"});  
+        writeFileSync(`${clientside_manifest_dir}/${filenameBase}.json`, clientside_manifest_str, {encoding: "utf-8"});
       }
 
     });

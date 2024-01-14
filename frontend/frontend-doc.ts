@@ -1,23 +1,21 @@
-import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
-import storageAvailable from "storage-available";
-import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
+import storageAvailable from "storage-available";
+import { OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, createManifestFilenameBase, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
+import { extract_response, fill_response, parse_submission, stringify_response } from "../src/response/responses";
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
 
-import { activateExamContent, activateExamComponents, setupCodeEditors } from "./common";
 import axios from "axios";
-import { parseExamSpecification } from "../src/core/exam_specification";
 import { Exam } from "../src/core/exam_components";
+import { parseExamSpecification } from "../src/core/exam_specification";
+import { activateExamComponents, activateExamContent, setupCodeEditors } from "./common";
 import "./frontend-doc.css";
 
 
-function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
+function extractQuestionAnswers(this: HTMLElement) : OpaqueQuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
-    question_id: "",
-    skin_id: "",
     uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
@@ -25,11 +23,9 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
+function extractSectionAnswers(this: HTMLElement) : OpaqueSectionAnswers {
   let section = $(this);
   return {
-    section_id: "",
-    skin_id: "",
     uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
@@ -52,7 +48,7 @@ function updateTimeElapsed() {
 const saverID = Date.now();
 let saveCount = 0;
 
-function extractExamAnswers() : ExamSubmission {
+function extractExamAnswers() : OpaqueExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
@@ -64,13 +60,8 @@ function extractExamAnswers() : ExamSubmission {
     time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
-    trusted: false,
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
-}
-
-function isBlankAnswers(answers: ExamSubmission) {
-  return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
 function fillQuestionAnswer(qa: QuestionAnswer) {
@@ -117,14 +108,14 @@ function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
   return examId + "-" + uniqname + "-" + uuid;
 }
 
-function autosaveToLocalStorage(answers: ) {
+function autosaveToLocalStorage(answers: ExamSubmission) {
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
 
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
 
-      let prevAnswers = <ExamSubmission>JSON.parse(prevAnswersLS);
+      let prevAnswers = parseExamSubmission(prevAnswersLS);
 
       // We want to know if we're competing with another tab/window.
       // We can detect that by checking if the previous save was made with a different saver ID,
@@ -143,7 +134,7 @@ function autosaveToLocalStorage(answers: ) {
 
 
     // Only save if there is something to save
-    if (!isBlankAnswers(answers)) {
+    if (!isBlankSubmission(answers)) {
       localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid), JSON.stringify(answers, null, 2));
       ++saveCount;
     }
@@ -172,25 +163,6 @@ function onSaved() {
   HAS_UNSAVED_CHANGES = false;
 }
 
-async function activateClientsideExam() {
-    
-  const exam_spec_response = await axios({
-    url: `./spec/exam-spec.json`,
-    method: "GET",
-    data: {},
-    responseType: "text",
-    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
-  });
-  const exam_spec = parseExamSpecification(exam_spec_response.data);
-
-  const exam = Exam.create(exam_spec);
-  
-  exam.allQuestions.forEach(question => {
-    question.activate($(`#`))
-  });
-
-}
-
 function main() {
   console.log("Attempting to start exam...");
 
@@ -214,9 +186,6 @@ function main() {
   startExam();
 
   console.log("Exam Started!");
-
-  // This doesn't block, will happen async
-  activateClientsideExam();
 }
 
 if (typeof $ === "function") {
@@ -350,7 +319,7 @@ function setupSaverModal() {
     // is no file selected, so this is just here for completeness
     if (files && files.length > 0) {
       try {
-        let answers = <ExamSubmission>JSON.parse(await files[0].text());
+        let answers = parseExamSubmission(await files[0].text());
         if (answers.uuid !== $("#examma-ray-exam").data("exam-uuid")) {
           alert("Error - That answers file appears to be for a different exam.");
         }
@@ -358,7 +327,7 @@ function setupSaverModal() {
           alert("Error - That answers file appears to be for a different student.");
         }
         else {
-          if (!isBlankAnswers(answers)) {
+          if (!isBlankSubmission(answers)) {
             fillExamAnswers(answers);
             $("#exam-saver").modal("hide");
           }
@@ -423,7 +392,7 @@ function setupChangeListeners() {
   // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
-function startExam() {
+async function startExam() {
   
   let examElem = $("#examma-ray-exam");
   let examId = examElem.data("exam-id");
@@ -435,7 +404,7 @@ function startExam() {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname, examUuid));
     if (autosavedAnswers) {
       try {
-        fillExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
+        fillExamAnswers(parseExamSubmission(autosavedAnswers));
         // $("#exam-welcome-restored-modal").modal("show");
       }
       catch (e: unknown) {
@@ -465,10 +434,34 @@ function startExam() {
   // Connect show/hide event listeners on time elapsed element
   $('#examma-ray-time-elapsed').on('hidden.bs.collapse', function () {
     $("#examma-ray-time-elapsed-button").html("Show");
-  })
+  });
   $('#examma-ray-time-elapsed').on('shown.bs.collapse', function () {
     $("#examma-ray-time-elapsed-button").html("Hide");
-  })
+  });
+
+  const exam_spec_response = await axios({
+    url: `../spec/exam-spec.json`,
+    method: "GET",
+    data: {},
+    responseType: "text",
+    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+  });
+  const exam_spec = parseExamSpecification(exam_spec_response.data);
+
+  const exam = Exam.create(exam_spec);
+
+  const exam_manifest_response = await axios({
+    url: `../manifests/${createManifestFilenameBase(uniqname, examUuid)}.json`,
+    method: "GET",
+    data: {},
+    responseType: "text",
+    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+  });
+  const
+  
+  // exam.allQuestions.forEach(question => {
+  //   question.activate($(`#`))
+  // });
 }
 
 

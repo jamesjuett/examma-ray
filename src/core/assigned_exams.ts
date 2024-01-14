@@ -2,14 +2,14 @@ import { sum } from 'simple-statistics';
 import { Exception, GraderMap } from '../ExamGrader';
 import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
 import { ResponseKind } from '../response/common';
-import { parse_submission, SubmissionType } from '../response/responses';
-import { Exam, Question, Section } from './exam_components';
-import { isValidID, StudentInfo } from './exam_specification';
+import { SubmissionType, parse_submission } from '../response/responses';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
-import { createCompositeSkin, ExamComponentSkin } from './skins';
-import { ExamManifest, TrustedExamSubmission } from './submissions';
+import { Exam, Question, Section } from './exam_components';
+import { StudentInfo, isValidID } from './exam_specification';
+import { ExamComponentSkin, createCompositeSkin } from './skins';
+import { ExamManifest, OpaqueExamManifest, TransparentExamManifest, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
-import { asMutable, assert, assertFalse, Mutable } from './util';
+import { Mutable, asMutable, assert, assertFalse } from './util';
 
 
 
@@ -294,13 +294,14 @@ export class AssignedExam {
       "?/" + this.pointsPossible;
   }
 
-  public createManifest() : ExamManifest {
+  public createManifest() : TransparentExamManifest {
     return {
       exam_id: this.exam.exam_id,
       uuid: this.uuid,
       student: this.student,
       timestamp: Date.now(),
       trusted: true,
+      transparent: true,
       saverId: 0,
       sections: this.assignedSections.map(s => ({
         section_id: s.section.section_id,
@@ -313,11 +314,12 @@ export class AssignedExam {
           uuid: q.uuid,
           display_index: q.displayIndex,
           kind: q.question.kind,
-          response: ""
         }))
       }))
     };
   }
+
+
 }
 
 export function areAllGradedExams(exams: AssignedExam[]) : exams is GradedExam[];

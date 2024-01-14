@@ -18,8 +18,19 @@ export {
   QuestionAnswer,
   SectionAnswers,
   ExamSubmission,
+  TransparentQuestionAnswer,
+  OpaqueQuestionAnswer,
+  TransparentSectionAnswers,
+  OpaqueSectionAnswers,
+  OpaqueExamSubmission,
+  TransparentExamSubmission,
   TrustedExamSubmission,
-  fillManifest
+  OpaqueExamManifest,
+  TransparentExamManifest,
+  fillManifest,
+  createManifestFilenameBase,
+  parseExamSubmission,
+  isBlankSubmission,
 } from "./core/submissions";
 
 export {

@@ -1,6 +1,6 @@
 import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import storageAvailable from "storage-available";
-import { ExamSubmission, QuestionAnswer, SectionAnswers } from "../src/core/submissions";
+import { OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
@@ -12,12 +12,10 @@ import { Exam } from "../src/core/exam_components";
 import "./frontend.css";
 
 
-function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
+function extractQuestionAnswers(this: HTMLElement) : OpaqueQuestionAnswer {
   let question = $(this);
   let response = question.find(".examma-ray-question-response");
   return {
-    question_id: "",
-    skin_id: "",
     uuid: question.data("question-uuid"),
     display_index: question.data("question-display-index"),
     kind: response.data("response-kind"),
@@ -25,11 +23,9 @@ function extractQuestionAnswers(this: HTMLElement) : QuestionAnswer {
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : SectionAnswers {
+function extractSectionAnswers(this: HTMLElement) : OpaqueSectionAnswers {
   let section = $(this);
   return {
-    section_id: "",
-    skin_id: "",
     uuid: section.data("section-uuid"),
     display_index: section.data("section-display-index"),
     questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
@@ -52,7 +48,7 @@ function updateTimeElapsed() {
 const saverID = Date.now();
 let saveCount = 0;
 
-function extractExamAnswers() : ExamSubmission {
+function extractExamAnswers() : OpaqueExamSubmission {
   let examElem = $("#examma-ray-exam");
   return {
     exam_id: examElem.data("exam-id"),
@@ -64,13 +60,8 @@ function extractExamAnswers() : ExamSubmission {
     time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
-    trusted: false,
     sections: $(".examma-ray-section").map(extractSectionAnswers).get()
   }
-}
-
-function isBlankAnswers(answers: ExamSubmission) {
-  return answers.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
 function fillQuestionAnswer(qa: QuestionAnswer) {
@@ -126,7 +117,7 @@ function autosaveToLocalStorage(answers: ExamSubmission) {
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
 
-      let prevAnswers = <ExamSubmission>JSON.parse(prevAnswersLS);
+      let prevAnswers = parseExamSubmission(prevAnswersLS);
 
       // We want to know if we're competing with another tab/window.
       // We can detect that by checking if the previous save was made with a different saver ID,
@@ -145,7 +136,7 @@ function autosaveToLocalStorage(answers: ExamSubmission) {
 
 
     // Only save if there is something to save
-    if (!isBlankAnswers(answers)) {
+    if (!isBlankSubmission(answers)) {
       localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid), JSON.stringify(answers, null, 2));
       ++saveCount;
     }
@@ -348,7 +339,7 @@ function setupSaverModal() {
     // is no file selected, so this is just here for completeness
     if (files && files.length > 0) {
       try {
-        let answers = <ExamSubmission>JSON.parse(await files[0].text());
+        let answers = parseExamSubmission(await files[0].text());
         if (answers.uuid !== $("#examma-ray-exam").data("exam-uuid")) {
           alert("Error - That answers file appears to be for a different exam.");
         }
@@ -356,7 +347,7 @@ function setupSaverModal() {
           alert("Error - That answers file appears to be for a different student.");
         }
         else {
-          if (!isBlankAnswers(answers)) {
+          if (!isBlankSubmission(answers)) {
             fillExamAnswers(answers);
             $("#exam-saver").modal("hide");
           }
@@ -434,7 +425,7 @@ function startExam() {
     let autosavedAnswers = localStorage.getItem(localStorageExamKey(examId, uniqname, examUuid));
     if (autosavedAnswers) {
       try {
-        fillExamAnswers(<ExamSubmission>JSON.parse(autosavedAnswers));
+        fillExamAnswers(parseExamSubmission(autosavedAnswers));
         $("#exam-welcome-restored-modal").modal("show");
       }
       catch (e: unknown) {
