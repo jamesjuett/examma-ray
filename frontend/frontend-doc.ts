@@ -1,6 +1,6 @@
 import { Blob } from 'blob-polyfill';
 import storageAvailable from "storage-available";
-import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, createManifestFilenameBase, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
+import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, createManifestFilenameBase, fillManifest, isBlankSubmission, isTransparentExamManifest, parseExamManifest, parseExamSubmission } from "../src/core/submissions";
 import { extract_response, fill_response, parse_submission, stringify_response } from "../src/response/responses";
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
@@ -10,6 +10,8 @@ import { Exam } from "../src/core/exam_components";
 import { parseExamSpecification } from "../src/core/exam_specification";
 import { activateExamComponents, activateExamContent, setupCodeEditors } from "./common";
 import "./frontend-doc.css";
+import { assert } from '../src/core/util';
+import { AssignedExam } from '../src/core/assigned_exams';
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
@@ -439,6 +441,8 @@ async function startExam() {
     $("#examma-ray-time-elapsed-button").html("Hide");
   });
 
+  if ($("#examma-ray-exam").data("clientside-content") === "yes") {
+
   const exam_spec_response = await axios({
     url: `../spec/exam-spec.json`,
     method: "GET",
@@ -458,10 +462,29 @@ async function startExam() {
     transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
   });
   
-  
-  // exam.allQuestions.forEach(question => {
-  //   question.activate($(`#`))
-  // });
+  const manifest = parseExamManifest(exam_manifest_response.data);
+    assert(isTransparentExamManifest(manifest));
+    const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
+    
+    setInterval(() => {
+
+      assigned_exam.assignedQuestions.forEach(aq => {
+        const verifier = aq.question.verifier;
+        if (verifier) {
+          const question_elem = $(`.examma-ray-question[data-question-uuid="${aq.uuid}"]`).first();
+          const answer = extractQuestionAnswers(question_elem);
+          aq.setRawSubmission(answer.response);
+          if (aq.question.defaultGrader) {
+            aq.grade(aq.question.defaultGrader);
+          }
+          verifier.updateStatus(aq, $(`.examma-ray-verifier-status[data-question-uuid="${aq.uuid}"]`));
+        }
+      })
+
+    }, 5000);
+
+  }
+
 }
 
 

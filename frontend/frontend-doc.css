@@ -161,6 +161,12 @@ code {
   vertical-align: middle;
 }
 
+.examma-ray-section-heading > .examma-ray-section-verifier-statuses {
+  font-size: 1em;
+  vertical-align: middle;
+  float: right;
+}
+
 .examma-ray-section-contents {
   width: 100%;
   table-layout: fixed;
