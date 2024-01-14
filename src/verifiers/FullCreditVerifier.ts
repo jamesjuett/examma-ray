@@ -31,24 +31,24 @@ export class FullCreditVerifier implements QuestionVerifier<ResponseKind> {
     return aq.isGraded() && hasFullCredit(aq);
   }
 
-  public renderStatusBadge(aq: AssignedQuestion) {
+  public renderStatus(aq: AssignedQuestion) {
     return `
-      <span class="examma-ray-verifier-status-badge badge badge-secondary" style="float: right; ">${ICON_BOX} <span style="vertical-align: middle;">Not Started</span></span>
+      <span class="badge badge-secondary">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} Not Started</span></span>
     `;
   }
 
-  public updateStatusBadge(aq: AssignedQuestion, elem: JQuery) {
+  public updateStatus(aq: AssignedQuestion, elem: JQuery) {
     if (!aq.isGraded()) {
-      elem.html(`${ICON_BOX_EXCLAMATION} <span style="vertical-align: middle;">Unverified</span>`).removeClass(BADGE_CLASSES).addClass("badge badge-secondary");
+      elem.html(`<span class="badge badge-secondary">${ICON_BOX_EXCLAMATION} <span style="vertical-align: middle;">${aq.displayIndex} Unverified</span></span>`);
     }
     else if (aq.gradingResult.wasBlankSubmission) {
-      elem.html(`${ICON_BOX} <span style="vertical-align: middle;">Not Started</span>`).removeClass(BADGE_CLASSES).addClass("badge badge-secondary");
+      elem.html(`<span class="badge badge-secondary">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} Not Started</span></span>`);
     }
     else if (hasFullCredit(aq)) {
-      elem.html(`${ICON_BOX_CHECK} <span style="vertical-align: middle;">Complete</span>`).removeClass(BADGE_CLASSES).addClass("badge badge-success");
+      elem.html(`<span class="badge badge-success">${ICON_BOX_CHECK} <span style="vertical-align: middle;">${aq.displayIndex} Complete</span></span>`);
     }
     else {
-      elem.html(`${ICON_BOX} <span style="vertical-align: middle;">In Progress</span>`).removeClass(BADGE_CLASSES).addClass("badge badge-warning");
+      elem.html(`<span class="badge badge-warning">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} In Progress</span></span>`);
     }
   }
 

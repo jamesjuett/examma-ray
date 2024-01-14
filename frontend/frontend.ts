@@ -478,7 +478,7 @@ async function startExam() {
           if (aq.question.defaultGrader) {
             aq.grade(aq.question.defaultGrader);
           }
-          verifier.updateStatusBadge(aq, question_elem.find(".examma-ray-verifier-status-badge"));
+          verifier.updateStatus(aq, $(`.examma-ray-verifier-status[data-question-uuid="${aq.uuid}"]`));
         }
       })
 

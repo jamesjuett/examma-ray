@@ -156,9 +156,15 @@ code {
   border-bottom: solid 1px #aaa;
 }
 
-.examma-ray-section-heading>.badge {
+.examma-ray-section-heading > .badge {
   font-size: 1.2em;
   vertical-align: middle;
+}
+
+.examma-ray-section-heading > .examma-ray-section-verifier-statuses {
+  font-size: 1em;
+  vertical-align: middle;
+  float: right;
 }
 
 .examma-ray-section-contents {

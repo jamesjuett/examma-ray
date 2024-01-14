@@ -5,6 +5,7 @@ import { StudentInfo } from './exam_specification';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_USER } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
+import { renderQuestionVerifierStatus as renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 
 export function renderHead(extra: string) {
   return (
@@ -342,8 +343,8 @@ abstract class TakenExamRenderer extends ExamRenderer {
     return `<script src="https://accounts.google.com/gsi/client" async></script>`;
   }
 
-  protected renderVerifierStatusBadge(aq: AssignedQuestion) {
-    return aq.question.verifier?.renderStatusBadge(aq) ?? "";
+  protected renderVerifierStatus(aq: AssignedQuestion) {
+    return aq.question.verifier ? renderQuestionVerifierStatus(aq, aq.question.verifier) : "";
   }
 
   protected override renderModals(ae: AssignedExam) {
@@ -464,6 +465,11 @@ export class OriginalExamRenderer extends TakenExamRenderer {
         <div class="badge badge-primary">
           ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)} ${renderPointsWorthBadge(as.pointsPossible, "badge-light")}
         </div>
+        <span class="examma-ray-section-verifier-statuses">
+          ${as.assignedQuestions.map(aq => `
+            ${this.renderVerifierStatus(aq)}
+          `).join("\n")}
+        </span>
       </div>
     `;
   }
@@ -472,7 +478,6 @@ export class OriginalExamRenderer extends TakenExamRenderer {
     return `
       <b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>
       ${renderPointsWorthBadge(aq.question.pointsPossible)}
-      ${this.renderVerifierStatusBadge(aq)}
     `;
   }
   
@@ -780,6 +785,11 @@ export class DocRenderer extends TakenExamRenderer {
         <div class="badge badge-primary">
           ${as.displayIndex}: ${mk2html_unwrapped(as.section.title, as.skin)}
         </div>
+        <span class="examma-ray-section-verifier-statuses">
+          ${as.assignedQuestions.map(aq => `
+            ${this.renderVerifierStatus(aq)}
+          `).join("\n")}
+        </span>
       </div>
     `;
   }
@@ -787,7 +797,6 @@ export class DocRenderer extends TakenExamRenderer {
   protected renderQuestionHeader(aq: AssignedQuestion) {
     return `
       <b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>
-      ${this.renderVerifierStatusBadge(aq)}
     `;
   }
   

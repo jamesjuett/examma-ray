@@ -12,17 +12,17 @@ export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
   verify(aq: AssignedQuestion<RK>): boolean;
 
   /**
-   * Renders HTML elements to report verification status. This function is called
-   * exactly once for the status badge element when the question in initally rendered.
+   * Renders inner HTML for a verification status badge. This function is called
+   * exactly once when the question in initally rendered.
    * @param elem The HTML element for the status badge.
    */
-  renderStatusBadge(aq: AssignedQuestion<RK>) : string;
+  renderStatus(aq: AssignedQuestion<RK>) : string;
   
   /**
    * Updates the elements to report verification status.
    * @param elem The HTML element for the status badge.
    */
-  updateStatusBadge(aq: AssignedQuestion<RK>, elem: JQuery) : void;
+  updateStatus(aq: AssignedQuestion<RK>, elem: JQuery) : void;
 
 };
 
@@ -43,4 +43,12 @@ export function realizeVerifier(spec: QuestionVerifierSpecification) : QuestionV
     spec.verifier_kind === "full_credit" ? new FullCreditVerifier(spec) :
     assertNever(spec.verifier_kind)
   );
+}
+
+export function renderQuestionVerifierStatus(aq: AssignedQuestion, verifier: QuestionVerifier) {
+  return `
+    <span class="examma-ray-verifier-status" data-question-uuid="${aq.uuid}">
+      ${verifier.renderStatus(aq)}
+    </span>
+  `;
 }
