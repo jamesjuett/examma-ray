@@ -1,6 +1,6 @@
 import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import storageAvailable from "storage-available";
-import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
+import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, createManifestFilenameBase, fillManifest, isBlankSubmission, isTransparentExamManifest, parseExamManifest, parseExamSubmission } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
@@ -10,25 +10,25 @@ import axios from "axios";
 import { parseExamSpecification } from "../src/core/exam_specification";
 import { Exam } from "../src/core/exam_components";
 import "./frontend.css";
+import { assert } from "../src/core/util";
+import { AssignedExam } from "../src/core/assigned_exams";
 
 
-function extractQuestionAnswers(this: HTMLElement) : OpaqueQuestionAnswer {
-  let question = $(this);
-  let response = question.find(".examma-ray-question-response");
+function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
+  let response = question_elem.find(".examma-ray-question-response");
   return {
-    uuid: question.data("question-uuid"),
-    display_index: question.data("question-display-index"),
+    uuid: question_elem.data("question-uuid"),
+    display_index: question_elem.data("question-display-index"),
     kind: response.data("response-kind"),
     response: stringify_response(extract_response(response.data("response-kind"), response))
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : OpaqueSectionAnswers {
-  let section = $(this);
+function extractSectionAnswers(section_elem: JQuery) : OpaqueSectionAnswers {
   return {
-    uuid: section.data("section-uuid"),
-    display_index: section.data("section-display-index"),
-    questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
+    uuid: section_elem.data("section-uuid"),
+    display_index: section_elem.data("section-display-index"),
+    questions: section_elem.find(".examma-ray-question").map((i,elem) => extractQuestionAnswers($(elem))).get()
   }
 }
 
@@ -60,7 +60,7 @@ function extractExamAnswers() : OpaqueExamSubmission {
     time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
-    sections: $(".examma-ray-section").map(extractSectionAnswers).get()
+    sections: $(".examma-ray-section").map((i, elem) => extractSectionAnswers($(elem))).get()
   }
 }
 
@@ -165,21 +165,6 @@ function onSaved() {
   HAS_UNSAVED_CHANGES = false;
 }
 
-async function activateClientsideExam() {
-    
-  const exam_spec_response = await axios({
-    url: `../spec/exam-spec.json`,
-    method: "GET",
-    data: {},
-    responseType: "text",
-    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
-  });
-  const exam_spec = parseExamSpecification(exam_spec_response.data);
-
-  const exam = Exam.create(exam_spec);
-  alert(exam.exam_id);
-}
-
 function main() {
   console.log("Attempting to start exam...");
 
@@ -203,9 +188,6 @@ function main() {
   startExam();
 
   console.log("Exam Started!");
-
-  // This doesn't block, will happen async
-  activateClientsideExam();
 }
 
 if (typeof $ === "function") {
@@ -413,7 +395,7 @@ function setupChangeListeners() {
   // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
-function startExam() {
+async function startExam() {
   
   let examElem = $("#examma-ray-exam");
   let examId = examElem.data("exam-id");
@@ -455,10 +437,55 @@ function startExam() {
   // Connect show/hide event listeners on time elapsed element
   $('#examma-ray-time-elapsed').on('hidden.bs.collapse', function () {
     $("#examma-ray-time-elapsed-button").html("Show");
-  })
+  });
   $('#examma-ray-time-elapsed').on('shown.bs.collapse', function () {
     $("#examma-ray-time-elapsed-button").html("Hide");
-  })
+  });
+
+  if ($("#examma-ray-exam").data("clientside-content") === "yes") {
+
+    const exam_spec_response = await axios({
+      url: `../spec/exam-spec.json`,
+      method: "GET",
+      data: {},
+      responseType: "text",
+      transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+    });
+    const exam_spec = parseExamSpecification(exam_spec_response.data);
+  
+    const exam = Exam.create(exam_spec);
+  
+    const exam_manifest_response = await axios({
+      url: `../manifests/${createManifestFilenameBase(uniqname, examUuid)}.json`,
+      method: "GET",
+      data: {},
+      responseType: "text",
+      transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+    });
+  
+    const manifest = parseExamManifest(exam_manifest_response.data);
+    assert(isTransparentExamManifest(manifest));
+    const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
+    
+    setInterval(() => {
+
+      assigned_exam.assignedQuestions.forEach(aq => {
+        const verifier = aq.question.verifier;
+        if (verifier) {
+          const question_elem = $(`.examma-ray-question[data-question-uuid="${aq.uuid}"]`).first();
+          const answer = extractQuestionAnswers(question_elem);
+          aq.setRawSubmission(answer.response);
+          if (aq.question.defaultGrader) {
+            aq.grade(aq.question.defaultGrader);
+          }
+          verifier.updateStatusBadge(aq, question_elem.find(".examma-ray-verifier-status-badge"));
+        }
+      })
+
+    }, 5000);
+
+  }
+
 }
 
 

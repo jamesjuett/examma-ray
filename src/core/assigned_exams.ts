@@ -44,6 +44,13 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     this.html_postscript = question.renderPostscript(this.skin);
   }
 
+  public setRawSubmission(raw_submission: string) {
+    (<Mutable<this>>this).rawSubmission = raw_submission;
+    (<Mutable<this>>this).submission = parse_submission(this.question.kind, raw_submission);
+    delete (<Mutable<this>>this).gradedBy;
+    delete (<Mutable<this>>this).gradingResult;
+  }
+
   public grade(grader: QuestionGrader<QT>) {
     (<Mutable<this>>this).gradingResult = grader.grade(this);
     if (this.gradingResult) {
@@ -261,7 +268,7 @@ export class AssignedExam {
               s_i,
               q_i,
               q.response
-            )); 
+            ));
           })
         ));
       }),

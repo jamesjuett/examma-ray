@@ -11,12 +11,16 @@ MC Test Question (Single Response)
     kind: "multiple_choice",
     choices: [
       "Choice A",
-      "Choice B",
+      "Choice B - correct",
       "Choice C",
       "Choice D",
       "Choice E"
     ],
-    multiple: false
+    multiple: false,
+    default_grader: {
+      grader_kind: "simple_multiple_choice",
+      correct_index: 1,
+    }
   },
   verifier: {
     verifier_kind: "full_credit",
@@ -39,7 +43,20 @@ MC Test Question (Multiple Response)
       "Choice D",
       "Choice E"
     ],
-    multiple: true
+    multiple: true,
+    default_grader: {
+      grader_kind: "summation_multiple_choice",
+      rubric: [
+        {selected: false, points: 0.4},
+        {selected: true, points: 0.4},
+        {selected: false, points: 0.4},
+        {selected: true, points: 0.4},
+        {selected: false, points: 0.4, ignore_selection: true},
+      ]
+    }
+  },
+  verifier: {
+    verifier_kind: "full_credit",
   }
 };
 

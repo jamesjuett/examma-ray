@@ -1,4 +1,4 @@
-import { activateExam, activateExamComponents, setupCodeEditors } from "./common";
+import { activateExamContent, activateExamComponents, setupCodeEditors } from "./common";
 import "./frontend.css";
 
 function setupSkinPickers() {
@@ -54,7 +54,7 @@ function main() {
 
   activatePreviewComponents();
 
-  activateExam();
+  activateExamContent();
 
   setupCodeEditors(() => {});
 

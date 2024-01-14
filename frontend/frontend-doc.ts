@@ -12,23 +12,21 @@ import { activateExamComponents, activateExamContent, setupCodeEditors } from ".
 import "./frontend-doc.css";
 
 
-function extractQuestionAnswers(this: HTMLElement) : OpaqueQuestionAnswer {
-  let question = $(this);
-  let response = question.find(".examma-ray-question-response");
+function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
+  let response = question_elem.find(".examma-ray-question-response");
   return {
-    uuid: question.data("question-uuid"),
-    display_index: question.data("question-display-index"),
+    uuid: question_elem.data("question-uuid"),
+    display_index: question_elem.data("question-display-index"),
     kind: response.data("response-kind"),
     response: stringify_response(extract_response(response.data("response-kind"), response))
   }
 }
 
-function extractSectionAnswers(this: HTMLElement) : OpaqueSectionAnswers {
-  let section = $(this);
+function extractSectionAnswers(section_elem: JQuery) : OpaqueSectionAnswers {
   return {
-    uuid: section.data("section-uuid"),
-    display_index: section.data("section-display-index"),
-    questions: section.find(".examma-ray-question").map(extractQuestionAnswers).get()
+    uuid: section_elem.data("section-uuid"),
+    display_index: section_elem.data("section-display-index"),
+    questions: section_elem.find(".examma-ray-question").map((i,elem) => extractQuestionAnswers($(elem))).get()
   }
 }
 
@@ -60,7 +58,7 @@ function extractExamAnswers() : OpaqueExamSubmission {
     time_started: TIME_STARTED,
     timestamp: Date.now(),
     saverId: saverID,
-    sections: $(".examma-ray-section").map(extractSectionAnswers).get()
+    sections: $(".examma-ray-section").map((i, elem) => extractSectionAnswers($(elem))).get()
   }
 }
 
@@ -111,6 +109,8 @@ function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
 function autosaveToLocalStorage(answers: ExamSubmission) {
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
+
+    let answers = extractExamAnswers();
 
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
@@ -457,7 +457,7 @@ async function startExam() {
     responseType: "text",
     transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
   });
-  const
+  
   
   // exam.allQuestions.forEach(question => {
   //   question.activate($(`#`))
