@@ -1,6 +1,6 @@
 import { stringify_response, extract_response, fill_response, parse_submission } from "../src/response/responses";
 import storageAvailable from "storage-available";
-import { OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
+import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
 import { Blob } from 'blob-polyfill';
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';

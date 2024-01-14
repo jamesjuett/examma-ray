@@ -1,6 +1,6 @@
 import { Blob } from 'blob-polyfill';
 import storageAvailable from "storage-available";
-import { OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, createManifestFilenameBase, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
+import { ExamSubmission, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, QuestionAnswer, createManifestFilenameBase, isBlankSubmission, parseExamSubmission } from "../src/core/submissions";
 import { extract_response, fill_response, parse_submission, stringify_response } from "../src/response/responses";
 
 import { FILE_CHECK, FILE_DOWNLOAD, FILLED_STAR } from '../src/core/icons';
