@@ -155,6 +155,10 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     `;
   }
 
+  public annotateResponseElem(gq: GradedQuestion<"fitb_drop", FITBDropGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
+
   public renderStats(aqs: readonly AssignedQuestion<"fitb_drop">[]): string {
     return "";
   }

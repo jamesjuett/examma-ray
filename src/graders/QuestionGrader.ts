@@ -169,11 +169,17 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param gqs 
    */
   renderOverview(gqs: readonly GradedQuestion<RK>[]): string;
+  
+  /**
+   * Annotates the response element with feedback (if there is any).
+   * @param elem The HTML element for the status badge.
+   */
+  annotateResponseElem(gq: GradedQuestion<RK, GR>, response_elem: JQuery) : void;
 
 };
 
 
-type GraderKind = 
+export type GraderKind = 
   | "manual_code_writing"
   | "manual_generic"
   | "manual_regex_fill_in_the_blank"

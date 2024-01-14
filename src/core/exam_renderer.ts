@@ -438,7 +438,7 @@ export class OriginalExamRenderer extends TakenExamRenderer {
             <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               ${renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true)}
               <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-                ${q.question.title ? `${q.displayIndex}: ${mk2html(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
+                ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </li>
           `).join("")}
@@ -750,7 +750,7 @@ export class DocRenderer extends TakenExamRenderer {
           ${s.assignedQuestions.map(q => `
             <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-              ${q.question.title ? `${q.displayIndex}: ${mk2html(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
+              ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </li>
           `).join("")}

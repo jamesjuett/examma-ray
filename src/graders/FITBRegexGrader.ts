@@ -200,6 +200,10 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       </tr>
     </table>`;
   }
+  
+  public annotateResponseElem(gq: GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
 
   public renderStats(aqs: readonly AssignedQuestion<"fill_in_the_blank">[]) {
     if (aqs.length === 0) {
@@ -323,6 +327,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   }
 
 }
+
 function FITBRubricItemMatch(rubricItem: FITBRegexRubricItem, submission: string) {
   return rubricItem.patterns.find(p => {
     if (typeof p.pattern === "function") {

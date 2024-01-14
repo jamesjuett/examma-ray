@@ -148,6 +148,10 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     //   </form>
     // `;
   }
+  
+  public annotateResponseElem(gq: GradedQuestion<"multiple_choice", SummationMCGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
 
   public renderStats() {
     return "Stats are not implemented for this question/grader type yet.";

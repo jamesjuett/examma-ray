@@ -1,35 +1,30 @@
-import { AssignedQuestion } from "../core/assigned_exams";
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { Question } from "../core/exam_components";
 import { assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { SubmissionType } from "../response/responses";
+import { GraderVerifierSpecification } from "./GraderVerifier";
 
 
 export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
 
   /**
-   * Returns whether or not this verifier can be used for the given response kind
-   * @param responseKind 
-   */
-  isVerifier<T extends ResponseKind>(responseKind: T): this is QuestionVerifier<T>;
-
-  /**
    * Returns whether or not the given submission is verified.
    * @param sub The submission to verify
    */
-  verify(submission: SubmissionType<RK>): boolean;
+  verify(aq: AssignedQuestion<RK>): boolean;
 
   /**
    * Renders HTML elements to report verification status. This function is called
    * exactly once for the status badge element when the question in initally rendered.
    * @param elem The HTML element for the status badge.
    */
-  renderStatusBadge(aq: AssignedQuestion<RK>) : void;
+  renderStatusBadge(aq: AssignedQuestion<RK>) : string;
   
   /**
    * Updates the elements to report verification status.
    * @param elem The HTML element for the status badge.
    */
-  updateStatusBadge(elem: JQuery) : void;
+  updateStatusBadge(aq: AssignedQuestion<RK>, elem: JQuery) : void;
 
 };
 
