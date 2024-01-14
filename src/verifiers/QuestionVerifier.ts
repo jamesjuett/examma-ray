@@ -1,9 +1,7 @@
-import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { Question } from "../core/exam_components";
+import { AssignedQuestion } from "../core/assigned_exams";
 import { assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { GraderVerifierSpecification } from "./GraderVerifier";
-
+import { FullCreditVerifier, FullCreditVerifierSpecification } from "./FullCreditVerifier";
 
 export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
 
@@ -30,35 +28,24 @@ export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
 
 
 type VerifierKind = 
-  | "grader";
+  | "full_credit";
 
 export type VerifierSpecification<VK extends VerifierKind = VerifierKind> =
-  VK extends "grader" ? GraderVerifierSpecification :
+  VK extends "full_credit" ? FullCreditVerifierSpecification :
   never;
 
 export type Verifier<VK extends VerifierKind = VerifierKind> =
-  VK extends "grader" ? GraderVerifier :
+  VK extends "full_credit" ? FullCreditVerifier :
   never;
 
-type ExtractViableVerifiers<V extends Verifier, RK> = V extends Verifier ? RK extends V["t_response_kinds"] ? G : never : never;
+type ExtractViableVerifiers<V extends Verifier, RK> = V extends Verifier ? RK extends V["t_response_kinds"] ? V : never : never;
 
 export type VerifierSpecificationFor<RK extends ResponseKind> = ExtractViableVerifiers<Verifier, RK>["spec"];
 export type VerifierFor<RK extends ResponseKind> = ExtractViableVerifiers<Verifier, RK>;
 
 export function realizeVerifier<VK extends VerifierKind>(spec: VerifierSpecification<VK>) : Verifier<VK> {
   return <Verifier<VK>>(
-    spec.verifier_kind === "grader" ? new GraderVerifier(spec) :
-    assertNever(spec)
+    spec.verifier_kind === "full_credit" ? new FullCreditVerifier(spec) :
+    assertNever(spec.verifier_kind)
   );
-}
-
-
-export type GradingResult = {
-  wasBlankSubmission: boolean
-}
-
-export type ImmutableGradingResult = GradingResult & {
-  readonly pointsEarned: number;
-  readonly wasBlankSubmission: boolean;
-  readonly wasInvalidSubmission?: boolean;
 }
