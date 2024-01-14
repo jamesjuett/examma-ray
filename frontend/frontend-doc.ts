@@ -117,11 +117,9 @@ function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
   return examId + "-" + uniqname + "-" + uuid;
 }
 
-function autosaveToLocalStorage() {
+function autosaveToLocalStorage(answers: ) {
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
-
-    let answers = extractExamAnswers();
 
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
@@ -186,7 +184,10 @@ async function activateClientsideExam() {
   const exam_spec = parseExamSpecification(exam_spec_response.data);
 
   const exam = Exam.create(exam_spec);
-  alert(exam.exam_id);
+  
+  exam.allQuestions.forEach(question => {
+    question.activate($(`#`))
+  });
 
 }
 
@@ -446,8 +447,10 @@ function startExam() {
       // $("#exam-welcome-normal-modal").modal("show");
     }
 
-    // Interval to autosave to local storage every 5 seconds
-    setInterval(autosaveToLocalStorage, 5000);
+    setInterval(() => {
+      let answers = extractExamAnswers();
+      autosaveToLocalStorage(answers);
+    }, 5000);
   }
   else {
     // $("#exam-welcome-no-autosave-modal").modal("show");

@@ -26,25 +26,20 @@ export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
 
 };
 
+export type QuestionVerifierSpecification =
+  | FullCreditVerifierSpecification;
 
-type VerifierKind = 
-  | "full_credit";
+// export type QuestionVerifier<VK extends QuestionVerifierKind = QuestionVerifierKind> =
+//   VK extends "full_credit" ? FullCreditVerifier :
+//   never;
 
-export type VerifierSpecification<VK extends VerifierKind = VerifierKind> =
-  VK extends "full_credit" ? FullCreditVerifierSpecification :
-  never;
+// type ExtractViableVerifiers<V extends QuestionVerifier, RK> = V extends QuestionVerifier ? RK extends V["t_response_kinds"] ? V : never : never;
 
-export type Verifier<VK extends VerifierKind = VerifierKind> =
-  VK extends "full_credit" ? FullCreditVerifier :
-  never;
+// export type QuestionVerifierSpecificationFor<RK extends ResponseKind> = ExtractViableVerifiers<QuestionVerifier, RK>["spec"];
+// export type VerifierFor<RK extends ResponseKind> = ExtractViableVerifiers<QuestionVerifier, RK>;
 
-type ExtractViableVerifiers<V extends Verifier, RK> = V extends Verifier ? RK extends V["t_response_kinds"] ? V : never : never;
-
-export type VerifierSpecificationFor<RK extends ResponseKind> = ExtractViableVerifiers<Verifier, RK>["spec"];
-export type VerifierFor<RK extends ResponseKind> = ExtractViableVerifiers<Verifier, RK>;
-
-export function realizeVerifier<VK extends VerifierKind>(spec: VerifierSpecification<VK>) : Verifier<VK> {
-  return <Verifier<VK>>(
+export function realizeVerifier(spec: QuestionVerifierSpecification) : QuestionVerifier {
+  return (
     spec.verifier_kind === "full_credit" ? new FullCreditVerifier(spec) :
     assertNever(spec.verifier_kind)
   );

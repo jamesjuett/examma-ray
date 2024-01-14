@@ -421,9 +421,9 @@ export class ExamPreview {
     mkdirSync(previewDir, { recursive: true });
     del.sync(`${previewDir}/*`);
 
-    writeFrontendJS(`${previewDir}/js`, "frontend.js");
-    writeFrontendJS(`${previewDir}/js`, "frontend-preview.js");
-    writeFrontendJS(`${previewDir}/js`, "frontend-solution.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-preview.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-solution.js");
     this.writeAssets(`${previewDir}`);
 
     writeFileSync(`${previewDir}/preview.html`, this.renderPreview(), {encoding: "utf-8"});

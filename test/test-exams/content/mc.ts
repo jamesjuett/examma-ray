@@ -17,6 +17,9 @@ MC Test Question (Single Response)
       "Choice E"
     ],
     multiple: false
+  },
+  verifier: {
+    verifier_kind: "full_credit",
   }
 };
 
@@ -58,6 +61,9 @@ MC Test Question (Multiple Response)
     ],
     multiple: true,
     limit: 3
+  },
+  verifier: {
+    verifier_kind: "full_credit",
   }
 };
 

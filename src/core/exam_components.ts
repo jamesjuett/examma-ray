@@ -1,11 +1,12 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
-import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
-import { chooseAllQuestions, chooseAllSections, CredentialsStrategy, ExamSpecification, isValidID, MinMaxPoints, minMaxPoints, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
+import { ResponseSpecification, SubmissionType, ViableSubmissionType, render_response, render_solution } from "../response/responses";
+import { ExamVerifierSpecification } from "../verifiers/ExamVerifier";
+import { QuestionVerifier, QuestionVerifierSpecification, realizeVerifier } from "../verifiers/QuestionVerifier";
+import { CredentialsStrategy, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
-import { ExamVerifierSpecification, QuestionVerifierSpecification } from "./verifiers";
 
 export class Question<QT extends ResponseKind = ResponseKind> {
 
@@ -25,7 +26,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
-  public readonly verifier?: QuestionVerifierSpecification;
+  public readonly verifier?: QuestionVerifier;
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
@@ -72,7 +73,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     ) : DEFAULT_SKIN;
     this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
-    this.verifier = spec.verifier;
+    this.verifier = spec.verifier && realizeVerifier(spec.verifier);
     this.assets_dir = spec.assets_dir;
   }
 

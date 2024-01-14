@@ -60,8 +60,9 @@ import { assert, assertFalse, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
 import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
-import { ExamVerifierSpecification, QuestionVerifierSpecification } from "./verifiers";
 import deepEqual from "deep-equal";
+import { QuestionVerifierSpecification } from "../verifiers/QuestionVerifier";
+import { ExamVerifierSpecification } from "../verifiers/ExamVerifier";
 
 
 

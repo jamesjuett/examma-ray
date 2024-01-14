@@ -23,10 +23,6 @@ This is a simple test question!
       points: 2,
       allow_blanks: true
     },
-  },
-  verifier: {
-    verification_strategy: "full_points",
-    grader_selection_strategy: "default_grader"
   }
 }
 

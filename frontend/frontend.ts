@@ -117,7 +117,7 @@ function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
   return examId + "-" + uniqname + "-" + uuid;
 }
 
-function autosaveToLocalStorage() {
+function autosaveToLocalStorage(answers: ExamSubmission) {
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
 
@@ -177,7 +177,7 @@ function onSaved() {
 async function activateClientsideExam() {
     
   const exam_spec_response = await axios({
-    url: `./spec/exam-spec.json`,
+    url: `../spec/exam-spec.json`,
     method: "GET",
     data: {},
     responseType: "text",
@@ -446,8 +446,10 @@ function startExam() {
       $("#exam-welcome-normal-modal").modal("show");
     }
 
-    // Interval to autosave to local storage every 5 seconds
-    setInterval(autosaveToLocalStorage, 5000);
+    setInterval(() => {
+      let answers = extractExamAnswers();
+      autosaveToLocalStorage(answers);
+    }, 5000);
   }
   else {
     $("#exam-welcome-no-autosave-modal").modal("show");

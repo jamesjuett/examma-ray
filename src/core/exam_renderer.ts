@@ -342,6 +342,10 @@ abstract class TakenExamRenderer extends ExamRenderer {
     return `<script src="https://accounts.google.com/gsi/client" async></script>`;
   }
 
+  protected renderVerifierStatusBadge(aq: AssignedQuestion) {
+    return aq.question.verifier?.renderStatusBadge(aq) ?? "";
+  }
+
   protected override renderModals(ae: AssignedExam) {
     if (!ae.exam.credentials_strategy) {
       return super.renderModals(ae);
@@ -465,7 +469,11 @@ export class OriginalExamRenderer extends TakenExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b> ${renderPointsWorthBadge(aq.question.pointsPossible)}`;
+    return `
+      <b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>
+      ${renderPointsWorthBadge(aq.question.pointsPossible)}
+      ${this.renderVerifierStatusBadge(aq)}
+    `;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {
@@ -777,7 +785,10 @@ export class DocRenderer extends TakenExamRenderer {
   }
 
   protected renderQuestionHeader(aq: AssignedQuestion) {
-    return `<b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>`;
+    return `
+      <b>${aq.displayIndex}${aq.question.title ? " " + mk2html_unwrapped(aq.question.title, aq.skin) : ""}</b>
+      ${this.renderVerifierStatusBadge(aq)}
+    `;
   }
   
   protected renderQuestionContent(aq: AssignedQuestion) {

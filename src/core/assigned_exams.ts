@@ -1,16 +1,15 @@
-import { asMutable, assert, assertFalse, Mutable } from './util';
-import { parse_submission, SubmissionType } from '../response/responses';
-import { ResponseKind } from '../response/common';
-import { mk2html, mk2html_unwrapped } from './render';
-import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
+import { sum } from 'simple-statistics';
 import { Exception, GraderMap } from '../ExamGrader';
-import { QuestionGrader, GradingResult } from '../graders/QuestionGrader';
+import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
+import { ResponseKind } from '../response/common';
+import { parse_submission, SubmissionType } from '../response/responses';
+import { Exam, Question, Section } from './exam_components';
 import { isValidID, StudentInfo } from './exam_specification';
+import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { createCompositeSkin, ExamComponentSkin } from './skins';
 import { ExamManifest, TrustedExamSubmission } from './submissions';
-import { sum } from 'simple-statistics';
-import { AppliedCurve, ExamCurve } from './ExamCurve';
-import { Exam, Question, Section } from './exam_components';
+import { maxPrecisionString } from "./ui_components";
+import { asMutable, assert, assertFalse, Mutable } from './util';
 
 
 
