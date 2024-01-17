@@ -78,9 +78,6 @@ MC Test Question (Multiple Response)
     ],
     multiple: true,
     limit: 3
-  },
-  verifier: {
-    verifier_kind: "full_credit",
   }
 };
 

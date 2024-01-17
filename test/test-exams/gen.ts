@@ -30,8 +30,13 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
       client_id: "444801118749-099920plmkl1s5n5u563pbmu71lo4bot.apps.googleusercontent.com",
       message: "Sign in with your @umich.edu Google account to earn participation credit for completing embedded exercises."
     },
-    verifier: {
-      verification_strategy: "all_verified"
+    completion: {
+      threshold: 1,
+      tooltip: "",
+      endpoints: {
+        check: "https://localhost/public_api/participation/me/",
+        submit: "https://localhost/public_api/participation/me/",
+      }
     }
   });
 }

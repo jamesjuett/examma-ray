@@ -2,7 +2,7 @@ import path from 'path';
 import { AssignedSection, Exam } from '../core';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_USER } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_USER } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { renderQuestionVerifierStatus as renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
@@ -67,15 +67,6 @@ export abstract class ExamRenderer {
 
   public abstract renderNavBadge(s: AssignedSection): string;
 
-  protected renderSignInButton() {
-    return `
-      <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
-      ${ICON_USER}
-      <span style="vertical-align: middle">Sign In</span>
-      </button>
-    `;
-  }
-
   public renderSaverButton(ae: AssignedExam) {
     return `
       <div class="examma-ray-exam-saver-status border-top">
@@ -101,7 +92,7 @@ export abstract class ExamRenderer {
     </div>`;
   }
 
-  public abstract renderScripts(frontendPath: string): string;
+  public abstract renderScripts(ae: AssignedExam, frontendPath: string): string;
 
   public abstract renderBody(ae: AssignedExam): string;
 
@@ -113,7 +104,7 @@ export abstract class ExamRenderer {
     return `
       <!DOCTYPE html>
       <html>
-      ${renderHead(this.renderScripts(frontendPath))}
+      ${renderHead(this.renderScripts(ae, frontendPath))}
       <body>
         ${this.renderBody(ae)}
         ${this.renderModals(ae)}
@@ -339,8 +330,30 @@ export abstract class ExamRenderer {
 abstract class TakenExamRenderer extends ExamRenderer {
 
 
-  public override renderScripts(frontendPath: string): string {
-    return `<script src="https://accounts.google.com/gsi/client" async></script>`;
+  public override renderScripts(ae: AssignedExam, frontendPath: string): string {
+    if (ae.exam.credentials_strategy?.strategy === "google_local") {
+      return `<script src="https://accounts.google.com/gsi/client" async></script>`;
+    }
+    else {
+      return "";
+    }
+  }
+
+  protected renderSignInButton() {
+    return `
+      <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
+      ${ICON_USER}
+      <span style="vertical-align: middle">Sign In</span>
+      </button>
+    `;
+  }
+
+  protected renderCompletionStatus(ae: AssignedExam) {
+    return `
+      <span id="examma-ray-exam-completion-status">
+        <span class="btn btn-sm btn-secondary">${ICON_BOX} <span style="vertical-align: middle;"> Participation</span></span>
+      </span>
+    `;
   }
 
   protected renderVerifierStatus(aq: AssignedQuestion) {
@@ -387,6 +400,12 @@ abstract class TakenExamRenderer extends ExamRenderer {
                 data-itp_support="true"
                 data-close_on_tap_outside="false"
               ></div>
+
+              <script>
+                function on_google_sign_in(response) {
+                  window.google_sign_in_callback(response);
+                }
+              </script>
             </div>
           </div>
         </div>
@@ -397,8 +416,8 @@ abstract class TakenExamRenderer extends ExamRenderer {
 
 export class OriginalExamRenderer extends TakenExamRenderer {
 
-  public override renderScripts(frontendPath: string): string {
-    return super.renderScripts(frontendPath) + `
+  public override renderScripts(ae: AssignedExam, frontendPath: string): string {
+    return super.renderScripts(ae, frontendPath) + `
       <script src="${path.join(frontendPath, "frontend.js")}"></script>
     `;
   }
@@ -407,8 +426,9 @@ export class OriginalExamRenderer extends TakenExamRenderer {
     return `<div id="examma-ray-exam" class="container-fluid" data-uniqname="${ae.student.uniqname}" data-name="${ae.student.name}" data-exam-id="${ae.exam.exam_id}" data-exam-uuid="${ae.uuid}" data-clientside-content="${ae.exam.allow_clientside_content ? "yes" : "no"}">
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
-          ${ae.exam.credentials_strategy || ae.exam.verifier ?
-            `<div class="text-center pt-1 pb-1 border-bottom">
+          ${ae.exam.credentials_strategy || ae.exam.completion ?
+            `<div class="pt-1 pb-1 border-bottom">
+              ${this.renderCompletionStatus(ae)}
               ${this.renderSignInButton()}
             </div>` :
             ""
@@ -491,7 +511,7 @@ export class OriginalExamRenderer extends TakenExamRenderer {
 
 export class SampleSolutionExamRenderer extends ExamRenderer {
 
-  public renderScripts(frontendPath: string): string {
+  public renderScripts(ae: AssignedExam, frontendPath: string): string {
     return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
   }
 
@@ -551,7 +571,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
 
 export class SubmittedExamRenderer extends ExamRenderer {
 
-  public renderScripts(frontendPath: string): string {
+  public renderScripts(ae: AssignedExam, frontendPath: string): string {
     return `<script src="${path.join(frontendPath, "frontend-solution.js")}"></script>`
   }
 
@@ -609,7 +629,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
 
 export class GradedExamRenderer extends ExamRenderer {
 
-  public renderScripts(frontendPath: string): string {
+  public renderScripts(ae: AssignedExam, frontendPath: string): string {
     return `<script src="${path.join(frontendPath, "frontend-graded.js")}"></script>`
   }
 
@@ -719,8 +739,8 @@ export class GradedExamRenderer extends ExamRenderer {
 
 export class DocRenderer extends TakenExamRenderer {
 
-  public override renderScripts(frontendPath: string): string {
-    return super.renderScripts(frontendPath) + `
+  public override renderScripts(ae: AssignedExam, frontendPath: string): string {
+    return super.renderScripts(ae, frontendPath) + `
       <script src="${path.join(frontendPath, "frontend-doc.js")}"></script>
     `;
   }
@@ -732,8 +752,9 @@ export class DocRenderer extends TakenExamRenderer {
           <div class="text-center pb-1 pl-4 pr-4 border-bottom">
             <b>${ae.exam.title}</b>
           </div>
-          ${ae.exam.credentials_strategy || ae.exam.verifier ?
-            `<div class="text-center pt-1 pb-1 border-bottom">
+          ${ae.exam.credentials_strategy || ae.exam.completion ?
+            `<div class="pt-1 pb-1 border-bottom">
+              ${this.renderCompletionStatus(ae)}
               ${this.renderSignInButton()}
             </div>` :
             ""

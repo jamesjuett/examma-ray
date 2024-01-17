@@ -12,6 +12,8 @@ import { Exam } from "../src/core/exam_components";
 import "./frontend.css";
 import { assert } from "../src/core/util";
 import { AssignedExam } from "../src/core/assigned_exams";
+import { ExamCompletion } from "../src/verifiers/ExamCompletion";
+import { jwtDecode } from "jwt-decode";
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
@@ -395,6 +397,9 @@ function setupChangeListeners() {
   // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
+let COMPLETION : ExamCompletion | undefined = undefined;
+let CREDENTIALS : string | undefined = undefined;
+
 async function startExam() {
   
   let examElem = $("#examma-ray-exam");
@@ -467,6 +472,23 @@ async function startExam() {
     assert(isTransparentExamManifest(manifest));
     const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
     
+    COMPLETION = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
+
+    (window as any).google_sign_in_callback = (response: any) => {
+      let email = (jwtDecode(response.credential) as any).email;
+      $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
+      CREDENTIALS = response.credential;
+      
+      if (CREDENTIALS) {
+        setInterval(async () => {
+          await COMPLETION?.checkCompletionWithServer(CREDENTIALS!);
+          if (!COMPLETION!.isComplete) {
+            COMPLETION!.verify(assigned_exam, CREDENTIALS!);
+          }
+        })
+      }
+    }
+
     setInterval(() => {
 
       assigned_exam.assignedQuestions.forEach(aq => {
@@ -482,11 +504,19 @@ async function startExam() {
         }
       })
 
+      if (CREDENTIALS && COMPLETION) {
+        if (!COMPLETION.isComplete) {
+          COMPLETION.verify(assigned_exam, CREDENTIALS);
+        }
+      }
+
     }, 5000);
 
   }
 
 }
+
+
 
 
 

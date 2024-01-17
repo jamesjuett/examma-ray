@@ -1,7 +1,7 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
 import { ResponseSpecification, SubmissionType, ViableSubmissionType, render_response, render_solution } from "../response/responses";
-import { ExamVerifierSpecification } from "../verifiers/ExamVerifier";
+import { ExamCompletionSpecification } from "../verifiers/ExamCompletion";
 import { QuestionVerifier, QuestionVerifierSpecification, realizeVerifier } from "../verifiers/QuestionVerifier";
 import { CredentialsStrategy, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
@@ -239,7 +239,7 @@ export class Exam {
 
   public readonly points: MinMaxPoints;
   public readonly sections: readonly (Section | SectionChooser)[];
-  public readonly verifier?: ExamVerifierSpecification;
+  public readonly completion?: ExamCompletionSpecification;
 
   public readonly enable_regrades: boolean;
   public readonly allow_clientside_content: boolean;
@@ -282,7 +282,7 @@ export class Exam {
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
-    this.verifier = spec.verifier;
+    this.completion = spec.completion;
     this.enable_regrades = !!spec.enable_regrades;
     this.allow_clientside_content = !!spec.allow_clientside_content;
     this.credentials_strategy = spec.credentials_strategy;

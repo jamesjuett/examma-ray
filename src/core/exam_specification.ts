@@ -62,7 +62,7 @@ import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
 import deepEqual from "deep-equal";
 import { QuestionVerifierSpecification } from "../verifiers/QuestionVerifier";
-import { ExamVerifierSpecification } from "../verifiers/ExamVerifier";
+import { ExamCompletionSpecification } from "../verifiers/ExamCompletion";
 
 
 
@@ -228,9 +228,9 @@ export type ExamSpecification = {
   readonly sections: readonly (SectionSpecification | SectionChooserSpecification)[],
 
   /**
-   * A verifier for this exam.
+   * A completion checker for this exam
    */
-  readonly verifier?: ExamVerifierSpecification;
+  readonly completion?: ExamCompletionSpecification;
 
   /**
    * Markdown-formatted announcements that will be shown in an "alert" style box at the top of the exam,
