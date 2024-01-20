@@ -94,7 +94,7 @@ export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIF
 }
 
 
-function evaluateRubricItem(item: StandardIFrameGraderRubricItem, submission: {}) : FITBDropRubricItemEvaluation{
+function evaluateRubricItem(item: StandardIFrameGraderRubricItem, submission: {[index: string]: any}) : FITBDropRubricItemEvaluation{
 
   return {
     pointsEarned: submission[item.property] === item.value ? item.points : 0,

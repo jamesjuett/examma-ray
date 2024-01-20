@@ -103,6 +103,16 @@ function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmiss
 
   try {
     let parsed : {} | [] | string | number | boolean | null = JSON.parse(rawSubmission);
+
+    // This is a HACK related to EECS 280 asynchronous lectures for W24.
+    // Remove it once W24 is finished.
+    if (typeof parsed === "string") {
+      return {
+        code: parsed,
+        complete: true,
+      };
+    }
+
     if ( !(typeof parsed === "object") || parsed === null || Array.isArray(parsed) ) {
       return MALFORMED_SUBMISSION;
     }
@@ -187,12 +197,18 @@ class IFrameResponse {
     }
 
     if (this.is_ready) {
-      this.iframe_window.postMessage({
-        examma_ray_message: {
-          message_kind: "set_submission",
-          submission: submission
-        }
-      });
+
+      // Can't serialize symbols MALFORMED_SUBMISSION or BLANK_SUBMISSION to put
+      // through a postMessage call. However, we don't really want to send these to
+      // the iframe anway.
+      if (submission !== MALFORMED_SUBMISSION && submission !== BLANK_SUBMISSION) {
+        this.iframe_window.postMessage({
+          examma_ray_message: {
+            message_kind: "set_submission",
+            submission: submission
+          }
+        });
+      }
     }
     else {
       this.current_timeout = window.setTimeout(() => this.setSubmission(submission), 1000);
