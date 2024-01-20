@@ -94,14 +94,29 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = string | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
+export type IFrameSubmission = {} | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
 
 function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
 
-  return rawSubmission;
+  try {
+    let parsed : {} | [] | string | number | boolean | null = JSON.parse(rawSubmission);
+    if ( !(typeof parsed === "object") || parsed === null || Array.isArray(parsed) ) {
+      return MALFORMED_SUBMISSION;
+    }
+
+    return Object.keys(parsed).length > 0 ? parsed : BLANK_SUBMISSION
+  }
+  catch(e) {
+    if (e instanceof SyntaxError) {
+      return MALFORMED_SUBMISSION;
+    }
+    else {
+      throw e;
+    }
+  }
 }
 
 function IFRAME_RENDERER(response: IFrameResponseSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -127,7 +142,7 @@ type IFrameResponseMessage = {
 class IFrameResponse {
   public readonly is_ready: boolean;
   public readonly iframe_window: Window;
-  public readonly submission: string;
+  public readonly submission: IFrameSubmission;
 
   private current_timeout: number | undefined;
 
@@ -162,7 +177,7 @@ class IFrameResponse {
     }
   }
 
-  public setSubmission(submission: string) {
+  public setSubmission(submission: IFrameSubmission) {
 
     asMutable(this).submission = submission;
 

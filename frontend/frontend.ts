@@ -480,7 +480,7 @@ async function startExam() {
       CREDENTIALS = response.credential;
       
       if (CREDENTIALS) {
-        setInterval(async () => {
+        setTimeout(async () => {
           await COMPLETION?.checkCompletionWithServer(CREDENTIALS!);
           if (!COMPLETION!.isComplete) {
             COMPLETION!.verify(assigned_exam, CREDENTIALS!);
@@ -489,7 +489,7 @@ async function startExam() {
       }
     }
 
-    setInterval(() => {
+    const check_answers = () => {
 
       assigned_exam.assignedQuestions.forEach(aq => {
         const verifier = aq.question.verifier;
@@ -510,7 +510,11 @@ async function startExam() {
         }
       }
 
-    }, 5000);
+    };
+
+    setTimeout(check_answers)
+
+    setInterval(check_answers, 3000);
 
   }
 

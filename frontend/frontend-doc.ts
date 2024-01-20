@@ -12,6 +12,8 @@ import { activateExamComponents, activateExamContent, setupCodeEditors } from ".
 import "./frontend-doc.css";
 import { assert } from '../src/core/util';
 import { AssignedExam } from '../src/core/assigned_exams';
+import { ExamCompletion } from '../src/verifiers/ExamCompletion';
+import { jwtDecode } from 'jwt-decode';
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
@@ -394,6 +396,9 @@ function setupChangeListeners() {
   // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
+let COMPLETION : ExamCompletion | undefined = undefined;
+let CREDENTIALS : string | undefined = undefined;
+
 async function startExam() {
   
   let examElem = $("#examma-ray-exam");
@@ -466,7 +471,24 @@ async function startExam() {
     assert(isTransparentExamManifest(manifest));
     const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
     
-    setInterval(() => {
+    COMPLETION = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
+
+    (window as any).google_sign_in_callback = (response: any) => {
+      let email = (jwtDecode(response.credential) as any).email;
+      $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
+      CREDENTIALS = response.credential;
+      
+      if (CREDENTIALS) {
+        setTimeout(async () => {
+          await COMPLETION?.checkCompletionWithServer(CREDENTIALS!);
+          if (!COMPLETION!.isComplete) {
+            COMPLETION!.verify(assigned_exam, CREDENTIALS!);
+          }
+        })
+      }
+    }
+
+    const check_answers = () => {
 
       assigned_exam.assignedQuestions.forEach(aq => {
         const verifier = aq.question.verifier;
@@ -481,11 +503,23 @@ async function startExam() {
         }
       })
 
-    }, 5000);
+    if (CREDENTIALS && COMPLETION) {
+        if (!COMPLETION.isComplete) {
+          COMPLETION.verify(assigned_exam, CREDENTIALS);
+        }
+      }
+
+    };
+
+    setTimeout(check_answers)
+
+    setInterval(check_answers, 3000);
 
   }
 
 }
+
+
 
 
 
