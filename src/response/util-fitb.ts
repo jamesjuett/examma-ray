@@ -1,6 +1,6 @@
 import { encode } from "he";
 import { mk2html } from "../core/render";
-import { BLANK_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION } from "./common";
 import { FITBSubmission } from "./fitb";
 
 
@@ -72,7 +72,7 @@ export function createFilledFITB(
   });
 
   // Replace placeholders with submission values
-  if (submission && submission !== BLANK_SUBMISSION) {
+  if (submission && submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
     submission.forEach(sub => {
       let submission_replacement = encoder(sub);
       
@@ -92,11 +92,24 @@ export function createFilledFITB(
 }
 function DEFAULT_BLANK_RENDERER(submission_placeholder: string, length: number) {
   let autoAttrs = `autocomplete="off" autocorrect="off" spellcheck="false"`;
-  return `<input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>`;
+  return `
+    <input type="text" value="${submission_placeholder}" size="${length}" maxlength="${length}" ${autoAttrs} class="examma-ray-fitb-blank-input nohighlight"></input>
+    <span class="examma-ray-fitb-input-annotation examma-ray-fitb-blank-annotation"></span>
+  `;
 }
 function DEFAULT_BOX_RENDERER(submission_placeholder: string, lines: number, width: number) {
   let rcAttrs = `rows="${lines}"${width !== 0 ? ` cols="${width}"` : ""}`;
   let autoAttrs = `autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false"`;
   let style = `style="resize: none; overflow: auto;${width === 0 ? " width: 100%;" : ""}"`;
-  return `<textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>`;
+  return `
+    <div class="examma-ray-fitb-box-input-holder" style="${width === 0 ? " width: 100%;" : ""}">
+      <textarea ${rcAttrs} ${autoAttrs} class="examma-ray-fitb-box-input nohighlight" ${style}>${submission_placeholder}</textarea>
+      <span class="examma-ray-fitb-input-annotation examma-ray-fitb-box-annotation"></span>
+    </div>
+  `;
+}
+
+
+export function findFITBInputElements(response_elem: JQuery) {
+  return response_elem.find(".examma-ray-fitb-box-input, .examma-ray-fitb-blank-input");
 }

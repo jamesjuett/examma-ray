@@ -489,17 +489,29 @@ async function startExam() {
       }
     }
 
+    let first : boolean = true;
+
     const check_answers = () => {
 
       assigned_exam.assignedQuestions.forEach(aq => {
         const verifier = aq.question.verifier;
-        if (verifier) {
-          const question_elem = $(`.examma-ray-question[data-question-uuid="${aq.uuid}"]`).first();
-          const answer = extractQuestionAnswers(question_elem);
-          aq.setRawSubmission(answer.response);
-          if (aq.question.defaultGrader) {
-            aq.grade(aq.question.defaultGrader);
+        const question_elem = $(`.examma-ray-question[data-question-uuid="${aq.uuid}"]`).first();
+        const answer = extractQuestionAnswers(question_elem);
+        
+        if (!first && answer.response === aq.rawSubmission) {
+          // submission hasn't changed, nothing to do
+          return;
+        }
+
+        aq.setRawSubmission(answer.response);
+        if (aq.question.defaultGrader) {
+          aq.grade(aq.question.defaultGrader);
+
+          if (aq.isGraded()) {
+            aq.question.defaultGrader.annotateResponseElem(<any>aq, $(`.examma-ray-question[data-question-uuid="${aq.uuid}"] .examma-ray-question-response`).first())
           }
+        }
+        if (verifier) {
           verifier.updateStatus(aq, $(`.examma-ray-verifier-status[data-question-uuid="${aq.uuid}"]`));
         }
       })
@@ -510,6 +522,7 @@ async function startExam() {
         }
       }
 
+      first = false;
     };
 
     setTimeout(check_answers)

@@ -14,18 +14,30 @@
 
 import { encode } from "he";
 import { min, sum } from "simple-statistics";
-import { applySkin, mk2html } from "../core/render";
+import { applySkin, mk2html, mk2html_unwrapped } from "../core/render";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
-import { createFilledFITB } from "../response/util-fitb";
-import { assert } from "../core/util";
+import { createFilledFITB, findFITBInputElements } from "../response/util-fitb";
+import { assert, assertNever } from "../core/util";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
-import { ICON_BOX_CHECK, ICON_INFO } from "../core/icons";
+import { ICON_CHECK_SQUARE_FILL, ICON_EXCLAMATION_SQUARE_FILL, ICON_BOX_CHECK, ICON_INFO, ICON_X_SQUARE_FILL, ICON_INFO_SQUARE_FILL } from "../core/icons";
 
 
-export type FITBRegexGradingResult = ImmutableGradingResult & {
+export type FITBRegexGradingResult = PartialFITBRegexGradingResult | FullFITBRegexGradingResult;
+
+type PartialFITBRegexGradingResult = ImmutableGradingResult & {
+  readonly wasBlankSubmission: true,
+  readonly wasInvalidSubmission?: boolean,
+} | ImmutableGradingResult & {
+  readonly wasBlankSubmission: false,
+  readonly wasInvalidSubmission: true,
+};
+
+type FullFITBRegexGradingResult = ImmutableGradingResult & {
+  readonly wasBlankSubmission: false,
+  readonly wasInvalidSubmission?: false,
   readonly itemResults: readonly {
     matched: boolean,
     pointsEarned: number,
@@ -46,6 +58,10 @@ export type FITBRegexRubricItem = {
   description: string;
   patterns: FITBRegexMatcher[];
 };
+
+function isFullFITBRegexGradingResult(gr: FITBRegexGradingResult) : gr is FullFITBRegexGradingResult {
+  return !gr.wasBlankSubmission && !gr.wasInvalidSubmission;
+}
 
 function identifyCodeWords(blanks: readonly string[]) {
   let result = new Set<string>();
@@ -83,11 +99,17 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
   public grade(aq: AssignedQuestion<"fill_in_the_blank">) : FITBRegexGradingResult {
     let submission = aq.submission;
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+    if (submission === INVALID_SUBMISSION) {
       return {
-        wasBlankSubmission: true,
         pointsEarned: 0,
-        itemResults: []
+        wasBlankSubmission: false,
+        wasInvalidSubmission: true,
+      }
+    }
+    else if (submission === BLANK_SUBMISSION) {
+      return {
+        pointsEarned: 0,
+        wasBlankSubmission: true,
       };
     }
 
@@ -149,12 +171,22 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let orig_submission = aq.submission;
     let skin = aq.skin;
     let submission: readonly string[];
-    if (gr.wasBlankSubmission) {
-      return "Your answer for this question was blank.";
+
+    if (isFullFITBRegexGradingResult(gr)) {
+      assert(orig_submission !== BLANK_SUBMISSION);
+      assert(orig_submission !== INVALID_SUBMISSION);
+      submission = orig_submission;
     }
     else {
-      assert(orig_submission !== BLANK_SUBMISSION);
-      submission = orig_submission;
+      if (gr.wasInvalidSubmission) {
+        return "Your answer for this question was invalid.";
+      }
+      else if (gr.wasBlankSubmission) {
+        return "Your answer for this question was blank.";
+      }
+      else {
+        assertNever(gr);
+      }
     }
 
     let content = question.response.content;
@@ -202,7 +234,47 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   }
   
   public annotateResponseElem(gq: GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>, response_elem: JQuery) {
-    // not yet implemented
+    const gr = gq.gradingResult;
+    const rubric = this.spec.rubric;
+
+    if (!isFullFITBRegexGradingResult(gr)) {
+      response_elem.find(".examma-ray-fitb-input-annotation").css("display", "none");
+      return;
+    }
+
+    response_elem.find(".examma-ray-fitb-input-annotation").each((i, html_elem) => {
+      const annotation_elem = $(html_elem);
+
+      const item_result = gr.itemResults[i];
+      const item_rubric = rubric[i];
+      if (!item_result.matched) {
+        // Nothing to annotate
+        annotation_elem.css("display", "none");
+        annotation_elem.tooltip("dispose");
+        return;
+      }
+
+      annotation_elem.css("display", "inline-block");
+      annotation_elem.tooltip("dispose");
+      item_result.explanation && annotation_elem.tooltip({
+        title: mk2html_unwrapped(item_result.explanation),
+        html: true,
+        placement: "left"
+      });
+
+      if (item_result.pointsEarned >= item_rubric.points) {
+        annotation_elem.css("color", "green");
+        annotation_elem.html(ICON_CHECK_SQUARE_FILL);
+      }
+      else if (item_result.pointsEarned > 0) {
+        annotation_elem.css("color", "yellow");
+        annotation_elem.html(item_result.explanation ? ICON_INFO_SQUARE_FILL : ICON_EXCLAMATION_SQUARE_FILL);
+      }
+      else {
+        annotation_elem.css("color", "red");
+        annotation_elem.html(item_result.explanation ? ICON_INFO_SQUARE_FILL : ICON_EXCLAMATION_SQUARE_FILL);
+      }
+    });
   }
 
   public renderStats(aqs: readonly AssignedQuestion<"fill_in_the_blank">[]) {
@@ -275,7 +347,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   private getGradedBlanksSubmissions(submissions: readonly FITBSubmission[]) {
     let blankSubmissions = this.spec.rubric.map(ri => <string[]>[]);
     submissions.forEach(sub => {
-      if (sub === BLANK_SUBMISSION || sub.length === 0 || sub.length !== this.spec.rubric.length) {
+      if (sub === BLANK_SUBMISSION || sub === INVALID_SUBMISSION || sub.length === 0 || sub.length !== this.spec.rubric.length) {
         return;
       }
 

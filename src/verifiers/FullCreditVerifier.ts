@@ -23,6 +23,8 @@ export class FullCreditVerifier implements QuestionVerifier<ResponseKind> {
 
   public readonly t_response_kinds!: ResponseKind;
 
+  private annotations_active : boolean = false;
+
   public constructor(spec: FullCreditVerifierSpecification) {
     this.spec = spec;
   }
@@ -50,6 +52,10 @@ export class FullCreditVerifier implements QuestionVerifier<ResponseKind> {
     else {
       elem.html(`<span class="badge badge-warning">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} In Progress</span></span>`);
     }
+  }
+
+  public activate(aq: AssignedQuestion, elem: JQuery) {
+    elem.on("click", () => { this.annotations_active = !this.annotations_active; });
   }
 
 }

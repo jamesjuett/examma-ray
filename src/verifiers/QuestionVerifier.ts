@@ -23,6 +23,12 @@ export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
    * @param elem The HTML element for the status badge.
    */
   updateStatus(aq: AssignedQuestion<RK>, elem: JQuery) : void;
+  
+  /**
+   * Activates any clientside JS for the verifier badge (e.g. annotations on click).
+   * @param elem The HTML element for the status badge.
+   */
+  activate(aq: AssignedQuestion<RK>, elem: JQuery) : void;
 
 };
 
