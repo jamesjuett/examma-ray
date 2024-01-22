@@ -259,7 +259,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       item_result.explanation && annotation_elem.tooltip({
         title: mk2html_unwrapped(item_result.explanation),
         html: true,
-        placement: annotation_elem.hasClass(".examma-ray-fitb-blank-annotation") ? "top" : "left"
+        placement: annotation_elem.hasClass("examma-ray-fitb-blank-annotation") ? "top" : "left"
       });
 
       if (item_result.pointsEarned >= item_rubric.points) {
