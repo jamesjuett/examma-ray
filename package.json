@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.371",
+  "version": "1.0.373",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
@@ -57,6 +57,7 @@
     "just-diff": "^5.1.1",
     "jwt-decode": "^4.0.0",
     "katex": "^0.11.1",
+    "luxon": "^3.4.4",
     "minimist": "^1.2.5",
     "ncp": "^2.0.0",
     "node-chartist": "^1.0.5",
@@ -88,6 +89,7 @@
     "@types/jsdom": "^16.2.13",
     "@types/jsdom-global": "^3.0.2",
     "@types/json-stable-stringify": "^1.0.32",
+    "@types/luxon": "^3.4.2",
     "@types/mocha": "^8.2.2",
     "@types/ncp": "^2.0.5",
     "@types/papaparse": "^5.2.5",

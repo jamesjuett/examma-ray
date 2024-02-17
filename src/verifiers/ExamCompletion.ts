@@ -1,9 +1,10 @@
-import axios, { formToJSON } from "axios";
+import axios, { AxiosError, formToJSON } from "axios";
 import { AssignedExam, AssignedQuestion } from "../core/assigned_exams";
-import { ICON_BOX, ICON_BOX_CHECK, ICON_BOX_EXCLAMATION } from "../core/icons";
+import { ICON_BOX, ICON_BOX_CHECK, ICON_BOX_DASH, ICON_BOX_EXCLAMATION, ICON_CLOCK, ICON_EXCLAMATION_TRIANGLE_FILL, ICON_SCALE } from "../core/icons";
 import { asMutable, assertNever } from "../core/util";
 import { FullCreditVerifier, FullCreditVerifierSpecification } from "./FullCreditVerifier";
 import { QuestionVerifier } from "./QuestionVerifier";
+import { DateTime } from "luxon";
 
 export type ExamCompletionSpecification = {
   threshold: number,
@@ -12,6 +13,7 @@ export type ExamCompletionSpecification = {
     check: string,
     submit: string,
   },
+  local_deadline?: DateTime
 };
 
 export class ExamCompletion {
@@ -20,99 +22,180 @@ export class ExamCompletion {
   public readonly spec: ExamCompletionSpecification;
   public readonly isComplete: boolean = false;
 
-  private statusElem : JQuery;
+  private server_status: "no_credentials" | "ok" | "error" = "no_credentials";
+
+  private statusElem: JQuery;
+  private credentials?: string;
 
   public constructor(assigned_exam: AssignedExam, statusElem: JQuery) {
     this.assigned_exam = assigned_exam;
     this.spec = assigned_exam.exam.completion!;
     this.statusElem = statusElem;
+    this.updateStatus();
   }
 
-  public async checkCompletionWithServer(credentials: string) {
-
-    const check_completion_response = await axios({
-      url: this.spec.endpoints.check + this.assigned_exam.exam.exam_id,
-      method: "GET",
-      headers: {
-          'Authorization': credentials
-      }
-    });
-    
-    if (check_completion_response.status === 200) {
-      asMutable(this).isComplete = true;
-      this.updateStatus();
-      return check_completion_response.data;
-    }
-    else {
-      return undefined;
-    }
+  public setCredentials(credentials: string) {
+    this.credentials = credentials;
+    this.updateStatus();
+    this.checkCompletionWithServer(); // async
   }
 
-  public async verify(ae: AssignedExam, credentials: string) {
-    let complete = ae.assignedQuestions.every(aq => !aq.question.verifier || aq.question.verifier.verify(aq));
-
-    if (!complete) {
+  public async checkCompletionWithServer() {
+    if (!this.credentials) {
+      this.updateStatus(); 
       return;
     }
 
-    const submit_completion_response = await axios({
-      url: this.spec.endpoints.submit + this.assigned_exam.exam.exam_id,
-      method: "POST",
-      headers: {
-          'Authorization': credentials
+    try {
+      const check_completion_response = await axios({
+        url: this.spec.endpoints.check + this.assigned_exam.exam.exam_id,
+        method: "GET",
+        headers: {
+            'Authorization': this.credentials
+        }
+      });
+      this.server_status = "ok";
+      
+      if (check_completion_response.status === 200) {
+        asMutable(this).isComplete = true;
+        return check_completion_response.data;
       }
-    });
-    
-    if (submit_completion_response.status === 201) {
-      asMutable(this).isComplete = true;
+      else {
+        return undefined;
+      }
+    }
+    catch (e: unknown) {
+      if (axios.isAxiosError(e)) {
+        if (e.response?.status === 404) {
+          this.server_status = "ok";
+        }
+        else {
+          this.server_status = "error";
+        }
+      }
+      else {
+        this.server_status = "error";
+        throw e;
+      }
+    }
+    finally {
       this.updateStatus();
-      return submit_completion_response.data;
     }
-    else {
-      return undefined;
-    }
+
+    this.updateStatus();
   }
 
-  public renderStatus() {
-    return `
-      <span class="btn btn-sm btn-secondary">${ICON_BOX} <span style="vertical-align: middle;"> Participation</span></span>
-    `;
+  private isPastDeadline() {
+    return !!(this.spec.local_deadline && this.spec.local_deadline.diffNow().as("milliseconds") < 0);
+  }
+
+  public async verify() {
+    if (!this.credentials || this.isComplete || this.isPastDeadline()) { 
+      this.updateStatus();
+      return;
+    }
+
+    let complete = this.assigned_exam.assignedQuestions.every(aq => !aq.question.verifier || aq.question.verifier.verify(aq));
+
+    if (!complete) {
+      this.updateStatus();
+      return;
+    }
+
+    try {
+      const submit_completion_response = await axios({
+        url: this.spec.endpoints.submit + this.assigned_exam.exam.exam_id,
+        method: "POST",
+        headers: {
+            'Authorization': this.credentials
+        }
+      });
+      this.server_status = "ok";
+      
+      if (submit_completion_response.status === 201) {
+        asMutable(this).isComplete = true;
+        return submit_completion_response.data;
+      }
+      else {
+        return undefined;
+      }
+    }
+    catch (e: unknown) {
+      if (axios.isAxiosError(e)) {
+        if (e.response?.status === 404) {
+          this.server_status = "ok";
+        }
+        else {
+          this.server_status = "error";
+        }
+      }
+      else {
+        this.server_status = "error";
+        throw e;
+      }
+    }
+    finally {
+      this.updateStatus();
+    }
+
   }
 
   public updateStatus() {
-    if (this.isComplete) {
-      this.statusElem.html(`<span class="btn btn-sm btn-success">${ICON_BOX_CHECK} <span style="vertical-align: middle;">Participation</span></span>`);
+    let status_html: string;
+    if (this.server_status === "no_credentials") {
+      status_html = `
+        <span style="font-size: 16pt;">
+          <span style="color: red;">${ICON_SCALE(ICON_EXCLAMATION_TRIANGLE_FILL)}</span> <span class="badge badge-secondary" style="vertical-align: middle;"> Sign in to verify</span>
+        </span>
+      `;
+    }
+    else if (this.server_status === "error") {
+      status_html = `
+        <span style="font-size: 16pt;">
+          <span style="color: red;">${ICON_SCALE(ICON_EXCLAMATION_TRIANGLE_FILL)}</span> <span class="badge badge-danger" style="vertical-align: middle;"> Server Error :(</span>
+        </span>
+      `;
+    }
+    else if (this.server_status === "ok") {
+      if (this.isComplete) {
+        status_html = `
+          <span style="font-size: 16pt;">
+            <span>${ICON_SCALE(ICON_BOX_CHECK)}</span> <span class="badge badge-success" style="vertical-align: middle;"> Completion Verified</span>
+          </span>
+        `;
+      }
+      else if (this.isPastDeadline()) {
+        status_html = `
+          <span style="font-size: 16pt;">
+            <span>${ICON_SCALE(ICON_BOX_DASH)}</span> <span class="badge badge-danger" style="vertical-align: middle;"> Past Deadline</span>
+          </span>
+        `;
+      }
+      else {
+        status_html = `
+          <span style="font-size: 16pt;">
+            <span>${ICON_SCALE(ICON_BOX)}</span> <span class="badge badge-warning" style="vertical-align: middle;"> Not Complete</span>
+          </span>
+        `;
+      }
     }
     else {
-      this.statusElem.html(`<span class="btn btn-sm btn-secondary">${ICON_BOX} <span style="vertical-align: middle;"> Participation</span></span>`);
+      assertNever(this.server_status);
     }
+
+    const deadline_html = this.spec.local_deadline
+      ? `<span style="font-size: 9pt; vertical-align: middle;">Due ${this.spec.local_deadline.toLocaleString({
+        ...DateTime.DATETIME_FULL,
+        weekday: "short"
+      })}</span>`
+      : "";
+
+    this.statusElem.html(`
+      <b>Participation</b><br />
+      ${deadline_html}
+      <br />
+      ${status_html}
+    `);
   }
 
 };
-
-export type QuestionVerifierSpecification =
-  | FullCreditVerifierSpecification;
-
-// export type QuestionVerifier<VK extends QuestionVerifierKind = QuestionVerifierKind> =
-//   VK extends "full_credit" ? FullCreditVerifier :
-//   never;
-
-// type ExtractViableVerifiers<V extends QuestionVerifier, RK> = V extends QuestionVerifier ? RK extends V["t_response_kinds"] ? V : never : never;
-
-// export type QuestionVerifierSpecificationFor<RK extends ResponseKind> = ExtractViableVerifiers<QuestionVerifier, RK>["spec"];
-// export type VerifierFor<RK extends ResponseKind> = ExtractViableVerifiers<QuestionVerifier, RK>;
-
-export function realizeVerifier(spec: QuestionVerifierSpecification) : QuestionVerifier {
-  return (
-    spec.verifier_kind === "full_credit" ? new FullCreditVerifier(spec) :
-    assertNever(spec.verifier_kind)
-  );
-}
-
-export function renderQuestionVerifierStatus(aq: AssignedQuestion, verifier: QuestionVerifier) {
-  return `
-    <span class="examma-ray-verifier-status" data-question-uuid="${aq.uuid}">
-      ${verifier.renderStatus(aq)}
-    </span>
-  `;
-}

@@ -396,7 +396,6 @@ function setupChangeListeners() {
   // Note that change listeners for CodeMirror editors are set up elsewhere
 }
 
-let COMPLETION : ExamCompletion | undefined = undefined;
 let CREDENTIALS : string | undefined = undefined;
 
 async function startExam() {
@@ -471,19 +470,18 @@ async function startExam() {
     assert(isTransparentExamManifest(manifest));
     const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
     
-    COMPLETION = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
+    const completion = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
 
     (window as any).google_sign_in_callback = (response: any) => {
       let email = (jwtDecode(response.credential) as any).email;
       $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
-      CREDENTIALS = response.credential;
+      const credentials = response.credential;
       
-      if (CREDENTIALS) {
+      if (credentials && completion) {
+        completion.setCredentials(credentials);
         setTimeout(async () => {
-          await COMPLETION?.checkCompletionWithServer(CREDENTIALS!);
-          if (!COMPLETION!.isComplete) {
-            COMPLETION!.verify(assigned_exam, CREDENTIALS!);
-          }
+          await completion.checkCompletionWithServer();
+          await completion.verify();
         })
       }
     }
@@ -515,13 +513,9 @@ async function startExam() {
         }
       })
 
-      if (CREDENTIALS && COMPLETION) {
-        if (!COMPLETION.isComplete) {
-          COMPLETION.verify(assigned_exam, CREDENTIALS);
-        }
-      }
+      completion?.verify();
 
-first = false;
+      first = false;
     };
 
     setTimeout(check_answers)

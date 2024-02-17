@@ -2,6 +2,12 @@ html {
   scroll-behavior: smooth;
 }
 
+.examma-ray-icon {
+  width: 1em;
+  height: 1em;
+}
+
+
 .examma-ray-sl-diff pre {
   margin-right: 0;
   margin-top: 0;
@@ -165,6 +171,14 @@ code {
   font-size: 1em;
   vertical-align: middle;
   float: right;
+}
+
+.examma-ray-verifier-status-mini {
+  float: right;
+}
+
+.examma-ray-verifier-status-mini .examma-ray-verifier-status-message {
+  display: none;
 }
 
 .examma-ray-section-contents {
@@ -560,7 +574,7 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-.nav.er-exam-nav .badge {
+.nav.er-exam-nav .badge .examma-ray-score-badge {
   width: 5em;
 }
 

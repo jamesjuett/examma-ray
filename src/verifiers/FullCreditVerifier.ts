@@ -35,22 +35,22 @@ export class FullCreditVerifier implements QuestionVerifier<ResponseKind> {
 
   public renderStatus(aq: AssignedQuestion) {
     return `
-      <span class="badge badge-secondary">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} Not Started</span></span>
+      <span class="badge badge-secondary">${ICON_BOX} <span class="examma-ray-verifier-status-display-index" style="vertical-align: middle;">${aq.displayIndex}</span> <span class="examma-ray-verifier-status-message" style="vertical-align: middle;">Not Started</span></span>
     `;
   }
 
-  public updateStatus(aq: AssignedQuestion, elem: JQuery) {
+  public updateStatus(aq: AssignedQuestion, elems: JQuery) {
     if (!aq.isGraded()) {
-      elem.html(`<span class="badge badge-secondary">${ICON_BOX_EXCLAMATION} <span style="vertical-align: middle;">${aq.displayIndex} Unverified</span></span>`);
+      elems.html(`<span class="badge badge-secondary">${ICON_BOX_EXCLAMATION} <span class="examma-ray-verifier-status-display-index" style="vertical-align: middle;">${aq.displayIndex}</span> <span class="examma-ray-verifier-status-message" style="vertical-align: middle;">Unverified</span></span>`);
     }
     else if (aq.gradingResult.wasBlankSubmission) {
-      elem.html(`<span class="badge badge-secondary">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} Not Started</span></span>`);
+      elems.html(`<span class="badge badge-secondary">${ICON_BOX} <span class="examma-ray-verifier-status-display-index" style="vertical-align: middle;">${aq.displayIndex}</span> <span class="examma-ray-verifier-status-message" style="vertical-align: middle;">Not Started</span></span>`);
     }
     else if (hasFullCredit(aq)) {
-      elem.html(`<span class="badge badge-success">${ICON_BOX_CHECK} <span style="vertical-align: middle;">${aq.displayIndex} Complete</span></span>`);
+      elems.html(`<span class="badge badge-success">${ICON_BOX_CHECK} <span class="examma-ray-verifier-status-display-index" style="vertical-align: middle;">${aq.displayIndex}</span> <span class="examma-ray-verifier-status-message" style="vertical-align: middle;">Complete</span></span>`);
     }
     else {
-      elem.html(`<span class="badge badge-warning">${ICON_BOX} <span style="vertical-align: middle;">${aq.displayIndex} In Progress</span></span>`);
+      elems.html(`<span class="badge badge-warning">${ICON_BOX} <span class="examma-ray-verifier-status-display-index" style="vertical-align: middle;">${aq.displayIndex}</span> <span class="examma-ray-verifier-status-message" style="vertical-align: middle;">In Progress</span></span>`);
     }
   }
 

@@ -7,6 +7,7 @@ import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
 import { OriginalExamRenderer } from "../../src/core";
+import { DateTime } from "luxon";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
@@ -36,7 +37,8 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
       endpoints: {
         check: "https://localhost/public_api/participation/me/",
         submit: "https://localhost/public_api/participation/me/",
-      }
+      },
+      local_deadline: DateTime.fromISO("2024-02-17T16:47", {zone: "America/Detroit"})
     }
   });
 }

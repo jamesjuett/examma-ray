@@ -5,7 +5,7 @@ import { StudentInfo } from './exam_specification';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_USER } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
-import { renderQuestionVerifierStatus as renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
+import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 
 export function renderHead(extra: string) {
   return (
@@ -60,12 +60,12 @@ export abstract class ExamRenderer {
     return `
       <ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<li class = "nav-item">
-          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
+          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
         </li>`).join("")}
       </ul>`
   }
 
-  public abstract renderNavBadge(s: AssignedSection): string;
+  public abstract renderSectionNavBadges(s: AssignedSection): string;
 
   public renderSaverButton(ae: AssignedExam) {
     return `
@@ -351,10 +351,30 @@ abstract class TakenExamRenderer extends ExamRenderer {
   protected renderCompletionStatus(ae: AssignedExam) {
     return `
       <span id="examma-ray-exam-completion-status">
-        <span class="btn btn-sm btn-secondary">${ICON_BOX} <span style="vertical-align: middle;"> Participation</span></span>
+        Loading...
       </span>
     `;
   }
+
+  public override renderNav(ae: AssignedExam): string {
+    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+      ${ae.assignedSections.map(s => `
+        <li class="nav-item">
+          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
+        </li>
+        ${s.assignedQuestions.map(q => `
+          <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
+            ${this.renderQuestionNavBadges(q)}
+            <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+              ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
+            </a>
+          </li>
+        `).join("")}
+      `).join("")}
+    </ul>`
+  }
+
+  protected abstract renderQuestionNavBadges(q: AssignedQuestion): string;
 
   protected renderVerifierStatus(aq: AssignedQuestion) {
     return aq.question.verifier ? renderQuestionVerifierStatus(aq, aq.question.verifier) : "";
@@ -428,8 +448,10 @@ export class OriginalExamRenderer extends TakenExamRenderer {
         <div class="bg-light examma-ray-left-panel">
           ${ae.exam.credentials_strategy || ae.exam.completion ?
             `<div class="pt-1 pb-1 border-bottom">
+              <div style="text-align: center">${this.renderSignInButton()}</div>
+            </div>
+            <div class="pt-1 pb-1 border-bottom">
               ${this.renderCompletionStatus(ae)}
-              ${this.renderSignInButton()}
             </div>` :
             ""
           }
@@ -453,26 +475,17 @@ export class OriginalExamRenderer extends TakenExamRenderer {
     </div>`;
   }
 
-  public override renderNav(ae: AssignedExam): string {
-    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
-        ${ae.assignedSections.map(s => `
-          <li class="nav-item">
-            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderNavBadge(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
-          </li>
-          ${s.assignedQuestions.map(q => `
-            <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
-              ${renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true)}
-              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-                ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
-              </a>
-            </li>
-          `).join("")}
-        `).join("")}
-      </ul>`
+  public override renderSectionNavBadges(s: AssignedSection) {
+    return `
+      ${renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true)}
+      ${s.assignedQuestions.map(aq => `
+        ${aq.question.verifier ? renderQuestionVerifierMiniStatus(aq, aq.question.verifier) : ""}
+      `).join("\n")}
+    `;
   }
 
-  public renderNavBadge(s: AssignedSection) {
-    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  protected renderQuestionNavBadges(q: AssignedQuestion) {
+    return renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true);
   }
 
   protected renderStudentHeader(student: StudentInfo) {
@@ -533,7 +546,7 @@ export class SampleSolutionExamRenderer extends ExamRenderer {
     </div>`;
   }
 
-  public renderNavBadge(s: AssignedSection) {
+  public renderSectionNavBadges(s: AssignedSection) {
     return renderPointsWorthBadge(s.pointsPossible, "badge-success", true);
   }
 
@@ -595,7 +608,7 @@ export class SubmittedExamRenderer extends ExamRenderer {
     </div>`;
   }
 
-  public renderNavBadge(s: AssignedSection) {
+  public renderSectionNavBadges(s: AssignedSection) {
     return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
   }
 
@@ -651,7 +664,7 @@ export class GradedExamRenderer extends ExamRenderer {
     </div>`;
   }
 
-  public renderNavBadge(s: AssignedSection) {
+  public renderSectionNavBadges(s: AssignedSection) {
     return s.isGraded() ? renderScoreBadge(s.pointsEarned, s.pointsPossible) :
     renderUngradedBadge(s.pointsPossible);
   }
@@ -754,8 +767,10 @@ export class DocRenderer extends TakenExamRenderer {
           </div>
           ${ae.exam.credentials_strategy || ae.exam.completion ?
             `<div class="pt-1 pb-1 border-bottom">
+              <div style="text-align: center">${this.renderSignInButton()}</div>
+            </div>
+            <div class="pt-1 pb-1 border-bottom">
               ${this.renderCompletionStatus(ae)}
-              ${this.renderSignInButton()}
             </div>` :
             ""
           }
@@ -775,25 +790,16 @@ export class DocRenderer extends TakenExamRenderer {
     </div>`;
   }
 
-  public override renderNav(ae: AssignedExam): string {
-    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
-        ${ae.assignedSections.map(s => `
-          <li class="nav-item">
-            <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
-          </li>
-          ${s.assignedQuestions.map(q => `
-            <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
-              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-              ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
-              </a>
-            </li>
-          `).join("")}
-        `).join("")}
-      </ul>`
+  public renderSectionNavBadges(s: AssignedSection) {
+    return `
+      ${s.assignedQuestions.map(aq => `
+        ${aq.question.verifier ? renderQuestionVerifierMiniStatus(aq, aq.question.verifier) : ""}
+      `).join("\n")}
+    `;
   }
 
-  public renderNavBadge(s: AssignedSection) {
-    return renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true);
+  protected renderQuestionNavBadges(q: AssignedQuestion) {
+    return renderPointsWorthBadge(q.question.pointsPossible, "btn-secondary", true);
   }
 
   protected renderStudentHeader(student: StudentInfo) {

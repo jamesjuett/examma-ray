@@ -63,6 +63,7 @@ import { GraderSpecification } from "../graders/QuestionGrader";
 import deepEqual from "deep-equal";
 import { QuestionVerifierSpecification } from "../verifiers/QuestionVerifier";
 import { ExamCompletionSpecification } from "../verifiers/ExamCompletion";
+import { DateTime } from "luxon";
 
 
 
@@ -770,26 +771,50 @@ export function parseExamComponentSpecification(str: string) : ExamComponentOrCh
           value["examma_ray_serialized_regex"]["flags"]
         );
       }
+      if (typeof value === "object" && typeof value["examma_ray_serialized_datetime"] === "object") {
+        return DateTime.fromISO(
+          value["examma_ray_serialized_datetime"]["iso"],
+          value["examma_ray_serialized_datetime"]["timezone"]
+        );
+      }
       return value;
     }
   );
 }
 
+const STRINGIFY_SPACING = 2;
+
 export function stringifyExamComponentSpecification(spec: ExamComponentOrChooserSpecification | ResponseSpecification<ResponseKind> | GraderSpecification) : string {
   return JSON.stringify(
     spec,
-    (key: string, value: any) => {
+    function (key: string, _original: any) {
+
+      // Use this[key] to retrieve the value since using the value parameter
+      // for the replacer function may have already been serialized using a
+      // .toJSON() function on the object. this[key] will be the original.
+      const value: any = this[key];
+
       if (value instanceof RegExp) {
         return {
           examma_ray_serialized_regex: {
             source: value.source,
             flags: value.flags
           }
-        }
+        };
       }
-      return value;
+      if (DateTime.isDateTime(value)) {
+        return {
+          examma_ray_serialized_datetime: {
+            iso: value.toISO(),
+            timezone: value.zoneName
+          }
+        };
+      }
+      
+      // Return value serialized without replacer function
+      return _original;
     },
-    2
+    STRINGIFY_SPACING
   );
 }
 

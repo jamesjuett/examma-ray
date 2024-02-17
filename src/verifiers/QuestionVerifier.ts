@@ -22,7 +22,7 @@ export interface QuestionVerifier<RK extends ResponseKind = ResponseKind> {
    * Updates the elements to report verification status.
    * @param elem The HTML element for the status badge.
    */
-  updateStatus(aq: AssignedQuestion<RK>, elem: JQuery) : void;
+  updateStatus(aq: AssignedQuestion<RK>, elems: JQuery) : void;
   
   /**
    * Activates any clientside JS for the verifier badge (e.g. annotations on click).
@@ -54,6 +54,14 @@ export function realizeVerifier(spec: QuestionVerifierSpecification) : QuestionV
 export function renderQuestionVerifierStatus(aq: AssignedQuestion, verifier: QuestionVerifier) {
   return `
     <span class="examma-ray-verifier-status" data-question-uuid="${aq.uuid}">
+      ${verifier.renderStatus(aq)}
+    </span>
+  `;
+}
+
+export function renderQuestionVerifierMiniStatus(aq: AssignedQuestion, verifier: QuestionVerifier) {
+  return `
+    <span class="examma-ray-verifier-status examma-ray-verifier-status-mini" data-question-uuid="${aq.uuid}">
       ${verifier.renderStatus(aq)}
     </span>
   `;
