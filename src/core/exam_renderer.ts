@@ -121,7 +121,7 @@ export abstract class ExamRenderer {
     return `
       <div class="examma-ray-header">
         <div class="text-center mb-3 border-bottom">
-          <h2>${ae.exam.title}</h2>
+          <h2>${mk2html_unwrapped(ae.exam.title)}</h2>
           ${this.renderStudentHeader(student)}
         </div>
         <div>
@@ -225,7 +225,7 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">${ae.exam.title}</h5>
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
               <div class="alert alert-info">This page was reloaded, and we've restored your answers from a local backup.</div>
@@ -242,7 +242,7 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">${ae.exam.title}</h5>
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
               <div class="alert alert-danger">
@@ -266,7 +266,7 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">${ae.exam.title}</h5>
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body">
               <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
@@ -293,7 +293,7 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">${ae.exam.title}</h5>
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
               <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
@@ -750,7 +750,7 @@ export class DocRenderer extends TakenExamRenderer {
       <div class="row">
         <div class="bg-light examma-ray-left-panel">
           <div class="text-center pb-1 pl-4 pr-4 border-bottom">
-            <b>${ae.exam.title}</b>
+            <b>${mk2html_unwrapped(ae.exam.title)}</b>
           </div>
           ${ae.exam.credentials_strategy || ae.exam.completion ?
             `<div class="pt-1 pb-1 border-bottom">
