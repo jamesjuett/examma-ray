@@ -2,7 +2,7 @@ import path from 'path';
 import { AssignedSection, Exam } from '../core';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_USER } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_SCALE, ICON_USER } from './icons';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
@@ -341,9 +341,8 @@ abstract class TakenExamRenderer extends ExamRenderer {
 
   protected renderSignInButton() {
     return `
-      <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
-      ${ICON_USER}
-      <span style="vertical-align: middle">Sign In</span>
+      <button id="examma-ray-exam-sign-in-button" class="btn btn-primary btn-sm" style="line-height: 1;" data-toggle="modal" data-target="#exam-sign-in-modal" aria-expanded="false" aria-controls="exam-sign-in-modal">
+        ${ICON_SCALE(ICON_USER)} <span style="vertical-align: middle">Sign In</span>
       </button>
     `;
   }
@@ -448,9 +447,8 @@ export class OriginalExamRenderer extends TakenExamRenderer {
         <div class="bg-light examma-ray-left-panel">
           ${ae.exam.credentials_strategy || ae.exam.completion ?
             `<div class="pt-1 pb-1 border-bottom">
-              <div style="text-align: center">${this.renderSignInButton()}</div>
-            </div>
-            <div class="pt-1 pb-1 border-bottom">
+              <b>Participation</b> ${this.renderSignInButton()}
+              <br />
               ${this.renderCompletionStatus(ae)}
             </div>` :
             ""
@@ -478,9 +476,11 @@ export class OriginalExamRenderer extends TakenExamRenderer {
   public override renderSectionNavBadges(s: AssignedSection) {
     return `
       ${renderPointsWorthBadge(s.pointsPossible, "badge-secondary", true)}
+      <span style="float: right;">
       ${s.assignedQuestions.map(aq => `
         ${aq.question.verifier ? renderQuestionVerifierMiniStatus(aq, aq.question.verifier) : ""}
       `).join("\n")}
+      </span>
     `;
   }
 
@@ -767,9 +767,8 @@ export class DocRenderer extends TakenExamRenderer {
           </div>
           ${ae.exam.credentials_strategy || ae.exam.completion ?
             `<div class="pt-1 pb-1 border-bottom">
-              <div style="text-align: center">${this.renderSignInButton()}</div>
-            </div>
-            <div class="pt-1 pb-1 border-bottom">
+              <b>Participation</b> ${this.renderSignInButton()}
+              <br />
               ${this.renderCompletionStatus(ae)}
             </div>` :
             ""
@@ -792,9 +791,11 @@ export class DocRenderer extends TakenExamRenderer {
 
   public renderSectionNavBadges(s: AssignedSection) {
     return `
+      <span style="float: right;">
       ${s.assignedQuestions.map(aq => `
         ${aq.question.verifier ? renderQuestionVerifierMiniStatus(aq, aq.question.verifier) : ""}
       `).join("\n")}
+      </span>
     `;
   }
 

@@ -473,16 +473,10 @@ async function startExam() {
     const completion = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
 
     (window as any).google_sign_in_callback = (response: any) => {
-      let email = (jwtDecode(response.credential) as any).email;
-      $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
-      const credentials = response.credential;
+      const google_id_token = response.credential;
       
-      if (credentials && completion) {
-        completion.setCredentials(credentials);
-        setTimeout(async () => {
-          await completion.checkCompletionWithServer();
-          await completion.verify();
-        })
+      if (google_id_token && completion) {
+        completion.signIn(google_id_token);
       }
     }
 

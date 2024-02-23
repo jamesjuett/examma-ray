@@ -1,10 +1,11 @@
 import axios, { AxiosError, formToJSON } from "axios";
 import { AssignedExam, AssignedQuestion } from "../core/assigned_exams";
-import { ICON_BOX, ICON_BOX_CHECK, ICON_BOX_DASH, ICON_BOX_EXCLAMATION, ICON_CLOCK, ICON_EXCLAMATION_TRIANGLE_FILL, ICON_SCALE } from "../core/icons";
-import { asMutable, assertNever } from "../core/util";
+import { ICON_BOX, ICON_BOX_CHECK, ICON_BOX_DASH, ICON_BOX_EXCLAMATION, ICON_CLOCK, ICON_EXCLAMATION_TRIANGLE_FILL, ICON_SCALE, ICON_USER } from "../core/icons";
+import { asMutable, assert, assertNever } from "../core/util";
 import { FullCreditVerifier, FullCreditVerifierSpecification } from "./FullCreditVerifier";
 import { QuestionVerifier } from "./QuestionVerifier";
 import { DateTime } from "luxon";
+import { jwtDecode } from "jwt-decode";
 
 export type ExamCompletionSpecification = {
   threshold: number,
@@ -12,62 +13,93 @@ export type ExamCompletionSpecification = {
   endpoints: {
     check: string,
     submit: string,
+    auth: string,
   },
-  local_deadline?: DateTime
+  local_deadline?: {
+    when: DateTime,
+    grace_minutes?: number
+  }
 };
+
+type User = {
+  participation_token: string,
+  email: string,
+  is_complete?: boolean,
+};
+
+function decodeUser(participation_token: string) : User {
+  const decoded = jwtDecode(participation_token);
+  assert(decoded.sub);
+  return {
+    participation_token: participation_token,
+    email: decoded.sub
+  };
+}
+
+const PARTICIPATION_TOKEN_KEY = "examma-ray-participation-token";
 
 export class ExamCompletion {
 
   public readonly assigned_exam: AssignedExam;
   public readonly spec: ExamCompletionSpecification;
-  public readonly isComplete: boolean = false;
 
-  private server_status: "no_credentials" | "ok" | "error" = "no_credentials";
+  private server_status: "ok" | "error" = "ok";
 
   private statusElem: JQuery;
-  private credentials?: string;
+  private user?: User;
 
   public constructor(assigned_exam: AssignedExam, statusElem: JQuery) {
     this.assigned_exam = assigned_exam;
     this.spec = assigned_exam.exam.completion!;
     this.statusElem = statusElem;
-    this.updateStatus();
-  }
 
-  public setCredentials(credentials: string) {
-    this.credentials = credentials;
-    this.updateStatus();
-    this.checkCompletionWithServer(); // async
-  }
-
-  public async checkCompletionWithServer() {
-    if (!this.credentials) {
-      this.updateStatus(); 
-      return;
+    const participation_token = localStorage.getItem(PARTICIPATION_TOKEN_KEY);
+    if (participation_token) {
+      this.setUser(participation_token);
     }
+    this.updateStatus();
+  }
+
+  private async setUser(participation_token: string) {
+    this.user = decodeUser(participation_token);
+    $("#examma-ray-exam-sign-in-button > span").html(this.user.email.replace("@umich.edu", ""));
+    $("#exam-sign-in-modal").modal("hide");
+    await this.checkCompletionWithServer();
+    await this.verify();
+  }
+
+  private removeUser() {
+    delete this.user;
+    $("#examma-ray-exam-sign-in-button > span").html(`${ICON_SCALE(ICON_USER)} <span style="vertical-align: middle">Sign In</span>`);
+  }
+
+  public async signIn(google_id_token: string) {
+
+    localStorage.removeItem(PARTICIPATION_TOKEN_KEY);
+    this.removeUser();
 
     try {
-      const check_completion_response = await axios({
-        url: this.spec.endpoints.check + this.assigned_exam.exam.exam_id,
-        method: "GET",
+      const auth_response = await axios({
+        url: this.spec.endpoints.auth,
+        method: "POST",
         headers: {
-            'Authorization': this.credentials
+          "Authorization": google_id_token
         }
       });
-      this.server_status = "ok";
       
-      if (check_completion_response.status === 200) {
-        asMutable(this).isComplete = true;
-        return check_completion_response.data;
-      }
-      else {
-        return undefined;
+      if (auth_response.status === 201) {
+        const participation_token = auth_response.data.participation_token;
+        if (participation_token && participation_token !== "") {
+          localStorage.setItem(PARTICIPATION_TOKEN_KEY, participation_token);
+          await this.setUser(participation_token);
+        }
       }
     }
     catch (e: unknown) {
       if (axios.isAxiosError(e)) {
-        if (e.response?.status === 404) {
-          this.server_status = "ok";
+        if (e.response?.status === 403) {
+          localStorage.removeItem(PARTICIPATION_TOKEN_KEY);
+          this.removeUser();
         }
         else {
           this.server_status = "error";
@@ -81,16 +113,51 @@ export class ExamCompletion {
     finally {
       this.updateStatus();
     }
+  }
 
-    this.updateStatus();
+  public async checkCompletionWithServer() {
+    if (!this.user) {
+      return;
+    }
+
+    try {
+      const check_completion_response = await axios({
+        url: this.spec.endpoints.check + this.assigned_exam.exam.exam_id,
+        method: "GET",
+        headers: {
+          "Authorization": this.user.participation_token
+        }
+      });
+      this.server_status = "ok";
+      
+      if (check_completion_response.status === 200) {
+        const data = check_completion_response.data;
+        this.user.is_complete = data.is_complete;
+        return data;
+      }
+      else {
+        return undefined;
+      }
+    }
+    catch (e: unknown) {
+      this.server_status = "error";
+      if (!axios.isAxiosError(e)) {
+        throw e;
+      }
+    }
+    finally {
+      this.updateStatus();
+    }
   }
 
   private isPastDeadline() {
-    return !!(this.spec.local_deadline && this.spec.local_deadline.diffNow().as("milliseconds") < 0);
+    if (!this.spec.local_deadline) { return false; } // no deadline
+
+    return this.spec.local_deadline.when.diffNow().as("minutes") < -(this.spec.local_deadline.grace_minutes ?? 0);
   }
 
   public async verify() {
-    if (!this.credentials || this.isComplete || this.isPastDeadline()) { 
+    if (!this.user || this.user.is_complete || this.isPastDeadline()) {
       this.updateStatus();
       return;
     }
@@ -105,32 +172,25 @@ export class ExamCompletion {
     try {
       const submit_completion_response = await axios({
         url: this.spec.endpoints.submit + this.assigned_exam.exam.exam_id,
-        method: "POST",
+        method: "PUT",
         headers: {
-            'Authorization': this.credentials
+          "Authorization": this.user.participation_token
         }
       });
       this.server_status = "ok";
       
       if (submit_completion_response.status === 201) {
-        asMutable(this).isComplete = true;
-        return submit_completion_response.data;
+        const data = submit_completion_response.data;
+        this.user.is_complete = data.is_complete;
+        return data;
       }
       else {
         return undefined;
       }
     }
     catch (e: unknown) {
-      if (axios.isAxiosError(e)) {
-        if (e.response?.status === 404) {
-          this.server_status = "ok";
-        }
-        else {
-          this.server_status = "error";
-        }
-      }
-      else {
-        this.server_status = "error";
+      this.server_status = "error";
+      if (!axios.isAxiosError(e)) {
         throw e;
       }
     }
@@ -142,7 +202,7 @@ export class ExamCompletion {
 
   public updateStatus() {
     let status_html: string;
-    if (this.server_status === "no_credentials") {
+    if (!this.user) {
       status_html = `
         <span style="font-size: 16pt;">
           <span style="color: red;">${ICON_SCALE(ICON_EXCLAMATION_TRIANGLE_FILL)}</span> <span class="badge badge-secondary" style="vertical-align: middle;"> Sign in to verify</span>
@@ -157,7 +217,7 @@ export class ExamCompletion {
       `;
     }
     else if (this.server_status === "ok") {
-      if (this.isComplete) {
+      if (this.user.is_complete) {
         status_html = `
           <span style="font-size: 16pt;">
             <span>${ICON_SCALE(ICON_BOX_CHECK)}</span> <span class="badge badge-success" style="vertical-align: middle;"> Completion Verified</span>
@@ -184,16 +244,14 @@ export class ExamCompletion {
     }
 
     const deadline_html = this.spec.local_deadline
-      ? `<span style="font-size: 9pt; vertical-align: middle;">Due ${this.spec.local_deadline.toLocaleString({
+      ? `<span style="font-size: 9pt; vertical-align: middle;">Due ${this.spec.local_deadline.when.toLocaleString({
         ...DateTime.DATETIME_FULL,
         weekday: "short"
-      })}</span>`
+      })}</span><br />`
       : "";
 
     this.statusElem.html(`
-      <b>Participation</b><br />
       ${deadline_html}
-      <br />
       ${status_html}
     `);
   }

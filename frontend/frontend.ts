@@ -476,10 +476,11 @@ async function startExam() {
     (window as any).google_sign_in_callback = (response: any) => {
       let email = (jwtDecode(response.credential) as any).email;
       $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
-      const credentials = response.credential;
+      $("#exam-sign-in-modal").modal("hide");
+      const google_id_token = response.credential;
       
-      if (credentials && completion) {
-        completion.setCredentials(credentials);
+      if (google_id_token && completion) {
+        completion.signIn(google_id_token);
         setTimeout(async () => {
           await completion.checkCompletionWithServer();
           await completion.verify();

@@ -172,10 +172,6 @@ code {
   float: right;
 }
 
-.examma-ray-verifier-status-mini {
-  float: right;
-}
-
 .examma-ray-verifier-status-mini .examma-ray-verifier-status-message {
   display: none;
 }
