@@ -10,7 +10,6 @@ import { ExamComponentSkin, createCompositeSkin } from './skins';
 import { ExamManifest, OpaqueExamManifest, TransparentExamManifest, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
 import { Mutable, asMutable, assert, assertFalse } from './util';
-import { ExamCompletion } from '../../frontend/plugins/ExamCompletion';
 
 
 
