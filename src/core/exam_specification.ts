@@ -62,9 +62,21 @@ import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
 import deepEqual from "deep-equal";
 import { QuestionVerifierSpecification } from "../verifiers/QuestionVerifier";
-import { ExamCompletionSpecification } from "../verifiers/ExamCompletion";
 import { DateTime } from "luxon";
 
+
+export type ExamCompletionSpecification = {
+  threshold: number,
+  tooltip: string,
+  endpoints: {
+    check: string,
+    submit: string,
+  },
+  local_deadline?: {
+    when: DateTime,
+    grace_minutes?: number
+  },
+};
 
 
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
@@ -195,6 +207,7 @@ export type SectionSpecification = {
 export type CredentialsStrategy = {
   strategy: "google_local",
   client_id: string,
+  auth_endpoint: string,
   message?: string,
   header?: string,
 };

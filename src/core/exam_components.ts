@@ -1,9 +1,8 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
 import { ResponseSpecification, SubmissionType, ViableSubmissionType, render_response, render_solution } from "../response/responses";
-import { ExamCompletionSpecification } from "../verifiers/ExamCompletion";
-import { QuestionVerifier, QuestionVerifierSpecification, realizeVerifier } from "../verifiers/QuestionVerifier";
-import { CredentialsStrategy, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
+import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
+import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";

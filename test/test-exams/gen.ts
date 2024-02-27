@@ -29,13 +29,13 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
     credentials_strategy: {
       strategy: "google_local",
       client_id: "444801118749-099920plmkl1s5n5u563pbmu71lo4bot.apps.googleusercontent.com",
+      auth_endpoint: "https://localhost/public_api/participation/auth/",
       message: "Sign in with your @umich.edu Google account to earn participation credit for completing embedded exercises."
     },
     completion: {
       threshold: 1,
       tooltip: "",
       endpoints: {
-        auth: "https://localhost/public_api/participation/auth/",
         check: "https://localhost/public_api/participation/me/",
         submit: "https://localhost/public_api/participation/me/",
       },

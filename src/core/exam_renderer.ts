@@ -415,9 +415,7 @@ abstract class TakenExamRenderer extends ExamRenderer {
                 data-context="signin"
                 data-ux_mode="popup"
                 data-callback="on_google_sign_in"
-                data-auto_select="true"
-                data-itp_support="true"
-                data-close_on_tap_outside="false"
+                data-auto_prompt="false"
               ></div>
 
               <script>

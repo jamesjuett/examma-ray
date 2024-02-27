@@ -12,8 +12,9 @@ import { Exam } from "../src/core/exam_components";
 import "./frontend.css";
 import { assert } from "../src/core/util";
 import { AssignedExam } from "../src/core/assigned_exams";
-import { ExamCompletion } from "../src/verifiers/ExamCompletion";
+import { ExamCompletion } from "./plugins/ExamCompletion";
 import { jwtDecode } from "jwt-decode";
+import { Participant } from "./plugins/Participant";
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
@@ -470,21 +471,15 @@ async function startExam() {
     const manifest = parseExamManifest(exam_manifest_response.data);
     assert(isTransparentExamManifest(manifest));
     const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
+    const participant = new Participant(assigned_exam);
     
-    const completion = exam.completion && new ExamCompletion(assigned_exam, $("#examma-ray-exam-completion-status"));
+    const completion = exam.completion && new ExamCompletion(participant, $("#examma-ray-exam-completion-status"));
 
     (window as any).google_sign_in_callback = (response: any) => {
-      let email = (jwtDecode(response.credential) as any).email;
-      $("#examma-ray-exam-sign-in-button > span").html(email.replace("@umich.edu", ""));
-      $("#exam-sign-in-modal").modal("hide");
-      const google_id_token = response.credential;
-      
+            const google_id_token = response.credential;
+      assert(assigned_exam.exam.credentials_strategy); // otherwise callback should never have happened
       if (google_id_token && completion) {
-        completion.signIn(google_id_token);
-        setTimeout(async () => {
-          await completion.checkCompletionWithServer();
-          await completion.verify();
-        })
+        participant.signIn(google_id_token, assigned_exam.exam.credentials_strategy.auth_endpoint);
       }
     }
 
@@ -515,7 +510,7 @@ async function startExam() {
         }
       })
 
-      completion?.verify();
+      completion?.refresh();
         
       first = false;
     };
