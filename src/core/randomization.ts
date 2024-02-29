@@ -10,11 +10,17 @@ export class SeededRandomizer {
   public constructor(seed: string) {
     this.rng = createRNG(seed);
   }
-
+  
+  /**
+   * @returns A random floating point number between 0 (inclusive) and 1 (exclusive).
+   */
   public float() {
     return this.rng.random();
   }
 
+  /**
+   * @returns A random integer between 0 (inclusive) and n (exclusive).
+   */
   public range(n: number) {
     return this.rng.range(n);
   };
@@ -29,6 +35,10 @@ export class SeededRandomizer {
     return choices[this.rng.range(choices.length)];
   };
 
+  /**
+   * @requires `choices` is non-empty.
+   * @returns One of the elements of `choices`, selected randomly.
+   */
   public chooseOne<T>(choices: readonly T[]) {
     assert(choices.length > 0, "No choices available.");
 
@@ -38,6 +48,11 @@ export class SeededRandomizer {
     return this.chooseN(choices, 1)[0];
   };
 
+  /**
+   * Randomly selects `n` elements from `choices` (repetition is not allowed).
+   * @requires `choices` is non-empty and `n` is less than or equal to the length of `choices`.
+   * @returns An array of `n` elements from `choices`, selected randomly.
+   */
   public chooseN<T>(choices: readonly T[], n: number) {
     assert(choices.length >= n, "Number to randomly choose is larger than number of choices.");
 
