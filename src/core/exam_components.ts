@@ -1,7 +1,8 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
-import { render_response, render_solution, ResponseSpecification, SubmissionType, ViableSubmissionType } from "../response/responses";
-import { chooseAllQuestions, chooseAllSections, ExamSpecification, isValidID, MinMaxPoints, minMaxPoints, QuestionChooser, QuestionSpecification, realizeChooser, realizeQuestion, realizeQuestions, realizeSections, SectionChooser, SectionSpecification, SkinChooser } from "./exam_specification";
+import { ResponseSpecification, SubmissionType, ViableSubmissionType, render_response, render_solution } from "../response/responses";
+import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
+import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
@@ -24,6 +25,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly skin: ExamComponentSkin | SkinChooser;
   public readonly sampleSolution?: ViableSubmissionType<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
+  public readonly verifier?: QuestionVerifier;
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
@@ -70,6 +72,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     ) : DEFAULT_SKIN;
     this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
+    this.verifier = spec.verifier && realizeVerifier(spec.verifier);
     this.assets_dir = spec.assets_dir;
   }
 
@@ -235,9 +238,11 @@ export class Exam {
 
   public readonly points: MinMaxPoints;
   public readonly sections: readonly (Section | SectionChooser)[];
+  public readonly completion?: ExamCompletionSpecification;
 
   public readonly enable_regrades: boolean;
-
+  public readonly allow_clientside_content: boolean;
+  public readonly credentials_strategy?: CredentialsStrategy;
   private static instances = new WeakMap<ExamSpecification, Exam>();
 
   public readonly spec: ExamSpecification;
@@ -276,7 +281,11 @@ export class Exam {
     this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
+    this.completion = spec.completion;
     this.enable_regrades = !!spec.enable_regrades;
+    this.allow_clientside_content = !!spec.allow_clientside_content;
+    this.credentials_strategy = spec.credentials_strategy;
+
     this.assets_dir = spec.assets_dir;
 
     this.spec = spec;

@@ -6,7 +6,8 @@ import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
-import { OriginalExamRenderer } from "../../src/core";
+import { DocRenderer, OriginalExamRenderer } from "../../src/core";
+import { DateTime } from "luxon";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
@@ -23,7 +24,26 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
         mk_reference: "[Section Reference]",
         questions: questions
       }
-    ]
+    ],
+    allow_clientside_content: true,
+    credentials_strategy: {
+      strategy: "google_local",
+      client_id: "444801118749-099920plmkl1s5n5u563pbmu71lo4bot.apps.googleusercontent.com",
+      auth_endpoint: "https://localhost/public_api/participation/auth/",
+      message: "Sign in with your @umich.edu Google account to earn participation credit for completing embedded exercises."
+    },
+    completion: {
+      threshold: 1,
+      tooltip: "",
+      endpoints: {
+        check: "https://localhost/public_api/participation/me/",
+        submit: "https://localhost/public_api/participation/me/",
+      },
+      local_deadline: {
+        when: DateTime.fromISO("2024-02-25T00:55", {zone: "America/Detroit"}),
+        grace_minutes: 1
+      }
+    }
   });
 }
 
@@ -36,7 +56,7 @@ function genTestExam(exam: Exam) {
     name: "Test Student",
     uniqname: "test"
   });
-  gen.writeAll(new OriginalExamRenderer(), path.join(__dirname, "out"), path.join(__dirname, "data"));
+  gen.writeAll(new DocRenderer(), path.join(__dirname, "out"), path.join(__dirname, "data"));
 }
 
 

@@ -1,14 +1,14 @@
 import "./frontend-solution.css";
 import "./frontend.css";
 
-import { activateExam, activateExamComponents } from "./common";
+import { activateExamContent, activateExamComponents } from "./common";
 
 function main() {
   console.log("Attempting to activate solution...");
 
   activateExamComponents();
 
-  activateExam();
+  activateExamContent();
   
 
   console.log("Solution activated!");

@@ -28,7 +28,7 @@ function activateResponse(this: HTMLElement) {
   activate_response(<ResponseKind>response.data("response-kind"), false, response);
 }
 
-export function activateExam() {
+export function activateExamContent() {
 
   // Activate any FITB Drop banks in reference material
   $(".examma-ray-section-reference .examma-ray-fitb-drop-bank").each(function() {

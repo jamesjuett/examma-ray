@@ -255,6 +255,10 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
       </table>
     `;
   }
+  
+  public annotateResponseElem(gq: GradedQuestion<ResponseKind, CodeWritingGraderGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
 
   
   public renderStats() {
@@ -267,8 +271,6 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
     let numSubmissions = this.grading_data.submission_results.length;
     return `<div>${renderGradingProgressBar(numGraded, numSubmissions)}</div>`;
   }
-
-
 
 
 }

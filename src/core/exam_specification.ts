@@ -61,7 +61,22 @@ import { Exam, Question, Section } from "./exam_components";
 import { quantileSorted } from "simple-statistics";
 import { GraderSpecification } from "../graders/QuestionGrader";
 import deepEqual from "deep-equal";
+import { QuestionVerifierSpecification } from "../verifiers/QuestionVerifier";
+import { DateTime } from "luxon";
 
+
+export type ExamCompletionSpecification = {
+  threshold: number,
+  tooltip: string,
+  endpoints: {
+    check: string,
+    submit: string,
+  },
+  local_deadline?: {
+    when: DateTime,
+    grace_minutes?: number
+  },
+};
 
 
 export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
@@ -99,6 +114,11 @@ export type QuestionSpecification<QT extends ResponseKind = ResponseKind> = {
    * Depending on the kind of response, this may also contain a significant amount of content as well.
    */
   readonly response: ResponseSpecification<QT>,
+
+  /**
+   * Optional, a verifier for this question used to check the answer on the clientside.
+   */
+  readonly verifier?: QuestionVerifierSpecification,
 
   /**
    * Tags for this question that may be used to pick it out of a question bank.
@@ -184,6 +204,14 @@ export type SectionSpecification = {
   readonly assets_dir?: string;
 }
 
+export type CredentialsStrategy = {
+  strategy: "google_local",
+  client_id: string,
+  auth_endpoint: string,
+  message?: string,
+  header?: string,
+};
+
 export type ExamSpecification = {
 
   readonly component_kind?: "specification",
@@ -212,6 +240,11 @@ export type ExamSpecification = {
    * @see [[SectionChooser]]
    */
   readonly sections: readonly (SectionSpecification | SectionChooserSpecification)[],
+
+  /**
+   * A completion checker for this exam
+   */
+  readonly completion?: ExamCompletionSpecification;
 
   /**
    * Markdown-formatted announcements that will be shown in an "alert" style box at the top of the exam,
@@ -263,10 +296,38 @@ export type ExamSpecification = {
    * `__dirname + "/assets"`.
    */
   readonly assets_dir?: string;
+
+  /**
+   * Whether or not the exam content is available in the clienside exam spec,
+   * which is written to spec/exam_spec.json. Defaults to undefined (interpreted as false).
+   * 
+   * Enabling this is required for certain client-side features, for example, local
+   * grading of questions.
+   * 
+   * CAUTION! This should NOT be enabled unless you are OK with the
+   * full content, including the exam structure, randomization details, and all questions
+   * being potentially available to savvy users. If the exam specification contains
+   * sample solutions or encodings of graders, those would also be accessible.
+   */
+  readonly allow_clientside_content?: boolean;
+
+  /**
+   * Enable login on the clientside to retrieve credentials that may be used
+   * to authenticate requests to a backend server.
+   */
+  readonly credentials_strategy?: CredentialsStrategy;
 };
 
 export function isValidID(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9_\-]*$/.test(id);
+}
+
+export function without_content(spec: ExamSpecification) : ExamSpecification {
+  const {sections, ...others} = spec;
+  return {
+    ...others,
+    sections: []
+  };
 }
 
 export type ExamComponentSpecification =
@@ -723,26 +784,50 @@ export function parseExamComponentSpecification(str: string) : ExamComponentOrCh
           value["examma_ray_serialized_regex"]["flags"]
         );
       }
+      if (typeof value === "object" && typeof value["examma_ray_serialized_datetime"] === "object") {
+        return DateTime.fromISO(
+          value["examma_ray_serialized_datetime"]["iso"],
+          value["examma_ray_serialized_datetime"]["timezone"]
+        );
+      }
       return value;
     }
   );
 }
 
+const STRINGIFY_SPACING = 2;
+
 export function stringifyExamComponentSpecification(spec: ExamComponentOrChooserSpecification | ResponseSpecification<ResponseKind> | GraderSpecification) : string {
   return JSON.stringify(
     spec,
-    (key: string, value: any) => {
+    function (key: string, _original: any) {
+
+      // Use this[key] to retrieve the value since using the value parameter
+      // for the replacer function may have already been serialized using a
+      // .toJSON() function on the object. this[key] will be the original.
+      const value: any = this[key];
+
       if (value instanceof RegExp) {
         return {
           examma_ray_serialized_regex: {
             source: value.source,
             flags: value.flags
           }
-        }
+        };
       }
-      return value;
+      if (DateTime.isDateTime(value)) {
+        return {
+          examma_ray_serialized_datetime: {
+            iso: value.toISO(),
+            timezone: value.zoneName
+          }
+        };
+      }
+      
+      // Return value serialized without replacer function
+      return _original;
     },
-    2
+    STRINGIFY_SPACING
   );
 }
 

@@ -73,6 +73,10 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
     `;
   }
 
+  public annotateResponseElem(gq: GradedQuestion<ResponseKind, FreebieGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
+
   public renderStats(aqs: readonly AssignedQuestion[]) {
     return "Stats are not implemented for this question/grader type yet.";
   }

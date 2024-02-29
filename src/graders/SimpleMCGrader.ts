@@ -102,6 +102,10 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     return report;
   }
 
+  public annotateResponseElem(aq: GradedQuestion<"multiple_choice", SimpleMCGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
+
   public renderStats() {
     return "Stats are not implemented for this question/grader type yet.";
   }

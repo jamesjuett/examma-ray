@@ -2,6 +2,12 @@ html {
   scroll-behavior: smooth;
 }
 
+.examma-ray-icon {
+  width: 1em;
+  height: 1em;
+}
+
+
 .examma-ray-sl-diff pre {
   margin-right: 0;
   margin-top: 0;
@@ -159,6 +165,16 @@ code {
 .examma-ray-section-heading>.badge {
   font-size: 1.2em;
   vertical-align: middle;
+}
+
+.examma-ray-section-heading > .examma-ray-section-verifier-statuses {
+  font-size: 1em;
+  vertical-align: middle;
+  float: right;
+}
+
+.examma-ray-verifier-status-mini .examma-ray-verifier-status-message {
+  display: none;
 }
 
 .examma-ray-section-contents {
@@ -554,7 +570,7 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-.nav.er-exam-nav .badge {
+.nav.er-exam-nav .badge .examma-ray-score-badge {
   width: 5em;
 }
 
@@ -608,6 +624,29 @@ pre .examma-ray-fitb-droppable pre {
 
 .examma-ray-manual-graded-rubric-item svg {
   vertical-align: text-top;
+}
+
+.examma-ray-fitb-box-input-holder {
+  display: inline-block;
+  position: relative;
+}
+
+.examma-ray-fitb-box-annotation {
+  position: absolute;
+  display: none;
+  overflow: visible;
+  top: 5px;
+  right: 5px;
+}
+
+.examma-ray-fitb-blank-annotation {
+  position: relative;
+  display: none;
+  overflow: visible;
+  height: 0px;
+  width: 1.75rem;
+  margin-left: -1.75rem;
+  margin-right: 0px;
 }
 
 

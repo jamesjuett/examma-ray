@@ -117,13 +117,8 @@ import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/Qu
 
 
 export type ExamGraderOptions = {
-  /**
-   * @deprecated This is ignored
-   */
   frontend_js_path: string,
-
   frontend_assets_dir: string,
-  
   uuid_strategy: UUID_Strategy,
   uuidv5_namespace?: string,
 };
@@ -307,7 +302,7 @@ export class ExamGrader {
   }
 
   public writeGraderPages() {
-    writeFrontendJS(`out/${this.exam.exam_id}/graded/js`, "grader-page-fitb.js");
+    writeFrontendJS(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
@@ -321,7 +316,7 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
-    writeFrontendJS(`${examDir}/js`, "frontend-graded.js");
+    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-graded.js");
     this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
@@ -331,7 +326,7 @@ export class ExamGrader {
         let filenameBase = this.createGradedFilenameBase(ex);
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
+        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
@@ -342,7 +337,7 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
-    writeFrontendJS(`${examDir}/js`, "frontend-solution.js");
+    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
     this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
@@ -353,7 +348,7 @@ export class ExamGrader {
         let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, "js/"), {encoding: "utf-8"});
+        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
@@ -428,7 +423,7 @@ export class ExamGrader {
   
   public writeOverview() {
 
-    writeFrontendJS("out/js", "overview.js");
+    writeFrontendJS(path.join("out", this.options.frontend_js_path), "overview.js");
 
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;

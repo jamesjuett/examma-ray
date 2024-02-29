@@ -94,14 +94,39 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = string | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
+export type IFrameSubmission = {} | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
 
 function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
     return BLANK_SUBMISSION;
   }
 
-  return rawSubmission;
+  try {
+    let parsed : {} | [] | string | number | boolean | null = JSON.parse(rawSubmission);
+
+    // This is a HACK related to EECS 280 asynchronous lectures for W24.
+    // Remove it once W24 is finished.
+    if (typeof parsed === "string") {
+      return {
+        code: parsed,
+        complete: true,
+      };
+    }
+
+    if ( !(typeof parsed === "object") || parsed === null || Array.isArray(parsed) ) {
+      return MALFORMED_SUBMISSION;
+    }
+
+    return Object.keys(parsed).length > 0 ? parsed : BLANK_SUBMISSION
+  }
+  catch(e) {
+    if (e instanceof SyntaxError) {
+      return MALFORMED_SUBMISSION;
+    }
+    else {
+      throw e;
+    }
+  }
 }
 
 function IFRAME_RENDERER(response: IFrameResponseSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -127,7 +152,7 @@ type IFrameResponseMessage = {
 class IFrameResponse {
   public readonly is_ready: boolean;
   public readonly iframe_window: Window;
-  public readonly submission: string;
+  public readonly submission: IFrameSubmission;
 
   private current_timeout: number | undefined;
 
@@ -162,7 +187,7 @@ class IFrameResponse {
     }
   }
 
-  public setSubmission(submission: string) {
+  public setSubmission(submission: IFrameSubmission) {
 
     asMutable(this).submission = submission;
 
@@ -172,12 +197,18 @@ class IFrameResponse {
     }
 
     if (this.is_ready) {
-      this.iframe_window.postMessage({
-        examma_ray_message: {
-          message_kind: "set_submission",
-          submission: submission
-        }
-      });
+
+      // Can't serialize symbols MALFORMED_SUBMISSION or BLANK_SUBMISSION to put
+      // through a postMessage call. However, we don't really want to send these to
+      // the iframe anway.
+      if (submission !== MALFORMED_SUBMISSION && submission !== BLANK_SUBMISSION) {
+        this.iframe_window.postMessage({
+          examma_ray_message: {
+            message_kind: "set_submission",
+            submission: submission
+          }
+        });
+      }
     }
     else {
       this.current_timeout = window.setTimeout(() => this.setSubmission(submission), 1000);

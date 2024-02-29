@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } fro
 import Papa from "papaparse";
 import path from "path";
 import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
-import { ExamSubmission, fillManifest, TrustedExamSubmission } from "./core/submissions";
+import { ExamManifest, ExamSubmission, fillManifest, hasResponses, isTransparentExamManifest, parseExamManifest, parseExamSubmission, TrustedExamSubmission } from "./core/submissions";
 import { assert, assertNever } from "./core/util";
 
 import "colors";
@@ -22,13 +22,18 @@ export namespace ExamUtils {
     writeFileSync(filename, stringifyExamComponentSpecification(spec), "utf8");
   }
 
-  export function loadExamAnswers(filename: string) : ExamSubmission {
-    return <ExamSubmission>JSON.parse(readFileSync(filename, "utf8"));
+  export function loadExamSubmission(filename: string) : ExamSubmission {
+    return parseExamSubmission(readFileSync(filename, "utf8"));
+  }
+
+  export function loadExamManifest(filename: string) : ExamManifest {
+    return parseExamManifest(readFileSync(filename, "utf8"));
   }
 
   export function loadTrustedSubmission(manifestDirectory: string, submittedFilename: string) {
-    let submitted = loadExamAnswers(submittedFilename);
-    let manifest = loadExamAnswers(path.join(manifestDirectory, submitted.student.uniqname + "-" + submitted.uuid + ".json"))
+    let submitted = loadExamSubmission(submittedFilename);
+    let manifest = loadExamManifest(path.join(manifestDirectory, submitted.student.uniqname + "-" + submitted.uuid + ".json"));
+    assert(isTransparentExamManifest(manifest));
     return fillManifest(
       manifest,
       submitted

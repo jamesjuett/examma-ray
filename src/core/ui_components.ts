@@ -36,23 +36,23 @@ export function renderWideNumBadge(num: number | string) {
 
 export function renderPointsWorthBadge(num: number, cssClass: string = "badge-secondary", short = false) {
   let prefix = short ? "pt" : "point";
-  return `<span class="badge ${cssClass}">${num} ${num === 1 ? prefix : prefix+"s"}</span>`;
+  return `<span class="badge examma-ray-score-badge ${cssClass}">${num} ${num === 1 ? prefix : prefix+"s"}</span>`;
 }
 
 export function renderShortPointsWorthBadge(num: number, cssClass: string = "badge-secondary") {
-  return `<span class="badge ${cssClass}" style="min-width: 4em">${num} ${num === 1 ? "pt" : "pts"}</span>`;
+  return `<span class="badge examma-ray-score-badge ${cssClass}" style="min-width: 4em">${num} ${num === 1 ? "pt" : "pts"}</span>`;
 }
 
 let percentCorrectScale = chroma.scale(["#dc3545", "#ffc107", "#28a745"]).mode("lab");
 
 export function renderPercentCorrectBadge(percent: number) {
-  return `<span class="badge" style="background-color: ${percentCorrectScale(percent).hex()}; color: white;">${Math.floor(percent * 100)}%</span>`;
+  return `<span class="badge examma-ray-score-badge" style="background-color: ${percentCorrectScale(percent).hex()}; color: white;">${Math.floor(percent * 100)}%</span>`;
 }
 
 export function renderDynamicColoredScoreBadge(pointsEarned: number, pointsPossible: number) {
   // Note the unary + below drops extra .00 from the number because it implicitly converts
   // the string from .toFixed() back into a number
-  return `<span class="badge" style="background-color: ${percentCorrectScale(pointsEarned / pointsPossible).hex()}; color: white;">${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}</span>`;
+  return `<span class="badge examma-ray-score-badge" style="background-color: ${percentCorrectScale(pointsEarned / pointsPossible).hex()}; color: white;">${+pointsEarned.toFixed(2)}/${+pointsPossible.toFixed(2)}</span>`;
 }
 
 export function renderPointsProgressBar(pointsEarned: number, pointsPossible: number, text?: string) {
