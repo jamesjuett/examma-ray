@@ -165,7 +165,13 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     </tr>
     </table>`;
   }
+
   // TODO ^^^ make this handle groups as well
+
+  public annotateResponseElem(gq: GradedQuestion<"select_lines", StandardSLGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
+
   public renderStats() {
     return "Stats are not implemented for this question/grader type yet.";
   }

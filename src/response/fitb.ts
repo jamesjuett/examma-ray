@@ -3,10 +3,10 @@ import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
 import { isStringArray } from "./util";
-import { createFilledFITB, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
+import { createFilledFITB, numBlanksAndBoxes, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
 
 /**
  * ## Fill-In-The-Blank (FITB) Response Element Specification
@@ -121,10 +121,17 @@ export type FITBSpecification = {
 
 /**
  * A submission for an FITB response is an array of strings that specify
- * the content submitted for each blank. The submission may also be the
- * symbol [[BLANK_SUBMISSION]].
+ * the content submitted for each blank.
+ * 
+ * A submission may be the symbol [[BLANK_SUBMISSION]] if nothing at all was entered in any box.
+ * 
+ * A submission may also be [[`INVALID_SUBMISSION`]] if the array of text responses contains more
+ * elements than there are blanks and boxes in the response element.(This should not regularly
+ * happen, but is possible if e.g. a student were to nefariously edit their answers `.json`
+ * file before turning it in. Upon loading, their submission would be checked and replaced
+ * by [[`INVALID_SUBMISSION`]]).
  */
-export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
+export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION;
 
 
 function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
@@ -151,12 +158,20 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
   }
 }
 
+function FITB_VALIDATOR(response: FITBSpecification, submission: FITBSubmission) {
+  if (submission === BLANK_SUBMISSION || submission === INVALID_SUBMISSION) {
+    return submission;
+  }
+
+  return submission.length === numBlanksAndBoxes(response.content) ? submission : INVALID_SUBMISSION;
+}
+
 function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 
 function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: FITBSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  if (solution !== BLANK_SUBMISSION) {
+  if (solution !== BLANK_SUBMISSION && solution !== INVALID_SUBMISSION) {
     solution = solution.map(s => applySkin(s, skin))
   }
   return createFilledFITB(applySkin(response.content, skin), solution);
@@ -164,7 +179,7 @@ function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: FITBSubmi
 
 function FITB_EXTRACTOR(responseElem: JQuery) {
   let filledResponses = responseElem.find("input, textarea").map(function() {
-    let v = "" + ($(this).val() ?? "");
+    const v = "" + ($(this).val() ?? "");
     return v.trim() === "" ? "" : v;
   }).get();
   return filledResponses.every(br => br === "") ? BLANK_SUBMISSION : filledResponses;
@@ -173,13 +188,13 @@ function FITB_EXTRACTOR(responseElem: JQuery) {
 function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
   let inputs = elem.find("input, textarea");
 
-  if (submission !== BLANK_SUBMISSION) {
+  if (submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
     assert(inputs.length === submission.length)
     let inputElems = inputs.get();
     submission.forEach((filledText, i) => $(inputElems[i]).val(filledText));
   }
   else {
-    // if it's a blank submission, blank out all the blanks/boxes
+    // if it's a blank or invalid submission, blank out all the blanks/boxes
     inputs.val("");
   }
 }
@@ -204,10 +219,10 @@ function FITB_DIFF(r1: FITBSpecification, r2: FITBSpecification) : ResponseSpeci
 
 export const FITB_HANDLER : ResponseHandler<"fill_in_the_blank"> = {
   parse: FITB_PARSER,
+  validate: FITB_VALIDATOR,
   render: FITB_RENDERER,
   render_solution: FITB_SOLUTION_RENDERER,
   extract: FITB_EXTRACTOR,
   fill: FITB_FILLER,
   diff: FITB_DIFF,
 };
-

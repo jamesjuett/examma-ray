@@ -10,6 +10,7 @@ import { StandardSLGrader, StandardSLGraderSpecification } from "./StandardSLGra
 import { SummationMCGrader, SummationMCGraderSpecification } from "./SummationMCGrader";
 import { StandardFITBDropGrader, StandardFITBDropGraderSpecification } from "./StandardFITBDropGrader";
 import { BugCatchingGrader, BugCatchingGraderSpecification } from "./BugCatchingGrader";
+import { StandardIFrameGrader, StandardIFrameGraderSpecification } from "./StandardIFrameGrader";
 
 /**
  * ## TODO this documentation is old and needs to be updated Grading Exams
@@ -169,11 +170,17 @@ export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR exten
    * @param gqs 
    */
   renderOverview(gqs: readonly GradedQuestion<RK>[]): string;
+  
+  /**
+   * Annotates the response element with feedback (if there is any).
+   * @param elem The HTML element for the status badge.
+   */
+  annotateResponseElem(gq: GradedQuestion<RK, GR>, response_elem: JQuery) : void;
 
 };
 
 
-type GraderKind = 
+export type GraderKind = 
   | "manual_code_writing"
   | "manual_generic"
   | "manual_regex_fill_in_the_blank"
@@ -182,7 +189,8 @@ type GraderKind =
   | "summation_multiple_choice"
   | "standard_select_lines"
   | "standard_fitb_drop"
-  | "bug_catching";
+  | "bug_catching"
+  | "standard_iframe";
 
 export type GraderSpecification<GK extends GraderKind = GraderKind> =
   GK extends "manual_code_writing" ? CodeWritingGraderSpecification :
@@ -194,6 +202,7 @@ export type GraderSpecification<GK extends GraderKind = GraderKind> =
   GK extends "standard_select_lines" ? StandardSLGraderSpecification :
   GK extends "standard_fitb_drop" ? StandardFITBDropGraderSpecification :
   GK extends "bug_catching" ? BugCatchingGraderSpecification :
+  GK extends "standard_iframe" ? StandardIFrameGraderSpecification :
   never;
 
 export type Grader<GK extends GraderKind = GraderKind> =
@@ -206,6 +215,7 @@ export type Grader<GK extends GraderKind = GraderKind> =
   GK extends "standard_select_lines" ? StandardSLGrader :
   GK extends "standard_fitb_drop" ? StandardFITBDropGrader :
   GK extends "bug_catching" ? BugCatchingGrader :
+  GK extends "standard_iframe" ? StandardIFrameGrader :
   never;
 
 type ExtractViableGraders<G extends Grader, RK> = G extends Grader ? RK extends G["t_response_kinds"] ? G : never : never;
@@ -224,6 +234,7 @@ export function realizeGrader<GK extends GraderKind>(spec: GraderSpecification<G
     spec.grader_kind === "standard_select_lines" ? new StandardSLGrader(spec) :
     spec.grader_kind === "standard_fitb_drop" ? new StandardFITBDropGrader(spec) :
     spec.grader_kind === "bug_catching" ? new BugCatchingGrader(spec) :
+    spec.grader_kind === "standard_iframe" ? new StandardIFrameGrader(spec) :
     assertNever(spec)
   );
 }

@@ -157,6 +157,10 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
       </script>
     `;
   }
+  
+  public annotateResponseElem(gq: GradedQuestion<"multiple_choice", TestCaseGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  }
 
   public renderStats(aqs: readonly AssignedQuestion<"multiple_choice">[]): string {
     return "";

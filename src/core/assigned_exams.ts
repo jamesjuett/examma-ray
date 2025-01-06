@@ -1,16 +1,15 @@
-import { asMutable, assert, assertFalse, Mutable } from './util';
-import { parse_submission, SubmissionType } from '../response/responses';
-import { ResponseKind } from '../response/common';
-import { mk2html, mk2html_unwrapped } from './render';
-import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
-import { Exception, GraderMap } from '../ExamGrader';
-import { QuestionGrader, GradingResult } from '../graders/QuestionGrader';
-import { isValidID, StudentInfo } from './exam_specification';
-import { createCompositeSkin, ExamComponentSkin } from './skins';
-import { ExamManifest, TrustedExamSubmission } from './submissions';
 import { sum } from 'simple-statistics';
+import { Exception, GraderMap } from '../ExamGrader';
+import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
+import { ResponseKind } from '../response/common';
+import { SubmissionType, parse_submission } from '../response/responses';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
+import { StudentInfo, isValidID } from './exam_specification';
+import { ExamComponentSkin, createCompositeSkin } from './skins';
+import { ExamManifest, OpaqueExamManifest, TransparentExamManifest, TrustedExamSubmission } from './submissions';
+import { maxPrecisionString } from "./ui_components";
+import { Mutable, asMutable, assert, assertFalse } from './util';
 
 
 
@@ -43,6 +42,13 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
     this.html_description = question.renderDescription(this.skin);
     this.html_postscript = question.renderPostscript(this.skin);
+  }
+
+  public setRawSubmission(raw_submission: string) {
+    (<Mutable<this>>this).rawSubmission = raw_submission;
+    (<Mutable<this>>this).submission = parse_submission(this.question.kind, raw_submission);
+    delete (<Mutable<this>>this).gradedBy;
+    delete (<Mutable<this>>this).gradingResult;
   }
 
   public grade(grader: QuestionGrader<QT>) {
@@ -262,7 +268,7 @@ export class AssignedExam {
               s_i,
               q_i,
               q.response
-            )); 
+            ));
           })
         ));
       }),
@@ -289,19 +295,20 @@ export class AssignedExam {
     (<Mutable<GradedExam>>this).curve = curve.applyTo(this);
   }
 
-  public renderGrade() {
+  public renderGrade() : string {
     return this.isGraded() ?
       maxPrecisionString(this.curve?.adjustedScore ?? this.pointsEarned, 2) + "/" + this.pointsPossible :
       "?/" + this.pointsPossible;
   }
 
-  public createManifest() : ExamManifest {
+  public createManifest() : TransparentExamManifest {
     return {
       exam_id: this.exam.exam_id,
       uuid: this.uuid,
       student: this.student,
       timestamp: Date.now(),
       trusted: true,
+      transparent: true,
       saverId: 0,
       sections: this.assignedSections.map(s => ({
         section_id: s.section.section_id,
@@ -314,11 +321,12 @@ export class AssignedExam {
           uuid: q.uuid,
           display_index: q.displayIndex,
           kind: q.question.kind,
-          response: ""
         }))
       }))
     };
   }
+
+
 }
 
 export function areAllGradedExams(exams: AssignedExam[]) : exams is GradedExam[];

@@ -262,6 +262,10 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
     `;
   }
 
+  public annotateResponseElem(aq: GradedQuestion<ResponseKind, ManualGenericGraderGradingResult>, response_elem: JQuery) {
+    // not yet implemented
+  };
+
   
   public renderStats() {
     return "Stats are not implemented for this question/grader type yet.";

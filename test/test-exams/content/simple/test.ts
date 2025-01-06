@@ -22,7 +22,7 @@ This is a simple test question!
       grader_kind: "freebie",
       points: 2,
       allow_blanks: true
-    }
+    },
   }
 }
 

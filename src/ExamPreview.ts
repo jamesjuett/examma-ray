@@ -9,6 +9,7 @@ import { createCompositeSkin, ExamComponentSkin, isDefaultSkin } from './core/sk
 import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
 import { ExamUtils, writeFrontendJS } from './ExamUtils';
+import { mk2html_unwrapped } from './core/render';
 
 export type ExamPreviewOptions = {
   frontend_js_path: string,
@@ -214,7 +215,7 @@ export class ExamPreview {
     return `
       <div class="examma-ray-header">
         <div class="text-center mb-3 border-bottom">
-          <h2>${this.exam.title}</h2>
+          <h2>${mk2html_unwrapped(this.exam.title)}</h2>
           <h4 style="color: purple; font-weight: bold;">Exam Preview</h4>
         </div>
         <div>
@@ -421,9 +422,9 @@ export class ExamPreview {
     mkdirSync(previewDir, { recursive: true });
     del.sync(`${previewDir}/*`);
 
-    writeFrontendJS(`${previewDir}/js`, "frontend.js");
-    writeFrontendJS(`${previewDir}/js`, "frontend-preview.js");
-    writeFrontendJS(`${previewDir}/js`, "frontend-solution.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-preview.js");
+    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-solution.js");
     this.writeAssets(`${previewDir}`);
 
     writeFileSync(`${previewDir}/preview.html`, this.renderPreview(), {encoding: "utf-8"});
