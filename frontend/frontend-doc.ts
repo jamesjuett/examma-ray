@@ -448,26 +448,26 @@ async function startExam() {
 
   if ($("#examma-ray-exam").data("clientside-content") === "yes") {
 
-  const exam_spec_response = await axios({
-    url: `../spec/exam-spec.json`,
-    method: "GET",
-    data: {},
-    responseType: "text",
-    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
-  });
-  const exam_spec = parseExamSpecification(exam_spec_response.data);
+    const exam_spec_response = await axios({
+      url: `../spec/exam-spec.json`,
+      method: "GET",
+      data: {},
+      responseType: "text",
+      transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+    });
+    const exam_spec = parseExamSpecification(exam_spec_response.data);
 
-  const exam = Exam.create(exam_spec);
+    const exam = Exam.create(exam_spec);
 
-  const exam_manifest_response = await axios({
-    url: `../manifests/${createManifestFilenameBase(uniqname, examUuid)}.json`,
-    method: "GET",
-    data: {},
-    responseType: "text",
-    transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
-  });
-  
-  const manifest = parseExamManifest(exam_manifest_response.data);
+    const exam_manifest_response = await axios({
+      url: `../manifests/${createManifestFilenameBase(uniqname, examUuid)}.json`,
+      method: "GET",
+      data: {},
+      responseType: "text",
+      transformResponse: [v => v] // Avoid default transformation that attempts JSON parsing (so we can parse our special way below)
+    });
+    
+    const manifest = parseExamManifest(exam_manifest_response.data);
     assert(isTransparentExamManifest(manifest));
     const assigned_exam = AssignedExam.createFromSubmission(exam, fillManifest(manifest, extractExamAnswers()));
     const participant = new Participant(assigned_exam);
@@ -510,6 +510,7 @@ async function startExam() {
       })
 
       completion?.refresh();
+      completion?.submit(extractExamAnswers());
 
       first = false;
     };
