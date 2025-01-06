@@ -510,7 +510,6 @@ async function startExam() {
       })
 
       completion?.refresh();
-      completion?.submit(extractExamAnswers());
 
       first = false;
     };
