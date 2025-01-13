@@ -34,13 +34,13 @@ describe('Reference Material', () => {
   it('Initial Reference Width', () => {
 
     // Check actual css widths
-    sectionElem("test-multi_section_test_exam-s-section1").find(".examma-ray-section-reference-column").should((jq) => {
+    sectionElem("test-multi_section_test_exam-s-section1").find(".examma-ray-section-right-column").should((jq) => {
       expect(jq[0].style.getPropertyValue("width")).to.equal("20%")
     });
-    sectionElem("test-multi_section_test_exam-s-section2").find(".examma-ray-section-reference-column").should((jq) => {
+    sectionElem("test-multi_section_test_exam-s-section2").find(".examma-ray-section-right-column").should((jq) => {
       expect(jq[0].style.getPropertyValue("width")).to.equal("40%")
     });
-    sectionElem("test-multi_section_test_exam-s-section3").find(".examma-ray-section-reference-column").should((jq) => {
+    sectionElem("test-multi_section_test_exam-s-section3").find(".examma-ray-section-right-column").should((jq) => {
       expect(jq[0].style.getPropertyValue("width")).to.equal("60%")
     });
 
@@ -76,16 +76,16 @@ function checkResize(section_uuid: string, value: number) {
 
   // Resize section to given %
   sectionElem(section_uuid)
-    .find(".examma-ray-section-reference-column .examma-ray-section-reference-width-slider")
+    .find(".examma-ray-section-right-column .examma-ray-section-right-column-width-slider")
     .invoke("val", value)
     .trigger("input");
 
   // check css style
-  sectionElem(section_uuid).find(".examma-ray-section-reference-column").should((jq) => {
+  sectionElem(section_uuid).find(".examma-ray-section-right-column").should((jq) => {
     expect(jq[0].style.getPropertyValue("width")).to.equal(value + "%")
   });
 
   // check test shown
-  sectionElem(section_uuid).find(".examma-ray-section-reference-column .examma-ray-section-reference-width-value").contains(value + "%")
+  sectionElem(section_uuid).find(".examma-ray-section-right-column .examma-ray-section-right-column-width-value").contains(value + "%")
 
 }

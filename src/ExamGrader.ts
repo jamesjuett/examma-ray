@@ -165,7 +165,7 @@ export class ExamGrader {
     this.exam = exam;
     this.onStatus = onStatus;
     verifyOptions(options);
-    this.options = Object.assign(DEFAULT_OPTIONS, options);
+    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);

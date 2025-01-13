@@ -47,7 +47,7 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   });
 }
 
-function genTestExam(exam: Exam) {
+function genTestExam(exam: Exam, renderer = new DocRenderer()) {
   let gen = new ExamGenerator(exam, {
     uuid_strategy: "plain",
     frontend_js_path: "js/"
@@ -56,7 +56,7 @@ function genTestExam(exam: Exam) {
     name: "Test Student",
     uniqname: "test"
   });
-  gen.writeAll(new DocRenderer(), path.join(__dirname, "out"), path.join(__dirname, "data"));
+  gen.writeAll(renderer, path.join(__dirname, "out"), path.join(__dirname, "data"));
 }
 
 
@@ -64,6 +64,23 @@ genTestExam(makeTestExam("simple_test", [
   Question_Simple_Test_1,
   Question_Simple_Test_2,
 ]));
+
+genTestExam(makeTestExam("simple_test_css", [
+  Question_Simple_Test_1,
+  Question_Simple_Test_2,
+]), new DocRenderer({
+  custom_css: `
+    .examma-ray-section-heading {
+      background-color: red;
+    }
+
+    .examma-ray-section {
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  `
+}));
 
 genTestExam(makeTestExam("full_test_exam", [
   Test_Question_MC_Single,

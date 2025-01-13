@@ -180,7 +180,7 @@ code {
   width: 100%;
   table-layout: fixed;
   
-  /*needed for inline-block examma-ray-section-reference-container height*/
+  /*needed for inline-block examma-ray-section-right-column-container height*/
   position: relative;
   height: 100%;
 }
@@ -189,7 +189,7 @@ code {
   vertical-align: top;
 }
 
-.examma-ray-questions-container {
+.examma-ray-section-main-column {
   padding-top: 0;
   padding-bottom: 30vh;
 }
@@ -247,18 +247,18 @@ code {
   font-size: 90%;
 }
 
-.examma-ray-section-reference-column {
+.examma-ray-section-right-column {
   height: 100%;
   padding-bottom: 30vh;
 }
 
-.examma-ray-section-reference-container {
+.examma-ray-section-right-column-container {
   display: inline-block;
   width: 100%;
   height: 100%;
 }
 
-.examma-ray-section-reference {
+.examma-ray-section-right-column-contents {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
@@ -272,17 +272,17 @@ code {
   max-height: 80vh;
 }
 
-.examma-ray-section-reference-width-slider-container {
+.examma-ray-section-right-column-width-slider-container {
   float: right;
   white-space: nowrap;
 }
 
-.examma-ray-section-reference-width-value {
+.examma-ray-section-right-column-width-value {
   display: inline-block;
   vertical-align: middle;
 }
 
-.examma-ray-section-reference-width-slider {
+.examma-ray-section-right-column-width-slider {
   display: inline-block;
   vertical-align: middle;
   width: 75px;

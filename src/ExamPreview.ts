@@ -14,11 +14,13 @@ import { mk2html_unwrapped } from './core/render';
 export type ExamPreviewOptions = {
   frontend_js_path: string,
   frontend_assets_dir: string,
+  custom_css?: string,
 };
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
-  frontend_assets_dir: "assets"
+  frontend_assets_dir: "assets",
+  // custom_css is undefined
 };
 
 export type ExamPreviewSpecification = Partial<ExamPreviewOptions>;
@@ -49,7 +51,7 @@ export class ExamPreview {
       ${renderHead(`
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
         <script src="${path.join(this.options.frontend_js_path, "frontend-preview.js")}"></script>
-      `)}
+      `, this.options.custom_css || "")}
       <body>
         ${this.renderBody()}
       </body>
@@ -248,21 +250,23 @@ export class ExamPreview {
             <hr />
             <table class="examma-ray-section-contents">
               <tr>
-                <td class="examma-ray-questions-container">
+                <td class="examma-ray-section-main-column">
                   ${this.renderSectionHeader(section, section_index)}
                   <div class="examma-ray-section-description">${section.renderDescription(skin)}</div>
                   ${section.questions.map((q, i) => this.renderQuestionOrChooser(q, section_index, i+1, skin)).join("<br />")}
                 </td>
                 ${!section.mk_reference ? "" :
-                  `<td class="examma-ray-section-reference-column" style="width: ${section.reference_width}%;">
-                    <div class="examma-ray-section-reference-container">
-                      <div class="examma-ray-section-reference">
-                        <div class = "examma-ray-section-reference-width-slider-container">
-                          <div class = "examma-ray-section-reference-width-value">${section.reference_width}%</div>
-                          <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+                  `<td class="examma-ray-section-right-column" style="width: ${section.reference_width}%;">
+                    <div class="examma-ray-section-right-column-container">
+                      <div class="examma-ray-section-right-column-contents">
+                        <div class="examma-ray-section-reference">
+                          <div class="examma-ray-section-right-column-width-slider-container">
+                            <div class="examma-ray-section-right-column-width-value">${section.reference_width}%</div>
+                            <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
+                          </div>
+                          <h6>Reference Material (Section ${section_index})</h6>
+                          ${section.renderReference(skin)}
                         </div>
-                        <h6>Reference Material (Section ${section_index})</h6>
-                        ${section.renderReference(skin)}
                       </div>
                     </div>
                   </td>`
