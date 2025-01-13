@@ -7,7 +7,7 @@ import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
 import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 
-export function renderHead(extra: string) {
+export function renderHead(scripts: string, css: string) {
   return (
 `<head>
   <meta charset="UTF-8">
@@ -16,7 +16,10 @@ export function renderHead(extra: string) {
   <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-  ${extra}
+  ${scripts}
+  <style>
+    ${css}
+  </style>
 </head>`
   );
   
@@ -41,7 +44,24 @@ export function renderAnnouncements(exam: Exam) {
   </div>`;
 }
 
+type ExamRendererOptions = {
+  /**
+   * A string containing custom css rules, which will be rendered into a style
+   * tag within the <head> tag of the generated html.
+   */
+  custom_css?: string
+};
+
+const DEFAULT_OPTIONS : Readonly<ExamRendererOptions> = {
+  // custom_css is undefined
+};
 export abstract class ExamRenderer {
+
+  public options: Readonly<ExamRendererOptions>;
+
+  public constructor(options: Partial<ExamRendererOptions> = {}) {
+    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+  }
 
   public renderTimer() {
     return `
@@ -104,7 +124,10 @@ export abstract class ExamRenderer {
     return `
       <!DOCTYPE html>
       <html>
-      ${renderHead(this.renderScripts(ae, frontendPath))}
+      ${renderHead(
+        this.renderScripts(ae, frontendPath),
+        this.options.custom_css ?? ""
+      )}
       <body>
         ${this.renderBody(ae)}
         ${this.renderModals(ae)}
@@ -138,32 +161,57 @@ export abstract class ExamRenderer {
 
   public renderSection(as: AssignedSection) {
     return `
-      <div id="section-${as.uuid}" class="examma-ray-section ${as.html_reference ? "" : "examma-ray-section-no-reference"}" data-section-uuid="${as.uuid}" data-section-display-index="${as.displayIndex}">
+      <div id="section-${as.uuid}" class="examma-ray-section" data-section-uuid="${as.uuid}" data-section-display-index="${as.displayIndex}">
         <hr />
         <table class="examma-ray-section-contents">
           <tr>
-            <td class="examma-ray-questions-container">
-              ${this.renderSectionHeader(as)}
-              <div class="examma-ray-section-description">${as.html_description}</div>
-              ${as.assignedQuestions.map(aq => this.renderQuestion(aq)).join("<br />")}
-            </td>
-            ${!as.html_reference ? "" :
-            `<td class="examma-ray-section-reference-column" style="width: ${as.section.reference_width}%;">
-              <div class="examma-ray-section-reference-container">
-                <div class="examma-ray-section-reference">
-                  <div class = "examma-ray-section-reference-width-slider-container">
-                    <div class = "examma-ray-section-reference-width-value">${as.section.reference_width}%</div>
-                    <input class="examma-ray-section-reference-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
-                  </div>
-                  <h6>Reference Material (Section ${as.displayIndex})</h6>
-                  ${as.html_reference}
-                </div>
-              </div>
-            </td>
-            `}
+            ${this.renderSectionMainColumn(as)}
+            ${this.renderSectionRightColumn(as)}
           </tr>
         </table>
       </div>
+    `;
+  }
+
+  public renderSectionMainColumn(as: AssignedSection) {
+    return `
+      <td class="examma-ray-section-main-column">
+        ${this.renderSectionHeader(as)}
+        <div class="examma-ray-section-description">${as.html_description}</div>
+        ${as.assignedQuestions.map(aq => this.renderQuestion(aq)).join("<br />")}
+      </td>
+    `;
+  }
+
+  public renderSectionRightColumn(as: AssignedSection) {
+    if (!as.html_reference) { return ""; }
+
+    return `
+      <td class="examma-ray-section-right-column" style="width: ${as.section.reference_width}%;">
+        <div class="examma-ray-section-right-column-container">
+          <div class="examma-ray-section-right-column-contents">
+            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-home-tab" data-toggle="pill" data-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Home</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-profile-tab" data-toggle="pill" data-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Profile</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-contact-tab" data-toggle="pill" data-target="#pills-contact" type="button" role="tab" aria-controls="pills-contact" aria-selected="false">Contact</button>
+              </li>
+            </ul>
+            <div class="examma-ray-section-right-column-width-slider-container">
+              <div class="examma-ray-section-right-column-width-value">${as.section.reference_width}%</div>
+              <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
+            </div>
+            <div class="examma-ray-section-reference">
+              <h6>Reference Material (Section ${as.displayIndex})</h6>
+              ${as.html_reference}
+            </div>
+          </div>
+        </div>
+      </td>
     `;
   }
   
