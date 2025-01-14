@@ -168,6 +168,36 @@ genTestExam(Exam.create({
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_3"}),
       ]
-    }
+    },
+    {
+      section_id: "section4",
+      title: "[Section Title 4]",
+      mk_description: "[Section Description 4]",
+      mk_reference: "[Section Reference 4]",
+      reference_width: 60,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_4"}),
+      ]
+    },
+    {
+      section_id: "section5",
+      title: "[Section Title 5]",
+      mk_description: "[Section Description 5]",
+      mk_reference: "[Section Reference 5]",
+      reference_width: 60,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_5"}),
+      ]
+    },
+    {
+      section_id: "section6",
+      title: "[Section Title 6]",
+      mk_description: "[Section Description 6]",
+      mk_reference: "[Section Reference 6]",
+      reference_width: 60,
+      questions: [
+        CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_6"}),
+      ]
+    },
   ]
 }));
