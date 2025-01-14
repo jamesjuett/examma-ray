@@ -78,11 +78,12 @@ export abstract class ExamRenderer {
 
   public renderNav(ae: AssignedExam) {
     return `
-      <ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
-        ${ae.assignedSections.map(s => `<li class = "nav-item">
-          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
-        </li>`).join("")}
-      </ul>`
+      <nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+        ${ae.assignedSections.map(s => `<nav class="nav">
+          <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
+        </nav>`).join("")}
+      </nav>
+    `;
   }
 
   public abstract renderSectionNavBadges(s: AssignedSection): string;
@@ -128,7 +129,7 @@ export abstract class ExamRenderer {
         this.renderScripts(ae, frontendPath),
         this.options.custom_css ?? ""
       )}
-      <body>
+      <body style="position: relative;" data-spy="scroll" data-target="#er-exam-nav" data-offset="100">
         ${this.renderBody(ae)}
         ${this.renderModals(ae)}
       </body>
@@ -190,17 +191,6 @@ export abstract class ExamRenderer {
       <td class="examma-ray-section-right-column" style="width: ${as.section.reference_width}%;">
         <div class="examma-ray-section-right-column-container">
           <div class="examma-ray-section-right-column-contents">
-            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="pills-home-tab" data-toggle="pill" data-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Home</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-profile-tab" data-toggle="pill" data-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Profile</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-contact-tab" data-toggle="pill" data-target="#pills-contact" type="button" role="tab" aria-controls="pills-contact" aria-selected="false">Contact</button>
-              </li>
-            </ul>
             <div class="examma-ray-section-right-column-width-slider-container">
               <div class="examma-ray-section-right-column-width-value">${as.section.reference_width}%</div>
               <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
@@ -404,21 +394,23 @@ abstract class TakenExamRenderer extends ExamRenderer {
   }
 
   public override renderNav(ae: AssignedExam): string {
-    return `<ul class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+    return `<nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
       ${ae.assignedSections.map(s => `
-        <li class="nav-item">
-          <a class="nav-link text-truncate" style="padding: 0.1rem" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
-        </li>
-        ${s.assignedQuestions.map(q => `
-          <li id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
-            ${this.renderQuestionNavBadges(q)}
-            <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
-              ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
-            </a>
-          </li>
-        `).join("")}
+        <nav class="nav">
+          <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
+          <nav class="nav">
+          ${s.assignedQuestions.map(q => `
+            <div id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
+              ${this.renderQuestionNavBadges(q)}
+              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+                ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
+              </a>
+            </div>
+          `).join("")}
+          </nav>
+        </nav>
       `).join("")}
-    </ul>`
+    </nav>`
   }
 
   protected abstract renderQuestionNavBadges(q: AssignedQuestion): string;

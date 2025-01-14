@@ -150,6 +150,10 @@ code {
   width: 1px;
 }
 
+.examma-ray-section {
+  margin-bottom: 100px;
+}
+
 .examma-ray-section-heading {
   margin-bottom: 10px;
   position: -webkit-sticky;
@@ -249,7 +253,6 @@ code {
 
 .examma-ray-section-right-column {
   height: 100%;
-  padding-bottom: 30vh;
 }
 
 .examma-ray-section-right-column-container {
@@ -570,9 +573,18 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-.nav.er-exam-nav .badge .examma-ray-score-badge {
+#er-exam-nav .badge .examma-ray-score-badge {
   width: 5em;
 }
+
+#er-exam-nav nav {
+  display: block;
+}
+
+.er-section-nav-link.active {
+  text-decoration: bolder;
+}
+
 
 .rubric-item-card {
   width: 17em;
@@ -748,4 +760,5 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
 .examma-ray-main-panel {
   margin-left: 260px;
   width: calc(100% - 270px);
+  padding-bottom: 50vh;
 }

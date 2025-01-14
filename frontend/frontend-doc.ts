@@ -446,6 +446,11 @@ async function startExam() {
     $("#examma-ray-time-elapsed-button").html("Hide");
   });
 
+  $('[data-spy="scroll"]').on('activate.bs.scrollspy', function () {
+    // Future location for scroll events
+    // console.log($("#er-exam-nav").find(".er-section-nav-link.active").data("section-uuid"));
+  });
+
   if ($("#examma-ray-exam").data("clientside-content") === "yes") {
 
     const exam_spec_response = await axios({
