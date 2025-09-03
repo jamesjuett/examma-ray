@@ -20,3 +20,12 @@ export function assertNever(x: never): never {
 export function asMutable<T>(obj: T) : Mutable<T> {
     return <Mutable<T>>obj;
 }
+
+type SimpleJSONComponent =
+  | string | number | boolean
+  | SimpleJSONComponent[]
+  | { [key: string]: SimpleJSONComponent };
+
+export type SimpleJSON = {
+  [key: string]: SimpleJSONComponent
+};

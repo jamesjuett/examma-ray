@@ -119,7 +119,7 @@ export class Section {
    * Desired width of reference material as a percent (e.g. 40 means 40%).
    * Guaranteed to be an integral value.
    */
-  public readonly reference_width: number;
+  public readonly right_column_width: number;
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
@@ -163,12 +163,12 @@ export class Section {
         : spec.skin
     ) : DEFAULT_SKIN;
 
-    this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
+    this.right_column_width = spec.right_column_width ?? DEFAULT_REFERENCE_WIDTH;
     this.assets_dir = spec.assets_dir;
 
     assert(
-      Number.isInteger(this.reference_width) && 0 <= this.reference_width && this.reference_width <= 100,
-      "Reference material width must be an integer between 0 and 100, inclusive."
+      Number.isInteger(this.right_column_width) && 0 <= this.right_column_width && this.right_column_width <= 100,
+      `Right panel width must be an integer between 0 and 100, inclusive, representing a percent. Value provided: ${this.right_column_width}`
     );
   }
 

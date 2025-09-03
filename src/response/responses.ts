@@ -40,6 +40,22 @@ export type ViableSubmission<ST> = Exclude<ST, typeof BLANK_SUBMISSION | typeof 
 export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
 
 
+
+/**
+ * A helper type that represents only the valid submissions from a submission type
+ * by excluding [[INVALID_SUBMISSION]]. These represent the submissions that could
+ * be present in a student submission without some kind of error or other funny
+ * business. Note that [[BLANK_SUBMISSION]] is still included in this type.
+ */
+export type ValidSubmission<ST> = Exclude<ST, typeof INVALID_SUBMISSION>;
+
+/**
+ * A helper type that gives the type representing valid submissions for a given
+ * response kind.
+ */
+export type ValidSubmissionType<QT extends ResponseKind> = ValidSubmission<SubmissionType<QT>>;
+
+
 /**
  * A type used to represent differences between two response specifications.
  */
@@ -55,12 +71,12 @@ export type ResponseSpecificationDiff = {
 
 export type ResponseHandler<QT extends ResponseKind> = {
   parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
-  validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => SubmissionType<QT>,
+  validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => boolean,
   render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
-  render_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
+  render_solution: (response: ResponseSpecification<QT>, solution: ValidSubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery, is_sample_solution: boolean) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
-  fill: (elem: JQuery, submission: SubmissionType<QT>) => void,
+  fill: (elem: JQuery, submission: ValidSubmissionType<QT>) => void,
   diff: (response1: ResponseSpecification<QT>, response2: ResponseSpecification<QT>) => ResponseSpecificationDiff;
 };
 
@@ -75,20 +91,20 @@ export const RESPONSE_HANDLERS : {
   "iframe": IFRAME_HANDLER,
 };
 
-export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {
-  return <SubmissionType<QT>>RESPONSE_HANDLERS[kind].parse(rawSubmission);
+export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> | typeof MALFORMED_SUBMISSION {
+  return RESPONSE_HANDLERS[kind].parse(rawSubmission);
 }
 
-export function validate_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : SubmissionType<QT> {
+export function validate_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : submission is Exclude<SubmissionType<QT>, typeof INVALID_SUBMISSION> {
   let handler = <ResponseHandler<QT>>RESPONSE_HANDLERS[response.kind];
-  return handler.validate ? handler.validate(response, submission) : submission;
+  return handler.validate === undefined || handler.validate(response, submission);
 }
 
 export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, question_uuid, skin);
 }
 
-export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
+export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: ValidSubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render_solution(response, solution, question_id, question_uuid, skin);
 }
 
@@ -107,7 +123,7 @@ export function stringify_response<QT extends ResponseKind>(submission: Submissi
         JSON.stringify(submission);
 }
 
-export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, response: SubmissionType<QT>) : void {
+export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, response: ValidSubmissionType<QT>) : void {
   return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).fill(elem, response);
 }
 

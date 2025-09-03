@@ -3,7 +3,7 @@ import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
 /**
@@ -136,15 +136,12 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
 }
 
 function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
-  if (submission === BLANK_SUBMISSION || submission === INVALID_SUBMISSION) {
-    return submission;
-  }
+  if (submission === BLANK_SUBMISSION) { return true; }
+  if (submission === INVALID_SUBMISSION) { return false; }
 
-  if (!response.multiple || response.limit === undefined) {
-    return submission;
-  }
+  if (!response.multiple || response.limit === undefined) { return true; }
 
-  return submission.length <= response.limit ? submission : INVALID_SUBMISSION;
+  return submission.length <= response.limit;
 }
 
 function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -161,23 +158,15 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
   `;
 }
 
-function MC_SOLUTION_RENDERER(response: MCSpecification, orig_solution: MCSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function MC_SOLUTION_RENDERER(response: MCSpecification, orig_solution: ValidSubmission<MCSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
-  const was_invalid = orig_solution === INVALID_SUBMISSION;
-
-  if (orig_solution === BLANK_SUBMISSION || orig_solution === INVALID_SUBMISSION) {
+  if (orig_solution === BLANK_SUBMISSION) {
     orig_solution = [];
   }
 
   const solution = orig_solution; // Allow type inference within the map() below
 
   return `
-    ${was_invalid
-      ? "<p>This solution was invalid (i.e. was outside the space of allowed answer choices - this should not normally happen).</p>"
-      : solution.length === 0
-        ? "<p>All options left unselected.</p>"
-        : ""
-    }
     <form>
     ${(response.multiple && response.limit !== undefined) ? `<div><span class="examma-ray-mc-num-selected">${solution.length}</span> out of ${response.limit} allowed choices are selected.</div>`: ""}
     ${response.choices.map((item,i) => `
@@ -235,12 +224,12 @@ function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
   return responses;
 }
 
-function MC_FILLER(responseElem: JQuery, submission: MCSubmission) {
+function MC_FILLER(responseElem: JQuery, submission: ValidSubmission<MCSubmission>) {
   // blank out all selections
   let inputs = responseElem.find("input");
   inputs.prop("checked", false);
 
-  if (submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
+  if (submission !== BLANK_SUBMISSION) {
 
     // Enforce checkbox limit if any
     let limit = getCheckboxLimit(responseElem);

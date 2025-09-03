@@ -1,10 +1,10 @@
 import deepEqual from "deep-equal";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { asMutable, assert } from "../core/util";
+import { asMutable, assert, SimpleJSON } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
 /**
@@ -94,7 +94,7 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = {} | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
+export type IFrameSubmission = SimpleJSON | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
 
 function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -102,16 +102,7 @@ function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmiss
   }
 
   try {
-    let parsed : {} | [] | string | number | boolean | null = JSON.parse(rawSubmission);
-
-    // This is a HACK related to EECS 280 asynchronous lectures for W24.
-    // Remove it once W24 is finished.
-    if (typeof parsed === "string") {
-      return {
-        code: parsed,
-        complete: true,
-      };
-    }
+    let parsed : SimpleJSON = JSON.parse(rawSubmission);
 
     if ( !(typeof parsed === "object") || parsed === null || Array.isArray(parsed) ) {
       return MALFORMED_SUBMISSION;
@@ -137,7 +128,7 @@ function IFRAME_RENDERER(response: IFrameResponseSpecification, question_id: str
   `;
 }
 
-function IFRAME_SOLUTION_RENDERER(response: IFrameResponseSpecification, orig_solution: IFrameSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function IFRAME_SOLUTION_RENDERER(response: IFrameResponseSpecification, orig_solution: ValidSubmission<IFrameSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
   return IFRAME_RENDERER(response, question_id, question_uuid, skin);
 }
@@ -146,20 +137,20 @@ type IFrameResponseMessage = {
   message_kind: "ready";
 } | {
   message_kind: "update";
-  submission: string;
+  submission: SimpleJSON;
 }
 
 class IFrameResponse {
   public readonly is_ready: boolean;
   public readonly iframe_window: Window;
-  public readonly submission: IFrameSubmission;
+  public readonly submission: SimpleJSON;
 
   private current_timeout: number | undefined;
 
   public constructor(iframe_window: Window) {
     this.is_ready = false;
     this.iframe_window = iframe_window
-    this.submission = "";
+    this.submission = {};
     this.current_timeout = undefined;
 
     // Note this is called on "window" and not the "iframe_window"
@@ -187,7 +178,7 @@ class IFrameResponse {
     }
   }
 
-  public setSubmission(submission: IFrameSubmission) {
+  public setSubmission(submission: SimpleJSON) {
 
     asMutable(this).submission = submission;
 
@@ -197,18 +188,12 @@ class IFrameResponse {
     }
 
     if (this.is_ready) {
-
-      // Can't serialize symbols MALFORMED_SUBMISSION or BLANK_SUBMISSION to put
-      // through a postMessage call. However, we don't really want to send these to
-      // the iframe anway.
-      if (submission !== MALFORMED_SUBMISSION && submission !== BLANK_SUBMISSION) {
-        this.iframe_window.postMessage({
-          examma_ray_message: {
-            message_kind: "set_submission",
-            submission: submission
-          }
-        });
-      }
+      this.iframe_window.postMessage({
+        examma_ray_message: {
+          message_kind: "set_submission",
+          submission: submission
+        }
+      });
     }
     else {
       this.current_timeout = window.setTimeout(() => this.setSubmission(submission), 1000);
@@ -231,21 +216,21 @@ function IFRAME_EXTRACTOR(responseElem: JQuery) : IFrameSubmission {
 
   let iframe_response = <IFrameResponse>(responseElem.data("iframe_response"));
 
-  if (iframe_response.submission === "") {
+  if (Object.keys(iframe_response.submission).length === 0) {
     return BLANK_SUBMISSION;
   }
 
   return iframe_response.submission;
 }
 
-function IFRAME_FILLER(responseElem: JQuery, submission: IFrameSubmission) {
+function IFRAME_FILLER(responseElem: JQuery, submission: ValidSubmission<IFrameSubmission>) {
   
   const iframe_window = responseElem.find("iframe")[0].contentWindow;
   assert(iframe_window, "unable to find iframe");
 
   let iframe_response = <IFrameResponse>(responseElem.data("iframe_response"));
 
-  if (submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
+  if (submission !== BLANK_SUBMISSION) {
     iframe_response.setSubmission(submission);
   }
 }

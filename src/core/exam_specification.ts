@@ -188,9 +188,9 @@ export type SectionSpecification = {
   readonly skin?: ExamComponentSkin | SkinChooserSpecification,
 
   /**
-   * The initial width, in percent 0-100, of the reference material for this section.
+   * The initial width, in percent 0-100, of the right panel for this section.
    */
-  readonly reference_width?: number,
+  readonly right_column_width?: number,
 
 
   /**
@@ -298,7 +298,7 @@ export type ExamSpecification = {
   readonly assets_dir?: string;
 
   /**
-   * Whether or not the exam content is available in the clienside exam spec,
+   * Whether or not the exam content is available in the clientside exam spec,
    * which is written to spec/exam_spec.json. Defaults to undefined (interpreted as false).
    * 
    * Enabling this is required for certain client-side features, for example, local
@@ -946,7 +946,7 @@ export function stringifyExamComponentSpecification(spec: ExamComponentOrChooser
 //     skin:
 //       !deepEqual(spec1.skin, spec2.skin, { strict: true }),
 //     format:
-//       spec1.reference_width !== spec2.reference_width
+//       spec1.right_column_width !== spec2.right_column_width
 //   };
 
 //   return Object.values(diff).some(v => v) ? diff : undefined;

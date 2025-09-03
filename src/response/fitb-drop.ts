@@ -6,7 +6,7 @@ import { ExamComponentSkin } from "../core/skins";
 import { assert, assertFalse } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 
 export type DroppableSpecification = {
   id: string,
@@ -108,7 +108,7 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
-function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: FITBDropSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ValidSubmission<FITBDropSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
 
   let group_id = response.group_id ?? question_id;
   return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, solution);
@@ -238,7 +238,7 @@ function FITB_DROP_EXTRACTOR(responseElem: JQuery) {
   return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? BLANK_SUBMISSION : filledResponses;
 }
 
-function FITB_DROP_FILLER(responseElem: JQuery, submission: FITBDropSubmission) {
+function FITB_DROP_FILLER(responseElem: JQuery, submission: ValidSubmission<FITBDropSubmission>) {
 
   if (submission === BLANK_SUBMISSION) {
     // blank out all the blanks/boxes

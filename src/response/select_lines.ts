@@ -1,9 +1,9 @@
 import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import deepEqual from "deep-equal";
 
 /**
@@ -159,9 +159,10 @@ export type SLSpecification = {
 /**
  * A submission for a select lines response is an array of numbers corresponding to the indices
  * of selected lines. Note that any "forced" items will always be included in a submission.
- * The submission may also be [[BLANK_SUBMISSION]] if no items were selected.
+ * The submission may also be [[BLANK_SUBMISSION]] if no items were selected or [[INVALID_SUBMISSION]]
+ * if the array contains duplicate or out-of-range indices.
  */
-export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION;
+export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION;
 
 function SL_PARSER(rawSubmission: string | null | undefined) : SLSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -185,6 +186,23 @@ function SL_PARSER(rawSubmission: string | null | undefined) : SLSubmission | ty
       throw e;
     }
   }
+}
+
+function SL_VALIDATOR(response: SLSpecification, submission: SLSubmission) {
+  if (submission === BLANK_SUBMISSION) { return true; }
+  if (submission === INVALID_SUBMISSION) { return false; }
+
+  // duplicate selections
+  if (new Set(submission).size !== submission.length) {
+    return false;
+  }
+
+  // out of range selections
+  if (submission.some(n => n < 0 || n >= response.choices.length)) {
+    return false;
+  }
+
+  return true;
 }
 
 function SL_RENDERER(response: SLSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -226,7 +244,7 @@ function renderSLItem(item: SLItem, question_id: string, item_index: number, cod
     </div>`;
 }
 
-function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: ValidSubmission<SLSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
   if (orig_solution === BLANK_SUBMISSION) {
     orig_solution = [];
@@ -309,7 +327,7 @@ function SL_EXTRACTOR(responseElem: JQuery) {
   return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
 }
 
-function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
+function SL_FILLER(responseElem: JQuery, submission: ValidSubmission<SLSubmission>) {
   
   let inputs = responseElem.find(".examma-ray-sl-choices input");
 
@@ -370,6 +388,7 @@ function SL_DIFF(r1: SLSpecification, r2: SLSpecification) : ResponseSpecificati
 
 export const SL_HANDLER : ResponseHandler<"select_lines"> = {
   parse: SL_PARSER,
+  validate: SL_VALIDATOR,
   render: SL_RENDERER,
   render_solution: SL_SOLUTION_RENDERER,
   activate: SL_ACTIVATE,

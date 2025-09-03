@@ -4,7 +4,7 @@ import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isStringArray } from "./util";
 import { createFilledFITB, numBlanksAndBoxes, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
 
@@ -159,19 +159,17 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
 }
 
 function FITB_VALIDATOR(response: FITBSpecification, submission: FITBSubmission) {
-  if (submission === BLANK_SUBMISSION || submission === INVALID_SUBMISSION) {
-    return submission;
-  }
-
-  return submission.length === numBlanksAndBoxes(response.content) ? submission : INVALID_SUBMISSION;
+  if (submission === BLANK_SUBMISSION) { return true; }
+  if (submission === INVALID_SUBMISSION) { return false; }
+  return submission.length === numBlanksAndBoxes(response.content);
 }
 
 function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 
-function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: FITBSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  if (solution !== BLANK_SUBMISSION && solution !== INVALID_SUBMISSION) {
+function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ValidSubmission<FITBSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  if (solution !== BLANK_SUBMISSION) {
     solution = solution.map(s => applySkin(s, skin))
   }
   return createFilledFITB(applySkin(response.content, skin), solution);
@@ -185,10 +183,10 @@ function FITB_EXTRACTOR(responseElem: JQuery) {
   return filledResponses.every(br => br === "") ? BLANK_SUBMISSION : filledResponses;
 }
 
-function FITB_FILLER(elem: JQuery, submission: FITBSubmission) {
+function FITB_FILLER(elem: JQuery, submission: ValidSubmission<FITBSubmission>) {
   let inputs = elem.find("input, textarea");
 
-  if (submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
+  if (submission !== BLANK_SUBMISSION) {
     assert(inputs.length === submission.length)
     let inputElems = inputs.get();
     submission.forEach((filledText, i) => $(inputElems[i]).val(filledText));

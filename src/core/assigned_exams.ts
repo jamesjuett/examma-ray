@@ -1,7 +1,7 @@
 import { sum } from 'simple-statistics';
 import { Exception, GraderMap } from '../ExamGrader';
 import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
-import { ResponseKind } from '../response/common';
+import { MALFORMED_SUBMISSION, ResponseKind } from '../response/common';
 import { SubmissionType, parse_submission } from '../response/responses';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
@@ -38,7 +38,11 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     public readonly rawSubmission: string,
   ) {
     this.displayIndex = (sectionIndex+1) + "." + (partIndex+1);
-    this.submission = parse_submission(question.kind, rawSubmission);
+    const sub = parse_submission(question.kind, rawSubmission);
+    if (sub === MALFORMED_SUBMISSION) {
+      throw new Error(`Malformed submission for question ${question.question_id}`);
+    }
+    this.submission = sub;
 
     this.html_description = question.renderDescription(this.skin);
     this.html_postscript = question.renderPostscript(this.skin);
@@ -46,7 +50,11 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public setRawSubmission(raw_submission: string) {
     (<Mutable<this>>this).rawSubmission = raw_submission;
-    (<Mutable<this>>this).submission = parse_submission(this.question.kind, raw_submission);
+    const sub = parse_submission(this.question.kind, raw_submission);
+    if (sub === MALFORMED_SUBMISSION) {
+      throw new Error(`Malformed submission for question ${this.question.question_id}`);
+    }
+    (<Mutable<this>>this).submission = sub;
     delete (<Mutable<this>>this).gradedBy;
     delete (<Mutable<this>>this).gradingResult;
   }

@@ -4,7 +4,7 @@ import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 
 /**
  * ## Code Editor Response Element Specification
@@ -139,7 +139,7 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
   `;
 }
 
-function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: CodeEditorSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: ValidSubmission<CodeEditorSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   if (solution === BLANK_SUBMISSION) {
     solution = "";
   }
@@ -166,7 +166,7 @@ function CODE_EDITOR_EXTRACTOR(responseElem: JQuery) {
 
 }
 
-function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
+function CODE_EDITOR_FILLER(elem: JQuery, submission: ValidSubmission<CodeEditorSubmission>) {
 
   // .setValue() is for the CodeMirror object
   $(elem).find(".examma-ray-codemirror").data("examma-ray-codemirror").setValue(submission === BLANK_SUBMISSION ? "" : submission);
