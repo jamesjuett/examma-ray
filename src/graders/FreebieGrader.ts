@@ -1,5 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { ResponseKind, BLANK_SUBMISSION, INVALID_SUBMISSION } from "../response/common";
+import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
 import { render_solution } from "../response/responses";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 

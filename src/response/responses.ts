@@ -1,11 +1,11 @@
-import { FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
+import { ExamComponentSkin } from "../core/skins";
+import { CODE_EDITOR_HANDLER, CodeEditorSpecification, CodeEditorSubmission } from "./code_editor";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
+import { FITBSpecification, FITBSubmission, FITB_HANDLER } from "./fitb";
+import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
+import { IFRAME_HANDLER, IFrameResponseSpecification, IFrameSubmission } from "./iframe";
 import { MCSpecification, MCSubmission, MC_HANDLER } from "./mc";
 import { SLSpecification, SLSubmission, SL_HANDLER } from "./select_lines";
-import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
-import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
-import { IFrameResponseSpecification, IFrameSubmission, IFRAME_HANDLER } from "./iframe";
-import { ExamComponentSkin } from "../core/skins";
 
 export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSpecification :
@@ -25,35 +25,37 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "iframe" ? IFrameSubmission :
   never;
 
+
+declare const VALID_SUBMISSION_BRAND: unique symbol;
+
 /**
- * A helper type that represents only the "viable" submissions from a submission type
- * by excluding [[BLANK_SUBMISSION]] and [[INVALID_SUBMISSION]]. There is a general
- * understanding that viable submissions represent those that could earn points or
- * are e.g. valid to specify as a sample solution.
+ * A branded type that represents only the valid submissions, which are those that
+ * could be present in a student submission without some kind of bug or other funny
+ * business. Note that [[BLANK_SUBMISSION]] is still included in this type. The
+ * [[validate_submission]] function may be used as a type predicate to narrow a
+ * regular (unvalidated) [[SubmissionType]] to a [[ValidSubmission]].
  */
-export type ViableSubmission<ST> = Exclude<ST, typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION>;
+export type ValidSubmission<ST extends SubmissionType<ResponseKind>> = ST & { [VALID_SUBMISSION_BRAND]: void };
 
 /**
- * A helper type that gives the type representing viable submissions for a given
- * response kind.
- */
-export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
-
-
-
-/**
- * A helper type that represents only the valid submissions from a submission type
- * by excluding [[INVALID_SUBMISSION]]. These represent the submissions that could
- * be present in a student submission without some kind of error or other funny
- * business. Note that [[BLANK_SUBMISSION]] is still included in this type.
- */
-export type ValidSubmission<ST> = Exclude<ST, typeof INVALID_SUBMISSION>;
-
-/**
- * A helper type that gives the type representing valid submissions for a given
- * response kind.
+ * A helper type that gives the [[ValidSubmission]] type for a given response kind.
  */
 export type ValidSubmissionType<QT extends ResponseKind> = ValidSubmission<SubmissionType<QT>>;
+
+
+
+/**
+ * A narrowed type that represents only "viable" submissions from a [[SubmissionType]],
+ * which are those within the corresponding [[ValidSubmission]] type, except for
+ * [[BLANK_SUBMISSION]]. In other words, these are submissions that could potentially
+ * earn points or are e.g. valid to specify as a sample solution.
+ */
+export type ViableSubmission<ST extends SubmissionType<ResponseKind>> = Exclude<ValidSubmission<ST>, typeof BLANK_SUBMISSION>;
+
+/**
+ * A helper type that gives the [[ViableSubmission]] type for a given response kind.
+ */
+export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
 
 
 /**
@@ -95,9 +97,13 @@ export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmissio
   return RESPONSE_HANDLERS[kind].parse(rawSubmission);
 }
 
-export function validate_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : submission is Exclude<SubmissionType<QT>, typeof INVALID_SUBMISSION> {
+export function validate_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : submission is ValidSubmissionType<QT> {
   let handler = <ResponseHandler<QT>>RESPONSE_HANDLERS[response.kind];
   return handler.validate === undefined || handler.validate(response, submission);
+}
+
+export function is_viable_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : submission is ViableSubmissionType<QT> {
+  return validate_submission(response, submission) && submission !== BLANK_SUBMISSION;
 }
 
 export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {

@@ -1,7 +1,7 @@
 import { encode } from "he";
 import { mk2html } from "../core/render";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION } from "./common";
 import { FITBSubmission } from "./fitb";
+import { ViableSubmission } from "./responses";
 
 
 /**
@@ -31,7 +31,7 @@ export function count_char(str: string, c: string) {
 }
 
 export function createFilledFITB(
-  content: string, submission?: FITBSubmission,
+  content: string, submission?: ViableSubmission<FITBSubmission>,
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,
   encoder: (s: string) => string = encode) {
@@ -72,7 +72,7 @@ export function createFilledFITB(
   });
 
   // Replace placeholders with submission values
-  if (submission && submission !== BLANK_SUBMISSION && submission !== INVALID_SUBMISSION) {
+  if (submission) {
     submission.forEach(sub => {
       let submission_replacement = encoder(sub);
       

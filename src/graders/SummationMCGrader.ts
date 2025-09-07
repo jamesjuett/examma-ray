@@ -1,10 +1,11 @@
-import { mk2html } from "../core/render";
 import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
-import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
-import { assert, assertFalse } from "../core/util";
-import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
 import { RED_X_ICON } from "../core/icons";
+import { mk2html } from "../core/render";
+import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
+import { assert, assertFalse } from "../core/util";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { validate_submission } from "../response/responses";
+import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {
@@ -48,7 +49,7 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     assert(this.spec.rubric.length === question.response.choices.length, "Summation MC grader submissions must have the same number of response choices as the grader configuration.")
     let orig_submission = aq.submission;
 
-    if (orig_submission === INVALID_SUBMISSION) {
+    if (!validate_submission(question.response, orig_submission)) {
       return {
         wasBlankSubmission: false,
         wasInvalidSubmission: true,

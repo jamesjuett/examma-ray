@@ -3,7 +3,7 @@ import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { assert } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isStringArray } from "./util";
 import { createFilledFITB, numBlanksAndBoxes, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
@@ -123,15 +123,13 @@ export type FITBSpecification = {
  * A submission for an FITB response is an array of strings that specify
  * the content submitted for each blank.
  * 
- * A submission may be the symbol [[BLANK_SUBMISSION]] if nothing at all was entered in any box.
+ * A submission may be the symbol [[`BLANK_SUBMISSION`]] if nothing at all was entered in any box.
  * 
- * A submission may also be [[`INVALID_SUBMISSION`]] if the array of text responses contains more
- * elements than there are blanks and boxes in the response element.(This should not regularly
- * happen, but is possible if e.g. a student were to nefariously edit their answers `.json`
- * file before turning it in. Upon loading, their submission would be checked and replaced
- * by [[`INVALID_SUBMISSION`]]).
+ * The subset of [[`FITBSubmissions`]] that are valid (see [[`validate_submission`]]) for a
+ * particular FITB response are those with exactly the right number of array elements to
+ * match the number of blanks and boxes in the response.
  */
-export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION;
+export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
 
 
 function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
@@ -160,7 +158,6 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
 
 function FITB_VALIDATOR(response: FITBSpecification, submission: FITBSubmission) {
   if (submission === BLANK_SUBMISSION) { return true; }
-  if (submission === INVALID_SUBMISSION) { return false; }
   return submission.length === numBlanksAndBoxes(response.content);
 }
 
@@ -169,10 +166,14 @@ function FITB_RENDERER(response: FITBSpecification, question_id: string, questio
 }
 
 function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ValidSubmission<FITBSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  if (solution !== BLANK_SUBMISSION) {
-    solution = solution.map(s => applySkin(s, skin))
+  if (solution == BLANK_SUBMISSION) {
+    return createFilledFITB(applySkin(response.content, skin));
   }
-  return createFilledFITB(applySkin(response.content, skin), solution);
+  else {
+    return createFilledFITB(
+      applySkin(response.content, skin),
+      solution.map(s => applySkin(s, skin)) as readonly string[] as ViableSubmission<FITBSubmission>);
+  }
 }
 
 function FITB_EXTRACTOR(responseElem: JQuery) {

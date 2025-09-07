@@ -4,12 +4,13 @@ import { ICON_INFO } from "../core/icons";
 import { applySkin, highlightCode, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
-import { render_solution } from "../response/responses";
+import { render_solution, validate_submission, ViableSubmission } from "../response/responses";
 import { createFilledFITB } from "../response/util-fitb";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
+import { valid } from "chroma-js";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -170,10 +171,11 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
       let content = question.response.content;
       let submission = <FITBSubmission>aq.submission;
       assert(submission !== BLANK_SUBMISSION);
+      assert(validate_submission(question.response, submission), `Invalid submission for question ${question.question_id}: ${JSON.stringify(submission)}`);
 
       studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
       if (question.sampleSolution) {
-        sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>question.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
+        sampleSolution_html = createFilledFITB(applySkin(content, skin), (question.sampleSolution).map(s => applySkin(s, skin)) as readonly string[] as ViableSubmission<FITBSubmission>); //, content, scores);
       }
       
     }
@@ -205,7 +207,7 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
     }
     else {
       const submission = aq.submission;
-      assert(submission !== INVALID_SUBMISSION);
+      assert(validate_submission(question.response, submission), `Invalid submission for question ${question.question_id}: ${JSON.stringify(submission)}`);
       studentSubmission_html = question.renderResponseSolution(aq.uuid, submission, skin);
       if (question.sampleSolution) {
         sampleSolution_html = question.renderResponseSolution(aq.uuid, question.sampleSolution, skin);

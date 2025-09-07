@@ -12,6 +12,10 @@ export function assertFalse(message: string = "") : never {
     throw Error("Assert failed: " + message);
 };
 
+export function assertExists<T>(value: T | null | undefined, message: string = "") : T {
+  return value === null || value === undefined ? assertFalse(message) : value;
+}
+
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking
 export function assertNever(x: never): never {
   throw new Error("Unexpected object: " + x);

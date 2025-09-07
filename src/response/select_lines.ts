@@ -1,7 +1,7 @@
 import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { isNumericArray } from "./util";
 import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import deepEqual from "deep-equal";
@@ -159,10 +159,13 @@ export type SLSpecification = {
 /**
  * A submission for a select lines response is an array of numbers corresponding to the indices
  * of selected lines. Note that any "forced" items will always be included in a submission.
- * The submission may also be [[BLANK_SUBMISSION]] if no items were selected or [[INVALID_SUBMISSION]]
- * if the array contains duplicate or out-of-range indices.
+ * 
+ * The submission may also be [[BLANK_SUBMISSION]] if no items were selected.
+ * 
+ * The subset of [[`FITBSubmissions`]] that are valid (see [[`validate_submission`]]) for a
+ * particular FITB response are those that do not contain duplicate or out-of-range indices.
  */
-export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION;
+export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
 function SL_PARSER(rawSubmission: string | null | undefined) : SLSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -190,7 +193,6 @@ function SL_PARSER(rawSubmission: string | null | undefined) : SLSubmission | ty
 
 function SL_VALIDATOR(response: SLSpecification, submission: SLSubmission) {
   if (submission === BLANK_SUBMISSION) { return true; }
-  if (submission === INVALID_SUBMISSION) { return false; }
 
   // duplicate selections
   if (new Set(submission).size !== submission.length) {

@@ -2,7 +2,7 @@ import deepEqual from "deep-equal";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
@@ -104,12 +104,11 @@ export type MCSpecification = {
  * 
  * A submission may also be [[`BLANK_SUBMISSION`]] if nothing was selected.
  * 
- * A submission may also be [[`INVALID_SUBMISSION`]] if the array of selected choices contains more
- * elements than a specified `limit`. (This should not regularly happen, but is possible if e.g. a
- * student were to nefariously edit their answers `.json` file before turning it in. Upon loading,
- * their submission would be checked and replaced by [[`INVALID_SUBMISSION`]]).
+ * The subset of [[`MCSubmissions`]] that are valid (see [[`validate_submission`]]) for a
+ * particular MC response are those that only contain in-bounds selected choice values, have
+ * no duplicates, and do not contain more selected choices than the response's limit (if any).
  */
-export type MCSubmission = readonly number[] | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
+export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
 
 function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -137,11 +136,28 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
 
 function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
   if (submission === BLANK_SUBMISSION) { return true; }
-  if (submission === INVALID_SUBMISSION) { return false; }
 
-  if (!response.multiple || response.limit === undefined) { return true; }
+  // all values must be in range
+  if (!submission.every(n => Number.isInteger(n) && n >= 0 && n < response.choices.length)) {
+    return false;
+  }
 
-  return submission.length <= response.limit;
+  // no duplicates
+  if (new Set(submission).size !== submission.length) {
+    return false;
+  }
+
+  // if multiple selection is not allowed, only one item may be selected
+  if (!response.multiple && submission.length > 1) {
+    return false;
+  }
+  
+  // if there's a limit, it must be respected
+  if (response.limit !== undefined && submission.length > response.limit) {
+    return false;
+  }
+
+  return true;
 }
 
 function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {

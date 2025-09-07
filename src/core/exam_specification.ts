@@ -590,10 +590,12 @@ export function chooseAllSkins(chooser: ExamComponentSkin | SkinChooser) {
 
 
 /**
- * 
+ * This factory function returns a specification for a [[SectionChooser]] that will randomly
+ * select a set of n questions from the given set of questions or question bank. If there are
+ * not enough to choose n of them, the chooser will throw an exception.
  * @param n 
  * @param sections 
- * @returns 
+ * @returns [[SectionChooserSpecification]]
  */
 export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | SectionChooserSpecification)[]): SectionChooserSpecification {
   return {
@@ -613,7 +615,7 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
  * @param tag Choose only questions with this tag
  * @param n The number of questions to choose
  * @param questionBank The bank to choose questions from
- * @returns 
+ * @returns [[SectionChooserSpecification]]
  */
  export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
@@ -626,12 +628,12 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
 }
 
 /**
- * This factory function returns a [[QuestionChooser]] that will randomly select a set
- * of n questions from the given set of questions or question bank. If there are not enough
- * to choose n of them, the chooser will throw an exception.
+ * This factory function returns a specification for a [[QuestionChooser]] that will randomly
+ * select a set of n questions from the given set of questions or question bank. If there are
+ * not enough to choose n of them, the chooser will throw an exception.
  * @param n 
- * @param questions 
- * @returns 
+ * @param sections 
+ * @returns [[QuestionChooserSpecification]]
  */
 export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (QuestionSpecification | QuestionChooserSpecification)[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;

@@ -3,7 +3,7 @@ import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { asMutable, assert, SimpleJSON } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
 import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
@@ -94,7 +94,7 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = SimpleJSON | typeof INVALID_SUBMISSION | typeof BLANK_SUBMISSION;
+export type IFrameSubmission = SimpleJSON | typeof BLANK_SUBMISSION;
 
 function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmission | typeof MALFORMED_SUBMISSION {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {

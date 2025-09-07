@@ -1,5 +1,6 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
+import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { validate_submission } from "../response/responses";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 import { FITBDropRubricItemEvaluation } from "./StandardFITBDropGrader";
 
@@ -45,7 +46,7 @@ export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIF
 
   public grade(aq: AssignedQuestion<"iframe">) : StandardIFrameGradingResult {
     const submission = aq.submission;
-    if (submission === INVALID_SUBMISSION) {
+    if (!validate_submission(aq.question.response, submission)) {
       return {
         wasBlankSubmission: false,
         wasInvalidSubmission: true,
