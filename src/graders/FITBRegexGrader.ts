@@ -19,9 +19,9 @@ import { ICON_BOX_CHECK, ICON_CHECK_SQUARE_FILL, ICON_EXCLAMATION_SQUARE_FILL, I
 import { applySkin, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
 import { assert, assertNever } from "../core/util";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
-import { is_viable_submission, validate_submission, ViableSubmission } from "../response/responses";
+import { ViableSubmission } from "../response/responses";
 import { createFilledFITB } from "../response/util-fitb";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -100,24 +100,25 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
   public grade(aq: AssignedQuestion<"fill_in_the_blank">) : FITBRegexGradingResult {
     let submission = aq.submission;
-    if (!validate_submission(aq.question.response, submission)) {
-      return {
-        pointsEarned: 0,
-        wasBlankSubmission: false,
-        wasInvalidSubmission: true,
-      }
-    }
-    else if (submission === BLANK_SUBMISSION) {
+    // if (submission.validity === "invalid") {
+    //   return {
+    //     pointsEarned: 0,
+    //     wasBlankSubmission: false,
+    //     wasInvalidSubmission: true,
+    //   }
+    // }
+    // else
+    if (submission.validity === "blank") {
       return {
         pointsEarned: 0,
         wasBlankSubmission: true,
       };
     }
 
+    const enc = submission.encoding;
+    assert(enc.length === this.spec.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
     
-    assert(submission.length === this.spec.rubric.length, `Error: Mismatched number of answers in FITB grader submission vs. rubric for ${aq.question.question_id}`.red);
-    
-    let result = this.grade_helper(submission);
+    let result = this.grade_helper(enc);
 
     // if (aq.question.sampleSolution) {
     //   let sampleSolution = aq.question.sampleSolution;
@@ -169,32 +170,22 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
   public renderReport(aq: GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>) {
     let gr = aq.gradingResult;
     let question = aq.question;
-    let orig_submission = aq.submission;
     let skin = aq.skin;
-    let submission: readonly string[];
+    const submission = aq.submission;
 
-    if (isFullFITBRegexGradingResult(gr)) {
-      assert(orig_submission !== BLANK_SUBMISSION);
-      assert(validate_submission(question.response, orig_submission));
-      submission = orig_submission;
+    if (submission.validity === "blank") {
+      return "Your answer for this question was blank.";
     }
-    else {
-      if (gr.wasInvalidSubmission) {
-        return "Your answer for this question was invalid.";
-      }
-      else if (gr.wasBlankSubmission) {
-        return "Your answer for this question was blank.";
-      }
-      else {
-        assertNever(gr);
-      }
-    }
+    // else if (submission.validity === "invalid") {
+    //   return "Your answer for this question was invalid.";
+    // }
 
-    let content = question.response.content;
+    // If not blank or invalid, should be full result
+    assert(isFullFITBRegexGradingResult(gr), "Expected full FITB regex grading result when rendering report.");
 
-    let studentFilled = createFilledFITB(applySkin(content, skin), submission.map(s => s) as readonly string[] as ViableSubmission<FITBSubmission>); //, content, scores);
-    
-    let itemResults = gr.itemResults;
+    const content = question.response.content;
+    const studentFilled = createFilledFITB(applySkin(content, skin), submission.encoding.map(s => s)); //, content, scores);
+    const itemResults = gr.itemResults;
     assert(itemResults.length === this.spec.rubric.length);
 
     let rubricItemsHtml = `<table style="position: sticky; top: 0;">${itemResults.map((itemResult, i) => {
@@ -212,7 +203,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
           <div class="collapse" id="${elem_id}-details">
             <div class="card-body">
               ${mk2html(rubricItem.description, skin)}
-              <p>Your response for this blank was: <code style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission[i])}</code></p>
+              <p>Your response for this blank was: <code style="border: solid 1px #333; padding: 0.2em; white-space: pre;">${encode(submission.encoding[i])}</code></p>
               ${explanation}
             </div>
           </div>
@@ -223,7 +214,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     let sampleSolution = aq.question.sampleSolution;
     let solutionFilled = sampleSolution && createFilledFITB(
       applySkin(content, skin),
-      sampleSolution.map(s => applySkin(s, skin)) as readonly string[] as ViableSubmission<FITBSubmission>
+      sampleSolution.encoding.map(s => applySkin(s, skin))
     );
 
     return `
@@ -288,9 +279,10 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     }
     
     let question = aqs[0].question;
-    let submissions = aqs.map(aq => aq.submission)
-      .filter(s => is_viable_submission(question.response, s))
-    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+    let submission_encodings = aqs.map(aq => aq.submission)
+      .filter(s => s.validity === "viable")
+      .map(s => s.encoding);
+    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submission_encodings);
 
     let allMatched = gradedBlankSubmissions.every(subs => subs.every(s => s.grading_result.matched));
 
@@ -350,7 +342,7 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     `;
   }
 
-  private getGradedBlanksSubmissions(submissions: readonly ViableSubmission<FITBSubmission>[]) {
+  private getGradedBlanksSubmissions(submissions: readonly FITBSubmission[]) {
     let blankSubmissions = this.spec.rubric.map(ri => <string[]>[]);
     submissions.forEach(sub => {
       // Probably not needed to check this since we only accept viable submissions
@@ -389,13 +381,14 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
 
   public renderOverview(gqs: readonly GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult>[]) {
     let question = gqs[0].question;
-    let submissions = gqs.map(aq => aq.submission)
-      .filter(s => is_viable_submission(question.response, s))
-    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submissions);
+    let submission_encodings = gqs.map(gq => gq.submission)
+      .filter(s => s.validity === "viable")
+      .map(s => s.encoding);
+    let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submission_encodings);
     let blankAverages = gradedBlankSubmissions.map(
       gradedSubmissions => sum(gradedSubmissions.map(s => s.grading_result.pointsEarned * s.num)) / sum(gradedSubmissions.map(s => s.num)));
     let blankPoints = this.spec.rubric.map(ri => ri.points);
-    let blankSolutions : string[] = question.sampleSolution?.map(s => encode(s)) ?? [];
+    let blankSolutions : string[] = question.sampleSolution?.encoding.map(s => encode(s)) ?? [];
     let percents = blankAverages.map((avg, i) => Math.floor(100 * (avg/blankPoints[i])));
     let blankBars = blankAverages.map((avg, i) => renderMultilinePointsProgressBar(avg, blankPoints[i], `${percents[i]}% ${blankSolutions[i] ?? ""}`));
     let solutionFilled = createFilledFITB(question.response.content, blankBars, s=>s, s=>s, s=>s);

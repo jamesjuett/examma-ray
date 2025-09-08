@@ -2,8 +2,7 @@ import deepEqual from "deep-equal";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
 /**
@@ -88,7 +87,7 @@ export type MCSpecification = {
   /**
    * A sample solution, which may not be blank or invalid.
    */
-  sample_solution?: ViableSubmission<MCSubmission>;
+  sample_solution?: SubmissionType<"multiple_choice">;
 
   /**
    * A default grader, used to evaluate submissions for this response.
@@ -102,31 +101,29 @@ export type MCSpecification = {
  * of selected choices. For a single response question, this array will be a single element.
  * For multiple response questions, the array may contain one or more elements.
  * 
- * A submission may also be [[`BLANK_SUBMISSION`]] if nothing was selected.
- * 
  * The subset of [[`MCSubmissions`]] that are valid (see [[`validate_submission`]]) for a
  * particular MC response are those that only contain in-bounds selected choice values, have
  * no duplicates, and do not contain more selected choices than the response's limit (if any).
  */
-export type MCSubmission = readonly number[] | typeof BLANK_SUBMISSION;
+export type MCSubmission = readonly number[];
 
-function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | typeof MALFORMED_SUBMISSION {
+function MC_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"multiple_choice"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isNumericArray(parsed)) {
-      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+      return parsed.length > 0 ? VIABLE_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
@@ -134,30 +131,34 @@ function MC_PARSER(rawSubmission: string | null | undefined) : MCSubmission | ty
   }
 }
 
-function MC_VALIDATOR(response: MCSpecification, submission: MCSubmission) {
-  if (submission === BLANK_SUBMISSION) { return true; }
+function MC_VALIDATOR(response: MCSpecification, submission: WellFormedSubmission<"multiple_choice">) : CheckedSubmission<"multiple_choice"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+
+  const enc = submission.encoding;
+  if (enc.length === 0) { return BLANK_SUBMISSION(); }
 
   // all values must be in range
-  if (!submission.every(n => Number.isInteger(n) && n >= 0 && n < response.choices.length)) {
-    return false;
+  if (!enc.every(n => Number.isInteger(n) && n >= 0 && n < response.choices.length)) {
+    return INVALID_SUBMISSION(enc);
   }
 
   // no duplicates
-  if (new Set(submission).size !== submission.length) {
-    return false;
+  if (new Set(enc).size !== enc.length) {
+    return INVALID_SUBMISSION(enc);
   }
 
   // if multiple selection is not allowed, only one item may be selected
-  if (!response.multiple && submission.length > 1) {
-    return false;
+  if (!response.multiple && enc.length > 1) {
+    return INVALID_SUBMISSION(enc);
   }
   
   // if there's a limit, it must be respected
-  if (response.limit !== undefined && submission.length > response.limit) {
-    return false;
+  if (response.limit !== undefined && enc.length > response.limit) {
+    return INVALID_SUBMISSION(enc);
   }
 
-  return true;
+  return VIABLE_SUBMISSION(enc);
 }
 
 function MC_RENDERER(response: MCSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -174,20 +175,16 @@ function MC_RENDERER(response: MCSpecification, question_id: string, question_uu
   `;
 }
 
-function MC_SOLUTION_RENDERER(response: MCSpecification, orig_solution: ValidSubmission<MCSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function MC_SOLUTION_RENDERER(response: MCSpecification, solution: ValidSubmission<"multiple_choice">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
-  if (orig_solution === BLANK_SUBMISSION) {
-    orig_solution = [];
-  }
-
-  const solution = orig_solution; // Allow type inference within the map() below
-
+  const enc = solution.validity !== "blank" ? solution.encoding : [];
+  
   return `
     <form>
-    ${(response.multiple && response.limit !== undefined) ? `<div><span class="examma-ray-mc-num-selected">${solution.length}</span> out of ${response.limit} allowed choices are selected.</div>`: ""}
+    ${(response.multiple && response.limit !== undefined) ? `<div><span class="examma-ray-mc-num-selected">${enc.length}</span> out of ${response.limit} allowed choices are selected.</div>`: ""}
     ${response.choices.map((item,i) => `
       <div class="form-check" style="${response.spacing ? ` margin-bottom: ${response.spacing};` : ""}">
-        <input id="${question_uuid}_choice_${i}" class="form-check-input" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}" style="pointer-events: none" ${solution.indexOf(i) !== -1 ? "checked" : "disabled"}/>
+        <input id="${question_uuid}_choice_${i}" class="form-check-input" type="${response.multiple ? "checkbox" : "radio"}" name="${question_uuid}_choice" value="${i}" style="pointer-events: none" ${enc.indexOf(i) !== -1 ? "checked" : "disabled"}/>
         <label class="form-check-label examma-ray-mc-option">${mk2html(item, skin)}</label>
       </div>`
     ).join("")}
@@ -228,7 +225,7 @@ function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
   }).get();
 
   if (responses.length === 0) {
-    return BLANK_SUBMISSION;
+    return [];
   }
 
   // Enforce checkbox limit if any
@@ -240,22 +237,28 @@ function MC_EXTRACTOR(responseElem: JQuery) : MCSubmission {
   return responses;
 }
 
-function MC_FILLER(responseElem: JQuery, submission: ValidSubmission<MCSubmission>) {
+function MC_FILLER(responseElem: JQuery, submission: ValidSubmission<"multiple_choice">) {
   // blank out all selections
   let inputs = responseElem.find("input");
   inputs.prop("checked", false);
 
-  if (submission !== BLANK_SUBMISSION) {
-
-    // Enforce checkbox limit if any
-    let limit = getCheckboxLimit(responseElem);
-    if (limit !== undefined) {
-      submission = submission.slice(0, limit);
-    }
-
-    let inputElems = inputs.get();
-    submission.forEach(n => $(inputElems[n]).prop("checked", true));
+  if (submission.validity === "blank") {
+    return;
   }
+
+  // Issue #236 - for now, keeping this unnecessary code
+  // however, we can potentially remove once the frontend
+  // checks validity before filling.
+  let enc = submission.encoding;
+
+  // Enforce checkbox limit if any
+  let limit = getCheckboxLimit(responseElem);
+  if (limit !== undefined) {
+    enc = enc.slice(0, limit);
+  }
+
+  let inputElems = inputs.get();
+  enc.forEach(n => $(inputElems[n]).prop("checked", true));
 }
 
 function MC_DIFF(r1: MCSpecification, r2: MCSpecification) : ResponseSpecificationDiff {

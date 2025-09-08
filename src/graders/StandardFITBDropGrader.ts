@@ -4,7 +4,7 @@ import { GradedQuestion } from "../core/assigned_exams";
 import { mk2html, mk2html_unwrapped, applySkin } from "../core/render";
 import { renderScoreBadge } from "../core/ui_components";
 import { assertNever } from "../core/util";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission } from "../response/fitb-drop";
 import { GradingResult } from "./QuestionGrader";
 
@@ -57,7 +57,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
 
   public grade(aq: AssignedQuestion<"fitb_drop">): FITBDropGradingResult {
     const submission = aq.submission;
-    if (submission === BLANK_SUBMISSION) {
+    if (submission.validity === "blank") {
       return {
         wasBlankSubmission: true
       }
@@ -65,7 +65,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     
     return {
       wasBlankSubmission: false,
-      evaluation: this.spec.rubric.map(ri => evaluateRubricItem(ri, submission))
+      evaluation: this.spec.rubric.map(ri => evaluateRubricItem(ri, submission.encoding))
     };
   }
 
@@ -81,7 +81,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     let skin = gq.skin;
     const submission = gq.submission;
     // let pts = this.pointsEarned(gr);
-    if (submission === BLANK_SUBMISSION || gr.wasBlankSubmission === true) { // the === true is apparently required by the type system for discriminating the union???
+    if (submission.validity === "blank" || gr.wasBlankSubmission === true) { // the === true is apparently required by the type system for discriminating the union???
       return "Your submission for this question was blank.";
     }
 
@@ -118,7 +118,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
       response.droppables,
       group_id,
       skin,
-      submission
+      submission.encoding
     );
 
 
@@ -128,7 +128,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
         response.droppables,
         group_id,
         skin,
-        mapSkinOverSubmission(question.sampleSolution, skin)
+        mapSkinOverSubmission(question.sampleSolution.encoding, skin)
       )
       : "";
 
@@ -179,7 +179,7 @@ type SimpleDropEvaluatorSpecification = {
 
 function simpleDropEvaluation(spec: SimpleDropEvaluatorSpecification, submission: FITBDropSubmission) {
 
-  if (submission === BLANK_SUBMISSION) {
+  if (submission.length === 0) {
     return {pointsEarned: 0, explanation: "Your submission was blank."};
   }
 
@@ -225,9 +225,7 @@ function child_contains(container: (string | DropSubmission)[] | undefined, item
 
 export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, submission: FITBDropSubmission) {
   
-  const box = submission !== BLANK_SUBMISSION
-    ? submission[spec.index]
-    : [];
+  const box = submission.length != 0 ? submission[spec.index] : [];
   
   if (typeof box === "string") {
     return {pointsEarned: 0, explanation: "Your submission appears to be invalid or corrupted."};

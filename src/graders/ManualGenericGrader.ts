@@ -1,16 +1,12 @@
-import { sum } from "simple-statistics";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { ICON_INFO } from "../core/icons";
 import { applySkin, highlightCode, mk2html, mk2html_unwrapped } from "../core/render";
-import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
-import { assert, assertFalse } from "../core/util";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { FITBSubmission } from "../response/fitb";
-import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
-import { render_solution, validate_submission, ViableSubmission } from "../response/responses";
+import { renderGradingProgressBar, renderShortPointsWorthBadge } from "../core/ui_components";
+import { assert } from "../core/util";
+import { ResponseKind } from "../response/common";
+import { createFilledFITBDrop, mapSkinOverSubmission } from "../response/fitb-drop";
 import { createFilledFITB } from "../response/util-fitb";
-import { GradingResult, QuestionGrader } from "./QuestionGrader";
-import { valid } from "chroma-js";
+import { QuestionGrader } from "./QuestionGrader";
 
 export type CodeWritingRubricItemStatus = "on" | "off" | "unknown";
 // type ManualOverrideRubricItemStatus = "on" | "off";
@@ -99,8 +95,7 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
 
   public grade(aq: AssignedQuestion<ResponseKind>) : ManualGenericGraderGradingResult | undefined {
     assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
-    let submission = aq.submission;
-    if (submission === BLANK_SUBMISSION || submission === "") {
+    if (aq.submission.validity === "blank") {
       return {
         submission_uuid: aq.uuid,
         wasBlankSubmission: true,
@@ -130,36 +125,35 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
   public renderReport(aq: GradedQuestion<ResponseKind, ManualGenericGraderGradingResult>) {
     let gr = aq.gradingResult;
 
-    if (aq.submission === BLANK_SUBMISSION || gr.wasBlankSubmission) {
+    if (aq.submission.validity === "blank" || gr.wasBlankSubmission) {
       return "Your answer for this question was blank.";
     }
 
-    let skin = aq.skin;
-    let question = aq.question;
+    const skin = aq.skin;
     let studentSubmission_html = "";
     let sampleSolution_html = "";
-    let res = aq.gradingResult;
-    if (question.isKind("code_editor")) {
-      let response = question.response;
+    const res = aq.gradingResult;
+    if (aq.isKind("code_editor")) {
+      const response = aq.question.response;
       studentSubmission_html = `
         <div class="examma-ray-code-editor-header">
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
         <div class="examma-ray-code-editor-submission">
-          ${`<pre><code>${highlightCode(aq.submission as string, response.code_language)}</code></pre>`}
+          ${`<pre><code>${highlightCode(aq.submission.encoding, response.code_language)}</code></pre>`}
         </div>
         <div class="examma-ray-code-editor-footer">
           ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
         </div>
       `;
       // TODO: eliminate code duplication
-      if (question.sampleSolution) {
+      if (aq.question.sampleSolution) {
         sampleSolution_html = `
           <div class="examma-ray-code-editor-header">
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
           <div class="examma-ray-code-editor-submission">
-            ${`<pre><code>${highlightCode(""+applySkin(question.sampleSolution as string, skin), response.code_language)}</code></pre>`}
+            ${`<pre><code>${highlightCode(""+applySkin(aq.question.sampleSolution.encoding, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">
             ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
@@ -167,30 +161,29 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
         `;
       }
     }
-    else if (question.isKind("fill_in_the_blank")) {
+    else if (aq.isKind("fill_in_the_blank")) {
+      const question = aq.question;
       let content = question.response.content;
-      let submission = <FITBSubmission>aq.submission;
-      assert(submission !== BLANK_SUBMISSION);
-      assert(validate_submission(question.response, submission), `Invalid submission for question ${question.question_id}: ${JSON.stringify(submission)}`);
+      let enc = aq.submission.encoding;
 
-      studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
+      studentSubmission_html = createFilledFITB(applySkin(content, skin), enc); //, content, scores);
       if (question.sampleSolution) {
-        sampleSolution_html = createFilledFITB(applySkin(content, skin), (question.sampleSolution).map(s => applySkin(s, skin)) as readonly string[] as ViableSubmission<FITBSubmission>); //, content, scores);
+        sampleSolution_html = createFilledFITB(applySkin(content, skin), question.sampleSolution.encoding.map(s => applySkin(s, skin))); //, content, scores);
       }
       
     }
-    else if (question.isKind("fitb_drop")) {
+    else if (aq.isKind("fitb_drop")) {
+      const question = aq.question;
       let response = question.response;
-      let submission = <FITBDropSubmission>aq.submission;
+      let enc = aq.submission.encoding;
       let group_id = response.group_id ?? question.question_id;
-      assert(submission !== BLANK_SUBMISSION);
       // createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)
       studentSubmission_html = createFilledFITBDrop(
         applySkin(response.content, skin),
         response.droppables,
         group_id,
         skin,
-        submission
+        enc
       );
 
       if (question.sampleSolution) {
@@ -200,14 +193,14 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
           response.droppables,
           group_id,
           skin,
-          mapSkinOverSubmission(question.sampleSolution, skin)
+          mapSkinOverSubmission(question.sampleSolution.encoding, skin)
         );
       }
       
     }
     else {
+      const question = aq.question;
       const submission = aq.submission;
-      assert(validate_submission(question.response, submission), `Invalid submission for question ${question.question_id}: ${JSON.stringify(submission)}`);
       studentSubmission_html = question.renderResponseSolution(aq.uuid, submission, skin);
       if (question.sampleSolution) {
         sampleSolution_html = question.renderResponseSolution(aq.uuid, question.sampleSolution, skin);
@@ -221,7 +214,7 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
         <tr style="text-align: center;">
           <th>Rubric</th>
           <th>Your Submission</th>
-          ${question.sampleSolution ? `<th>Sample Solution</th>` : ""}
+          ${aq.question.sampleSolution ? `<th>Sample Solution</th>` : ""}
         </tr>
         <tr>
           <td>

@@ -1,13 +1,13 @@
 import { sum } from 'simple-statistics';
 import { Exception, GraderMap } from '../ExamGrader';
 import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
-import { MALFORMED_SUBMISSION, ResponseKind } from '../response/common';
-import { SubmissionType, parse_submission } from '../response/responses';
+import { ResponseKind } from '../response/common';
+import { BLANK_SUBMISSION, ValidSubmission, parse_submission, validate_submission } from '../response/responses';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
 import { StudentInfo, isValidID } from './exam_specification';
 import { ExamComponentSkin, createCompositeSkin } from './skins';
-import { ExamManifest, OpaqueExamManifest, TransparentExamManifest, TrustedExamSubmission } from './submissions';
+import { TransparentExamManifest, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
 import { Mutable, asMutable, assert, assertFalse } from './util';
 
@@ -20,7 +20,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   public readonly gradingResult?: GradingResult;
   public readonly exception?: Exception;
 
-  public readonly submission: SubmissionType<QT>;
+  public readonly submission: ValidSubmission<QT>;
 
   public readonly displayIndex;
 
@@ -35,25 +35,29 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     public readonly skin: ExamComponentSkin,
     public readonly sectionIndex : number,
     public readonly partIndex : number,
-    public readonly rawSubmission: string,
+    public readonly rawSubmission: string | undefined,
   ) {
     this.displayIndex = (sectionIndex+1) + "." + (partIndex+1);
-    const sub = parse_submission(question.kind, rawSubmission);
-    if (sub === MALFORMED_SUBMISSION) {
-      throw new Error(`Malformed submission for question ${question.question_id}`);
+
+    this.submission = BLANK_SUBMISSION();
+    if (rawSubmission !== undefined) {
+      this.setRawSubmission(rawSubmission);
     }
-    this.submission = sub;
 
     this.html_description = question.renderDescription(this.skin);
     this.html_postscript = question.renderPostscript(this.skin);
   }
 
   public setRawSubmission(raw_submission: string) {
-    (<Mutable<this>>this).rawSubmission = raw_submission;
-    const sub = parse_submission(this.question.kind, raw_submission);
-    if (sub === MALFORMED_SUBMISSION) {
+    const parsed = parse_submission(this.question.kind, raw_submission);
+    if (parsed.validity === "malformed") {
       throw new Error(`Malformed submission for question ${this.question.question_id}`);
     }
+    const sub = validate_submission(this.question.response, parsed);
+    if (sub.validity === "invalid") {
+      throw new Error(`Invalid submission for question ${this.question.question_id}`);
+    }
+    (<Mutable<this>>this).rawSubmission = raw_submission;
     (<Mutable<this>>this).submission = sub;
     delete (<Mutable<this>>this).gradedBy;
     delete (<Mutable<this>>this).gradingResult;
@@ -100,6 +104,10 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
   public wasGradedBy<GR extends GradingResult>(grader: QuestionGrader<QT, GR>) : this is GradedQuestion<QT,GR> {
     return this.gradedBy === grader;
   };
+  
+  public isKind<RK extends QT>(kind: RK) : this is AssignedQuestion<RK> {
+    return this.question.kind === kind;
+  }
 
 }
 

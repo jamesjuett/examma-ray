@@ -3,10 +3,9 @@ import { encode } from "he";
 import Sortable from "sortablejs";
 import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { assert, assertFalse } from "../core/util";
+import { assert, assertFalse, assertNever } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
 export type DroppableSpecification = {
   id: string,
@@ -22,8 +21,8 @@ export type FITBDropSpecification = {
   kind: "fitb_drop";
   content: string;
   droppables: DroppableSpecification /* | [DroppableGroupSpecification] */;
-  starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
-  sample_solution?: ViableSubmission<FITBDropSubmission>;
+  starter?: FITBDropSubmission;
+  sample_solution?: SubmissionType<"fitb_drop">;
   default_grader?: GraderSpecificationFor<"fitb_drop">;
   group_id?: string;
 };
@@ -33,10 +32,10 @@ export type DropSubmission = {
   children?: (string | DropSubmission)[]
 }[];
 
-export type FITBDropSubmission = (string | DropSubmission)[] | typeof BLANK_SUBMISSION;
+export type FITBDropSubmission = (string | DropSubmission)[];
 
 
-function isValidFITBDropSubmission(obj: any) : obj is Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION> {
+function isValidFITBDropSubmission(obj: any) : obj is FITBDropSubmission {
   return Array.isArray(obj) && obj.every(
     elem =>
       typeof elem === "string" ||
@@ -47,23 +46,23 @@ function isValidFITBDropSubmission(obj: any) : obj is Exclude<FITBDropSubmission
   )
 }
 
-function FITB_DROP_PARSER(rawSubmission: string | null | undefined) : FITBDropSubmission | typeof MALFORMED_SUBMISSION {
+function FITB_DROP_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"fitb_drop"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isValidFITBDropSubmission(parsed)) {
-      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+      return parsed.length > 0 ? UNCHECKED_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
@@ -108,10 +107,28 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
-function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ValidSubmission<FITBDropSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function FITB_DROP_VALIDATE(response: FITBDropSpecification, submission: WellFormedSubmission<"fitb_drop">) : CheckedSubmission<"fitb_drop"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+  
+  const enc = submission.encoding;
+  
+  if (enc.length === 0) { return BLANK_SUBMISSION(); }
 
+  // Issue #239: this doesn't actually validate against the response structure at all,
+  // it just checks that the parsed submission could be valid for a fitb-drop in general.
+  if(isValidFITBDropSubmission(enc)) {
+    return VIABLE_SUBMISSION(enc);
+  }
+  else {
+    return INVALID_SUBMISSION(enc);
+  }
+}
+
+function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ValidSubmission<"fitb_drop">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  const encoding = solution.validity !== "blank" ? solution.encoding : undefined;
   let group_id = response.group_id ?? question_id;
-  return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, solution);
+  return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, encoding);
 
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
@@ -209,7 +226,7 @@ function getFirstLevelFITBDropElements(responseElem: JQuery<HTMLElement>) {
     .get();
 }
 
-function extractHelper(responseElem: JQuery) : Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>{
+function extractHelper(responseElem: JQuery) : FITBDropSubmission{
   return getFirstLevelFITBDropElements(responseElem).map((elem: HTMLElement) => {
       let v: string | DropSubmission;
       if ($(elem).hasClass("examma-ray-fitb-drop-location")) {
@@ -235,22 +252,24 @@ function extractHelper(responseElem: JQuery) : Exclude<FITBDropSubmission, typeo
 
 function FITB_DROP_EXTRACTOR(responseElem: JQuery) {
   let filledResponses = extractHelper(responseElem);
-  return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? BLANK_SUBMISSION : filledResponses;
+  return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? [] : filledResponses;
 }
 
-function FITB_DROP_FILLER(responseElem: JQuery, submission: ValidSubmission<FITBDropSubmission>) {
+function FITB_DROP_FILLER(responseElem: JQuery, submission: ValidSubmission<"fitb_drop">) {
 
-  if (submission === BLANK_SUBMISSION) {
+  if (submission.validity === "viable") {
+    fillerHelper(responseElem, submission.encoding, responseElem.find(".examma-ray-fitb-drop-originals"));
+  }
+  else if (submission.validity === "blank") {
     // blank out all the blanks/boxes
     responseElem.find("input, textarea").val("");
     
     // empty the drop locations
     responseElem.find(".examma-ray-fitb-drop-location").empty();
-
-    return;
   }
-
-  fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-originals"));
+  else {
+    assertNever(submission);
+  }
 }
 
 
@@ -276,6 +295,7 @@ function FITB_DROP_DIFF(r1: FITBDropSpecification, r2: FITBDropSpecification) : 
 
 export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   parse: FITB_DROP_PARSER,
+  validate: FITB_DROP_VALIDATE,
   render: FITB_DROP_RENDERER,
   render_solution: FITB_DROP_SOLUTION_RENDERER,
   activate: FITB_DROP_ACTIVATE,
@@ -284,7 +304,7 @@ export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   diff: FITB_DROP_DIFF,
 };
 
-function fillerHelper(elem: JQuery, submission: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>, originalsElem: JQuery) {
+function fillerHelper(elem: JQuery, submission: FITBDropSubmission, originalsElem: JQuery) {
 
   let elems = getFirstLevelFITBDropElements(elem);
   assert(elems.length === submission.length);
@@ -346,6 +366,11 @@ function count_char(str: string, c: string) {
   return count;
 }
 
+/**
+ * Precondition: submission (if provided) is a valid submission encoding for the given
+ * FITB-Drop response. That is, the number of strings in the submission matches the
+ * number of blanks and boxes in the content.
+ */
 export function createFilledFITBDrop(
   content: string,
   dropOriginals: DroppableSpecification,
@@ -409,7 +434,8 @@ export function createFilledFITBDrop(
   content = content.replace(new RegExp(drop_bank_id, "g"), dropBankRenderer(group_id));
 
   // Replace placeholders with submission values
-  if (submission && submission !== BLANK_SUBMISSION) {
+  if (submission) {
+
     submission.forEach(sub => {
       let submission_replacement = typeof sub === "string"
         ? encoder(applySkin(sub, skin))
@@ -465,9 +491,6 @@ export function renderFITBDropBank(droppables: DroppableSpecification, group_id:
 }
 
 export function mapSkinOverSubmission(submission: FITBDropSubmission, skin: ExamComponentSkin) : FITBDropSubmission {
-  if (submission === BLANK_SUBMISSION) {
-    return BLANK_SUBMISSION;
-  }
   return submission.map(dropSub => typeof dropSub === "string"
     ? applySkin(dropSub, skin)
     : dropSub.map(s => ({

@@ -154,6 +154,7 @@ code {
 }
 
 .examma-ray-section-heading {
+  display: flex;
   margin-bottom: 10px;
   position: -webkit-sticky;
   position: sticky;
@@ -579,8 +580,16 @@ pre .examma-ray-fitb-droppable pre {
   display: block;
 }
 
+er-section-nav-link {
+  font-weight: bold;
+}
+
 .er-section-nav-link.active {
-  text-decoration: bolder;
+  text-decoration: underline;
+}
+
+er-question-nav-link {
+  font-weight: bold;
 }
 
 .rubric-item-card {
@@ -755,4 +764,19 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   margin-left: 210px;
   width: calc(100% - 220px);
   padding-bottom: 50vh;
+}
+
+.examma-ray-avatar {
+  pointer-events: none;
+}
+
+.examma-ray-avatar-container {
+  /* position: relative; */
+  width: 15px;
+  overflow: visible;
+}
+
+.examma-ray-avatar-container:hover {
+  z-index: 10;
+  margin-top: -2px;
 }

@@ -111,7 +111,7 @@ import { TrustedExamSubmission } from './core/submissions';
 import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
 import { asMutable, assert } from './core/util';
 import { UUID_Strategy } from './ExamGenerator';
-import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
+import { createStudentUuid, ExamUtils, writeFrontendFile } from './ExamUtils';
 import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
 
 
@@ -302,7 +302,7 @@ export class ExamGrader {
   }
 
   public writeGraderPages() {
-    writeFrontendJS(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
@@ -316,7 +316,7 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-graded.js");
+    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-graded.js");
     this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
@@ -337,7 +337,7 @@ export class ExamGrader {
     mkdirSync(examDir, { recursive: true });
     del.sync(`${examDir}/*`);
 
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
+    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
     this.writeAssets(`${examDir}`);
 
     // Write out graded exams for all, sorted by uniqname
@@ -423,7 +423,7 @@ export class ExamGrader {
   
   public writeOverview() {
 
-    writeFrontendJS(path.join("out", this.options.frontend_js_path), "overview.js");
+    writeFrontendFile(path.join("out", this.options.frontend_js_path), "overview.js");
 
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;

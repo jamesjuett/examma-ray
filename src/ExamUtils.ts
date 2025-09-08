@@ -91,25 +91,21 @@ export namespace ExamUtils {
   }
 }
 
-export function writeFrontendJS(outDir: string, filename: string) {
+export function writeFrontendFile(outDir: string, filename: string) {
   mkdirSync(outDir, { recursive: true });
   try {
     let path = require.resolve(`examma-ray/dist/frontend/${filename}`);
-    copyFileSync(
-      path,
-      `${outDir}/${filename}`
-    );
-    console.log("Copied frontend JS bundle.")
+    copyFileSync(path, `${outDir}/${filename}`);
+    console.log(`Copied frontend file ${filename}`);
   }
   catch(e: any) {
     if (e.code === "MODULE_NOT_FOUND") {
-
       try {
         copyFileSync(
           `../node_modules/examma-ray/dist/frontend/${filename}`,
           `${outDir}/${filename}`
         );
-        console.log("Cannot resolve and copy frontend JS, using local copy instead.");
+        console.log(`Cannot resolve and copy frontend file ${filename}, using local copy instead.`);
       }
       catch(e) {
         try {
@@ -117,10 +113,10 @@ export function writeFrontendJS(outDir: string, filename: string) {
             `dist/frontend/${filename}`,
             `${outDir}/${filename}`
           );
-          console.log("Cannot resolve and copy frontend JS, using local copy instead.");
+          console.log(`Cannot resolve and copy frontend file ${filename}, using local copy instead.`);
         }
         catch(e) {
-          console.log(`Failed to find and copy frontend JS: ${filename}`.red);
+          console.error(`Failed to find and copy frontend file ${filename}`.red);
         }
       }
     }
@@ -142,6 +138,7 @@ export function copyFrontendAssets(asset_source_dir: string, frontend_assets_dir
       }
       else {
         console.error("ERROR copying frontend assets".red);
+        console.error(err);
       }
     }
   )

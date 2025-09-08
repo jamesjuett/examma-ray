@@ -1,5 +1,5 @@
 import { encode } from "he";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { mk2html } from "../core/render";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
@@ -72,23 +72,24 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
   }
 
   public grade(aq: AssignedQuestion<"multiple_choice">): TestCaseGradingResult {
-    const choices = aq.submission;
+    
 
-    if(!validate_submission(aq.question.response, choices)){
-      return {
-        bugs_caught: [],
-        wasBlankSubmission: false,
-      }
-    }
+    // if(aq.submission?.validity === "invalid") {
+    //   return {
+    //     bugs_caught: [],
+    //     wasBlankSubmission: false,
+    //   }
+    // }
 
-    if (choices === BLANK_SUBMISSION || choices.length === 0) {
+    if (aq.submission.validity === "blank") {
       return {
         bugs_caught: [],
         wasBlankSubmission: true,
       }
     }
 
-    let bugs_caught = this.spec.bugs.filter(bug => bug.test_cases.some(tc => choices.indexOf(tc) !== -1));
+    const choices = aq.submission.encoding;
+    const bugs_caught = this.spec.bugs.filter(bug => bug.test_cases.some(tc => choices.indexOf(tc) !== -1));
 
     return {
       bugs_caught: bugs_caught,
@@ -112,7 +113,7 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
     let gr = gq.gradingResult;
     let gr_bugs_caught = gr.bugs_caught.map(b=>b.num);
     let pts = this.pointsEarned(gr);
-    if (gq.submission === BLANK_SUBMISSION) {
+    if (gq.submission.validity === "blank") {
       return "Your submission for this question was blank.";
     }
 
@@ -120,7 +121,7 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
       return "Your submission for this question was invalid.";
     }
 
-    const chosen = gq.submission;
+    const chosen = gq.submission.encoding;
 
     return `
       <p>

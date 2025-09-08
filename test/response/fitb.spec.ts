@@ -1,7 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
 import { RESPONSE_HANDLERS } from '../../src/response/responses';
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from '../../src/response/common';
 import { JSDOM } from 'jsdom';
 import jquery from 'jquery';
 
@@ -31,26 +30,29 @@ describe('FITB parser', () => {
       FITB_HANDLER.parse('  '),
       FITB_HANDLER.parse('[]')
     ];
-    parsed.forEach(p => expect(p).to.equal(BLANK_SUBMISSION));
+    parsed.forEach(p => expect(p.validity).to.equal("blank"));
   });
 
   it('identifies malformed submissions', () => {
-    let parsed = [
-      FITB_HANDLER.parse('[}]'),
-      FITB_HANDLER.parse('["3", 3, 5]'),
-      FITB_HANDLER.parse('[3, 2, 9]'),
-      FITB_HANDLER.parse('[undefined, null]'),
-      FITB_HANDLER.parse('test'),
-      FITB_HANDLER.parse('["apple", "banana", ["cranberry"]]'),
+    const inputs = [
+      '[}]',
+      '["3", 3, 5]',
+      '[3, 2, 9]',
+      '[undefined, null]',
+      'test',
+      '["apple", "banana", ["cranberry"]]',
     ];
-    parsed.forEach(p => expect(p).to.equal(MALFORMED_SUBMISSION));
+    let parsed = inputs.map(i => FITB_HANDLER.parse(i));
+    parsed.forEach(
+      (p,i) => expect(p).to.deep.equal({validity: "malformed", raw: inputs[i]})
+
+    );
   });
 
   it('parses simple cases correctly', () => {
     let parsed = FITB_HANDLER.parse('["apple", "banana", "cranberry"]');
     expect(parsed)
-      .to.be.an("array")
-      .and.to.have.ordered.members(["apple", "banana", "cranberry"]);
+      .to.deep.equal({validity: "unchecked", encoding: ["apple", "banana", "cranberry"]});
   });
 
 });
@@ -131,9 +133,10 @@ describe('FITB extractor', () => {
       .with.ordered.members(["test1", "test2", "test\n\ntest", "test3"]);
   });
 
-  it('extracts/identifies blank submissions', () => {
+  it('extracts/identifies blank submission as empty array', () => {
     expect(FITB_HANDLER.extract($(`<div></div>`)))
-      .to.equal(BLANK_SUBMISSION);
+      .to.be.an("array")
+      .that.is.empty;
 
     expect(FITB_HANDLER.extract(
       $(`<div>
@@ -147,12 +150,14 @@ describe('FITB extractor', () => {
           </div>
         </div>
       </div>`)))
-      .to.equal(BLANK_SUBMISSION);
+      .to.be.an("array")
+      .that.is.empty;
   });
 
   it('treats whitespace-only entries as blank', () => {
     expect(FITB_HANDLER.extract($(`<div></div>`)))
-      .to.equal(BLANK_SUBMISSION);
+      .to.be.an("array")
+      .that.is.empty;
 
     expect(FITB_HANDLER.extract(
       $(`<div>
@@ -166,7 +171,8 @@ describe('FITB extractor', () => {
           </div>
         </div>
       </div>`)))
-      .to.equal(BLANK_SUBMISSION);
+      .to.be.an("array")
+      .that.is.empty;
 
       expect(FITB_HANDLER.extract(
         $(`<div>
@@ -182,7 +188,7 @@ describe('FITB extractor', () => {
         </div>`)))
         .to.be.an("array")
         .with.ordered.members(["a", "", "", ""])
-        .and.to.not.equal(BLANK_SUBMISSION);
+        .and.to.not.equal([]);
   });
 
 });
@@ -196,7 +202,7 @@ describe('FITB filler', () => {
     let elem = $(`<div>
       <input type="text" value="test"></input>
     </div>`);
-    FITB_HANDLER.fill(elem, ["test"]);
+    FITB_HANDLER.fill(elem, {validity: "viable", encoding: ["test"]});
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
       .to.be.an("array")
       .with.ordered.members(["test"]);
@@ -212,7 +218,7 @@ describe('FITB filler', () => {
           </div>
         </div>
       </div>`);
-    FITB_HANDLER.fill(elem, ["test1", "test2", "test\ntest\ntest", "test3"]);
+    FITB_HANDLER.fill(elem, {validity: "viable", encoding: ["test1", "test2", "test\ntest\ntest", "test3"]});
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
       .to.be.an("array")
       .with.ordered.members(["test1", "test2", "test\ntest\ntest", "test3"]);
@@ -232,7 +238,7 @@ describe('FITB filler', () => {
           </div>
         </div>
       </div>`);
-    FITB_HANDLER.fill(elem, ["test1", "test2", "test\ntest\ntest", "test3"]);
+    FITB_HANDLER.fill(elem, {validity: "viable", encoding: ["test1", "test2", "test\ntest\ntest", "test3"]});
     expect(elem.find("input, textarea").map(function() { return $(this).val(); }).get())
       .to.be.an("array")
       .with.ordered.members(["test1", "test2", "test\ntest\ntest", "test3"]);

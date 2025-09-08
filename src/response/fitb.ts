@@ -1,10 +1,9 @@
 import deepEqual from "deep-equal";
 import { applySkin } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { assert } from "../core/util";
+import { assert, assertNever } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 import { isStringArray } from "./util";
 import { createFilledFITB, numBlanksAndBoxes, numBlanksAndBoxes as numFITBBlanksAndBoxes } from "./util-fitb";
 
@@ -111,7 +110,7 @@ export type FITBSpecification = {
   /**
    * A sample solution, which may not be blank or invalid.
    */
-  sample_solution?: ViableSubmission<FITBSubmission>;
+  sample_solution?: SubmissionType<"fill_in_the_blank">;
 
   /**
    * A default grader, used to evaluate submissions for this response.
@@ -123,32 +122,30 @@ export type FITBSpecification = {
  * A submission for an FITB response is an array of strings that specify
  * the content submitted for each blank.
  * 
- * A submission may be the symbol [[`BLANK_SUBMISSION`]] if nothing at all was entered in any box.
- * 
  * The subset of [[`FITBSubmissions`]] that are valid (see [[`validate_submission`]]) for a
  * particular FITB response are those with exactly the right number of array elements to
  * match the number of blanks and boxes in the response.
  */
-export type FITBSubmission = readonly string[] | typeof BLANK_SUBMISSION;
+export type FITBSubmission = readonly string[];
 
 
-function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission | typeof MALFORMED_SUBMISSION {
+function FITB_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"fill_in_the_blank"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isStringArray(parsed)) {
-      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+      return parsed.length > 0 ? UNCHECKED_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
@@ -156,23 +153,36 @@ function FITB_PARSER(rawSubmission: string | null | undefined) : FITBSubmission 
   }
 }
 
-function FITB_VALIDATOR(response: FITBSpecification, submission: FITBSubmission) {
-  if (submission === BLANK_SUBMISSION) { return true; }
-  return submission.length === numBlanksAndBoxes(response.content);
+function FITB_VALIDATOR(response: FITBSpecification, submission: WellFormedSubmission<"fill_in_the_blank">) : CheckedSubmission<"fill_in_the_blank"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+
+  const enc = submission.encoding;
+
+  if (enc.length === 0) { return BLANK_SUBMISSION(); }
+
+  if (enc.length === numBlanksAndBoxes(response.content)) {
+    return VIABLE_SUBMISSION(enc);
+  }
+  else {
+    return INVALID_SUBMISSION(enc);
+  }
 }
 
 function FITB_RENDERER(response: FITBSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   return createFilledFITB(applySkin(response.content, skin));
 }
 
-function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ValidSubmission<FITBSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  if (solution == BLANK_SUBMISSION) {
+function FITB_SOLUTION_RENDERER(response: FITBSpecification, solution: ValidSubmission<"fill_in_the_blank">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  
+  if (solution.validity === "blank") {
     return createFilledFITB(applySkin(response.content, skin));
   }
+  else if (solution.validity === "viable") {
+    return createFilledFITB(applySkin(response.content, skin), solution.encoding.map(s => applySkin(s, skin)));
+  }
   else {
-    return createFilledFITB(
-      applySkin(response.content, skin),
-      solution.map(s => applySkin(s, skin)) as readonly string[] as ViableSubmission<FITBSubmission>);
+    return assertNever(solution);
   }
 }
 
@@ -181,20 +191,24 @@ function FITB_EXTRACTOR(responseElem: JQuery) {
     const v = "" + ($(this).val() ?? "");
     return v.trim() === "" ? "" : v;
   }).get();
-  return filledResponses.every(br => br === "") ? BLANK_SUBMISSION : filledResponses;
+  return filledResponses.every(br => br === "") ? [] : filledResponses;
 }
 
-function FITB_FILLER(elem: JQuery, submission: ValidSubmission<FITBSubmission>) {
+function FITB_FILLER(elem: JQuery, submission: ValidSubmission<"fill_in_the_blank">) {
   let inputs = elem.find("input, textarea");
 
-  if (submission !== BLANK_SUBMISSION) {
-    assert(inputs.length === submission.length)
+  if (submission.validity === "viable") {
+    const enc = submission.encoding
+    assert(inputs.length === enc.length)
     let inputElems = inputs.get();
-    submission.forEach((filledText, i) => $(inputElems[i]).val(filledText));
+    enc.forEach((filledText, i) => $(inputElems[i]).val(filledText));
   }
-  else {
+  else if (submission.validity === "blank") {
     // if it's a blank or invalid submission, blank out all the blanks/boxes
     inputs.val("");
+  }
+  else {
+    assertNever(submission);
   }
 }
 

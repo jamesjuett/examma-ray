@@ -1,22 +1,24 @@
 import path from 'path';
 import { AssignedSection, Exam } from '../core';
+import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_SCALE, ICON_USER } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_SCALE, ICON_USER } from './icons';
+import { NO_PLUGINS, PluginCollection } from './plugin';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
-import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 
-export function renderHead(scripts: string, css: string) {
+export function renderHead(scripts: string, plugin_configs: string, css: string) {
   return (
 `<head>
   <meta charset="UTF-8">
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
   ${scripts}
+  ${plugin_configs}
   <style>
     ${css}
   </style>
@@ -44,23 +46,39 @@ export function renderAnnouncements(exam: Exam) {
   </div>`;
 }
 
+export interface ExamRendererPlugin<Config_t extends {}, State_t extends {}> {
+  config(ae: AssignedExam): Config_t;
+  initial_state(ae: AssignedExam) : State_t;
+  section_nav?(as: AssignedSection) : string;
+  section_right_column?(as: AssignedSection) : {
+    readonly right_column_id: string,
+    readonly tab_header: string,
+    readonly tab_content: string,
+  } | undefined
+};
+
 type ExamRendererOptions = {
   /**
    * A string containing custom css rules, which will be rendered into a style
    * tag within the <head> tag of the generated html.
    */
-  custom_css?: string
+  custom_css?: string,
+  plugins?: PluginCollection
 };
 
 const DEFAULT_OPTIONS : Readonly<ExamRendererOptions> = {
-  // custom_css is undefined
+  // custom_css is undefined by default
+  // plugins is undefined by default
 };
+
 export abstract class ExamRenderer {
 
-  public options: Readonly<ExamRendererOptions>;
+  public readonly options: Readonly<ExamRendererOptions>;
+  public readonly plugins: PluginCollection;
 
   public constructor(options: Partial<ExamRendererOptions> = {}) {
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    this.plugins = this.options.plugins ?? NO_PLUGINS();
   }
 
   public renderTimer() {
@@ -78,7 +96,7 @@ export abstract class ExamRenderer {
 
   public renderNav(ae: AssignedExam) {
     return `
-      <nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+      <nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<nav class="nav">
           <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
         </nav>`).join("")}
@@ -115,6 +133,17 @@ export abstract class ExamRenderer {
 
   public abstract renderScripts(ae: AssignedExam, frontendPath: string): string;
 
+  public renderPluginConfigs(ae: AssignedExam): string {
+    return `<script id="examma-ray-plugin-data" type="application/json">
+      ${JSON.stringify(Object.fromEntries(
+        this.plugins.ordered.map(p => [p.plugin_id, p.renderer ? {
+          config: p.renderer.config(ae),
+          initial_state: p.renderer.initial_state(ae)
+        } : {}])
+      ))}
+    </script>`;
+  }
+
   public abstract renderBody(ae: AssignedExam): string;
 
   public renderSections(ae: AssignedExam) {
@@ -127,6 +156,7 @@ export abstract class ExamRenderer {
       <html>
       ${renderHead(
         this.renderScripts(ae, frontendPath),
+        this.renderPluginConfigs(ae),
         this.options.custom_css ?? ""
       )}
       <body style="position: relative;" data-spy="scroll" data-target="#er-exam-nav" data-offset="100">
@@ -184,24 +214,49 @@ export abstract class ExamRenderer {
     `;
   }
 
+  private hasRightColumnContent(as: AssignedSection) {
+    return this.plugins.ordered.some(p => p.renderer?.section_right_column?.(as));
+  }
+
   public renderSectionRightColumn(as: AssignedSection) {
-    if (!as.html_reference) { return ""; }
+    if (!this.hasRightColumnContent(as)) { return ""; }
 
     return `
-      <td class="examma-ray-section-right-column" style="width: ${as.section.reference_width}%;">
+      <td class="examma-ray-section-right-column" style="width: ${as.section.right_column_width}%;">
         <div class="examma-ray-section-right-column-container">
           <div class="examma-ray-section-right-column-contents">
             <div class="examma-ray-section-right-column-width-slider-container">
-              <div class="examma-ray-section-right-column-width-value">${as.section.reference_width}%</div>
-              <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
+              <div class="examma-ray-section-right-column-width-value">${as.section.right_column_width}%</div>
+              <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.right_column_width}">
             </div>
-            <div class="examma-ray-section-reference">
-              <h6>Reference Material (Section ${as.displayIndex})</h6>
-              ${as.html_reference}
-            </div>
+            ${this.renderRightColumnPanels(as)}
           </div>
         </div>
       </td>
+    `;
+  }
+
+  protected renderRightColumnPanels(as: AssignedSection) {
+    const right_columns = this.plugins.ordered.map(p => p.renderer?.section_right_column?.(as)).filter(x => x !== undefined);
+    return `
+      <ul class="nav nav-pills mb-3" role="tablist">
+        ${right_columns.map((r,i) => `
+          <li class="nav-item" role="presentation">
+            <button class="nav-link ${i === 0 ? "active" : ""}" id="${as.uuid}-right-column-tab-header-${r.right_column_id}"
+                    data-toggle="pill" data-target="#${as.uuid}-right-column-tab-content-${r.right_column_id}"
+                    type="button" role="tab" aria-controls="${as.uuid}-right-column-tab-content-${r.right_column_id}"
+                    aria-selected="${i === 0 ? "true" : "false"}">${r.tab_header}
+            </button>
+          </li>`
+        ).join("\n")}
+      </ul>
+      <div class="tab-content">
+        ${right_columns.map((r,i) => `
+          <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="${as.uuid}-right-column-tab-content-${r.right_column_id}"
+               role="tabpanel" aria-labelledby="${as.uuid}-right-column-tab-header-${r.right_column_id}">${r.tab_content}
+          </div>`
+        ).join("\n")}
+      </div>
     `;
   }
   
@@ -394,7 +449,7 @@ abstract class TakenExamRenderer extends ExamRenderer {
   }
 
   public override renderNav(ae: AssignedExam): string {
-    return `<nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+    return `<nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; overflow-y: scroll">
       ${ae.assignedSections.map(s => `
         <nav class="nav">
           <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
@@ -402,7 +457,7 @@ abstract class TakenExamRenderer extends ExamRenderer {
           ${s.assignedQuestions.map(q => `
             <div id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               ${this.renderQuestionNavBadges(q)}
-              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+              <a class="nav-link er-question-nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
                 ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </div>

@@ -1,11 +1,8 @@
 import deepEqual from "deep-equal";
-import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { asMutable, assert, SimpleJSON } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ValidSubmission, ViableSubmission } from "./responses";
-import { isNumericArray } from "./util";
+import { BLANK_SUBMISSION, CheckedSubmission, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
 /**
  * ## Multiple Choice Response Element Specification 
@@ -86,7 +83,7 @@ export type IFrameResponseSpecification = {
   /**
    * A sample solution, which may not be blank or invalid.
    */
-  sample_solution?: ViableSubmission<IFrameSubmission>;
+  sample_solution?: SubmissionType<"iframe">;
 
   /**
    * A default grader, used to evaluate submissions for this response.
@@ -94,30 +91,40 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = SimpleJSON | typeof BLANK_SUBMISSION;
+export type IFrameSubmission = SimpleJSON;
 
-function IFRAME_PARSER(rawSubmission: string | null | undefined) : IFrameSubmission | typeof MALFORMED_SUBMISSION {
+function IFRAME_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"iframe"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed : SimpleJSON = JSON.parse(rawSubmission);
 
     if ( !(typeof parsed === "object") || parsed === null || Array.isArray(parsed) ) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
 
-    return Object.keys(parsed).length > 0 ? parsed : BLANK_SUBMISSION
+    return Object.keys(parsed).length > 0 ? VIABLE_SUBMISSION(parsed) : BLANK_SUBMISSION()
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
     }
   }
+}
+
+function IFRAME_VALIDATOR(response: IFrameResponseSpecification, submission: WellFormedSubmission<"iframe">) : CheckedSubmission<"iframe"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+
+  // Note that we don't have a concept of blank submissions
+  // as it is presumed that a well-formed submission has some
+  // object and we don't check if it's empty.
+  return VIABLE_SUBMISSION(submission.encoding);
 }
 
 function IFRAME_RENDERER(response: IFrameResponseSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -128,7 +135,7 @@ function IFRAME_RENDERER(response: IFrameResponseSpecification, question_id: str
   `;
 }
 
-function IFRAME_SOLUTION_RENDERER(response: IFrameResponseSpecification, orig_solution: ValidSubmission<IFrameSubmission>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function IFRAME_SOLUTION_RENDERER(response: IFrameResponseSpecification, orig_solution: ValidSubmission<"iframe">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
   return IFRAME_RENDERER(response, question_id, question_uuid, skin);
 }
@@ -216,21 +223,17 @@ function IFRAME_EXTRACTOR(responseElem: JQuery) : IFrameSubmission {
 
   let iframe_response = <IFrameResponse>(responseElem.data("iframe_response"));
 
-  if (Object.keys(iframe_response.submission).length === 0) {
-    return BLANK_SUBMISSION;
-  }
-
   return iframe_response.submission;
 }
 
-function IFRAME_FILLER(responseElem: JQuery, submission: ValidSubmission<IFrameSubmission>) {
+function IFRAME_FILLER(responseElem: JQuery, submission: ValidSubmission<"iframe">) {
   
   const iframe_window = responseElem.find("iframe")[0].contentWindow;
   assert(iframe_window, "unable to find iframe");
 
   let iframe_response = <IFrameResponse>(responseElem.data("iframe_response"));
 
-  if (submission !== BLANK_SUBMISSION) {
+  if (submission.validity !== "blank") {
     iframe_response.setSubmission(submission);
   }
 }
@@ -254,6 +257,7 @@ function IFRAME_DIFF(r1: IFrameResponseSpecification, r2: IFrameResponseSpecific
 
 export const IFRAME_HANDLER : ResponseHandler<"iframe"> = {
   parse: IFRAME_PARSER,
+  validate: IFRAME_VALIDATOR,
   render: IFRAME_RENDERER,
   render_solution: IFRAME_SOLUTION_RENDERER,
   activate: IFRAME_ACTIVATE,

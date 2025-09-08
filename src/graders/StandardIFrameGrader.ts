@@ -1,6 +1,5 @@
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
-import { validate_submission } from "../response/responses";
+import { ResponseKind } from "../response/common";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 import { FITBDropRubricItemEvaluation } from "./StandardFITBDropGrader";
 
@@ -46,15 +45,15 @@ export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIF
 
   public grade(aq: AssignedQuestion<"iframe">) : StandardIFrameGradingResult {
     const submission = aq.submission;
-    if (!validate_submission(aq.question.response, submission)) {
-      return {
-        wasBlankSubmission: false,
-        wasInvalidSubmission: true,
-        pointsEarned: 0,
-        evaluation: []
-      }
-    }
-    if (submission === BLANK_SUBMISSION) {
+    // if (submission.validity === "invalid") {
+    //   return {
+    //     wasBlankSubmission: false,
+    //     wasInvalidSubmission: true,
+    //     pointsEarned: 0,
+    //     evaluation: []
+    //   }
+    // }
+    if (submission.validity === "blank") {
       return {
         wasBlankSubmission: true,
         pointsEarned: 0,
@@ -62,12 +61,12 @@ export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIF
       }
     }
     
-    const evaluations = this.spec.rubric.map(ri => evaluateRubricItem(ri, submission));
+    const evaluations = this.spec.rubric.map(ri => evaluateRubricItem(ri, submission.encoding));
     const points = evaluations.reduce((p, ev) => p + ev.pointsEarned, 0);
 
     return {
       wasBlankSubmission: false,
-      evaluation: this.spec.rubric.map(ri => evaluateRubricItem(ri, submission)),
+      evaluation: this.spec.rubric.map(ri => evaluateRubricItem(ri, submission.encoding)),
       pointsEarned: points,
     };
   }

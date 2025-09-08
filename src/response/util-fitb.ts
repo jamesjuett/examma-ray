@@ -1,7 +1,8 @@
 import { encode } from "he";
 import { mk2html } from "../core/render";
 import { FITBSubmission } from "./fitb";
-import { ViableSubmission } from "./responses";
+import { SubmissionType, ViableSubmission } from "./responses";
+import { assert } from "../core/util";
 
 
 /**
@@ -30,8 +31,13 @@ export function count_char(str: string, c: string) {
   return count;
 }
 
+/**
+ * Precondition: submission (if provided) is a valid submission encoding for the given
+ * FITB response. That is, the number of strings in the submission matches the
+ * number of blanks and boxes in the content.
+ */
 export function createFilledFITB(
-  content: string, submission?: ViableSubmission<FITBSubmission>,
+  content: string, submission?: SubmissionType<"fill_in_the_blank">,
   blankRenderer = DEFAULT_BLANK_RENDERER,
   boxRenderer = DEFAULT_BOX_RENDERER,
   encoder: (s: string) => string = encode) {
@@ -73,6 +79,9 @@ export function createFilledFITB(
 
   // Replace placeholders with submission values
   if (submission) {
+
+    assert(submission.length === blankLengths.length + boxLines.length, "Submission length does not match number of blanks and boxes in FITB content.");
+
     submission.forEach(sub => {
       let submission_replacement = encoder(sub);
       

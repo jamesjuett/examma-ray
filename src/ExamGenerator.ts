@@ -9,7 +9,7 @@ import { unparse } from 'papaparse';
 import del from 'del';
 import { chooseQuestions, chooseSections, chooseSkins, realizeQuestions, realizeSections, StudentInfo, without_content } from './core/exam_specification';
 import { createCompositeSkin, ExamComponentSkin } from './core/skins';
-import { createStudentUuid, writeFrontendJS, ExamUtils } from './ExamUtils';
+import { createStudentUuid, writeFrontendFile, ExamUtils } from './ExamUtils';
 import path from 'path';
 import { Exam, Question, Section } from './core/exam_components';
 import { createManifestFilenameBase, makeOpaque, stringifyExamContent } from './core/submissions';
@@ -160,7 +160,9 @@ export class ExamGenerator {
       question,
       questionSkin,
       sectionIndex,
-      partIndex, "")
+      partIndex,
+      undefined
+    )
     );
   }
 
@@ -247,9 +249,9 @@ export class ExamGenerator {
     mkdirSync(manifestDir, { recursive: true });
     del.sync(`${manifestDir}/*`);
 
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend.js");
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-doc.js");
+    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend.js");
+    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
+    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-doc.js");
 
     this.writeAssets(`${examDir}`);
 

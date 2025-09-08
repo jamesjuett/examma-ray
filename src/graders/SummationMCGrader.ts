@@ -3,7 +3,7 @@ import { RED_X_ICON } from "../core/icons";
 import { mk2html } from "../core/render";
 import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { validate_submission } from "../response/responses";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -47,28 +47,23 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
     assert(this.spec.rubric.length === question.response.choices.length, "Summation MC grader submissions must have the same number of response choices as the grader configuration.")
-    let orig_submission = aq.submission;
 
-    if (!validate_submission(question.response, orig_submission)) {
-      return {
-        wasBlankSubmission: false,
-        wasInvalidSubmission: true,
-        pointsEarned: 0
-      };
-    }
+    // if (submission.validity === "invalid") {
+    //   return {
+    //     wasBlankSubmission: false,
+    //     wasInvalidSubmission: true,
+    //     pointsEarned: 0
+    //   };
+    // }
 
-    if (orig_submission === BLANK_SUBMISSION) {
-      orig_submission = [];
-    }
+    const enc = aq.submission.validity === "viable" ? aq.submission.encoding : [];
     
-    
-    let submission = orig_submission;
     // let selections = submission.map(selection => ({
     //   optionIndex: selection,
     //   pointsEarned: this.spec.pointValues[selection]
     // }));
     let selections = this.spec.rubric.map((pv,i) => {
-      let isSelected = submission.indexOf(i) !== -1;
+      let isSelected = enc.indexOf(i) !== -1;
       return {
         selected: isSelected,
         pointsForThisItem: isSelected === pv.selected || pv.ignore_selection ? pv.points : 0
@@ -76,7 +71,7 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     });
 
     return {
-      wasBlankSubmission: submission.length === 0,
+      wasBlankSubmission: enc.length === 0,
       pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsForThisItem, 0))),
       selections: selections
     };
