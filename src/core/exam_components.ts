@@ -1,6 +1,6 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
-import { ResponseSpecification, ValidSubmission, ViableSubmission, render_response, render_solution } from "../response/responses";
+import { ResponseSpecification, SubmissionType, VIABLE_SUBMISSION, ValidSubmission, ViableSubmission, render_response, render_solution } from "../response/responses";
 import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
 import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
@@ -70,7 +70,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
         ? realizeChooser(spec.skin)
         : spec.skin
     ) : DEFAULT_SKIN;
-    this.sampleSolution = <ViableSubmission<QT>>spec.response.sample_solution;
+    this.sampleSolution = spec.response.sample_solution ? VIABLE_SUBMISSION(<SubmissionType<QT>>spec.response.sample_solution) : undefined;
     this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
     this.verifier = spec.verifier && realizeVerifier(spec.verifier);
     this.assets_dir = spec.assets_dir;
