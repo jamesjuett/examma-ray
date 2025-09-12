@@ -1,5 +1,5 @@
-import type { AssignedSection } from "../src/core";
-import type { ExamPlugin } from "../src/core/plugin";
+import type { AssignedSection } from "../core";
+import type { ExamPlugin } from "../core/plugin";
 
 export class SectionReferencePlugin implements ExamPlugin<{}, {}> {
   public static readonly plugin_id = "section-reference";

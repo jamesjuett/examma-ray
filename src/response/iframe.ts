@@ -91,7 +91,7 @@ export type IFrameResponseSpecification = {
   default_grader?: GraderSpecificationFor<"iframe">
 };
 
-export type IFrameSubmission = SimpleJSON;
+export type IFrameSubmission = {_examma_ray_iframe_submission: void} & SimpleJSON;
 
 function IFRAME_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"iframe"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
@@ -105,7 +105,7 @@ function IFRAME_PARSER(rawSubmission: string | null | undefined) : ParsedSubmiss
       return MALFORMED_SUBMISSION(rawSubmission);
     }
 
-    return Object.keys(parsed).length > 0 ? VIABLE_SUBMISSION(parsed) : BLANK_SUBMISSION()
+    return Object.keys(parsed).length > 0 ? VIABLE_SUBMISSION(parsed as IFrameSubmission) : BLANK_SUBMISSION()
   }
   catch(e) {
     if (e instanceof SyntaxError) {
@@ -223,7 +223,7 @@ function IFRAME_EXTRACTOR(responseElem: JQuery) : IFrameSubmission {
 
   let iframe_response = <IFrameResponse>(responseElem.data("iframe_response"));
 
-  return iframe_response.submission;
+  return iframe_response.submission as IFrameSubmission;
 }
 
 function IFRAME_FILLER(responseElem: JQuery, submission: ValidSubmission<"iframe">) {

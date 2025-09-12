@@ -100,7 +100,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { unparse } from 'papaparse';
 import path from 'path';
 import { average, mean, sum } from 'simple-statistics';
-import { AssignedExam, AssignedQuestion, isGradedQuestion } from './core/assigned_exams';
+import { AssignedExam, AssignedQuestion, createStudentUuid, isGradedQuestion, UUID_Options, UUID_Strategy } from './core/assigned_exams';
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
@@ -110,8 +110,7 @@ import { ICON_BOX_CHECK } from './core/icons';
 import { TrustedExamSubmission } from './core/submissions';
 import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
 import { asMutable, assert } from './core/util';
-import { UUID_Strategy } from './ExamGenerator';
-import { createStudentUuid, ExamUtils, writeFrontendFile } from './ExamUtils';
+import { ExamUtils, writeFrontendFile } from './ExamUtils';
 import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
 
 
@@ -119,19 +118,19 @@ import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/Qu
 export type ExamGraderOptions = {
   frontend_js_path: string,
   frontend_assets_dir: string,
-  uuid_strategy: UUID_Strategy,
-  uuidv5_namespace?: string,
+  uuid_options: UUID_Options,
 };
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS : ExamGraderOptions = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
-  uuid_strategy: "plain",
+  uuid_options: { strategy: "plain" },
 };
 
-function verifyOptions(options: Partial<ExamGraderOptions>) {
-  assert(options.uuid_strategy !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
-  assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+function verifyOptions(options: ExamGraderOptions) {
+  if (options.uuid_options.strategy === "uuidv5") {
+    assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+  }
 }
 
 export type ExamGraderSpecification = Partial<ExamGraderOptions>;
@@ -164,8 +163,8 @@ export class ExamGrader {
   public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
     this.exam = exam;
     this.onStatus = onStatus;
-    verifyOptions(options);
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    verifyOptions(this.options);
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
@@ -359,7 +358,7 @@ export class ExamGrader {
   }
 
   private createGradedFilenameBase(ex: AssignedExam) {
-    return ex.student.uniqname + "-" + createStudentUuid(this.options, ex.student, this.exam.exam_id + "-graded");
+    return ex.student.uniqname + "-" + createStudentUuid(this.options.uuid_options, ex.student, this.exam.exam_id + "-graded");
   }
 
   public writeScoresCsv() {

@@ -1,3 +1,4 @@
+import deepEqual from "deep-equal";
 import { ResponseKind } from "../response/common";
 import { assert } from "./util";
 
@@ -16,7 +17,13 @@ type QuestionAnswerBase<Transparent extends boolean, Responses extends boolean> 
 
 export type TransparentQuestionAnswer = QuestionAnswerBase<true, true>;
 export type OpaqueQuestionAnswer = QuestionAnswerBase<false, true>;
-export type QuestionAnswer = TransparentQuestionAnswer | OpaqueQuestionAnswer
+export type QuestionAnswer = TransparentQuestionAnswer | OpaqueQuestionAnswer;
+
+export function questionAnswerHasResponse<Transparent extends boolean>(
+  q: QuestionAnswerBase<Transparent, true> | QuestionAnswerBase<Transparent, false>
+) : q is QuestionAnswerBase<Transparent, true> {
+  return (q as QuestionAnswerBase<Transparent, true>).response !== undefined;
+}
 
 type SectionAnswersBase<Transparent extends boolean, Responses extends boolean> = {
   uuid: string,
@@ -31,7 +38,7 @@ export type TransparentSectionAnswers = SectionAnswersBase<true, true>;
 export type OpaqueSectionAnswers = SectionAnswersBase<false, true>;
 export type SectionAnswers = TransparentSectionAnswers | OpaqueSectionAnswers
 
-type ExamContentBase<Trusted extends boolean, Transparent extends boolean, Responses extends boolean> = {
+type ExamSubmissionBase<Trusted extends boolean, Transparent extends boolean, Responses extends boolean> = {
   exam_id: string,
   uuid: string,
   student: {
@@ -48,24 +55,24 @@ type ExamContentBase<Trusted extends boolean, Transparent extends boolean, Respo
   transparent: true,
 } : {});
 
-// export type OpaqueExamSubmission = ExamContentBase<boolean, false>;
-// export type TransparentExamSubmission = ExamContentBase<boolean, true>;
+// export type OpaqueExamSubmission = ExamSubmissionBase<boolean, false>;
+// export type TransparentExamSubmission = ExamSubmissionBase<boolean, true>;
 
-// export type TrustedExamSubmission<Transparent extends boolean = false> = ExamContentBase<true, Transparent>;
+// export type TrustedExamSubmission<Transparent extends boolean = false> = ExamSubmissionBase<true, Transparent>;
 
 // type ExamManifest<Transparent extends boolean = false> = TrustedExamSubmission<Transparent>;
 
-export type OpaqueExamManifest = ExamContentBase<true, false, false>;
-export type TransparentExamManifest = ExamContentBase<true, true, false>;
+export type OpaqueExamManifest = ExamSubmissionBase<true, false, false>;
+export type TransparentExamManifest = ExamSubmissionBase<true, true, false>;
 
 export type ExamManifest = OpaqueExamManifest | TransparentExamManifest;
 
-export type OpaqueExamSubmission = ExamContentBase<false, false, true>;
-export type TransparentExamSubmission = ExamContentBase<false, true, true>;
+export type OpaqueExamSubmission = ExamSubmissionBase<false, false, true>;
+export type TransparentExamSubmission = ExamSubmissionBase<false, true, true>;
 
 export type ExamSubmission = OpaqueExamSubmission | TransparentExamSubmission;
 
-export type TrustedExamSubmission = ExamContentBase<true, true, true>;
+export type TrustedExamSubmission = ExamSubmissionBase<true, true, true>;
 
 /**
  * Fills in the (presumed blank) question responses in the provided manifest
@@ -111,7 +118,7 @@ export function makeOpaque(manifest: TransparentExamManifest) : OpaqueExamManife
   }
 }
 
-export function isExamManifest(content: ExamContentBase<boolean, boolean, boolean>) : content is ExamManifest {
+export function isExamManifest(content: ExamSubmissionBase<boolean, boolean, boolean>) : content is ExamManifest {
   return !!((content as ExamManifest).trusted);
 }
 
@@ -120,7 +127,7 @@ export function isTransparentExamManifest(manifest: ExamManifest) : manifest is 
 }
 
 export function parseExamManifest(str: string) : ExamManifest {
-  const content = <ExamContentBase<boolean, boolean, boolean>>JSON.parse(str);
+  const content = <ExamSubmissionBase<boolean, boolean, boolean>>JSON.parse(str);
   assert(isExamManifest(content));
   return content;
 }
@@ -137,7 +144,7 @@ export function parseExamSubmission(str: string) {
   return <ExamSubmission>JSON.parse(str);
 }
 
-export function stringifyExamContent(content: ExamContentBase<boolean, boolean, boolean>) {
+export function stringifyExamSubmission(content: ExamSubmissionBase<boolean, boolean, boolean>) {
   return JSON.stringify(content, null, 2);
 }
 
@@ -145,9 +152,15 @@ export function isBlankSubmission(submission: ExamSubmission) {
   return submission.sections.every(s => s.questions.every(q => q.response === ""));
 }
 
-export function hasResponses<Trusted extends boolean, Transparent extends boolean>(exam_content: ExamContentBase<Trusted, Transparent, boolean>) : exam_content is ExamContentBase<Trusted, Transparent, true> {
+export function hasResponses<Trusted extends boolean, Transparent extends boolean>(exam_content: ExamSubmissionBase<Trusted, Transparent, boolean>) : exam_content is ExamSubmissionBase<Trusted, Transparent, true> {
   return exam_content.sections.every(s => s.questions.every(q => {
     const qq = <QuestionAnswer>q;
     return qq.response || qq.response == "";
   }));
+}
+
+export function areExamSubmissionsEquivalent(sub1: ExamSubmission, sub2: ExamSubmission) {
+  const {timestamp: ts1, ...sub1_without_ts} = sub1;
+  const {timestamp: ts2, ...sub2_without_ts} = sub2;
+  return deepEqual(sub1_without_ts, sub2_without_ts);
 }

@@ -1,9 +1,9 @@
 import { Blob } from "blob-polyfill";
 import storageAvailable from "storage-available";
-import { createManifestFilenameBase, ExamSubmission, fillManifest, isBlankSubmission, isTransparentExamManifest, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, parseExamManifest, parseExamSubmission, QuestionAnswer } from "../src/core/submissions";
+import { areExamSubmissionsEquivalent, createManifestFilenameBase, ExamSubmission, fillManifest, isBlankSubmission, isTransparentExamManifest, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, parseExamManifest, parseExamSubmission, QuestionAnswer } from "../src/core/submissions";
 import { BLANK_SUBMISSION, extract_response, fill_response, parse_submission, stringify_response } from "../src/response/responses";
 
-import { FILE_CHECK, FILE_DOWNLOAD } from '../src/core/icons';
+import { FILE_CHECK, FILE_MINUS } from '../src/core/icons';
 
 import axios from "axios";
 import { AssignedExam } from "../src/core/assigned_exams";
@@ -14,6 +14,7 @@ import { activateExamComponents, activateExamContent, setupCodeEditors } from ".
 import { ExamCompletion } from "./plugins/ExamCompletion";
 import { Participant } from "./plugins/Participant";
 import { setupQuestionStars } from "./question_stars";
+import { on } from "events";
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
@@ -66,6 +67,10 @@ function extractExamAnswers() : OpaqueExamSubmission {
   }
 }
 
+function stringifyExamAnswers(answers: OpaqueExamSubmission) : string {
+  return JSON.stringify(answers, null, 2);
+}
+
 function fillQuestionAnswer(qa: QuestionAnswer) {
   let questionElem = $(`#question-${qa.uuid}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
@@ -96,8 +101,8 @@ function fillExamAnswers(answers: ExamSubmission) {
   if (answers.time_started) {
     TIME_STARTED = answers.time_started;
   }
-  // Consider work to be saved after loading
-  onSaved();
+  // Consider work to be unsaved after loading - will resolve after autosave
+  onUnsavedChanges();
 }
 
 function updateExamSaverModal() {
@@ -110,7 +115,7 @@ function updateExamSaverModal() {
   // Timeout so that the "Preparing..." message actually gets shown before we do the work
   setTimeout(() => {
     let answers = extractExamAnswers();
-    let blob = new Blob([JSON.stringify(answers, null, 2)], {type: "application/json"});
+    let blob = new Blob([stringifyExamAnswers(answers)], {type: "application/json"});
     let url  = URL.createObjectURL(blob);
 
     $("#exam-saver-download-link")
@@ -126,11 +131,15 @@ function localStorageExamKey(examId: string, uniqname: string, uuid: string) {
   return examId + "-" + uniqname + "-" + uuid;
 }
 
-function autosaveToLocalStorage(answers: ExamSubmission) {
+function autosave(answers: ExamSubmission) {
+  if(LAST_SAVED_ANSWERS && areExamSubmissionsEquivalent(answers, LAST_SAVED_ANSWERS)) {
+    onNothingToSave();
+    return;
+  }
+  const stringified_answers = stringifyExamAnswers(answers);
+
   if (storageAvailable("localStorage")) {
     console.log("autosaving...");
-
-    let answers = extractExamAnswers();
 
     let prevAnswersLS = localStorage.getItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid));
     if (prevAnswersLS) {
@@ -152,35 +161,93 @@ function autosaveToLocalStorage(answers: ExamSubmission) {
       }
     }
 
-
     // Only save if there is something to save
     if (!isBlankSubmission(answers)) {
-      localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid), JSON.stringify(answers, null, 2));
+      localStorage.setItem(localStorageExamKey(answers.exam_id, answers.student.uniqname, answers.uuid), stringified_answers);
       ++saveCount;
+
+      attempt_submit(answers, stringified_answers);
+      onSaved(answers);
     }
 
     console.log("autosave complete!");
   }
 }
 
+async function attempt_submit(answers: OpaqueExamSubmission, stringified_answers: string) {
+  const exam_uuid = $("#examma-ray-exam").data("exam-uuid");
 
-const UNSAVED_CHANGES_HTML = `${FILE_DOWNLOAD} <span style="vertical-align: middle">Answers File</span>`;
-const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers File</span>`;
+  try {
+    // check to see if we're on the exam website by looking for cookie with the name "bearer"
+    const bearer_token = document.cookie.split('; ').find(row => row.startsWith('bearer='))?.split('=')[1];
+    if (bearer_token && bearer_token !== "") {
+      // If so, we can also autosave to the server
+      await axios({
+        url: `/student_api/exams/${exam_uuid}/live_submission`,
+        method: "PUT",
+        data: {submission: stringified_answers},
+        headers: {
+          'Authorization': 'bearer ' + bearer_token
+        }
+      });
+      console.log("autosave to server complete!");
 
-let HAS_UNSAVED_CHANGES = false;
+      // If successful, consider work to be saved
+      onSaved(answers);
+    }
+  }
+  catch (e) {
+    // ignore errors for now
+    // console.log("autosave to server failed!");
+    // console.log(e);
+  }
+}
+
+
+
+const UNSAVED_CHANGES_HTML = `${FILE_MINUS} <span style="vertical-align: middle">Answers</span>`;
+const SAVED_HTML = `${FILE_CHECK} <span style="vertical-align: middle">Answers</span>`;
+
+// Here's the model for tracking whether all work
+// is saved or not. The exam starts in state A via onNothingToSave().
+//
+// Start
+// - Begin exam -> State A via onNothingToSave()
+//
+// State A: Nothing to save
+// - Interaction with response elements -> State B via onUnsavedChanges()
+// - Load new work from answers file -> State B via onUnsavedChanges()
+// - Load new work from autosave -> State B via onUnsavedChanges()
+// 
+// State B: Potentially unsaved changes
+// - Attempt autosave, but no need since extracted answers match last save -> State A via onNothingToSave()
+// 
+// Critically, the only thing that happens when an autosave occurs and calls onSaved()
+// is to update the LAST_SAVED_ANSWERS variable. This means that if there are
+// concurrent changes while the autosave is happening, we will remain in State B
+// until we check again and see that our current answers match the last saved answers.
+// 
+
+let LAST_SAVED_ANSWERS : OpaqueExamSubmission | undefined = undefined;
 
 function onUnsavedChanges() {
   $(".examma-ray-exam-answers-file-button")
+    .removeClass("btn-primary")
+    .removeClass("btn-success")
+    .addClass("btn-warning")
     .html(UNSAVED_CHANGES_HTML);
-
-  HAS_UNSAVED_CHANGES = true;
 }
 
-function onSaved() {
+function onNothingToSave() {
   $(".examma-ray-exam-answers-file-button")
+    .removeClass("btn-primary")
+    .removeClass("btn-warning")
+    .addClass("btn-success")
     .html(SAVED_HTML);
+}
 
-  HAS_UNSAVED_CHANGES = false;
+function onSaved(answers: OpaqueExamSubmission | undefined) {
+  LAST_SAVED_ANSWERS = answers;
 }
 
 function setupSaverModal() {
@@ -245,7 +312,8 @@ function setupSaverModal() {
 
     // sanity check that they actually downloaded something
     if ($(this).attr("href")) {
-      onSaved();
+      // We do not call anything related to unsaved changes here
+      // because downloading answers is considered orthogonal
       $("#exam-saver").modal("hide");
     }
   });
@@ -254,9 +322,15 @@ function setupSaverModal() {
 function setupChangeListeners(warn_on_unload: boolean) {
   // https://stackoverflow.com/questions/7317273/warn-user-before-leaving-web-page-with-unsaved-changes
   if (warn_on_unload) {
+    // NOTE: this doesn't work on some browsers unless the event listener is added
+    // as the onbeforeunload property
     window.addEventListener("beforeunload", function (e) {
-      // we currently show the warning always, even if they don't have unsaved changes
-      
+      // if there are no unsaved changes, we don't need to do warn them
+      const answers = extractExamAnswers();
+      if (LAST_SAVED_ANSWERS && areExamSubmissionsEquivalent(extractExamAnswers(), LAST_SAVED_ANSWERS)) {
+          return undefined;
+      }
+
       // Note many browsers will ignore this message and just show a
       // default one for security purposes. That's ok.
       let msg = "You've made changes to you answers since the last time you downloaded an answers file. Are you sure you want to leave the page?";
@@ -289,6 +363,10 @@ async function startExam(is_exam: boolean) {
   let examId = examElem.data("exam-id");
   let examUuid = examElem.data("exam-uuid");
   let uniqname = examElem.data("uniqname");
+
+  // Consider work to be saved when exam is started
+  // but without specific saved answers
+  onNothingToSave();
   
   // Check whether an autosave exists in local storage
   if (storageAvailable("localStorage")) {
@@ -296,6 +374,8 @@ async function startExam(is_exam: boolean) {
     if (autosavedAnswers) {
       try {
         fillExamAnswers(parseExamSubmission(autosavedAnswers));
+        onUnsavedChanges();
+        autosave(extractExamAnswers()); // Theoretically this should not do anything since we just loaded from autosave
         is_exam && $("#exam-welcome-restored-modal").modal("show");
       }
       catch (e: unknown) {
@@ -309,15 +389,12 @@ async function startExam(is_exam: boolean) {
 
     setInterval(() => {
       let answers = extractExamAnswers();
-      autosaveToLocalStorage(answers);
+      autosave(answers);
     }, 5000);
   }
   else {
     is_exam && $("#exam-welcome-no-autosave-modal").modal("show");
   }
-
-  // Consider work to be saved when exam is started
-  onSaved();
 
   // Interval to update time elapsed
   setInterval(updateTimeElapsed, 1000);
@@ -415,10 +492,10 @@ async function startExam(is_exam: boolean) {
 
 type RuntimeExamOptions = {
   /**
-   * Whether or not this is an "exam" and should show certain modals
-   * and more aggressive warnings about unsaved work.
+   * Whether or not this is an "exam" and should show certain modals.
    */
   is_exam?: boolean,
+  
   // plugins?: readonly ExamPlugin[]
 };
 
@@ -441,7 +518,6 @@ export class RuntimeExam {
     // this.plugins.forEach(p => {
     //   p.depends_on.forEach(dep => dep.plugin_id)
     // });
-    alert("new doc frontend:" + this.options.is_exam);
     
     try {
       setupQuestionStars();
@@ -452,7 +528,7 @@ export class RuntimeExam {
   
     setupSaverModal();
   
-    setupChangeListeners(!!this.options.is_exam);
+    setupChangeListeners(false);
   
     activateExamComponents();
   

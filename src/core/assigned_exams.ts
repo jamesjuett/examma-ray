@@ -1,18 +1,62 @@
 import { sum } from 'simple-statistics';
-import { Exception, GraderMap } from '../ExamGrader';
+import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
+import type { Exception, GraderMap } from '../ExamGrader';
 import { GradingResult, QuestionGrader } from '../graders/QuestionGrader';
 import { ResponseKind } from '../response/common';
 import { BLANK_SUBMISSION, ValidSubmission, parse_submission, validate_submission } from '../response/responses';
 import { AppliedCurve, ExamCurve } from './ExamCurve';
 import { Exam, Question, Section } from './exam_components';
-import { StudentInfo, isValidID } from './exam_specification';
+import { StudentInfo, chooseQuestions, chooseSections, chooseSkins, isValidID, realizeQuestions, realizeSections } from './exam_specification';
+import { Randomizer, createQuestionChoiceRandomizer, createQuestionSkinRandomizer, createSectionChoiceRandomizer, createSectionSkinRandomizer } from './randomization';
 import { ExamComponentSkin, createCompositeSkin } from './skins';
-import { TransparentExamManifest, TrustedExamSubmission } from './submissions';
+import { ExamManifest, questionAnswerHasResponse, TransparentExamManifest, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
-import { Mutable, asMutable, assert, assertFalse } from './util';
+import { Mutable, asMutable, assert, assertFalse, assertNever } from './util';
 
+export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
 
+export type UUID_Options = {
+  strategy: "uuidv5",
+  v5_namespace: string,
+} | {
+  strategy: Exclude<UUID_Strategy, "uuidv5">,
+};
 
+/**
+ * Takes an ID for an exam, section, or question and creates a uuid
+ * for a particular student's instance of that entity. The uuid is
+ * created based on the policy specified in the `ExamGenerator`'s
+ * options when it is created.
+ * @param student 
+ * @param id 
+ * @returns 
+ */
+export function createStudentUuid(options: UUID_Options, student: StudentInfo, id: string) {
+  if(options.strategy === "plain") {
+    return student.uniqname + "-" + id;
+  }
+  else if (options.strategy === "uuidv4") {
+    return uuidv4();
+  }
+  else if (options.strategy === "uuidv5") {
+    return uuidv5(student.uniqname + "-" + id, options.v5_namespace!);
+  }
+  else {
+    assertNever(options.strategy);
+  }
+}
+
+export function createStudentExamUuid(options: UUID_Options, student: StudentInfo, exam_id: string) {
+  return createStudentUuid(options, student, exam_id);
+}
+
+export function createStudentSectionUuid(options: UUID_Options, student: StudentInfo, exam_id: string, section_id: string) {
+  return createStudentUuid(options, student, exam_id + "-s-" + section_id);
+}
+
+export function createStudentQuestionUuid(options: UUID_Options, student: StudentInfo, exam_id: string, question_id: string) {
+  return createStudentUuid(options, student, exam_id + "-q-" + question_id);
+}
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
@@ -248,7 +292,15 @@ export class AssignedExam {
     }
   }
 
+  public static createFromManifest(exam: Exam, manifest: TransparentExamManifest) {
+    return this.createFromSubmission_impl(exam, manifest);
+  }
+
   public static createFromSubmission(exam: Exam, submission: TrustedExamSubmission) {
+    return this.createFromSubmission_impl(exam, submission);
+  }
+
+  private static createFromSubmission_impl(exam: Exam, submission: TransparentExamManifest | TrustedExamSubmission) {
     let student = submission.student;
     return new AssignedExam(
       submission.exam_id,
@@ -283,12 +335,71 @@ export class AssignedExam {
               questionSkin,
               s_i,
               q_i,
-              q.response
+              questionAnswerHasResponse(q) ? q.response : undefined
             ));
           })
         ));
       }),
       false
+    );
+  }
+
+  public static createRandomized(
+    exam: Exam, student: StudentInfo,
+    uuid_options: UUID_Options, seed: string,
+    allow_duplicates: boolean = false,
+    rand: Randomizer = createSectionChoiceRandomizer(seed, exam)
+  ) {
+    let ae = new AssignedExam(
+      createStudentUuid(uuid_options, student, exam.exam_id),
+      exam,
+      student,
+      exam.sections
+        .flatMap(chooser => realizeSections(chooseSections(chooser, exam, student, rand)))
+        .flatMap((s, sectionIndex) => this.createRandomizedSection(exam, s, student, sectionIndex, uuid_options, seed, allow_duplicates)),
+      allow_duplicates
+    );
+
+    return ae;
+  }
+
+  private static createRandomizedSection(
+    exam: Exam, section: Section, student: StudentInfo, sectionIndex: number,
+    uuid_options: UUID_Options, seed: string, allow_duplicates: boolean = false,
+    rand: Randomizer = createQuestionChoiceRandomizer(seed, exam, section),
+    skinRand: Randomizer = createSectionSkinRandomizer(seed, exam, section)
+  ) {
+    let sectionSkins = chooseSkins(section.skin, exam, student, skinRand);
+    assert(allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
+    return sectionSkins.map(sectionSkin => new AssignedSection(
+      createStudentUuid(uuid_options, student, exam.exam_id + "-s-" + section.section_id),
+      section,
+      sectionIndex,
+      sectionSkin,
+      section.questions
+        .flatMap(chooser => realizeQuestions(chooseQuestions(chooser, exam, student, rand)))
+        .flatMap((q, partIndex) => this.createRandomizedQuestion(exam, q, student, sectionIndex, partIndex, sectionSkin, uuid_options, seed, allow_duplicates))
+    ));
+  }
+
+  private static createRandomizedQuestion(
+    exam: Exam, question: Question, student: StudentInfo, sectionIndex: number, partIndex: number, sectionSkin: ExamComponentSkin,
+    uuid_options: UUID_Options, seed: string, allow_duplicates: boolean = false,
+    rand: Randomizer = createQuestionSkinRandomizer(seed, exam, question)
+  ) {
+
+    let questionSkins = chooseSkins(question.skin, exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
+    assert(allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
+    return questionSkins.map(questionSkin => new AssignedQuestion(
+      createStudentUuid(uuid_options, student, exam.exam_id + "-q-" + question.question_id),
+      exam,
+      student,
+      question,
+      questionSkin,
+      sectionIndex,
+      partIndex,
+      undefined
+    )
     );
   }
 

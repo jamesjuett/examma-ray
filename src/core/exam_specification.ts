@@ -254,20 +254,20 @@ export type ExamSpecification = {
 
   /**
    * A markdown-formatted message that appears at the bottom left of the page, right above the
-   * "Answers File" button. A suggested use is to specify how students can ask questions during
+   * "Submission" button. A suggested use is to specify how students can ask questions during
    * the exam, perhaps including a link to e.g. a course forum or video meeting with proctors.
    */
   readonly mk_questions_message?: string,
 
   /**
    * A markdown-formatted message that appears at the bottom left of the page, right below the
-   * "Answers File" button. A suggested use is to remind students why to click the "Answers File"
+   * "Submission" button. A suggested use is to remind students why to click the "Submission"
    * button, e.g. "Download an answers file to submit to Canvas".
    */
   readonly mk_download_message?: string,
 
   /**
-   * A markdown-formatted message that appears when students open the "Answers File" modal.
+   * A markdown-formatted message that appears when students open the "Submission" modal.
    * A suggested use is to give students instructions for downloading and turning in their
    * answers file.
    */

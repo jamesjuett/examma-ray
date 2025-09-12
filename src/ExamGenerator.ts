@@ -1,18 +1,16 @@
 import 'colors';
-import { writeFileSync, mkdirSync } from 'fs';
-import json_stable_stringify from "json-stable-stringify";
-import { AssignedExam, AssignedQuestion, AssignedSection } from './core/assigned_exams';
-import { ExamRenderer, OriginalExamRenderer } from './core/exam_renderer';
-import { createQuestionSkinRandomizer, createSectionChoiceRandomizer, createQuestionChoiceRandomizer, createSectionSkinRandomizer, Randomizer } from "./core/randomization";
-import { assert } from './core/util';
-import { unparse } from 'papaparse';
 import del from 'del';
-import { chooseQuestions, chooseSections, chooseSkins, realizeQuestions, realizeSections, StudentInfo, without_content } from './core/exam_specification';
-import { createCompositeSkin, ExamComponentSkin } from './core/skins';
-import { createStudentUuid, writeFrontendFile, ExamUtils } from './ExamUtils';
+import { mkdirSync, writeFileSync } from 'fs';
+import json_stable_stringify from "json-stable-stringify";
+import { unparse } from 'papaparse';
 import path from 'path';
+import { AssignedExam, UUID_Options, UUID_Strategy } from './core/assigned_exams';
 import { Exam, Question, Section } from './core/exam_components';
-import { createManifestFilenameBase, makeOpaque, stringifyExamContent } from './core/submissions';
+import { ExamRenderer } from './core/exam_renderer';
+import { StudentInfo, without_content } from './core/exam_specification';
+import { createManifestFilenameBase, makeOpaque, stringifyExamSubmission } from './core/submissions';
+import { assert } from './core/util';
+import { ExamUtils, writeFrontendFile } from './ExamUtils';
 
 type SectionStats = {
   section: Section,
@@ -24,27 +22,26 @@ type QuestionStats = {
   n: number
 };
 
-export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
-
 export type ExamGeneratorOptions = {
   frontend_js_path: string,
   frontend_assets_dir: string,
-  uuid_strategy: UUID_Strategy,
-  uuidv5_namespace?: string,
+  uuid_options: UUID_Options,
   allow_duplicates: boolean,
   consistent_randomization?: boolean
+  seed?: string
 };
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS : ExamGeneratorOptions = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
-  uuid_strategy: "plain",
+  uuid_options: { strategy: "plain" },
   allow_duplicates: false
 };
 
-function verifyOptions(options: Partial<ExamGeneratorOptions>) {
-  assert(options.uuid_strategy !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
-  assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+function verifyOptions(options: ExamGeneratorOptions) {
+  if (options.uuid_options.strategy === "uuidv5") {
+    assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+  }
 }
 
 export type ExamGeneratorSpecification = Partial<ExamGeneratorOptions>;
@@ -68,8 +65,8 @@ export class ExamGenerator {
 
   public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}, onStatus?: (status: string) => void) {
     this.exam = exam;
-    verifyOptions(options);
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    verifyOptions(this.options);
     this.onStatus = onStatus;
     this.totalExams = 0
   }
@@ -88,7 +85,8 @@ export class ExamGenerator {
 
     console.log(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
     this.onStatus && this.onStatus(`Creating randomized exam for ${student.uniqname}... (${this.assignedExams.length + 1}/${this.totalExams})`);
-    let ae = this.createRandomizedExam(student);
+    let ae = AssignedExam.createRandomized(this.exam, student, this.options.uuid_options, this.makeSeed(student));
+    this.checkExam(ae);
 
     this.assignedExams.push(ae);
     this.assignedExamsByUniqname[student.uniqname] = ae;
@@ -98,74 +96,14 @@ export class ExamGenerator {
     return ae;
   }
 
-  private createRandomizedExam(
-    student: StudentInfo,
-    rand: Randomizer = createSectionChoiceRandomizer(this.makeSeed(student), this.exam))
-  {
-    let ae = new AssignedExam(
-      createStudentUuid(this.options, student, this.exam.exam_id),
-      this.exam,
-      student,
-      this.exam.sections
-        .flatMap(chooser => realizeSections(chooseSections(chooser, this.exam, student, rand)))
-        .flatMap((s, sectionIndex) => this.createRandomizedSection(s, student, sectionIndex)),
-      this.options.allow_duplicates
-    );
-
-    this.checkExam(ae);
-
-    return ae;
-  }
-
   private makeSeed(student: StudentInfo) {
-    return this.options.consistent_randomization
-      ? "common"
-      : student.uniqname;
+    // This ordering is used to match legacy seeds where the
+    // seed was an exam_id that appeared after the uniqname
+    let seed = this.options.consistent_randomization ? "common" : student.uniqname;
+    seed += this.options.seed ? "-" + this.options.seed : "";
+    return seed;
   }
-
-  private createRandomizedSection(
-    section: Section,
-    student: StudentInfo,
-    sectionIndex: number,
-    rand: Randomizer = createQuestionChoiceRandomizer(this.makeSeed(student), this.exam, section),
-    skinRand: Randomizer = createSectionSkinRandomizer(this.makeSeed(student), this.exam, section))
-  {
-    let sectionSkins = chooseSkins(section.skin, this.exam, student, skinRand);
-    assert(this.options.allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
-    return sectionSkins.map(sectionSkin => new AssignedSection(
-      createStudentUuid(this.options, student, this.exam.exam_id + "-s-" + section.section_id),
-      section,
-      sectionIndex,
-      sectionSkin,
-      section.questions
-        .flatMap(chooser => realizeQuestions(chooseQuestions(chooser, this.exam, student, rand)))
-        .flatMap((q, partIndex) => this.createRandomizedQuestion(q, student, sectionIndex, partIndex, sectionSkin))
-    ));
-  }
-
-  private createRandomizedQuestion(
-    question: Question,
-    student: StudentInfo,
-    sectionIndex: number,
-    partIndex: number,
-    sectionSkin: ExamComponentSkin,
-    rand: Randomizer = createQuestionSkinRandomizer(this.makeSeed(student), this.exam, question)) {
-
-    let questionSkins = chooseSkins(question.skin, this.exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
-    assert(this.options.allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
-    return questionSkins.map(questionSkin => new AssignedQuestion(
-      createStudentUuid(this.options, student, this.exam.exam_id + "-q-" + question.question_id),
-      this.exam,
-      student,
-      question,
-      questionSkin,
-      sectionIndex,
-      partIndex,
-      undefined
-    )
-    );
-  }
-
+  
   private checkExam(ae: AssignedExam) {
     // Find all sections assigned to any exam
     let sections = ae.assignedSections.map(s => s.section);
@@ -294,7 +232,7 @@ export class ExamGenerator {
       let filenameBase = createManifestFilenameBase(manifest.student.uniqname, manifest.uuid);
       filenames.push([manifest.student.uniqname, filenameBase])
 
-      const manifest_str = stringifyExamContent(manifest);
+      const manifest_str = stringifyExamSubmission(manifest);
 
       console.log(`${i + 1}/${arr.length} Saving assigned exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
       writeFileSync(`${manifestDir}/${filenameBase}.json`, manifest_str, {encoding: "utf-8"});
@@ -302,7 +240,7 @@ export class ExamGenerator {
       console.log(`${i + 1}/${arr.length} Saving assigned exam html for ${manifest.student.uniqname} to ${filenameBase}.html`);
       writeFileSync(`${examDir}/${filenameBase}.html`, ex.renderedHtml, {encoding: "utf-8"});
 
-      const clientside_manifest_str = this.exam.allow_clientside_content ? manifest_str : stringifyExamContent(makeOpaque(manifest));
+      const clientside_manifest_str = this.exam.allow_clientside_content ? manifest_str : stringifyExamSubmission(makeOpaque(manifest));
       if (this.exam.allow_clientside_content) {
         console.log(`${i + 1}/${arr.length} Saving clientside exam manifest for ${manifest.student.uniqname} to ${filenameBase}.json`);
         writeFileSync(`${clientside_manifest_dir}/${filenameBase}.json`, clientside_manifest_str, {encoding: "utf-8"});

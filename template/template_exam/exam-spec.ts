@@ -15,8 +15,10 @@ export const EXAM = Exam.create({
 });
 
 export const EXAM_GENERATOR = new ExamGenerator(EXAM, {
-  uuid_strategy: "uuidv5",
-  uuidv5_namespace: readFileSync("secret", "utf-8"),
+  uuid_options: {
+    strategy: "uuidv5",
+    v5_namespace: readFileSync("secret", "utf-8"),
+  }
 });
 
 export const EXAM_PREVIEW = new ExamPreview(EXAM);

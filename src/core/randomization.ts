@@ -80,19 +80,19 @@ export class SeededRandomizer {
 export type Randomizer = SeededRandomizer;
 
 export function createSectionChoiceRandomizer(student_randomization_seed: string, exam: Exam) : SeededRandomizer {
-  return new SeededRandomizer(student_randomization_seed + "-" + exam.exam_id);
+  return new SeededRandomizer(student_randomization_seed);
 }
 
 export function createQuestionChoiceRandomizer(student_randomization_seed: string, exam: Exam, section: Section) : SeededRandomizer {
-  return new SeededRandomizer(student_randomization_seed + "-" + exam.exam_id + "-" + section.section_id);
+  return new SeededRandomizer(student_randomization_seed + "-" + section.section_id);
 }
 
 export function createSectionSkinRandomizer(student_randomization_seed: string, exam: Exam, section: Section) : SeededRandomizer {
   // Note that it's important the seed for the section skin randomizer is different from the section randomizer.
   // Otherwise, students who get one section would always get the same section skin.
-  return new SeededRandomizer(student_randomization_seed + "-" + exam.exam_id + "-" + section.section_id + "-skin");
+  return new SeededRandomizer(student_randomization_seed + "-" + section.section_id + "-skin");
 }
 
 export function createQuestionSkinRandomizer(student_randomization_seed: string, exam: Exam, question: Question) : SeededRandomizer {
-  return new SeededRandomizer(student_randomization_seed + "-" + exam.exam_id + "-" + question.question_id + "-skin");
+  return new SeededRandomizer(student_randomization_seed + "-" + question.question_id + "-skin");
 }

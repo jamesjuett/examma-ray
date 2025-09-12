@@ -4,9 +4,10 @@ import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
 import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_SCALE, ICON_USER } from './icons';
-import { NO_PLUGINS, PluginCollection } from './plugin';
+import { NO_PLUGINS, PluginCollection, PLUGINS } from './plugin';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
+import { SectionReferencePlugin } from '../plugins/SectionReference';
 
 export function renderHead(scripts: string, plugin_configs: string, css: string) {
   return (
@@ -68,7 +69,7 @@ type ExamRendererOptions = {
 
 const DEFAULT_OPTIONS : Readonly<ExamRendererOptions> = {
   // custom_css is undefined by default
-  // plugins is undefined by default
+  plugins: PLUGINS([new SectionReferencePlugin()])
 };
 
 export abstract class ExamRenderer {
@@ -89,7 +90,7 @@ export abstract class ExamRenderer {
         <br>
         <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
         <br>
-        This is not an official timer. Please submit your answers file before the deadline.
+        This is not an official timer.
       </div>
     `;
   }
@@ -113,7 +114,7 @@ export abstract class ExamRenderer {
           ${mk2html_unwrapped(ae.exam.mk_questions_message)}
         </div>
         <br />
-        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
+        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Submission</button></div>
         <div class="examma-ray-exam-saver-status-note">${mk2html_unwrapped(ae.exam.mk_download_message)}</div>
       </div>`
   }
@@ -291,7 +292,7 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Answers File</h5>
+              <h5 class="modal-title">Submission</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -362,19 +363,10 @@ export abstract class ExamRenderer {
               <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body">
-              <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
-              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-info">Are you <b>${ae.student.uniqname}</b>?. If this is not you, please close this page.</div>
               <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, or if you have certain privacy extensions/add-ons enabled, this won't work.</div>
-  
-              <p style="margin-left: 2em; margin-right: 2em;">
-                By taking this exam and submitting an answers file, you attest to the CoE Honor Pledge:
-              </p>
-              <p style="margin-left: 4em; margin-right: 4em;">
-                <span style="font-style: italic">I have neither given nor received unauthorized aid on this examination, nor have I concealed any violations of the Honor Code."
-              </p>
-              
               <div style="text-align: center;">
-                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b> and I understand</button>
+                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b></button>
               </div>
             </div>
           </div>

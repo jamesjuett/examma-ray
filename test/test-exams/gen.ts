@@ -53,7 +53,7 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
 
 function genTestExam(exam: Exam, renderer : ExamRenderer = new OriginalExamRenderer()) {
   let gen = new ExamGenerator(exam, {
-    uuid_strategy: "plain",
+    uuid_options: { strategy: "plain" },
     frontend_js_path: "js/"
   });
   gen.assignExam({
