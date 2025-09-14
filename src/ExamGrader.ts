@@ -115,25 +115,23 @@ import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/Qu
 
 
 
-export type ExamGraderOptions = {
-  frontend_js_path: string,
-  frontend_assets_dir: string,
-  uuid_options: UUID_Options,
-};
+export type ExamGraderOptions = Partial<{
+  readonly frontend_js_path: string,
+  readonly frontend_assets_dir: string,
+  readonly uuid_options: UUID_Options,
+}>;
 
-const DEFAULT_OPTIONS : ExamGraderOptions = {
+const DEFAULT_OPTIONS : Required<ExamGraderOptions> = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
   uuid_options: { strategy: "plain" },
 };
 
-function verifyOptions(options: ExamGraderOptions) {
+function verifyOptions(options: Required<ExamGraderOptions>) {
   if (options.uuid_options.strategy === "uuidv5") {
     assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
   }
 }
-
-export type ExamGraderSpecification = Partial<ExamGraderOptions>;
 
 export class ExamGrader {
 
@@ -153,14 +151,14 @@ export class ExamGrader {
   private readonly graderMap: GraderMap = {};
   private readonly exceptionMap: ExceptionMap = {};
 
-  private options: ExamGraderOptions;
+  private readonly options: Required<ExamGraderOptions>;
 
   private renderer = new GradedExamRenderer();
   private submission_renderer = new SubmittedExamRenderer();
 
   private onStatus?: (status: string) => void;
 
-  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
+  public constructor(exam: Exam, options: ExamGraderOptions = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
     this.exam = exam;
     this.onStatus = onStatus;
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);

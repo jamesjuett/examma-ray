@@ -22,29 +22,29 @@ type QuestionStats = {
   n: number
 };
 
-export type ExamGeneratorOptions = {
-  frontend_js_path: string,
-  frontend_assets_dir: string,
-  uuid_options: UUID_Options,
-  allow_duplicates: boolean,
-  consistent_randomization?: boolean
-  seed?: string
-};
+export type ExamGeneratorOptions = Partial<{
+  readonly frontend_js_path: string,
+  readonly frontend_assets_dir: string,
+  readonly uuid_options: UUID_Options,
+  readonly allow_duplicates: boolean,
+  readonly consistent_randomization?: boolean
+  readonly seed: string
+}>;
 
-const DEFAULT_OPTIONS : ExamGeneratorOptions = {
+const DEFAULT_OPTIONS : Required<ExamGeneratorOptions> = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
   uuid_options: { strategy: "plain" },
-  allow_duplicates: false
+  allow_duplicates: false,
+  consistent_randomization: false,
+  seed: ""
 };
 
-function verifyOptions(options: ExamGeneratorOptions) {
+function verifyOptions(options: Required<ExamGeneratorOptions>) {
   if (options.uuid_options.strategy === "uuidv5") {
     assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
   }
 }
-
-export type ExamGeneratorSpecification = Partial<ExamGeneratorOptions>;
 
 export class ExamGenerator {
 
@@ -58,7 +58,7 @@ export class ExamGenerator {
   private readonly sectionStatsMap: { [index: string]: SectionStats; } = {};
   private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
 
-  private options: ExamGeneratorOptions;
+  private readonly options: Required<ExamGeneratorOptions>;
 
   private onStatus?: (status: string) => void;
   private totalExams: number;
@@ -100,7 +100,9 @@ export class ExamGenerator {
     // This ordering is used to match legacy seeds where the
     // seed was an exam_id that appeared after the uniqname
     let seed = this.options.consistent_randomization ? "common" : student.uniqname;
-    seed += this.options.seed ? "-" + this.options.seed : "";
+    if (this.options.seed) {
+      seed += this.options.seed;
+    }
     return seed;
   }
   
