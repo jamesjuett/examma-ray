@@ -352,7 +352,7 @@ export class ExamPreview {
                 </div>
                 ${this.renderQuestionContent(question, q_id, skin)}
                 <div class="examma-ray-question-postscript">
-                  ${question.renderDescription(skin)}
+                  ${question.renderPostscript(skin)}
                 </div>
               </div>
             </div>
