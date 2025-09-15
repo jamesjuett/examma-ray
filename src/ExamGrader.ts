@@ -356,7 +356,7 @@ export class ExamGrader {
   }
 
   private createGradedFilenameBase(ex: AssignedExam) {
-    return ex.student.uniqname + "-" + createStudentUuid(this.options.uuid_options, ex.student, this.exam.exam_id + "-graded");
+    return ex.student.uniqname + "-" + createStudentUuid(this.options.uuid_options, ex.student.uniqname, this.exam.exam_id + "-graded");
   }
 
   public writeScoresCsv() {

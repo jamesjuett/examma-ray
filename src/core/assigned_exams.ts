@@ -26,36 +26,37 @@ export type UUID_Options = {
  * Takes an ID for an exam, section, or question and creates a uuid
  * for a particular student's instance of that entity. The uuid is
  * created based on the policy specified in the `ExamGenerator`'s
- * options when it is created.
- * @param student 
+ * options when it is created, which may depend on the provided
+ * student uniqname.
+ * @param uniqname 
  * @param id 
  * @returns 
  */
-export function createStudentUuid(options: UUID_Options, student: StudentInfo, id: string) {
+export function createStudentUuid(options: UUID_Options, uniqname: string, id: string) {
   if(options.strategy === "plain") {
-    return student.uniqname + "-" + id;
+    return uniqname + "-" + id;
   }
   else if (options.strategy === "uuidv4") {
     return uuidv4();
   }
   else if (options.strategy === "uuidv5") {
-    return uuidv5(student.uniqname + "-" + id, options.v5_namespace!);
+    return uuidv5(uniqname + "-" + id, options.v5_namespace!);
   }
   else {
     assertNever(options.strategy);
   }
 }
 
-export function createStudentExamUuid(options: UUID_Options, student: StudentInfo, exam_id: string) {
-  return createStudentUuid(options, student, exam_id);
+export function createStudentExamUuid(options: UUID_Options, uniqname: string, exam_id: string) {
+  return createStudentUuid(options, uniqname, exam_id);
 }
 
-export function createStudentSectionUuid(options: UUID_Options, student: StudentInfo, exam_id: string, section_id: string) {
-  return createStudentUuid(options, student, exam_id + "-s-" + section_id);
+export function createStudentSectionUuid(options: UUID_Options, uniqname: string, exam_id: string, section_id: string) {
+  return createStudentUuid(options, uniqname, exam_id + "-s-" + section_id);
 }
 
-export function createStudentQuestionUuid(options: UUID_Options, student: StudentInfo, exam_id: string, question_id: string) {
-  return createStudentUuid(options, student, exam_id + "-q-" + question_id);
+export function createStudentQuestionUuid(options: UUID_Options, uniqname: string, exam_id: string, question_id: string) {
+  return createStudentUuid(options, uniqname, exam_id + "-q-" + question_id);
 }
 
 export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
@@ -351,7 +352,7 @@ export class AssignedExam {
     rand: Randomizer = createSectionChoiceRandomizer(seed, exam)
   ) {
     let ae = new AssignedExam(
-      createStudentUuid(uuid_options, student, exam.exam_id),
+      createStudentUuid(uuid_options, student.uniqname, exam.exam_id),
       exam,
       student,
       exam.sections
@@ -372,7 +373,7 @@ export class AssignedExam {
     let sectionSkins = chooseSkins(section.skin, exam, student, skinRand);
     assert(allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
-      createStudentUuid(uuid_options, student, exam.exam_id + "-s-" + section.section_id),
+      createStudentUuid(uuid_options, student.uniqname, exam.exam_id + "-s-" + section.section_id),
       section,
       sectionIndex,
       sectionSkin,
@@ -391,7 +392,7 @@ export class AssignedExam {
     let questionSkins = chooseSkins(question.skin, exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     assert(allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
-      createStudentUuid(uuid_options, student, exam.exam_id + "-q-" + question.question_id),
+      createStudentUuid(uuid_options, student.uniqname, exam.exam_id + "-q-" + question.question_id),
       exam,
       student,
       question,
