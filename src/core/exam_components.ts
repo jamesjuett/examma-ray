@@ -185,28 +185,9 @@ export class Section {
 
 
 
-
-
-
-export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = 
-`Click the button below to save a copy of your answers as a \`.json\`
-file. You may save as many times as you like. You can also restore answers
-from a previously saved file.
-
-**Important!** You MUST submit your \`.json\` answers file to **Canvas**
-BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
-It is up to you to download your answer file and turn it in on **Canvas**.
-
-**Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
-
 export const MK_DEFAULT_QUESTIONS_MESSAGE = "";
 
 export const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
-
-// export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = 
-// `You've reached the bottom of the exam! If you're done, make sure to
-// click the **"Answers File"** button, download a **\`.json\`
-// answers file**, and submit to **Canvas** before the end of the exam!`;
 
 export const MK_DEFAULT_BOTTOM_MESSAGE = 
 `You've reached the bottom of the exam! If you're done, make sure to
@@ -233,7 +214,7 @@ export class Exam {
   public readonly mk_questions_message: string;
   public readonly mk_download_message: string;
   public readonly mk_bottom_message: string;
-  public readonly mk_saver_message: string;
+  public readonly mk_saver_message?: string;
   public readonly assets_dir?: string;
 
   public readonly points: MinMaxPoints;
@@ -278,7 +259,7 @@ export class Exam {
     this.mk_questions_message = spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE;
     this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
     this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
-    this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
+    this.mk_saver_message = spec.mk_saver_message;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.completion = spec.completion;

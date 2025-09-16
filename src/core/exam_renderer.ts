@@ -298,7 +298,7 @@ export abstract class ExamRenderer {
               </button>
             </div>
             <div class="modal-body">
-              <div class="alert alert-info">${mk2html(ae.exam.mk_saver_message)}</div>
+              ${ae.exam.mk_saver_message ? `<div class="alert alert-info">${mk2html(ae.exam.mk_saver_message)}</div>` : ''}
               <div style="text-align: center;">
                 <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
                 <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
@@ -381,8 +381,7 @@ export abstract class ExamRenderer {
               <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
-              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-info">Are you <b>${ae.student.uniqname}</b>? If this is not you, please close this page.</div>
               <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
               <div>
                 <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b> and I understand</button>

@@ -49,6 +49,16 @@ export function PLUGINS(plugins: readonly ExamPlugin[]) : PluginCollection {
     )
   );
 
+  const sorted = toposort(edges);
+  
+  // Any that weren't included in the sort (e.g. have no dependencies and
+  // nothing depends on them) can just be added at the end in any order.
+  for(const plugin of plugins) {
+    if (!sorted.includes(plugin.plugin_id)) {
+      sorted.push(plugin.plugin_id);
+    }
+  }
+
   return {
     ordered: toposort(edges).map(plugin_id => assertExists(plugin_map.get(plugin_id))),
     by_id: Object.fromEntries(plugin_map),
