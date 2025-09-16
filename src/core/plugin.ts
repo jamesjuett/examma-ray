@@ -60,7 +60,7 @@ export function PLUGINS(plugins: readonly ExamPlugin[]) : PluginCollection {
   }
 
   return {
-    ordered: toposort(edges).map(plugin_id => assertExists(plugin_map.get(plugin_id))),
+    ordered: sorted.map(plugin_id => assertExists(plugin_map.get(plugin_id))),
     by_id: Object.fromEntries(plugin_map),
   };
 }
