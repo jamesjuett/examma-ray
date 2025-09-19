@@ -189,10 +189,7 @@ export const MK_DEFAULT_QUESTIONS_MESSAGE = "";
 
 export const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
 
-export const MK_DEFAULT_BOTTOM_MESSAGE = 
-`You've reached the bottom of the exam! If you're done, make sure to
-click the **"Answers File"** button, download a **\`.json\`
-answers file**, and submit it before the end of the exam!`;
+export const MK_DEFAULT_BOTTOM_MESSAGE = "You've reached the bottom of the exam!";
 
 
 // const MK_DEFAULT_REGRADE_MESSAGE = 
@@ -214,6 +211,7 @@ export class Exam {
   public readonly mk_questions_message: string;
   public readonly mk_download_message: string;
   public readonly mk_bottom_message: string;
+  public readonly enable_bottom_im_finished_button: boolean;
   public readonly mk_saver_message?: string;
   public readonly assets_dir?: string;
 
@@ -259,6 +257,7 @@ export class Exam {
     this.mk_questions_message = spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE;
     this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
     this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
+    this.enable_bottom_im_finished_button = !!spec.enable_bottom_im_finished_button;
     this.mk_saver_message = spec.mk_saver_message;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);

@@ -199,9 +199,75 @@ async function attempt_submit(answers: OpaqueExamSubmission, stringified_answers
   catch (e) {
     // ignore errors for now
     // console.log("autosave to server failed!");
-    // console.log(e);
+    console.log(e);
   }
 }
+
+
+type ExamSessionInfo = {
+  readonly exam_uuid: string,
+  readonly exam_window?: {
+    readonly name?: string,
+    readonly open_time: Date, // timestamp
+    readonly close_time: Date, // timestamp
+  },
+  readonly start_time?: Date, // timestamp
+  readonly now: Date, // timestamp
+  readonly duration_seconds: number,
+  readonly force_open?: boolean,
+  readonly duration_multiplier: number,
+};
+
+async function checkSession() {
+
+  try {
+    // check to see if we're on the exam website by looking for cookie with the name "bearer"
+    const bearer_token = document.cookie.split('; ').find(row => row.startsWith('bearer='))?.split('=')[1];
+    if (!bearer_token || bearer_token === "") { return; }
+    const exam_uuid = $("#examma-ray-exam").data("exam-uuid");
+    
+    const session_info = (await axios({
+      url: `/student_api/exams/${exam_uuid}/session`,
+      method: "GET",
+      headers: {
+        'Authorization': 'bearer ' + bearer_token
+      }
+    })).data as ExamSessionInfo;
+
+    const duration_ms = session_info.duration_seconds * 1000 * session_info.duration_multiplier;
+
+    const is_within_window = session_info.exam_window
+      && (new Date(session_info.exam_window.open_time) <= new Date(session_info.now))
+      && (new Date(session_info.now) < new Date(session_info.exam_window.close_time));
+    const is_finished = session_info.start_time
+      && (new Date(session_info.start_time).getTime() + duration_ms < new Date(session_info.now).getTime());
+    const is_force_open = !!session_info.force_open;
+
+    if (!is_force_open && (!is_within_window || is_finished)) {
+      // open the ending modal
+      $("#exam-finished-modal-message-window-closed").hide()
+      $("#exam-finished-modal-message-duration-elapsed").hide()
+      $("#exam-finished-modal-message-user-finished").hide()
+
+      if (!is_within_window) {
+        $("#exam-finished-modal-message-window-closed").show()
+      }
+      else if (is_finished) {
+        $("#exam-finished-modal-message-duration-elapsed").show()
+      }
+
+      $("#exam-finished-modal-return-to-exam-button").hide();
+
+      $("#exam-finished-modal").modal("show");
+    }
+  }
+  catch (e) {
+    // ignore errors for now
+    console.log(e);
+  }
+
+}
+  
 
 
 
@@ -236,6 +302,8 @@ function onUnsavedChanges() {
     .removeClass("btn-success")
     .addClass("btn-warning")
     .html(UNSAVED_CHANGES_HTML);
+  $("#exam-finished-modal-message-answers-saved").hide();
+  $("#exam-finished-modal-message-saving-answers").show();
 }
 
 function onNothingToSave() {
@@ -244,6 +312,8 @@ function onNothingToSave() {
     .removeClass("btn-warning")
     .addClass("btn-success")
     .html(SAVED_HTML);
+  $("#exam-finished-modal-message-answers-saved").show();
+  $("#exam-finished-modal-message-saving-answers").hide();
 }
 
 function onSaved(answers: OpaqueExamSubmission | undefined) {
@@ -317,6 +387,12 @@ function setupSaverModal() {
       $("#exam-saver").modal("hide");
     }
   });
+
+  $("#examma-ray-im-finished-button").on("click", function() {
+    $("#exam-finished-modal-message-user-finished").show();
+    $("#exam-finished-modal-return-to-exam-button").show();
+  });
+
 }
 
 function setupChangeListeners(warn_on_unload: boolean) {
@@ -390,6 +466,7 @@ async function startExam(is_exam: boolean) {
     setInterval(() => {
       let answers = extractExamAnswers();
       autosave(answers);
+      checkSession();
     }, 5000);
   }
   else {

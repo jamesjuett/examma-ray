@@ -196,7 +196,7 @@ code {
 
 .examma-ray-section-main-column {
   padding-top: 0;
-  padding-bottom: 10vh;
+  padding-bottom: 30vh;
 }
 
 .examma-ray-question .card-body {
@@ -214,6 +214,7 @@ code {
 
 .examma-ray-bottom-message {
   max-width: 850px;
+  text-align: center;
 }
 
 .examma-ray-section-description {

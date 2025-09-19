@@ -283,6 +283,13 @@ export type ExamSpecification = {
   readonly mk_bottom_message?: string,
 
   /**
+   * If true, an "I'm Finished" button will be shown at the bottom of the exam.
+   * When clicked, it opens a modal to confirm.
+   * Defaults to undefined (interpreted as false).
+   */
+  readonly enable_bottom_im_finished_button?: boolean;
+
+  /**
    * TODO this will probably be moved elsewhere.
    */
   readonly enable_regrades?: boolean

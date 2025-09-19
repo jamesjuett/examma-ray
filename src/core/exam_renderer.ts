@@ -407,6 +407,33 @@ export abstract class ExamRenderer {
           </div>
         </div>
       </div>
+
+      <div id="exam-finished-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div id="exam-finished-modal-message-window-closed" style="display: none;">
+                The testing window has closed. You're no longer able to continue working.
+              </div>
+              <div id="exam-finished-modal-message-duration-elapsed" style="display: none;">
+                Allowed time has elapsed. You're no longer able to continue working.
+              </div>
+              <div id="exam-finished-modal-message-user-finished" style="display: none;">
+                You've indicated you're finished with the exam. You may continue working if you wish.
+              </div>
+              <div id="exam-finished-modal-message-saving-answers" class="alert alert-warning" style="display: none;">Hold on a moment while we save your final answers...</div>
+              <br />
+              <div id="exam-finished-modal-message-answers-saved" class="alert alert-success" style="display: none;">Your final answers have been saved! Go ahead and close the page.</div>
+            </div>
+            <div class="modal-footer">
+              <button id="exam-finished-modal-return-to-exam-button" class="btn btn-primary" data-dismiss="modal">Return to Exam</button>
+            <div>
+          </div>
+        </div>
+      </div>
     `;
   }
 }
@@ -548,9 +575,16 @@ export class OriginalExamRenderer extends TakenExamRenderer {
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
           <div class="container examma-ray-bottom-message">
-            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
-            </div>
+            ${ae.exam.mk_bottom_message
+              ? `<div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+                ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
+              </div>`
+              : ""
+            }
+            ${ae.exam.enable_bottom_im_finished_button
+              ? `<button class="examma-ray-im-finished-button btn btn-primary btn-lg" data-toggle="modal" data-target="#exam-finished-modal" aria-expanded="false" aria-controls="exam-finished-modal">I'm Finished</button></div>`
+              : ""
+            }
           </div>
         </div>
       </div>
@@ -864,9 +898,16 @@ export class DocRenderer extends TakenExamRenderer {
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
           <div class="container examma-ray-bottom-message">
-            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
-            </div>
+            ${ae.exam.mk_bottom_message
+              ? `<div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+                ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
+              </div>`
+              : ""
+            }
+            ${ae.exam.enable_bottom_im_finished_button
+              ? `<button class="examma-ray-im-finished-button btn btn-primary btn-lg" data-toggle="modal" data-target="#exam-finished-modal" aria-expanded="false" aria-controls="exam-finished-modal">I'm Finished</button></div>`
+              : ""
+            }
           </div>
         </div>
       </div>
