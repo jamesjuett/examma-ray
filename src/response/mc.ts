@@ -2,7 +2,7 @@ import deepEqual from "deep-equal";
 import { mk2html } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 import { isNumericArray } from "./util";
 
 /**
@@ -115,7 +115,7 @@ function MC_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isNumericArray(parsed)) {
-      return parsed.length > 0 ? VIABLE_SUBMISSION(parsed) : BLANK_SUBMISSION();
+      return parsed.length > 0 ? UNCHECKED_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
       return MALFORMED_SUBMISSION(rawSubmission);

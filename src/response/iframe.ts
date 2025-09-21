@@ -2,7 +2,7 @@ import deepEqual from "deep-equal";
 import { ExamComponentSkin } from "../core/skins";
 import { asMutable, assert, SimpleJSON } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, CheckedSubmission, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
 /**
  * ## Multiple Choice Response Element Specification 
@@ -105,7 +105,7 @@ function IFRAME_PARSER(rawSubmission: string | null | undefined) : ParsedSubmiss
       return MALFORMED_SUBMISSION(rawSubmission);
     }
 
-    return Object.keys(parsed).length > 0 ? VIABLE_SUBMISSION(parsed as IFrameSubmission) : BLANK_SUBMISSION()
+    return Object.keys(parsed).length > 0 ? UNCHECKED_SUBMISSION(parsed as IFrameSubmission) : BLANK_SUBMISSION()
   }
   catch(e) {
     if (e instanceof SyntaxError) {

@@ -37,14 +37,22 @@ export type UncheckedSubmission<QT extends ResponseKind> = { validity: "unchecke
 export type InvalidSubmission<QT extends ResponseKind> = { readonly validity: "invalid", encoding: SubmissionType<QT> };
 export type ViableSubmission<QT extends ResponseKind> = { readonly validity: "viable", encoding: SubmissionType<QT> };
 
-export type ParsedSubmission<QT extends ResponseKind> =
+export type AnySubmission<QT extends ResponseKind> =
   | MalformedSubmission
   | BlankSubmission
   | UncheckedSubmission<QT>
   | InvalidSubmission<QT>
   | ViableSubmission<QT>;
 
-export type WellFormedSubmission<QT extends ResponseKind> = Exclude<ParsedSubmission<QT>, MalformedSubmission>;
+export type ParsedSubmission<QT extends ResponseKind> =
+  | MalformedSubmission
+  | BlankSubmission
+  | UncheckedSubmission<QT>;
+  // Note: We don't include InvalidSubmission and ViableSubmission here
+  // because validity generally cannot be determined by parsing, instead
+  // it requires validation against a specific response specification.
+
+export type WellFormedSubmission<QT extends ResponseKind> = Exclude<AnySubmission<QT>, MalformedSubmission>;
 
 export type CheckedSubmission<QT extends ResponseKind> = Exclude<WellFormedSubmission<QT>, UncheckedSubmission<QT>>;
 
@@ -75,7 +83,7 @@ export function BLANK_SUBMISSION() : BlankSubmission {
 /**
  * Creates a wrapper representing an unchecked submission.
  */
-export function UNCHECKED_SUBMISSION<QT extends ResponseKind>(encoding: SubmissionType<QT>) : WellFormedSubmission<QT> {
+export function UNCHECKED_SUBMISSION<QT extends ResponseKind>(encoding: SubmissionType<QT>) : UncheckedSubmission<QT> {
   return { validity: "unchecked", encoding: encoding };
 }
 

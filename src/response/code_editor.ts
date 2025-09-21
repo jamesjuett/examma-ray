@@ -3,7 +3,7 @@ import { encode } from "he";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, CheckedSubmission, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, ValidSubmission, VIABLE_SUBMISSION, ViableSubmission, WellFormedSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, ViableSubmission, WellFormedSubmission } from "./responses";
 
 /**
  * ## Code Editor Response Element Specification
@@ -104,7 +104,7 @@ function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : ParsedSu
     return BLANK_SUBMISSION();
   }
 
-  return VIABLE_SUBMISSION(rawSubmission);
+  return UNCHECKED_SUBMISSION(rawSubmission);
 }
 
 function CODE_EDITOR_VALIDATOR(response: CodeEditorSpecification, submission: WellFormedSubmission<"code_editor">) : CheckedSubmission<"code_editor"> {
