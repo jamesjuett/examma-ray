@@ -7,10 +7,11 @@ import path from 'path';
 import { AssignedExam, UUID_Options, UUID_Strategy } from './core/assigned_exams';
 import { Exam, Question, Section } from './core/exam_components';
 import { ExamRenderer } from './core/exam_renderer';
-import { StudentInfo, without_content } from './core/exam_specification';
+import { exam_spec_without_assets_dirs, StudentInfo, without_content } from './core/exam_specification';
 import { createManifestFilenameBase, makeOpaque, stringifyExamSubmission } from './core/submissions';
 import { assert } from './core/util';
 import { ExamUtils, writeFrontendFile } from './ExamUtils';
+import { ncp } from 'ncp';
 
 type SectionStats = {
   section: Section,
@@ -22,16 +23,19 @@ type QuestionStats = {
   n: number
 };
 
-export type ExamGeneratorOptions = Partial<{
+type FullExamGeneratorOptions = {
   readonly frontend_js_path: string,
   readonly frontend_assets_dir: string,
+  readonly assets_bundle_dir?: string,
   readonly uuid_options: UUID_Options,
   readonly allow_duplicates: boolean,
   readonly consistent_randomization?: boolean
   readonly seed: string
-}>;
+};
 
-const DEFAULT_OPTIONS : Required<ExamGeneratorOptions> = {
+export type ExamGeneratorOptions = Partial<FullExamGeneratorOptions>;
+
+const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
   uuid_options: { strategy: "plain" },
@@ -40,7 +44,7 @@ const DEFAULT_OPTIONS : Required<ExamGeneratorOptions> = {
   seed: ""
 };
 
-function verifyOptions(options: Required<ExamGeneratorOptions>) {
+function verifyOptions(options: FullExamGeneratorOptions) {
   if (options.uuid_options.strategy === "uuidv5") {
     assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
   }
@@ -58,12 +62,12 @@ export class ExamGenerator {
   private readonly sectionStatsMap: { [index: string]: SectionStats; } = {};
   private readonly questionStatsMap: { [index: string]: QuestionStats; } = {};
 
-  private readonly options: Required<ExamGeneratorOptions>;
+  private readonly options: FullExamGeneratorOptions;
 
   private onStatus?: (status: string) => void;
   private totalExams: number;
 
-  public constructor(exam: Exam, options: Partial<ExamGeneratorOptions> = {}, onStatus?: (status: string) => void) {
+  public constructor(exam: Exam, options: ExamGeneratorOptions = {}, onStatus?: (status: string) => void) {
     this.exam = exam;
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
     verifyOptions(this.options);
@@ -159,7 +163,20 @@ export class ExamGenerator {
 
     let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
     
-    ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    if (this.options.assets_bundle_dir) {
+      ncp(
+        this.options.assets_bundle_dir,
+        assetOutDir,
+        (err) => { // callback
+          if (err) {
+            console.error("Error copying exam assets: ".red + err);
+          }
+        }
+      );
+    }
+    else {
+      ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    }
   }
 
   public renderExams(exam_renderer: ExamRenderer) {
@@ -173,11 +190,13 @@ export class ExamGenerator {
   public writeAll(exam_renderer: ExamRenderer, outDir: string = "out", manifestDir: string = "data") {
     this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
+    const no_assets_exam_spec = exam_spec_without_assets_dirs(this.exam.spec);
+
     // Write exam specification as JSON to data folder
     mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
     ExamUtils.writeExamSpecificationToFileSync(
       `data/${this.exam.exam_id}/exam-spec.json`,
-      this.exam.spec
+      no_assets_exam_spec
     );
 
     const examDir = path.join(outDir, `${this.exam.exam_id}/exams`);
@@ -200,9 +219,9 @@ export class ExamGenerator {
     del.sync(`${specDir}/*`);
     ExamUtils.writeExamSpecificationToFileSync(
       path.join(specDir,"exam-spec.json"),
-      (this.exam.spec.allow_clientside_content
-        ? this.exam.spec
-        : without_content(this.exam.spec)
+      (no_assets_exam_spec.allow_clientside_content
+        ? no_assets_exam_spec
+        : without_content(no_assets_exam_spec)
       )
     );
 

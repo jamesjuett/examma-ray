@@ -337,6 +337,40 @@ export function without_content(spec: ExamSpecification) : ExamSpecification {
   };
 }
 
+export function question_spec_without_assets_dir(spec: QuestionSpecification) : QuestionSpecification;
+export function question_spec_without_assets_dir(spec: QuestionChooserSpecification) : QuestionChooserSpecification;
+export function question_spec_without_assets_dir(spec: QuestionSpecification | QuestionChooserSpecification) : QuestionSpecification | QuestionChooserSpecification;
+export function question_spec_without_assets_dir(spec: QuestionSpecification | QuestionChooserSpecification) : QuestionSpecification | QuestionChooserSpecification {
+  if (spec.component_kind === "chooser_specification") {
+    return {...spec, choices: spec.choices.map(c => question_spec_without_assets_dir(c))};
+  }
+  const {assets_dir, ...others} = spec;
+  return others;
+}
+
+
+export function section_spec_without_assets_dir(spec: SectionSpecification) : SectionSpecification;
+export function section_spec_without_assets_dir(spec: SectionChooserSpecification) : SectionChooserSpecification;
+export function section_spec_without_assets_dir(spec: SectionSpecification | SectionChooserSpecification) : SectionSpecification | SectionChooserSpecification;
+export function section_spec_without_assets_dir(spec: SectionSpecification | SectionChooserSpecification) : SectionSpecification | SectionChooserSpecification {
+  if (spec.component_kind === "chooser_specification") {
+    return {...spec, choices: spec.choices.map(c => section_spec_without_assets_dir(c))};
+  }
+  const {assets_dir, questions, ...others} = spec;
+  return {
+    ...others,
+    questions: questions.map(q => question_spec_without_assets_dir(q)),
+  };
+}
+
+export function exam_spec_without_assets_dirs(spec: ExamSpecification) : ExamSpecification {
+  const {assets_dir, sections, ...others} = spec;
+  return {
+    ...others,
+    sections: sections.map(s => section_spec_without_assets_dir(s)),
+  };
+}
+
 export type ExamComponentSpecification =
   | ExamSpecification
   | SectionSpecification
