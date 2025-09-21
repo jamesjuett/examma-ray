@@ -1,6 +1,6 @@
 import 'colors';
 import del from 'del';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 import json_stable_stringify from "json-stable-stringify";
 import { unparse } from 'papaparse';
 import path from 'path';
@@ -12,6 +12,11 @@ import { createManifestFilenameBase, makeOpaque, stringifyExamSubmission } from 
 import { assert } from './core/util';
 import { ExamUtils, writeFrontendFile } from './ExamUtils';
 import { ncp } from 'ncp';
+
+type ExamStats = {
+  sections: { [index: string]: SectionStats; },
+  questions: { [index: string]: QuestionStats; }
+};
 
 type SectionStats = {
   section: Section,
@@ -147,16 +152,58 @@ export class ExamGenerator {
 
   }
 
-  private writeStats() {
+  private writeStats(dataDir: string) {
     // Create output directory
-    mkdirSync(`data/${this.exam.exam_id}/`, { recursive: true });
+    mkdirSync(`${dataDir}/${this.exam.exam_id}/`, { recursive: true });
 
     // Write to file. JSON.stringify removes the section/question objects
-    writeFileSync(`data/${this.exam.exam_id}/stats.json`, json_stable_stringify({
+    writeFileSync(`${dataDir}/${this.exam.exam_id}/stats.json`, json_stable_stringify({
       sections: this.sectionStatsMap,
       questions: this.questionStatsMap
     }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
 
+  }
+
+  private updateStats(dataDir: string) {
+    // Load stats if already there
+    try {
+      const existing_stats : ExamStats = JSON.parse(readFileSync(`${dataDir}/${this.exam.exam_id}/stats.json`, "utf8"));
+      const new_stats: ExamStats = { sections: this.sectionStatsMap, questions: this.questionStatsMap };
+      // Merge existing stats with new stats
+      Object.entries(existing_stats.sections).forEach(([section_id, stats]) => {
+        if (new_stats.sections[section_id]) {
+          new_stats.sections[section_id].n += stats.n;
+        }
+        else {
+          new_stats.sections[section_id] = stats;
+        }
+      });
+      Object.entries(existing_stats.questions).forEach(([question_id, stats]) => {
+        if (new_stats.questions[question_id]) {
+          new_stats.questions[question_id].n += stats.n;
+        }
+        else {
+          new_stats.questions[question_id] = stats;
+        }
+      });
+      
+      // Write updated stats
+      // JSON.stringify removes the section/question objects
+
+      writeFileSync(`${dataDir}/${this.exam.exam_id}/stats.json`, json_stable_stringify({
+        sections: this.sectionStatsMap,
+        questions: this.questionStatsMap
+      }, { replacer: (k, v) => k === "section" || k === "question" ? undefined : v, space: 2 }));
+    }
+    catch(e) {
+      if (e instanceof Error && 'code' in e && e.code === "ENOENT") {
+        // No existing stats, just write new stats
+        this.writeStats(dataDir);
+      }
+      else {
+        throw e;
+      }
+    }
   }
 
   private writeAssets(outDir: string) {
@@ -187,36 +234,39 @@ export class ExamGenerator {
     });
   }
 
-  public writeAll(exam_renderer: ExamRenderer, outDir: string = "out", manifestDir: string = "data") {
+  public writeAll(exam_renderer: ExamRenderer, outDir: string = "out", dataDir: string = "data", clearExisting: boolean = true) {
     this.onStatus && this.onStatus("Phase 3/3: Saving exam data...")
 
     const no_assets_exam_spec = exam_spec_without_assets_dirs(this.exam.spec);
 
     // Write exam specification as JSON to data folder
-    mkdirSync(`data/${this.exam.exam_id}`, { recursive: true });
+    mkdirSync(`${dataDir}/${this.exam.exam_id}`, { recursive: true });
     ExamUtils.writeExamSpecificationToFileSync(
-      `data/${this.exam.exam_id}/exam-spec.json`,
+      `${dataDir}/${this.exam.exam_id}/exam-spec.json`,
       no_assets_exam_spec
     );
 
     const examDir = path.join(outDir, `${this.exam.exam_id}/exams`);
-    manifestDir = path.join(manifestDir, `${this.exam.exam_id}/manifests`);
+    const manifestDir = path.join(dataDir, `${this.exam.exam_id}/manifests`);
 
     // Create output directories and clear previous contents
     mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
+    if (clearExisting) { del.sync(`${examDir}/*`); }
     mkdirSync(manifestDir, { recursive: true });
-    del.sync(`${manifestDir}/*`);
+    if (clearExisting) { del.sync(`${manifestDir}/*`); }
 
+    // Write frontend js files
     writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend.js");
     writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
     writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-doc.js");
 
+    // Write frontend assets
     this.writeAssets(`${examDir}`);
 
+    // Write frontend exam specification
     const specDir = path.join(outDir, this.exam.exam_id, "spec");
     mkdirSync(specDir, { recursive: true });
-    del.sync(`${specDir}/*`);
+    if (clearExisting) { del.sync(`${specDir}/*`); }
     ExamUtils.writeExamSpecificationToFileSync(
       path.join(specDir,"exam-spec.json"),
       (no_assets_exam_spec.allow_clientside_content
@@ -225,7 +275,12 @@ export class ExamGenerator {
       )
     );
 
-    this.writeStats();
+    if (clearExisting) {
+      this.writeStats(dataDir);
+    }
+    else {
+      this.updateStats(dataDir);
+    }
 
     let filenames : string[][] = [];
 
@@ -243,7 +298,7 @@ export class ExamGenerator {
     if (this.exam.allow_clientside_content) {
       
       mkdirSync(clientside_manifest_dir, { recursive: true });
-      del.sync(`${clientside_manifest_dir}/*`);
+      if (clearExisting) { del.sync(`${clientside_manifest_dir}/*`); }
     }
 
     // Write out manifests and exams for all, sorted by uniqname
@@ -269,7 +324,7 @@ export class ExamGenerator {
 
     });
 
-    writeFileSync(`data/${this.exam.exam_id}/student-ids.csv`, unparse({
+    writeFileSync(`${dataDir}/${this.exam.exam_id}/student-ids.csv`, unparse({
       fields: ["uniqname", "filenameBase"],
       data: filenames 
     }));
