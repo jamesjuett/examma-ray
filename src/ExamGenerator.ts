@@ -208,7 +208,7 @@ export class ExamGenerator {
 
   private writeAssets(outDir: string) {
 
-    let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
+    const assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
     
     if (this.options.assets_bundle_dir) {
       ncp(

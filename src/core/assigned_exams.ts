@@ -304,7 +304,7 @@ export class AssignedExam {
   private static createFromSubmission_impl(exam: Exam, submission: TransparentExamManifest | TrustedExamSubmission) {
     let student = submission.student;
     return new AssignedExam(
-      submission.exam_id,
+      submission.uuid,
       exam,
       student,
       submission.sections.flatMap((s, s_i) => {

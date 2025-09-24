@@ -112,22 +112,26 @@ import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_com
 import { asMutable, assert } from './core/util';
 import { ExamUtils, writeFrontendFile } from './ExamUtils';
 import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
+import ncp from 'ncp';
 
 
 
-export type ExamGraderOptions = Partial<{
+type FullExamGraderOptions = {
   readonly frontend_js_path: string,
   readonly frontend_assets_dir: string,
+  readonly assets_bundle_dir?: string,
   readonly uuid_options: UUID_Options,
-}>;
+};
 
-const DEFAULT_OPTIONS : Required<ExamGraderOptions> = {
+export type ExamGraderOptions = Partial<FullExamGraderOptions>;
+
+const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
   uuid_options: { strategy: "plain" },
 };
 
-function verifyOptions(options: Required<ExamGraderOptions>) {
+function verifyOptions(options: FullExamGraderOptions) {
   if (options.uuid_options.strategy === "uuidv5") {
     assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
   }
@@ -151,7 +155,7 @@ export class ExamGrader {
   private readonly graderMap: GraderMap = {};
   private readonly exceptionMap: ExceptionMap = {};
 
-  private readonly options: Required<ExamGraderOptions>;
+  private readonly options: FullExamGraderOptions;
 
   private renderer = new GradedExamRenderer();
   private submission_renderer = new SubmittedExamRenderer();
@@ -295,7 +299,20 @@ export class ExamGrader {
 
   private writeAssets(outDir: string) {
     let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
-    ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    if (this.options.assets_bundle_dir) {
+      ncp(
+        this.options.assets_bundle_dir,
+        assetOutDir,
+        (err) => { // callback
+          if (err) {
+            console.error("Error copying exam assets: ".red + err);
+          }
+        }
+      );
+    }
+    else {
+      ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    }
   }
 
   public writeGraderPages() {
@@ -306,15 +323,14 @@ export class ExamGrader {
     this.exam.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
-  public writeReports() {
-    const examDir = `out/${this.exam.exam_id}/graded/exams`;
+  public writeReports(reportsDir: string) {
 
     // Create output directories and clear previous contents
-    mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
+    mkdirSync(reportsDir, { recursive: true });
+    del.sync(`${reportsDir}/*`);
 
-    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-graded.js");
-    this.writeAssets(`${examDir}`);
+    writeFrontendFile(path.join(reportsDir, this.options.frontend_js_path), "frontend-graded.js");
+    this.writeAssets(`${reportsDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -323,19 +339,18 @@ export class ExamGrader {
         let filenameBase = this.createGradedFilenameBase(ex);
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${reportsDir}/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
-  public writeSubmissions() {
-    const examDir = `out/${this.exam.exam_id}/submitted/`;
+  public writeSubmissions(submittedDir: string) {
 
     // Create output directories and clear previous contents
-    mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
+    mkdirSync(submittedDir, { recursive: true });
+    del.sync(`${submittedDir}/*`);
 
-    writeFrontendFile(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
-    this.writeAssets(`${examDir}`);
+    writeFrontendFile(path.join(submittedDir, this.options.frontend_js_path), "frontend-solution.js");
+    this.writeAssets(`${submittedDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -345,7 +360,7 @@ export class ExamGrader {
         let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${submittedDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
@@ -356,7 +371,7 @@ export class ExamGrader {
   }
 
   private createGradedFilenameBase(ex: AssignedExam) {
-    return ex.student.uniqname + "-" + createStudentUuid(this.options.uuid_options, ex.student.uniqname, this.exam.exam_id + "-graded");
+    return ex.student.uniqname + "-" + ex.uuid;
   }
 
   public writeScoresCsv() {
