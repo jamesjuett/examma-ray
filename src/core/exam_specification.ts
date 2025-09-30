@@ -54,7 +54,8 @@
 import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "../response/common";
-import {response_specification_diff, ResponseSpecification, ResponseSpecificationDiff } from "../response/responses";
+import {ResponseSpecification, ResponseSpecificationDiff } from "../response/responses";
+import { response_specification_diff } from "../response/handlers";
 import { ExamComponentSkin } from "./skins";
 import { assert, assertFalse, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";

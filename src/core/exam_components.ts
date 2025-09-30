@@ -1,6 +1,7 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
-import { ResponseSpecification, SubmissionType, VIABLE_SUBMISSION, ValidSubmission, ViableSubmission, render_response, render_solution } from "../response/responses";
+import { ResponseSpecification, SubmissionType, VIABLE_SUBMISSION, ValidSubmission, ViableSubmission } from "../response/responses";
+import { render_response, render_solution } from "../response/handlers";
 import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
 import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";

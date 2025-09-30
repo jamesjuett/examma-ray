@@ -8,10 +8,10 @@ import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
 import { DocRenderer, ExamRenderer, OriginalExamRenderer } from "../../src/core";
 import { DateTime } from "luxon";
-import { CommunityPlugin } from "../../plugins/CommunityPlugin";
 import { MACHINE_MODEL_PART_1 } from "./content/lec";
 import { PLUGINS } from "../../src/core/plugin";
-import { SectionReferencePlugin } from "../../plugins/SectionReference";
+import { SectionReferencePlugin } from "../../src/plugins/SectionReference";
+import { CommunityPlugin } from "../../src/plugins/CommunityPlugin";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({

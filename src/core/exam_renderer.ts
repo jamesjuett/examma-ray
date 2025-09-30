@@ -429,7 +429,8 @@ export abstract class ExamRenderer {
               <div id="exam-finished-modal-message-answers-saved" class="alert alert-success" style="display: none;">Your final answers have been saved! Go ahead and close the page.</div>
             </div>
             <div class="modal-footer">
-              <button id="exam-finished-modal-return-to-exam-button" class="btn btn-primary" data-dismiss="modal">Return to Exam</button>
+              <button type="button" id="exam-finished-modal-return-to-exam-button" class="btn btn-primary" data-dismiss="modal">Return to Exam</button>
+              <a id="exam-finished-modal-exit-page-button" class="btn btn-success" href="/">Close Page</a>
             <div>
           </div>
         </div>

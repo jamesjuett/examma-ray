@@ -106,13 +106,20 @@ export class ExamGenerator {
   }
 
   private makeSeed(student: StudentInfo) {
-    // This ordering is used to match legacy seeds where the
-    // seed was an exam_id that appeared after the uniqname
-    let seed = this.options.consistent_randomization ? "common" : student.uniqname;
+
+    // NOTE: DO NOT change the ordering of the components in the composite seed
+
+    let composite_seed = this.options.consistent_randomization ? "common" : student.uniqname;
     if (this.options.seed) {
-      seed += this.options.seed;
+      if (this.options.seed.startsWith("legacy-no-dash-")) {
+        // legacy seeds had no dash between parts of the composite seed
+        composite_seed += this.options.seed.substring(15);
+      }
+      else {
+        composite_seed += ("-" + this.options.seed);
+      }
     }
-    return seed;
+    return composite_seed;
   }
   
   private checkExam(ae: AssignedExam) {

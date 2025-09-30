@@ -4,7 +4,7 @@ import { mk2html } from "../core/render";
 import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { validate_submission } from "../response/responses";
+import { validate_submission } from "../response/handlers";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
 

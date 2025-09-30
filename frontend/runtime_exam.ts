@@ -1,7 +1,7 @@
 import { Blob } from "blob-polyfill";
 import storageAvailable from "storage-available";
 import { areExamSubmissionsEquivalent, createManifestFilenameBase, ExamSubmission, fillManifest, isBlankSubmission, isTransparentExamManifest, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, parseExamManifest, parseExamSubmission, QuestionAnswer } from "../src/core/submissions";
-import { BLANK_SUBMISSION, extract_response, fill_response, parse_submission, stringify_response } from "../src/response/responses";
+import { BLANK_SUBMISSION } from "../src/response/responses";
 
 import { FILE_CHECK, FILE_MINUS } from '../src/core/icons';
 
@@ -14,7 +14,7 @@ import { activateExamComponents, activateExamContent, setupCodeEditors } from ".
 import { ExamCompletion } from "./plugins/ExamCompletion";
 import { Participant } from "./plugins/Participant";
 import { setupQuestionStars } from "./question_stars";
-import { on } from "events";
+import { extract_response, fill_response, parse_submission, stringify_response } from "../src/response/handlers";
 
 
 function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {

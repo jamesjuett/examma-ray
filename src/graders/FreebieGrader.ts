@@ -1,7 +1,7 @@
 import { validate } from "uuid";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { ResponseKind } from "../response/common";
-import { validate_submission } from "../response/responses";
+import { validate_submission } from "../response/handlers";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 
 export type FreebieGradingResult = ImmutableGradingResult;

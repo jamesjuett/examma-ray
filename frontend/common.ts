@@ -11,7 +11,7 @@ import { decode } from "he";
 
 import { activateBank } from "../src/response/fitb-drop";
 import { ResponseKind } from "../src/response/common";
-import { activate_response } from '../src/response/responses';
+import { activate_response } from "../src/response/handlers";
 
 export function activateExamComponents() {
   // Active section reference width slider
