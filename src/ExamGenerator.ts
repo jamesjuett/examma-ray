@@ -7,7 +7,7 @@ import path from 'path';
 import { AssignedExam, UUID_Options, UUID_Strategy } from './core/assigned_exams';
 import { Exam, Question, Section } from './core/exam_components';
 import { ExamRenderer } from './core/exam_renderer';
-import { exam_spec_without_assets_dirs, StudentInfo, without_content } from './core/exam_specification';
+import { exam_spec_without_assets_dirs, stringifyExamComponentSpecification, StudentInfo, without_content } from './core/exam_specification';
 import { createManifestFilenameBase, makeOpaque, stringifyExamSubmission } from './core/submissions';
 import { assert } from './core/util';
 import { ExamUtils, writeFrontendFile } from './ExamUtils';
@@ -133,7 +133,11 @@ export class ExamGenerator {
     // If there wasn't a previous stats entry for that section ID, add one
     sections.forEach(
       section => this.sectionStatsMap[section.section_id]
-        ? ++this.sectionStatsMap[section.section_id].n && assert(this.options.allow_duplicates || section.spec === this.sectionStatsMap[section.section_id].section.spec, `Multiple sections from different specifications with the ID "${section.section_id}" were detected.`)
+        ? ++this.sectionStatsMap[section.section_id].n && assert(
+            this.options.allow_duplicates
+            || section.spec === this.sectionStatsMap[section.section_id].section.spec
+            || stringifyExamComponentSpecification(section.spec) === stringifyExamComponentSpecification(this.sectionStatsMap[section.section_id].section.spec),
+          `Multiple sections from different specifications with the ID "${section.section_id}" were detected.`)
         : this.sectionStatsMap[section.section_id] = {
           section: section,
           n: 1
@@ -150,7 +154,11 @@ export class ExamGenerator {
     // Verify that every question with the same ID originated from the same specification
     questions.forEach(
       question => this.questionStatsMap[question.question_id]
-        ? ++this.questionStatsMap[question.question_id].n && assert(this.options.allow_duplicates || question.spec === this.questionStatsMap[question.question_id].question.spec, `Multiple questions from different specifications with the ID "${question.question_id}" were detected.`)
+        ? ++this.questionStatsMap[question.question_id].n && assert(
+          this.options.allow_duplicates
+            || question.spec === this.questionStatsMap[question.question_id].question.spec
+            || stringifyExamComponentSpecification(question.spec) === stringifyExamComponentSpecification(this.questionStatsMap[question.question_id].question.spec),
+          `Multiple questions from different specifications with the ID "${question.question_id}" were detected.`)
         : this.questionStatsMap[question.question_id] = {
           question: question,
           n: 1

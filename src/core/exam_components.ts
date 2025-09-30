@@ -274,8 +274,32 @@ export class Exam {
     this.allSections = this.sections.flatMap(chooser => realizeSections(chooseAllSections(chooser)));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
+    // Remove duplicate sections (can happen if the same section appears multiple times)
+    const section_id_set = new Set<string>(Object.keys(this.sectionsMap));
+    this.allSections = this.allSections.filter(s => {
+      if (section_id_set.has(s.section_id)) {
+        section_id_set.delete(s.section_id);
+        return true;
+      }
+      else {
+        return false;
+      }
+    });
+
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    // Remove duplicate questions (can happen if the same question appears in multiple sections)
+    const question_id_set = new Set<string>(Object.keys(this.questionsMap));
+    this.allQuestions = this.allQuestions.filter(q => {
+      if (question_id_set.has(q.question_id)) {
+        question_id_set.delete(q.question_id);
+        return true;
+      }
+      else {
+        return false;
+      }
+    });
   }
 
   public addAnnouncement(announcement_mk: string) {

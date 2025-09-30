@@ -199,6 +199,10 @@ code {
   padding-top: 0;
 }
 
+.examma-ray-section-main-column-footer {
+  display: none;
+}
+
 .examma-ray-question .card-body {
   padding-bottom: 1em;
   overflow-x: auto;

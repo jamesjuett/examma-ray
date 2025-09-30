@@ -3,7 +3,7 @@ import { AssignedSection, Exam } from '../core';
 import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_SCALE, ICON_USER } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_ARROW_BAR_DOWN, ICON_SCALE, ICON_USER } from './icons';
 import { NO_PLUGINS, PluginCollection, PLUGINS } from './plugin';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
@@ -211,6 +211,12 @@ export abstract class ExamRenderer {
         ${this.renderSectionHeader(as)}
         <div class="examma-ray-section-description">${as.html_description}</div>
         ${as.assignedQuestions.map(aq => this.renderQuestion(aq)).join("<br />")}
+        <div class="examma-ray-section-main-column-footer">
+          <div>
+            Additional Sections Below<br />
+            ${ICON_ARROW_BAR_DOWN}
+          </div>
+        </div>
       </td>
     `;
   }

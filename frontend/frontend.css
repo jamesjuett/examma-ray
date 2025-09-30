@@ -196,7 +196,24 @@ code {
 
 .examma-ray-section-main-column {
   padding-top: 0;
-  padding-bottom: 30vh;
+}
+
+.examma-ray-section-main-column-footer {
+  height: 30vh;
+  font-size: 24pt;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.examma-ray-section-main-column-footer svg {
+  width: 2.5em;
+  height: 2.5em;
+}
+
+.examma-ray-section:last-of-type + .examma-ray-bottom-message {
+  display: none !important;
 }
 
 .examma-ray-question .card-body {
