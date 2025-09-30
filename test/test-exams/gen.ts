@@ -204,7 +204,7 @@ genTestExam(Exam.create({
       ]
     },
   ]
-}), new DocRenderer({
+}), new OriginalExamRenderer({
   plugins: PLUGINS([
     new SectionReferencePlugin(),
     new CommunityPlugin({

@@ -212,7 +212,7 @@ code {
   height: 2.5em;
 }
 
-.examma-ray-section:last-of-type + .examma-ray-bottom-message {
+.examma-ray-section:has(+ .examma-ray-bottom-message) .examma-ray-section-main-column-footer > * {
   display: none !important;
 }
 
