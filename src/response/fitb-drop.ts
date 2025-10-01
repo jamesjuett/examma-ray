@@ -7,6 +7,7 @@ import { assert, assertFalse, assertNever } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
+// TODO: ensure droppable IDs cannot contain characters like {{}} for skins
 export type DroppableSpecification = {
   id: string,
   content: string;
@@ -78,7 +79,26 @@ function createDroppableElement(id: string, html: string) {
   return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">${html}</div>`
 }
 
+function verifyDroppables(droppables: DroppableSpecification) {
+  // Verify droppable IDs only contain valid characters a-zA-Z0-9_- (no spaces or special characters, no {{ }} for skins)
+  droppables.forEach(d => assert(/^[a-zA-Z0-9_-]+$/.test(d.id), `Droppable ID "${d.id}" contains invalid characters. Only a-z, A-Z, 0-9, _, and - are allowed.`));
+
+  // Ensure droppable IDs are unique
+  if(!(new Set<string>(droppables.map(d => d.id)).size === droppables.length)) {
+    droppables.forEach(d1 => {
+      if (droppables.filter(d2 => d2.id === d1.id).length > 1) {
+        console.log("Duplicate droppable ID: " + d1.id);
+      }
+    })
+    assertFalse("Error: duplicate droppable ID detected (see above)");
+  }
+
+}
+
 function renderDroppables(droppables: DroppableSpecification, group_id: string, skin?: ExamComponentSkin) {
+  
+  verifyDroppables(droppables);
+  
   return droppables.map(
     droppable => createDroppableElement(droppable.id, createFilledFITBDrop(droppable.content, droppables, group_id, skin))
   ).join("");
@@ -86,15 +106,7 @@ function renderDroppables(droppables: DroppableSpecification, group_id: string, 
 
 function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
 
-  // Ensure droppable IDs are unique
-  if(!(new Set<string>(response.droppables.map(d => d.id)).size === response.droppables.length)) {
-    response.droppables.forEach(d1 => {
-      if (response.droppables.filter(d2 => d2.id === d1.id).length > 1) {
-        console.log("Duplicate droppable ID: " + d1.id);
-      }
-    })
-    assertFalse("Error: duplicate droppable ID detected (see above)");
-  }
+  verifyDroppables(response.droppables);
 
   let group_id = response.group_id ?? question_id;
   return `
@@ -386,6 +398,8 @@ export function createFilledFITBDrop(
   dropLocationRenderer = DEFAULT_DROP_LOCATION_RENDERER,
   dropBankRenderer = DEFAULT_DROP_BANK_RENDERER,
   encoder: (s:string)=>string = encode) {
+
+  verifyDroppables(dropOriginals);
 
   // count the number of underscores in each blank pattern
   let blankLengths = content.match(BLANK_PATTERN)?.map(m => count_char(m, "_")) ?? [];
