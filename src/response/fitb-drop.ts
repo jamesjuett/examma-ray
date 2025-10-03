@@ -513,7 +513,7 @@ export function mapSkinOverSubmission(submission: FITBDropSubmission, skin: Exam
     ? applySkin(dropSub, skin)
     : dropSub.map(s => ({
       id: s.id,
-      children: s.children && <(string | DropSubmission)[]>mapSkinOverSubmission(s.children, skin)
+      children: s.children && mapSkinOverSubmission(s.children, skin)
     }))
   )
 }
