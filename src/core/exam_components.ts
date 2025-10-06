@@ -16,10 +16,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly component_kind = "component";
   public readonly spec: QuestionSpecification<QT>;
   public readonly question_id: string;
-  public readonly title?: string;
+  public readonly title?: SkinnableString;
   public readonly tags: readonly string[];
-  public readonly mk_description: string;
-  public readonly mk_postscript: string;
+  public readonly mk_description: SkinnableString;
+  public readonly mk_postscript: SkinnableString;
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
