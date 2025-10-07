@@ -1,6 +1,6 @@
 import deepEqual from "deep-equal";
 import { encode } from "he";
-import { applySkin, highlightCode } from "../core/render";
+import { applySkin, ExamContent, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, CheckedSubmission, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, ViableSubmission, WellFormedSubmission } from "./responses";
@@ -92,6 +92,13 @@ export type CodeEditorSpecification = {
   sample_solution?: SubmissionType<"code_editor">,
   default_grader?: GraderSpecificationFor<"code_editor">
 };
+
+export type CodeEditorResponse = Omit<CodeEditorSpecification, "starter" | "header" | "footer"> & {
+  starter: ExamContent<"skin">,
+  header?: ExamContent<"skin">,
+  footer?: ExamContent<"skin">,
+};
+
 
 /**
  * A submission for a code editor response is simply a string with whatever content

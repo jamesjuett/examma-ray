@@ -13,6 +13,7 @@ import { ExamComponentSkin, createCompositeSkin } from './skins';
 import { ExamManifest, questionAnswerHasResponse, TransparentExamManifest, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
 import { Mutable, asMutable, assert, assertFalse, assertNever } from './util';
+import { ExamContent } from './render';
 
 export type UUID_Strategy = "plain" | "uuidv4" | "uuidv5";
 
@@ -70,8 +71,8 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly displayIndex;
 
-  public readonly html_description: string;
-  public readonly html_postscript: string;
+  public readonly html_description: ExamContent<"html">;
+  public readonly html_postscript: ExamContent<"html">;
 
   public constructor(
     public readonly uuid: string,
@@ -198,8 +199,8 @@ export class AssignedSection {
 
   private _isFullyGraded: boolean = false;
   
-  public readonly html_description: string;
-  public readonly html_reference?: string;
+  public readonly html_description: ExamContent<"html">;
+  public readonly html_reference?: ExamContent<"html">;
 
   public constructor(
     public readonly uuid: string,
@@ -467,119 +468,3 @@ export function areAllGradedExams(exams: readonly AssignedExam[]) : exams is rea
 export interface GradedExam extends AssignedExam {
   readonly pointsEarned: number;
 }
-
-
-
-
-
-// <script>
-//       $(function() {
-//         $('button.examma-ray-blank-saver').on("click", function() {
-//           let blank_num = $(this).data("blank-num");
-//           let checked = $("input[type=checkbox]:checked").filter(function() {
-//             return $(this).data("blank-num") === blank_num;
-//           }).map(function() {
-//             return '"'+$(this).data("blank-submission").replace('"','\\\\"')+'"';
-//           }).get().join(",\\n");
-//           $(".checked-submissions-content").html(he.encode(checked));
-//           $(".checked-submissions-modal").modal("show")
-//         })
-//       });
-
-//     </script>
-
-// export function run_autograder(exam: Exam) {
-//   let argv = minimist(process.argv.slice(2), {
-//     alias : {
-//         "a": "all_questions",
-//         "n": "no_reports"
-//     },
-//     default : {
-//       "no_reports": false
-//     }
-//     });
-      
-//     let isAllQuestions: string = argv["all_questions"];
-//     let isRenderReports: boolean = !argv["no_reports"];
-    
-//     (async () => {
-    
-//         if (isAllQuestions) {
-//             console.log("Creating one exam with all questions with answers drawn from random students...");
-//             await exam.loadRandomizedStudent("matlab_exam_w21_answerkey.csv");
-//         }
-//         else {
-//             console.log("Loading submissions for all students...");
-//             await exam.loadSubmissions("matlab_exam_w21_morning.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_evening.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_makeup.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_nacosw.csv");
-//         }
-        
-//         console.log("Grading exam...");
-//         exam.gradeAllStudents();
-    
-//         console.log("Rendering question details...");
-//         exam.questions.forEach(q => renderStatsToFile(exam, q.unifiedIndex));
-
-//         console.log("Rendering overview...");
-//         renderOverview(exam);
-
-//         if (isRenderReports) {
-//             console.log("Rendering student reports...");
-//             exam.renderReports();
-//         }
-    
-    
-//         console.log("Writing scores csv...");
-//         exam.writeScoresCsv();
-//     })();
-// }
-
-// export function run_autograder(exam: Exam) {
-//   let argv = minimist(process.argv.slice(2), {
-//     alias : {
-//         "a": "all_questions",
-//         "n": "no_reports"
-//     },
-//     default : {
-//       "no_reports": false
-//     }
-//     });
-      
-//     let isAllQuestions: string = argv["all_questions"];
-//     let isRenderReports: boolean = !argv["no_reports"];
-    
-//     (async () => {
-    
-//         if (isAllQuestions) {
-//             console.log("Creating one exam with all questions with answers drawn from random students...");
-//             await exam.loadRandomizedStudent("matlab_exam_w21_answerkey.csv");
-//         }
-//         else {
-//             console.log("Loading submissions for all students...");
-//             await exam.loadSubmissions("matlab_exam_w21_morning.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_evening.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_makeup.csv");
-//             await exam.loadSubmissions("matlab_exam_w21_nacosw.csv");
-//         }
-        
-//         console.log("Grading exam...");
-//         exam.gradeAllStudents();
-    
-//         console.log("Rendering question details...");
-//         exam.questions.forEach(q => renderStatsToFile(exam, q.unifiedIndex));
-
-//         console.log("Rendering overview...");
-//         renderOverview(exam);
-
-//         if (isRenderReports) {
-//             console.log("Rendering student reports...");
-//             exam.renderReports();
-//         }
-    
-    
-//         console.log("Writing scores csv...");
-//         exam.writeScoresCsv();
-//     })();
-// }

@@ -1,14 +1,11 @@
-import showdown from 'showdown';
-import showdownKatex from 'showdown-katex';
-import showdownHighlight from 'showdown-highlight';
-import hljs from 'highlight.js'
-import { ExamComponentSkin } from './skins';
-import { assertFalse, Branded } from './util';
 import * as Handlebars from "handlebars";
-import { Exam } from './exam_components';
+import hljs from 'highlight.js';
+import showdown from 'showdown';
+import showdownHighlight from 'showdown-highlight';
+import showdownKatex from 'showdown-katex';
 import { expectType, TypeEqual, TypeOf } from 'ts-expect';
-import exp from 'constants';
-import { expect } from 'chai';
+import { ExamComponentSkin } from './skins';
+import { assertFalse } from './util';
 
 
 const converter = new showdown.Converter({
@@ -39,9 +36,9 @@ const skinned_mk_cache = new Map<string, Map<string, string>>();
 
 declare const ExamContentBrands : {
   // readonly "exam_content" : unique symbol,
+  readonly "html" : unique symbol,
   readonly "markdown" : unique symbol,
   readonly "skin" : unique symbol,
-  readonly "html" : unique symbol,
 }
 
 declare const ExamContentSymbol: unique symbol;
@@ -90,15 +87,19 @@ export type ExamContentKind = keyof typeof ExamContentBrands;
  * 
  * ```
  */
-export type ExamContent<T extends ExamContentKind = never> = 
-  typeof ExamContentSymbol & { [K in typeof ExamContentBrands[T]]: void };
+export type ExamContent<T extends ExamContentKind = ExamContentKind> = 
+  typeof ExamContentSymbol & { [K in typeof ExamContentBrands[Exclude<ExamContentKind, T>]]: false };
 
 /**
  * Designates the input string as an [[ExamContent]] of the specified kind(s).
  * Defaults to `ExamContent<ExamContentKind>`, i.e. exam content that may contain
  * any of the supported content types (e.g. markdown, html, skin placeholders).
  */
-export function EXAM_CONTENT<T extends ExamContentKind = ExamContentKind>(content: string) : ExamContent<T> {
+export function EXAM_CONTENT(content: string) : ExamContent<ExamContentKind>;
+export function EXAM_CONTENT(content?: string) : ExamContent<ExamContentKind> | undefined;
+export function EXAM_CONTENT<T extends ExamContentKind = ExamContentKind>(content: string) : ExamContent<T>;
+export function EXAM_CONTENT<T extends ExamContentKind = ExamContentKind>(content?: string) : ExamContent<T> | undefined;
+export function EXAM_CONTENT<T extends ExamContentKind = ExamContentKind>(content?: string) : ExamContent<T> {
   return content as unknown as ExamContent<T>;
 }
 
@@ -107,109 +108,85 @@ expectType<TypeOf<ExamContent, string>>(false); // A plain string is not allowed
 expectType<TypeOf<string, ExamContent>>(false); // An ExamContent cannot be used directly as a string
 
 
-type ExcludeContent<C extends ExamContent, U extends ExamContentKind> =
-  C extends ExamContent<infer K>
-    ? [U] extends [K] // wrap in tuple to prevent distribution
-      ? ExamContent<Exclude<K, U>>
-      : C
-    : never;
 
-type IncludeContent<C extends ExamContent, U extends ExamContentKind> =
-  C extends ExamContent<infer K>
-    ? [U] extends [K] // wrap in tuple to prevent distribution
-      ? C
-      : ExamContent<K | U>
-    : never;
-
-// Type Tests for ExcludeContent
-expectType<TypeEqual<ExcludeContent<ExamContent<"markdown" | "skin">, "markdown">, ExamContent<"skin">>>(true);
-expectType<TypeEqual<ExcludeContent<ExamContent<"markdown" | "skin">, "skin">, ExamContent<"markdown">>>(true);
-expectType<TypeEqual<ExcludeContent<ExamContent<"skin">, "markdown">, ExamContent<"skin">>>(true);
-expectType<TypeEqual<ExcludeContent<ExamContent, "markdown">, ExamContent>>(true);
-expectType<TypeEqual<ExcludeContent<ExamContent<"markdown" | "skin">, "markdown" | "skin">, ExamContent>>(true);
-
-// Type Tests for IncludeContent
-expectType<TypeEqual<IncludeContent<ExamContent<"markdown">, "skin">, ExamContent<"markdown" | "skin">>>(true);
-expectType<TypeEqual<IncludeContent<ExamContent<"skin">, "markdown">, ExamContent<"markdown" | "skin">>>(true);
-expectType<TypeEqual<IncludeContent<ExamContent<"markdown" | "skin">, "markdown">, ExamContent<"markdown" | "skin">>>(true);
-expectType<TypeEqual<IncludeContent<ExamContent, "markdown">, ExamContent<"markdown">>>(true);
-expectType<TypeEqual<IncludeContent<ExamContent, "markdown" | "skin">, ExamContent<"markdown" | "skin">>>(true);
-
-
-export function allow_only_html<V extends ExamContent>(content: ExamContent<"html"> extends V ? V : never) : string {
+export function embed_content<T extends ExamContentKind>(content: ExamContent<T>) : string {
   return content as unknown as string;
 }
 
-export function allow_only_html_or_markdown<V extends ExamContent>(content: ExamContent<"html" | "markdown"> extends V ? V : never) : string {
-  return content as unknown as string;
-}
-
-export function may_contain<T extends ExamContentKind>(content: ExamContent<T>) : string {
+export function embed_html(content: ExamContent<"html">) : string {
   return content as unknown as string;
 }
 
 
-// export function 
 
-`some content: ${allow_only_html(EXAM_CONTENT<never>("test"))}`;
-`some content: ${allow_only_html(EXAM_CONTENT<"html">("test"))}`;
-`some content: ${allow_only_html(EXAM_CONTENT("test"))}`;
-`some content: ${allow_only_html(EXAM_CONTENT<"markdown">("test"))}`;
-`some content: ${allow_only_html(mk2html(EXAM_CONTENT<"markdown">("test")))}`;
-`some content: ${allow_only_html(mk2html(EXAM_CONTENT<"markdown" | "skin">("test")))}`;
-`some content: ${allow_only_html(mk2html(EXAM_CONTENT<"markdown" | "skin">("test"), {skin_id: "test", replacements: {}}))}`;
-`some content: ${allow_only_html("test")}`;
-console.log(z + "");
-// export type SkinnableString = Branded<string, "14443758-873d-4f74-a522-8fa0e198efd4">;
 
-// let x: Branded<string, "mk" | "skin"> = "hello" as Branded<string, "mk" | "skin">;
-// let y: Branded<string, "mk"> = "world" as Branded<string, "mk">;
-// x = y;
-// y = x;
-
-// let a = mk2html_rewrapped("hello", "test", 2 as any);
-// let b = mk2html_rewrapped(x, "test", 2 as any);
-// let c : string = b;
-// c = a;
-
-// export function mk2html<T extends ExamContent<"html" | "markdown" | "skin">>(content: T, skin: ExamComponentSkin) : IncludeContent<ExcludeContent<T, "markdown" | "skin">, "html">;
-// export function mk2html<T extends ExamContent<"html" | "markdown">>(content: T) : IncludeContent<ExcludeContent<T, "markdown">, "html">;
-export function mk2html<T extends ExamContent<"markdown" | "skin">>(content: T, skin: ExamComponentSkin) : IncludeContent<ExcludeContent<T, "markdown" | "skin">, "html">;
-export function mk2html<T extends ExamContent<"markdown" | "skin">>(content: T, skin: undefined) : IncludeContent<ExcludeContent<T, "markdown" | "skin">, "html">;
-export function mk2html<T extends ExamContent<"markdown">>(content: T) : IncludeContent<ExcludeContent<T, "markdown">, "html">;
+export function mk2html<T extends ExamContentKind>(content: ExamContent<T>) : ExamContent<Exclude<T, "markdown"> | "html">;
+export function mk2html<T extends ExamContentKind>(content: ExamContent<T>, skin: ExamComponentSkin) : ExamContent<Exclude<T, "markdown" | "skin"> | "html">;
 export function mk2html(content: ExamContent, skin?: ExamComponentSkin) {
   return mk2html_impl(content as unknown as string, skin) as unknown as ExamContent;
 }
 
-export function mk2html_unwrapped<T extends ExamContent<"markdown" | "skin">>(content: T, skin?: ExamComponentSkin) : IncludeContent<ExcludeContent<T, "markdown" | "skin">, "html">;
-export function mk2html_unwrapped<T extends ExamContent<"markdown">>(content: T) : IncludeContent<ExcludeContent<T, "markdown">, "html">;
+export function mk2html_unwrapped<T extends ExamContentKind>(content: ExamContent<T>) : ExamContent<Exclude<T, "markdown"> | "html">;
+export function mk2html_unwrapped<T extends ExamContentKind>(content: ExamContent<T>, skin: ExamComponentSkin) : ExamContent<Exclude<T, "markdown" | "skin"> | "html">;
 export function mk2html_unwrapped(mk: ExamContent, skin?: ExamComponentSkin) {
   return mk2html_unwrapped_impl(mk as unknown as string, skin) as unknown as ExamContent;
 }
 
-export function mk2html_rewrapped<T extends ExamContent<"markdown" | "skin">>(content: T, tag: string, skin?: ExamComponentSkin) : IncludeContent<ExcludeContent<T, "markdown" | "skin">, "html">;
-export function mk2html_rewrapped<T extends ExamContent<"markdown">>(content: T, tag: string) : IncludeContent<ExcludeContent<T, "markdown">, "html">;
+export function mk2html_rewrapped<T extends ExamContentKind>(content: ExamContent<T>, tag: string) : ExamContent<Exclude<T, "markdown"> | "html">;
+export function mk2html_rewrapped<T extends ExamContentKind>(content: ExamContent<T>, tag: string, skin: ExamComponentSkin) : ExamContent<Exclude<T, "markdown" | "skin"> | "html">;
 export function mk2html_rewrapped(mk: ExamContent, tag: string, skin?: ExamComponentSkin) {
   return mk2html_rewrapped_impl(mk as unknown as string, tag, skin) as unknown as ExamContent;
 }
 
 
 
-export function applySkin<T extends ExamContent<"skin">>(content: T, skin?: ExamComponentSkin) : ExcludeContent<T, "skin"> {
-  return applySkin_impl(content as unknown as string, skin) as unknown as ExcludeContent<T, "skin">;
+
+export function applySkin<T extends ExamContentKind>(content: ExamContent<T>, skin?: ExamComponentSkin) : ExamContent<Exclude<T, "skin">> {
+  // Note: ok to remove the "skin" content type even though the skin parameter may be undefined. If the original content
+  // includes a skin placeholder and no skin was provided, there will be an unfilled placholder and the function impl throws.
+  return applySkin_impl(content as unknown as string, skin) as unknown as ExamContent<Exclude<T, "skin">>;
 }
 
 
-export function highlightCode<V extends ExamContent>(content: ExamContent<never> extends V ? V : never, language: string) : ExamContent<"html"> {
+export function highlightCode(content: ExamContent<never>, language: string) : ExamContent<"html"> {
   return highlightCode_impl(content as unknown as string, language) as unknown as ExamContent<"html">;
 }
 
-highlightCode("test", "cpp");
-highlightCode(EXAM_CONTENT("test"), "cpp");
-highlightCode(EXAM_CONTENT<"markdown">("test"), "cpp");
-highlightCode(EXAM_CONTENT<"skin">("test"), "cpp");
-highlightCode(EXAM_CONTENT<"markdown" | "skin">("test"), "cpp");
-highlightCode(EXAM_CONTENT<never>("test"), "cpp");
+
+
+
+
+
+
+
+
+// Embed functions go all the way to a string
+
+export function mk2html_embed(content: ExamContent<"html" | "markdown">) : string;
+export function mk2html_embed(content: ExamContent, skin: ExamComponentSkin) : string;
+export function mk2html_embed(content: ExamContent, skin?: ExamComponentSkin) {
+  return embed_content<"html">(mk2html(content, skin!));
+}
+
+export function mk2html_unwrapped_embed(content: ExamContent<"html" | "markdown">) : string;
+export function mk2html_unwrapped_embed(content: ExamContent, skin: ExamComponentSkin) : string;
+export function mk2html_unwrapped_embed(content: ExamContent, skin?: ExamComponentSkin) {
+  return embed_content<"html">(mk2html_unwrapped(content, skin!));
+}
+
+export function mk2html_rewrapped_embed(content: ExamContent<"html" | "markdown">, tag: string) : string;
+export function mk2html_rewrapped_embed(content: ExamContent, tag: string, skin: ExamComponentSkin) : string;
+export function mk2html_rewrapped_embed(content: ExamContent, tag: string, skin?: ExamComponentSkin) {
+  return embed_content<"html">(mk2html_rewrapped(content, tag, skin!));
+}
+
+export function applySkin_embed(content: ExamContent<"skin">, skin?: ExamComponentSkin) {
+  return embed_content<"html">(applySkin(content, skin));
+}
+
+export function highlightCode_embed(content: ExamContent<never>, language: string) {
+  return embed_content<"html">(highlightCode(content, language));
+}
 
 
 

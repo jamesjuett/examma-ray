@@ -4,7 +4,7 @@ import { ResponseSpecification, SubmissionType, VIABLE_SUBMISSION, ValidSubmissi
 import { render_response, render_solution } from "../response/handlers";
 import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
 import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
-import { mk2html } from "./render";
+import { EXAM_CONTENT, ExamContent, mk2html } from "./render";
 import { DEFAULT_SKIN, ExamComponentSkin } from "./skins";
 import { asMutable, assert } from "./util";
 
@@ -16,10 +16,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly component_kind = "component";
   public readonly spec: QuestionSpecification<QT>;
   public readonly question_id: string;
-  public readonly title?: SkinnableString;
+  public readonly title?: ExamContent;
   public readonly tags: readonly string[];
-  public readonly mk_description: SkinnableString;
-  public readonly mk_postscript: SkinnableString;
+  public readonly mk_description: ExamContent;
+  public readonly mk_postscript: ExamContent;
   public readonly pointsPossible : number;
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
@@ -30,11 +30,11 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
-    [index:string] : string | undefined
+    [index:string] : ExamContent<"html"> | undefined
   } = {};
 
   private readonly postscriptCache: {
-    [index:string] : string | undefined
+    [index:string] : ExamContent<"html"> | undefined
   } = {};
 
   private static instances = new WeakMap<QuestionSpecification, Question>();
@@ -59,10 +59,10 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     this.spec = spec;
     assert(isValidID(spec.question_id), `Invalid question ID: ${spec.question_id}`);
     this.question_id = spec.question_id;
-    if(spec.title) { this.title = spec.title; }
+    if(spec.title) { this.title = EXAM_CONTENT(spec.title); }
     this.tags = spec.tags ?? [];
-    this.mk_description = spec.mk_description;
-    this.mk_postscript = spec.mk_postscript ?? "";
+    this.mk_description = EXAM_CONTENT(spec.mk_description);
+    this.mk_postscript = EXAM_CONTENT(spec.mk_postscript ?? "");
     this.pointsPossible = spec.points;
     this.kind = <QT>spec.response.kind;
     this.response = spec.response;
@@ -109,9 +109,9 @@ export class Section {
   public readonly component_kind = "component";
   public readonly spec: SectionSpecification;
   public readonly section_id: string;
-  public readonly title: string;
-  public readonly mk_description: string;
-  public readonly mk_reference?: string;
+  public readonly title: ExamContent;
+  public readonly mk_description: ExamContent;
+  public readonly mk_reference?: ExamContent;
   public readonly points: MinMaxPoints;
   public readonly questions: readonly (Question | QuestionChooser)[];
   public readonly skin: ExamComponentSkin | SkinChooser;
@@ -124,11 +124,11 @@ export class Section {
   public readonly assets_dir?: string;
 
   private readonly descriptionCache: {
-    [index:string] : string | undefined
+    [index:string] : ExamContent<"html"> | undefined
   } = {};
 
   private readonly referenceCache: {
-    [index:string] : string | undefined
+    [index:string] : ExamContent<"html"> | undefined
   } = {};
 
   private static instances = new WeakMap<SectionSpecification, Section>();
@@ -153,9 +153,9 @@ export class Section {
     this.spec = spec;
     assert(isValidID(spec.section_id), `Invalid section ID: ${spec.section_id}`);
     this.section_id = spec.section_id;
-    this.title = spec.title;
-    this.mk_description = spec.mk_description;
-    this.mk_reference = spec.mk_reference;
+    this.title = EXAM_CONTENT(spec.title);
+    this.mk_description = EXAM_CONTENT(spec.mk_description);
+    this.mk_reference = EXAM_CONTENT(spec.mk_reference);
     this.points = minMaxPoints(spec);
     this.questions = spec.questions.map(q => realizeQuestion(q));
     this.skin = spec.skin ? (
@@ -205,15 +205,15 @@ export class Exam {
 
   public readonly component_kind = "component";
   public readonly exam_id: string;
-  public readonly title: string;
+  public readonly title: ExamContent<"html" | "markdown">;
 
-  public readonly html_instructions: string;
-  public readonly html_announcements: readonly string[];
-  public readonly mk_questions_message: string;
-  public readonly mk_download_message: string;
-  public readonly mk_bottom_message: string;
+  public readonly html_instructions: ExamContent<"html">;
+  public readonly html_announcements: readonly ExamContent<"html">[];
+  public readonly mk_questions_message: ExamContent<"html" | "markdown">;
+  public readonly mk_download_message: ExamContent<"html" | "markdown">;
+  public readonly mk_bottom_message: ExamContent<"html" | "markdown">;
   public readonly enable_bottom_im_finished_button: boolean;
-  public readonly mk_saver_message?: string;
+  public readonly mk_saver_message?: ExamContent<"html" | "markdown">;
   public readonly assets_dir?: string;
 
   public readonly points: MinMaxPoints;
@@ -252,14 +252,14 @@ export class Exam {
   private constructor(spec: ExamSpecification) {
     assert(isValidID(spec.exam_id), `Invalid exam ID: ${spec.exam_id}`);
     this.exam_id = spec.exam_id;
-    this.title = spec.title;
-    this.html_instructions = mk2html(spec.mk_intructions);
-    this.html_announcements = spec.mk_announcements?.map(a => mk2html(a)) ?? [];
-    this.mk_questions_message = spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE;
-    this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
-    this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
+    this.title = EXAM_CONTENT<"html" | "markdown">(spec.title);
+    this.html_instructions = mk2html(EXAM_CONTENT<"html" | "markdown">(spec.mk_intructions));
+    this.html_announcements = spec.mk_announcements?.map(a => mk2html(EXAM_CONTENT<"html" | "markdown">(a))) ?? [];
+    this.mk_questions_message = EXAM_CONTENT<"html" | "markdown">(spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE);
+    this.mk_download_message = EXAM_CONTENT<"html" | "markdown">(spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE);
+    this.mk_bottom_message = EXAM_CONTENT<"html" | "markdown">(spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE);
     this.enable_bottom_im_finished_button = !!spec.enable_bottom_im_finished_button;
-    this.mk_saver_message = spec.mk_saver_message;
+    this.mk_saver_message = EXAM_CONTENT<"html" | "markdown">(spec.mk_saver_message);
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.completion = spec.completion;
@@ -302,7 +302,7 @@ export class Exam {
     });
   }
 
-  public addAnnouncement(announcement_mk: string) {
+  public addAnnouncement(announcement_mk: ExamContent<"html" | "markdown">) {
     asMutable(this.html_announcements).push(mk2html(announcement_mk));
   }
 

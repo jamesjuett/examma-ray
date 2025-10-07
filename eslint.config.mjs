@@ -9,20 +9,20 @@ export default defineConfig(
   // eslint.configs.recommended,
   // tseslint.configs.recommendedTypeChecked,
   // tseslint,
-  tseslint.configs.base,
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
-    rules: {
-      "@typescript-eslint/restrict-template-expressions": ["error", {
-        "allowNumber": false,
-        "allowBoolean": true,
-      }],
-    },
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
+  // tseslint.configs.base,
+  // {
+  //   files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
+  //   rules: {
+  //     "@typescript-eslint/restrict-template-expressions": ["error", {
+  //       "allowNumber": false,
+  //       "allowBoolean": true,
+  //     }],
+  //   },
+  //   languageOptions: {
+  //     parserOptions: {
+  //       projectService: true,
+  //       tsconfigRootDir: import.meta.dirname,
+  //     },
+  //   },
+  // },
 );
