@@ -2,7 +2,7 @@ import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { CHECK_ICON, RED_X_ICON } from "../core/icons";
 import { mk2html } from "../core/render";
 import { renderNumBadge } from "../core/ui_components";
-import { assert } from "../core/util";
+import { asMutable, assert } from "../core/util";
 import { ResponseKind } from "../response/common";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
@@ -38,7 +38,9 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
     return responseKind === "multiple_choice";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: SimpleMCGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;

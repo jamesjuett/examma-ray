@@ -10,7 +10,7 @@ import { Exam, Question, Section } from './exam_components';
 import { StudentInfo, chooseQuestions, chooseSections, chooseSkins, isValidID, realizeQuestions, realizeSections } from './exam_specification';
 import { Randomizer, createQuestionChoiceRandomizer, createQuestionSkinRandomizer, createSectionChoiceRandomizer, createSectionSkinRandomizer } from './randomization';
 import { ExamComponentSkin, createCompositeSkin } from './skins';
-import { ExamManifest, questionAnswerHasResponse, TransparentExamManifest, TrustedExamSubmission } from './submissions';
+import { ExamManifest, questionSubmissionHasResponse, TransparentExamManifest, TransparentQuestionManifest, TransparentQuestionSubmission, TransparentSectionManifest, TransparentSectionSubmission, TrustedExamSubmission } from './submissions';
 import { maxPrecisionString } from "./ui_components";
 import { Mutable, asMutable, assert, assertFalse, assertNever } from './util';
 
@@ -68,23 +68,17 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
   public readonly submission: ValidSubmission<QT>;
 
-  public readonly displayIndex;
-
   public readonly html_description: string;
   public readonly html_postscript: string;
 
   public constructor(
     public readonly uuid: string,
-    public readonly exam: Exam,
     public readonly student: StudentInfo,
     public readonly question: Question<QT>,
     public readonly skin: ExamComponentSkin,
-    public readonly sectionIndex : number,
-    public readonly partIndex : number,
+    public readonly displayIndex: string,
     public readonly rawSubmission: string | undefined,
   ) {
-    this.displayIndex = (sectionIndex+1) + "." + (partIndex+1);
-
     this.submission = BLANK_SUBMISSION();
     if (rawSubmission !== undefined) {
       this.setRawSubmission(rawSubmission);
@@ -92,6 +86,23 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
 
     this.html_description = question.renderDescription(this.skin);
     this.html_postscript = question.renderPostscript(this.skin);
+  }
+
+  public static createFromSubmission(
+    question: Question, student: StudentInfo,
+    question_submission: TransparentQuestionManifest | TransparentQuestionSubmission, section_skin?: ExamComponentSkin) {
+    const question_only_skin = question.skin.component_kind !== "chooser"
+      ? question.skin
+      : question.skin.all_choices.find(skin => skin.skin_id === question_submission.skin_id) ?? assertFalse(`No matching skin found for id: ${question_submission.skin_id}`)
+    const skin = section_skin ? createCompositeSkin(section_skin, question_only_skin) : question_only_skin;
+    return new AssignedQuestion(
+      question_submission.uuid,
+      student,
+      question,
+      skin,
+      question_submission.display_index,
+      questionSubmissionHasResponse(question_submission) ? question_submission.response : undefined
+    );
   }
 
   public setRawSubmission(raw_submission: string) {
@@ -107,6 +118,17 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     (<Mutable<this>>this).submission = sub;
     delete (<Mutable<this>>this).gradedBy;
     delete (<Mutable<this>>this).gradingResult;
+  }
+
+  public getFullAnswers() : TransparentQuestionSubmission {
+    return {
+      uuid: this.uuid,
+      display_index: this.displayIndex,
+      question_id: this.question.question_id,
+      skin_id: this.skin.non_composite_skin_id ?? this.skin.skin_id,
+      kind: this.question.kind,
+      response: this.rawSubmission!,
+    };
   }
 
   public grade(grader: QuestionGrader<QT>) {
@@ -203,6 +225,7 @@ export class AssignedSection {
 
   public constructor(
     public readonly uuid: string,
+    public readonly student: StudentInfo,
     public readonly section: Section, 
     public readonly sectionIndex : number,
     public readonly skin: ExamComponentSkin,
@@ -215,6 +238,26 @@ export class AssignedSection {
     this.html_reference = section.renderReference(this.skin);
   }
 
+  public static createFromSubmission(
+    section: Section, section_index: number, student: StudentInfo,
+    section_submission: TransparentSectionManifest | TransparentSectionSubmission
+  ) {
+    let skin = section.skin.component_kind !== "chooser"
+      ? section.skin
+      : section.skin.all_choices.find(skin => skin.skin_id === section_submission.skin_id) ?? assertFalse(`No matching skin found for id: ${section_submission.skin_id}`)
+    return new AssignedSection(
+      section_submission.uuid,
+      student,
+      section,
+      section_index,
+      skin,
+      section_submission.questions.map((q_sub, q_i) => {
+        let question = section.getQuestionById(q_sub.question_id) ?? assertFalse(`No matching question found id: ${q_sub.question_id}`);
+        return AssignedQuestion.createFromSubmission(question, student, q_sub, skin);
+      })
+    );
+  }
+  
   public gradeAllQuestions(ex: AssignedExam, graders: GraderMap) {
     this.assignedQuestions.forEach(aq => {
       let grader = graders[aq.question.question_id] ?? aq.question.defaultGrader;
@@ -308,39 +351,9 @@ export class AssignedExam {
       submission.uuid,
       exam,
       student,
-      submission.sections.flatMap((s, s_i) => {
-        let section = exam.getSectionById(s.section_id) ?? assertFalse(`No matching section found id: ${s.section_id}`);
-        let sectionSkins = [
-          section.skin.component_kind !== "chooser"
-            ? section.skin
-            : section.skin.all_choices.find(skin => skin.skin_id === s.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
-        ];
-        return sectionSkins.map(sectionSkin => new AssignedSection(
-          s.uuid,
-          section,
-          s_i,
-          sectionSkin,
-          s.questions.flatMap((q, q_i) => {
-            let question = exam.getQuestionById(q.question_id) ?? assertFalse(`No matching question found id: ${q.question_id}`);
-            let questionSkins = [
-              question.skin.component_kind !== "chooser"
-                ? question.skin
-                : question.skin.all_choices.find(skin => skin.skin_id === q.skin_id) ?? assertFalse(`No matching skin found for id: ${s.skin_id}`)
-            ].map(
-              qSkin => createCompositeSkin(sectionSkin, qSkin)
-            );
-            return questionSkins.map(questionSkin => new AssignedQuestion(
-              q.uuid,
-              exam,
-              submission.student,
-              question,
-              questionSkin,
-              s_i,
-              q_i,
-              questionAnswerHasResponse(q) ? q.response : undefined
-            ));
-          })
-        ));
+      submission.sections.flatMap((s_sub, s_i) => {
+        let section = exam.getSectionById(s_sub.section_id) ?? assertFalse(`No matching section found id: ${s_sub.section_id}`);
+        return AssignedSection.createFromSubmission(section, s_i, student, s_sub);
       }),
       false
     );
@@ -350,7 +363,7 @@ export class AssignedExam {
     exam: Exam, student: StudentInfo,
     uuid_options: UUID_Options, seed: string,
     allow_duplicates: boolean = false,
-    rand: Randomizer = createSectionChoiceRandomizer(seed, exam)
+    rand: Randomizer = createSectionChoiceRandomizer(seed)
   ) {
     let ae = new AssignedExam(
       createStudentUuid(uuid_options, student.uniqname, exam.exam_id),
@@ -366,43 +379,41 @@ export class AssignedExam {
   }
 
   private static createRandomizedSection(
-    exam: Exam, section: Section, student: StudentInfo, sectionIndex: number,
+    exam: Exam, section: Section, student: StudentInfo, section_index: number,
     uuid_options: UUID_Options, seed: string, allow_duplicates: boolean = false,
-    rand: Randomizer = createQuestionChoiceRandomizer(seed, exam, section),
-    skinRand: Randomizer = createSectionSkinRandomizer(seed, exam, section)
+    rand: Randomizer = createQuestionChoiceRandomizer(seed, section),
+    skinRand: Randomizer = createSectionSkinRandomizer(seed, section)
   ) {
     let sectionSkins = chooseSkins(section.skin, exam, student, skinRand);
     assert(allow_duplicates || sectionSkins.length === 1, "Generating multiple skins per section is only allowed if an exam allows duplicate sections.")
     return sectionSkins.map(sectionSkin => new AssignedSection(
       createStudentUuid(uuid_options, student.uniqname, exam.exam_id + "-s-" + section.section_id),
+      student,
       section,
-      sectionIndex,
+      section_index,
       sectionSkin,
       section.questions
         .flatMap(chooser => realizeQuestions(chooseQuestions(chooser, exam, student, rand)))
-        .flatMap((q, partIndex) => this.createRandomizedQuestion(exam, q, student, sectionIndex, partIndex, sectionSkin, uuid_options, seed, allow_duplicates))
+        .flatMap((q, q_i) => this.createRandomizedQuestion(exam, q, student, (section_index+1) + "." + (q_i+1), sectionSkin, uuid_options, seed, allow_duplicates))
     ));
   }
 
   private static createRandomizedQuestion(
-    exam: Exam, question: Question, student: StudentInfo, sectionIndex: number, partIndex: number, sectionSkin: ExamComponentSkin,
+    exam: Exam, question: Question, student: StudentInfo, display_index: string, sectionSkin: ExamComponentSkin,
     uuid_options: UUID_Options, seed: string, allow_duplicates: boolean = false,
-    rand: Randomizer = createQuestionSkinRandomizer(seed, exam, question)
+    rand: Randomizer = createQuestionSkinRandomizer(seed, question)
   ) {
 
     let questionSkins = chooseSkins(question.skin, exam, student, rand).map(qSkin => createCompositeSkin(sectionSkin, qSkin));
     assert(allow_duplicates || questionSkins.length === 1, "Generating multiple skins per question is only allowed if an exam allows duplicate sections.")
     return questionSkins.map(questionSkin => new AssignedQuestion(
       createStudentUuid(uuid_options, student.uniqname, exam.exam_id + "-q-" + question.question_id),
-      exam,
       student,
       question,
       questionSkin,
-      sectionIndex,
-      partIndex,
+      display_index,
       undefined
-    )
-    );
+    ));
   }
 
   public getAssignedQuestionById(question_id: string) {

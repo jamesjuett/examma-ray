@@ -28,10 +28,12 @@ export type FITBDropSpecification = {
   group_id?: string;
 };
 
-export type DropSubmission = {
+export type DropSubmissionItem = {
   id: string,
   children?: (string | DropSubmission)[]
-}[];
+};
+
+export type DropSubmission = DropSubmissionItem[];
 
 export type FITBDropSubmission = (string | DropSubmission)[];
 
@@ -170,7 +172,7 @@ function FITB_DROP_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
     });
 
     // Activate sortablejs for the bank overall
-    activateBank(bank, group_id);
+    activateFITBDropBank(bank, group_id);
   });
 
 }
@@ -201,9 +203,9 @@ function activateDropLocations(elem: JQuery<HTMLElement>) {
   });
 }
 
-export function activateBank(elem: JQuery<HTMLElement>, group_id: string) {
+export function activateFITBDropBank(elem: JQuery<HTMLElement>, group_id: string) {
   
-    console.log(++sortabble_count)
+  console.log(++sortabble_count)
   Sortable.create(elem[0], {
     swapThreshold: 0.2,
     group: {
@@ -214,6 +216,7 @@ export function activateBank(elem: JQuery<HTMLElement>, group_id: string) {
     sort: false,
     animation: 150,
     // TODO
+    // TODO ^^ figure out what that TODO was for
     onClone: evt => activateDropLocations($(evt.item))
   });
 }

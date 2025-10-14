@@ -104,7 +104,7 @@ import { AssignedExam, AssignedQuestion, createStudentUuid, isGradedQuestion, UU
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
-import { StudentInfo } from './core/exam_specification';
+import { exam_spec_without_assets_dirs, StudentInfo } from './core/exam_specification';
 import { GradedStats } from "./core/GradedStats";
 import { ICON_BOX_CHECK } from './core/icons';
 import { TrustedExamSubmission } from './core/submissions';
@@ -317,6 +317,14 @@ export class ExamGrader {
 
   public writeGraderPages() {
     writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
+    
+    const specDir = path.join("out", this.exam.exam_id, "graded", "spec");
+    mkdirSync(specDir);
+    ExamUtils.writeExamSpecificationToFileSync(
+      path.join(specDir, "exam-spec.json"),
+      exam_spec_without_assets_dirs(this.exam.spec)
+    );
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
@@ -418,8 +426,8 @@ export class ExamGrader {
     }
 
     // Create output directories
-    mkdirSync(`out/${this.exam.exam_id}/graded/questions/`, { recursive: true });
-    let out_filename = `out/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
+    mkdirSync(`out/${this.exam.exam_id}/graded/questions/${question.question_id}`, { recursive: true });
+    let out_filename = `out/${this.exam.exam_id}/graded/questions/${question.question_id}/grader.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader || !grader.isGrader(question.kind)) {
@@ -502,7 +510,7 @@ export class ExamGrader {
           </div>
           <div class="collapse" id="${overview_id}-details">
             <div class="card-body">
-              <div><a href="questions/${question.question_id}.html">Question Analysis Page</a></div>
+              <div><a href="questions/${question.question_id}/grader.html">Question Analysis Page</a></div>
               ${question.renderDescription(assignedQuestions[0].skin)}
               ${question_overview}
               ${question.renderPostscript(assignedQuestions[0].skin)}

@@ -2,7 +2,7 @@ import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned
 import { RED_X_ICON } from "../core/icons";
 import { mk2html } from "../core/render";
 import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
-import { assert, assertFalse } from "../core/util";
+import { asMutable, assert, assertFalse } from "../core/util";
 import { ResponseKind } from "../response/common";
 import { validate_submission } from "../response/handlers";
 import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
@@ -42,7 +42,9 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     return responseKind === "multiple_choice";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: SummationMCGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;

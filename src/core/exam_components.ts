@@ -123,6 +123,10 @@ export class Section {
   public readonly right_column_width: number;
   public readonly assets_dir?: string;
 
+  public readonly allQuestions: readonly Question[];
+  
+  private readonly questionsMap: { [index: string]: Question | undefined } = {};
+
   private readonly descriptionCache: {
     [index:string] : string | undefined
   } = {};
@@ -167,10 +171,20 @@ export class Section {
     this.right_column_width = spec.right_column_width ?? DEFAULT_REFERENCE_WIDTH;
     this.assets_dir = spec.assets_dir;
 
+    this.allQuestions = this.questions.flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
+    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    // There shouldn't be any duplicates
+    assert(Object.keys(this.questionsMap).length === this.allQuestions.length, `Duplicate question IDs found within section ${this.section_id}`);
+
     assert(
       Number.isInteger(this.right_column_width) && 0 <= this.right_column_width && this.right_column_width <= 100,
       `Right panel width must be an integer between 0 and 100, inclusive, representing a percent. Value provided: ${this.right_column_width}`
     );
+  }
+  
+  public getQuestionById(question_id: string) {
+    return this.questionsMap[question_id];
   }
 
   public renderDescription(skin: ExamComponentSkin) {

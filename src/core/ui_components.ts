@@ -1,5 +1,5 @@
 import chroma from 'chroma-js';
-
+import randomColor from 'randomcolor';
 
 
 export function maxPrecisionString(points: number, precision: number) {
@@ -20,6 +20,10 @@ export function renderScoreBadge(pointsEarned: number, pointsPossible: number, p
     pointsEarned === 0 ? "badge-danger" :
       pointsEarned < pointsPossible ? "badge-warning" :
         "badge-success"} examma-ray-score-badge">${prefix}${text}</span>`;
+}
+
+export function renderRandomColorBadge(content: string, seed: string) {
+  return `<span class="badge" style="background-color: ${randomColor({luminosity: "light", seed: seed})};" examma-ray-score-badge">${content}</span>`;
 }
 
 export function renderUngradedBadge(pointsPossible: number) {

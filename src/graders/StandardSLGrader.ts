@@ -5,7 +5,7 @@ import { ResponseKind } from "../response/common";
 import { SLItem, SLSubmission } from "../response/select_lines";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { CHECK_ICON, GRAY_DASH_ICON, INFO_OCTICON, RED_X_ICON } from "../core/icons";
-import { assert } from "../core/util";
+import { asMutable, assert } from "../core/util";
 
 
 export type StandardSLGradingResult = ImmutableGradingResult & {
@@ -50,7 +50,9 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     return responseKind === "select_lines";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: StandardSLGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"select_lines">) : StandardSLGradingResult {
     const submission = aq.submission;

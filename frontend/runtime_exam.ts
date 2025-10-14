@@ -1,6 +1,6 @@
 import { Blob } from "blob-polyfill";
 import storageAvailable from "storage-available";
-import { areExamSubmissionsEquivalent, createManifestFilenameBase, ExamSubmission, fillManifest, isBlankSubmission, isTransparentExamManifest, OpaqueExamSubmission, OpaqueQuestionAnswer, OpaqueSectionAnswers, parseExamManifest, parseExamSubmission, QuestionAnswer } from "../src/core/submissions";
+import { areExamSubmissionsEquivalent, createManifestFilenameBase, ExamSubmission, fillManifest, isBlankSubmission, isTransparentExamManifest, OpaqueExamSubmission, OpaqueQuestionSubmission, OpaqueSectionSubmission, parseExamManifest, parseExamSubmission, QuestionSubmission } from "../src/core/submissions";
 import { BLANK_SUBMISSION } from "../src/response/responses";
 
 import { FILE_CHECK, FILE_MINUS } from '../src/core/icons';
@@ -17,7 +17,7 @@ import { setupQuestionStars } from "./question_stars";
 import { extract_response, fill_response, parse_submission, stringify_response } from "../src/response/handlers";
 
 
-function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
+function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionSubmission {
   let response = question_elem.find(".examma-ray-question-response");
   return {
     uuid: question_elem.data("question-uuid"),
@@ -27,7 +27,7 @@ function extractQuestionAnswers(question_elem: JQuery) : OpaqueQuestionAnswer {
   }
 }
 
-function extractSectionAnswers(section_elem: JQuery) : OpaqueSectionAnswers {
+function extractSectionAnswers(section_elem: JQuery) : OpaqueSectionSubmission {
   return {
     uuid: section_elem.data("section-uuid"),
     display_index: section_elem.data("section-display-index"),
@@ -71,7 +71,7 @@ function stringifyExamAnswers(answers: OpaqueExamSubmission) : string {
   return JSON.stringify(answers, null, 2);
 }
 
-function fillQuestionAnswer(qa: QuestionAnswer) {
+function fillQuestionAnswer(qa: QuestionSubmission) {
   let questionElem = $(`#question-${qa.uuid}`);
   let responseElem = questionElem.find(".examma-ray-question-response");
   if (responseElem.length > 0 && qa.kind === responseElem.data("response-kind")) {

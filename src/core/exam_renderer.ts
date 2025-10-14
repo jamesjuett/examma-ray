@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'path-browserify';
 import { AssignedSection, Exam } from '../core';
 import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
@@ -838,18 +838,18 @@ export class GradedExamRenderer extends ExamRenderer {
       </div>`; 
     }
 
-    let regrades = `
-      <div style="text-align: right">
-        <input type="checkbox" id="regrade-${aq.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${aq.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${aq.uuid}"></input>
-        <label for="regrade-${aq.uuid}-checkbox">Mark for Regrade</label>
-      </div>
-      <div class="collapse examma-ray-question-regrade" id="regrade-${aq.uuid}">
-        <p>Please describe your regrade request for this question in the box below. After
-        marking <b>all</b> questions for which you would like to request a regrade,
-        click "Submit Regrade Request" at the bottom of the page.</p>
-        <textarea class="examma-ray-regrade-entry"></textarea>
-      </div>
-    `;
+    // let regrades = `
+    //   <div style="text-align: right">
+    //     <input type="checkbox" id="regrade-${aq.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${aq.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${aq.uuid}"></input>
+    //     <label for="regrade-${aq.uuid}-checkbox">Mark for Regrade</label>
+    //   </div>
+    //   <div class="collapse examma-ray-question-regrade" id="regrade-${aq.uuid}">
+    //     <p>Please describe your regrade request for this question in the box below. After
+    //     marking <b>all</b> questions for which you would like to request a regrade,
+    //     click "Submit Regrade Request" at the bottom of the page.</p>
+    //     <textarea class="examma-ray-regrade-entry"></textarea>
+    //   </div>
+    // `;
 
     return `
       <div class="examma-ray-question-exception">
@@ -858,8 +858,9 @@ export class GradedExamRenderer extends ExamRenderer {
       <div class="examma-ray-grading-report">
         ${graded_html}
       </div>
-      ${aq.exam.enable_regrades ? regrades : ""}
-    `;
+      `;
+      // TODO: regrades have been taken out for now (they were never finished)
+      // ${aq.exam.enable_regrades ? regrades : ""}
   }
 
   private renderExceptionIfPresent(aq: AssignedQuestion) {

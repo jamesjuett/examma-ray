@@ -18,7 +18,7 @@ import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { ICON_BOX_CHECK, ICON_CHECK_SQUARE_FILL, ICON_EXCLAMATION_SQUARE_FILL, ICON_INFO, ICON_INFO_SQUARE_FILL } from "../core/icons";
 import { applySkin, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderMultilinePointsProgressBar, renderNumBadge, renderScoreBadge } from "../core/ui_components";
-import { assert, assertNever } from "../core/util";
+import { asMutable, assert, assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { ViableSubmission } from "../response/responses";
@@ -96,7 +96,9 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     return responseKind === "fill_in_the_blank";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: FITBRegexGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"fill_in_the_blank">) : FITBRegexGradingResult {
     let submission = aq.submission;

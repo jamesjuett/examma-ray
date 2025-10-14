@@ -1,11 +1,11 @@
 
-import { QuestionGrader, AssignedQuestion } from "../core";
+import { QuestionGrader, AssignedQuestion, OriginalExamRenderer } from "../core";
 import { GradedQuestion } from "../core/assigned_exams";
 import { mk2html, mk2html_unwrapped, applySkin } from "../core/render";
-import { renderScoreBadge } from "../core/ui_components";
-import { assertNever } from "../core/util";
+import { renderRandomColorBadge, renderPointsWorthBadge, renderScoreBadge } from "../core/ui_components";
+import { asMutable, assert, assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission } from "../response/fitb-drop";
+import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission, DropSubmissionItem, renderFITBDropBank } from "../response/fitb-drop";
 import { GradingResult } from "./QuestionGrader";
 
 const ICON_INFO = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
@@ -25,11 +25,13 @@ export type FITBDropRubricItemEvaluation = {
   explanation: string;
 }
 
+export type FITBDropRubricItemPolicy = "first_match" | "best_score";
 export type FITBDropRubricItem = {
   title: string;
   points: number;
   description: string;
-  evaluator: FITBDropEvaluatorSpecification
+  policy: FITBDropRubricItemPolicy;
+  evaluators: FITBDropEvaluatorSpecification[]
 };
 
 export type StandardFITBDropGraderSpecification = {
@@ -51,11 +53,12 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     return responseKind === "fitb_drop";
   }
 
-  public prepare() {
-    // do nothing
+  public prepare(exam_id: string, question_id: string, spec: StandardFITBDropGraderSpecification) {
+    asMutable(this).spec = spec;
   }
 
   public grade(aq: AssignedQuestion<"fitb_drop">): FITBDropGradingResult {
+    // console.log("-----------------", aq.student.uniqname, aq.question.question_id)
     const submission = aq.submission;
     if (submission.validity === "blank") {
       return {
@@ -159,8 +162,129 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
     // not yet implemented
   }
 
-  public renderStats(aqs: readonly AssignedQuestion<"fitb_drop">[]): string {
-    return "";
+
+  public renderStats(aqs: readonly AssignedQuestion<"fitb_drop">[]) {
+    if (aqs.length === 0) {
+      return "No submissions for this question.";
+    }
+    
+    let question = aqs[0].question;
+    let submission_encodings = aqs.map(aq => aq.submission)
+      .filter(s => s.validity === "viable")
+      .map(s => s.encoding);
+
+    
+    const renderer = new OriginalExamRenderer();
+    
+    const question_response_html = renderer.renderQuestion(aqs[0]);
+
+    const drop_bank_html = renderFITBDropBank(aqs[0].question.response.droppables, question.response.group_id ?? question.question_id, aqs[0].skin);
+    
+    // let gradedBlankSubmissions = this.getGradedBlanksSubmissions(submission_encodings);
+
+    // let allMatched = gradedBlankSubmissions.every(subs => subs.every(s => s.grading_result.matched));
+
+    // let sampleSolution = question.sampleSolution;
+    // let solutionFilled = createFilledFITB(question.response.content, sampleSolution);
+    // const gqs = aqs.filter((aq: AssignedQuestion) : aq is GradedQuestion<"fill_in_the_blank", FITBRegexGradingResult> => aq.isGraded());
+
+
+    // checkbox for each rubric item
+    const rubric_itmes_html = this.spec.rubric.map((ri, i) => `
+      <div class="form-check">
+        <input class="form-check-input rubric-item-filter" data-rubric-index="${i}" type="checkbox" id="rubric-item-filter-${i}" checked>
+        <label class="form-check-label" for="rubric-item-filter-${i}">
+          ${renderRandomColorBadge(`${ri.points} points`, ri.title)} ${mk2html_unwrapped(ri.title)} (${ri.points} pts)
+        </label>
+      </div>
+    `).join("\n");
+
+    
+
+    const submission_cards : string = `<div class="row row-cols-2">
+      ${aqs.map(aq => {
+        if (aq.isGraded()) {
+          assert(aq.wasGradedBy(this));
+          return `<div class="col mb-4"><div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              ${aq.student.uniqname}
+            </h5>
+            <div>
+              ${aq.gradingResult.wasBlankSubmission ? "" : aq.gradingResult.evaluation.map(
+                (item_result, i) => `<div class="rubric-result rubric-result-${i}" style="display: none; opacity: ${item_result.pointsEarned / this.spec.rubric[i].points}">${renderRandomColorBadge(`${item_result.pointsEarned} / ${this.spec.rubric[i].points}`, this.spec.rubric[i].title)} ${this.spec.rubric[i].title}</div>`
+              ).join(" ")}
+            </div>
+            <div style="font-size: 7pt;">${aq.submission.validity === "blank" ? "Blank Submission" : aq.question.renderResponseSolution(aq.uuid, aq.submission, aq.skin)}</div>
+          </div>
+        </div></div>`
+        }
+        else {
+          return `<div class="col mb-4"><div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              ${aq.student.uniqname}
+              <span class="badge badge-secondary">Not Graded</span>
+            </h5>
+            <div>${aq.submission.validity === "blank" ? "Blank Submission" : aq.question.renderResponseSolution(aq.uuid, aq.submission, aq.skin)}</div>
+          </div>
+        </div></div>`;
+        }
+      }).join("\n")}
+    </div>`;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <meta charset="UTF-8">
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+      <script src="../js/grader-page-fitb-drop.js"></script>
+      <body>
+        <table style="width: 100%;">
+          <tr>
+            <td>
+              <div style="height: 100vh; overflow-y: scroll; resize: horizontal; border: 1px solid gray; padding: 0.5em;">
+                <div>
+                  ${question_response_html}
+                </div>
+                <div class="examma-ray-fitb-grader-drop-bank">
+                  ${drop_bank_html}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="height: 100vh; overflow-y: scroll;">
+                <div>
+                  ${rubric_itmes_html}
+                </div>
+                <div class="container-fluid">
+                  ${submission_cards}
+                  <div class="checked-submissions-modal modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Selected Answers</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          <pre><code class="checked-submissions-content"></code></pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
   }
 
   public renderOverview(gqs: readonly GradedQuestion<"fitb_drop", FITBDropGradingResult>[]): string {
@@ -172,8 +296,8 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
 type SimpleDropEvaluatorSpecification = {
   readonly kind: "simple_drop_evaluator",
   readonly index: number,
-  readonly evaluations: {
-    [index: string]: FITBDropRubricItemEvaluation
+  readonly evaluations_by_droppable_id: {
+    readonly [index: string]: FITBDropRubricItemEvaluation | undefined
   }
 };
 
@@ -194,10 +318,10 @@ function simpleDropEvaluation(spec: SimpleDropEvaluatorSpecification, submission
   }
 
   if (box.length > 1) {
-    return {pointsEarned: 0, explanation: "Only 1 drop item was expected for this blank (i.e. multiple items constitute an incorrect answer)."};
+    return {pointsEarned: 0, explanation: "Only 1 drop item was expected for this box (i.e. multiple items constitute an incorrect answer)."};
   }
 
-  return spec.evaluations[box[0].id] ?? FITBDropEvaluations.no_credit();
+  return spec.evaluations_by_droppable_id[box[0].id];
 }
 
 
@@ -205,13 +329,10 @@ type TargetDropEvaluatorSpecification = {
   readonly kind: "target_drop_evaluator",
   readonly index: number,
   readonly include_children?: boolean,
-  readonly evaluations: readonly {
-    readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none" | "require_blank",
-    readonly targets: readonly string[],
-    readonly prohibited?: readonly string[]
-    readonly evaluation: FITBDropRubricItemEvaluation
-  }[],
-  readonly global_prohibited?: readonly string[]
+  readonly criteria: "at_least_one" | "exactly_one" | "require_all" | "require_none" | "require_blank",
+  readonly targets: readonly string[],
+  readonly prohibited?: readonly string[]
+  readonly evaluation: FITBDropRubricItemEvaluation
 };
 
 function child_contains(container: (string | DropSubmission)[] | undefined, item_id: string) : boolean {
@@ -233,37 +354,156 @@ export function targetDropEvaluation(spec: TargetDropEvaluatorSpecification, sub
 
   const inBox = (id:string) => !!box.find(item => item.id === id || spec.include_children && child_contains(item.children, id));
 
-  if (spec.global_prohibited?.some(inBox)) {
-    return FITBDropEvaluations.no_credit();
+  if (spec.prohibited?.some(inBox)) {
+    return {pointsEarned: 0, explanation: "Your submission for this box contains items that were not allowed in a correct submission."};
+  }
+  
+  let num_matched_targets = spec.targets.filter(inBox).length;
+
+  const matched = spec.criteria === "at_least_one" ? num_matched_targets >= 1
+    : spec.criteria === "exactly_one" ? num_matched_targets === 1
+    : spec.criteria === "require_all" ? num_matched_targets === spec.targets.length
+    : spec.criteria === "require_none" ? true
+    : spec.criteria === "require_blank" ? box.length === 0
+    : assertNever(spec.criteria);
+
+  return matched ? spec.evaluation : FITBDropEvaluations.no_credit();
+}
+
+export type DropMatchItem = {
+  id: string,
+  children?: readonly DropMatchStructure[]
+  readonly ignore_ordering?: boolean,
+  readonly ignore_nesting?: boolean,
+};
+
+export type DropMatchStructure = readonly DropMatchItem[];
+
+type MatchingDropEvaluatorSpecification = {
+  readonly kind: "matching_drop_evaluator",
+  readonly structure: Omit<DropMatchItem, "id" | "children"> & Required<Pick<DropMatchItem, "children">>,
+  readonly evaluation: FITBDropRubricItemEvaluation
+};
+
+function topLevelMatch(structure_item: Omit<DropMatchItem, "id">, sub_item: FITBDropSubmission) : boolean {
+  return itemMatch({...structure_item, id: "placeholder"}, {children: sub_item, id: "placeholder"});
+}
+
+export function itemMatch(structure_item: DropMatchItem, sub_item: DropSubmissionItem) : boolean {
+  // console.log("!!!Matching", JSON.stringify(structure_item), "against", JSON.stringify(sub_item));
+  if (structure_item.id !== sub_item.id) { return false; } // not a match
+  if (!structure_item.children) { return true; } // match, no children to check
+
+  // Recursively check children
+  return structure_item.children.every(
+    (child, i) => matchStructure(child, sub_item.children?.[i], structure_item.ignore_ordering, structure_item.ignore_nesting)
+  );
+}
+
+export function itemMatchAnyChild(structure_item: DropMatchItem, sub_item: DropSubmissionItem) : boolean {
+  // console.log("!!!Matching any child of", JSON.stringify(sub_item), "against", JSON.stringify(structure_item));
+  return !!sub_item.children?.some(child => typeof child !== "string" && child.some(child_item => itemMatch(structure_item, child_item)));
+}
+
+export function matchStructure(structure: DropMatchStructure, submission: string | DropSubmission | undefined, ignore_ordering: boolean | undefined, ignore_nesting: boolean | undefined) : boolean {
+  // console.log(JSON.stringify({structure, submission, ignore_ordering}, null, 2));
+
+  // Note: do not access structure_item.ignore_ordering or structure_item.ignore_nesting here,
+  // those are only relevant for the children of that item, not the item itself.
+  // The ignore_ordering and ignore_nesting parameters are passed down from the parent item.
+
+  if (typeof submission === "string") {
+    return false;
+  }
+  
+  if (structure.length === 0) {
+    return true;
   }
 
-  let match = spec.evaluations.find(evaluation => {
-    
-    if (evaluation.prohibited?.some(inBox)) {
-      return false;
-    }
-    
-    let num_matched_targets = evaluation.targets.filter(inBox).length;
+  if (submission === undefined) {
+    return false;
+  }
 
-    return evaluation.criteria === "at_least_one" ? num_matched_targets >= 1
-      : evaluation.criteria === "exactly_one" ? num_matched_targets === 1
-      : evaluation.criteria === "require_all" ? num_matched_targets === evaluation.targets.length
-      : evaluation.criteria === "require_none" ? true
-      : evaluation.criteria === "require_blank" ? box.length === 0
-      : assertNever(evaluation.criteria);
-  });
+  if (ignore_ordering) {
+    // If we don't care about ordering, then each structure item
+    // just needs to be matched by at least one submission item.
+    return structure.every(structure_item => submission.some(
+      sub_item => itemMatch(structure_item, sub_item) || ignore_nesting && itemMatchAnyChild(structure_item, sub_item)
+    ));
+  }
+  else {
+    let to_match = structure.slice();
+      
+    // If we care about ordering, then iterate through the
+    // submission and try to match each structure item in order.
+    // No need to ever "rewind" here.
+    submission.forEach(sub_item => {
+      if (to_match.length === 0) {
+        return; // already matched everything
+      }
 
-  return match?.evaluation ?? FITBDropEvaluations.no_credit();
+      // console.log("original");
+      if (itemMatch(to_match[0], sub_item)) {
+        to_match.shift();
+        return;
+      }
+
+      // console.log("children");
+      if (ignore_nesting && itemMatchAnyChild(to_match[0], sub_item)) {
+        to_match.shift();
+        return;
+      }
+    });
+
+    // If we matched everything, then the match was successful.
+    return to_match.length === 0;
+  }
+
+}
+
+export function matchingDropEvaluation(evaluator: MatchingDropEvaluatorSpecification, submission: FITBDropSubmission) {
+  
+  if (submission.length === 0) {
+    return {pointsEarned: 0, explanation: "Your submission was blank."};
+  }
+  
+  return topLevelMatch(evaluator.structure, submission) ? evaluator.evaluation : FITBDropEvaluations.no_credit();
+
 }
 
 export type FITBDropEvaluatorSpecification =
   | SimpleDropEvaluatorSpecification
-  | TargetDropEvaluatorSpecification;
+  | TargetDropEvaluatorSpecification
+  | MatchingDropEvaluatorSpecification;
 
-function evaluateRubricItem(ri: FITBDropRubricItem, submission: FITBDropSubmission) {
-  return ri.evaluator.kind === "simple_drop_evaluator" ? simpleDropEvaluation(ri.evaluator, submission) :
-    ri.evaluator.kind === "target_drop_evaluator" ? targetDropEvaluation(ri.evaluator, submission) :
-    assertNever(ri.evaluator);
+export function fitbDropEvaluate(evaluator: FITBDropEvaluatorSpecification, submission: FITBDropSubmission) {
+
+  return evaluator.kind === "simple_drop_evaluator" ? simpleDropEvaluation(evaluator, submission) :
+    evaluator.kind === "target_drop_evaluator" ? targetDropEvaluation(evaluator, submission) :
+    evaluator.kind === "matching_drop_evaluator" ? matchingDropEvaluation(evaluator, submission) :
+    assertNever(evaluator);
+
+}
+
+export function evaluateRubricItem(ri: FITBDropRubricItem, submission: FITBDropSubmission) {
+  
+  if (ri.policy === "first_match") {
+    for(const evaluator of ri.evaluators) {
+      const evaluation = fitbDropEvaluate(evaluator, submission);
+      if (evaluation) { return evaluation; }
+    }
+    return FITBDropEvaluations.no_credit();
+  }
+  else if (ri.policy === "best_score") {
+    return ri.evaluators
+      .map(evaluator => fitbDropEvaluate(evaluator, submission))
+      .filter(ev => ev !== undefined)
+      .reduce((best, cur) => cur.pointsEarned > best.pointsEarned ? cur : best, FITBDropEvaluations.no_credit());
+  }
+  else {
+    return assertNever(ri.policy);
+  }
+
 }
 
 

@@ -9,7 +9,7 @@ import 'codemirror/addon/comment/comment.js';
 import 'codemirror/keymap/sublime.js';
 import { decode } from "he";
 
-import { activateBank } from "../src/response/fitb-drop";
+import { activateFITBDropBank } from "../src/response/fitb-drop";
 import { ResponseKind } from "../src/response/common";
 import { activate_response } from "../src/response/handlers";
 
@@ -34,7 +34,7 @@ export function activateExamContent() {
   $(".examma-ray-section-reference .examma-ray-fitb-drop-bank").each(function() {
     let bank = $(this);
     let group_id = bank.data("examma-ray-fitb-drop-group-id")
-    activateBank(bank, group_id);
+    activateFITBDropBank(bank, group_id);
   });
 
   $(".examma-ray-question-response").map(activateResponse).get()
