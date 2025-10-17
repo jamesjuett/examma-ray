@@ -88,6 +88,7 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
     this.html_postscript = question.renderPostscript(this.skin);
   }
 
+  // TODO: perhaps add a template parameter here for question kind
   public static createFromSubmission(
     question: Question, student: StudentInfo,
     question_submission: TransparentQuestionManifest | TransparentQuestionSubmission, section_skin?: ExamComponentSkin) {
@@ -95,6 +96,21 @@ export class AssignedQuestion<QT extends ResponseKind = ResponseKind> {
       ? question.skin
       : question.skin.all_choices.find(skin => skin.skin_id === question_submission.skin_id) ?? assertFalse(`No matching skin found for id: ${question_submission.skin_id}`)
     const skin = section_skin ? createCompositeSkin(section_skin, question_only_skin) : question_only_skin;
+    return new AssignedQuestion(
+      question_submission.uuid,
+      student,
+      question,
+      skin,
+      question_submission.display_index,
+      questionSubmissionHasResponse(question_submission) ? question_submission.response : undefined
+    );
+  }
+
+  public static createFromSubmissionWithSkinOverride(
+    question: Question, student: StudentInfo,
+    question_submission: TransparentQuestionManifest | TransparentQuestionSubmission,
+    skin: ExamComponentSkin
+  ) {
     return new AssignedQuestion(
       question_submission.uuid,
       student,

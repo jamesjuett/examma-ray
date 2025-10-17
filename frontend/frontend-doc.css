@@ -534,6 +534,7 @@ pre code .examma-ray-fitb-droppable .examma-ray-fitb-droppable {
   display: table;
   border-collapse: separate;
   margin: 0.24em;
+  white-space: initial;
 }
 
 .examma-ray-fitb-droppable:not(:only-child) {

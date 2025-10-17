@@ -239,6 +239,8 @@ export function realizeGrader<GK extends GraderKind>(spec: GraderSpecification<G
   );
 }
 
+export type GradedResponseKind<GK extends GraderKind> = Grader<GK>["t_response_kinds"];
+
 
 export type GradingResult = {
   wasBlankSubmission: boolean

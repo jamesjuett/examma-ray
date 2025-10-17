@@ -8,7 +8,7 @@ import { GraderSpecificationFor } from "../graders/QuestionGrader";
 import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
 // TODO: ensure droppable IDs cannot contain characters like {{}} for skins
-export type DroppableSpecification = {
+export type DroppableSpecification = readonly {
   id: string,
   content: string;
 }[];
@@ -183,10 +183,8 @@ function groupsMatch(to: Sortable, from: Sortable) {
   return to_group_name === from_group_name; // also covers undefined === undefined case
 }
 
-let sortabble_count = 0;
 function activateDropLocations(elem: JQuery<HTMLElement>) {
   elem.find(".examma-ray-fitb-drop-location").each(function() {
-    console.log(++sortabble_count)
     Sortable.create(this, {
       swapThreshold: 0.2,
       animation: 150,
@@ -196,7 +194,7 @@ function activateDropLocations(elem: JQuery<HTMLElement>) {
           return groupsMatch(to, from) // drop group ids must match
             && elem.closest("#bank").length === 0; // not dropping into a nested drop location in a bank element
         },
-        pull: true
+        pull: true,
       },
       removeOnSpill: true
     });
@@ -205,7 +203,6 @@ function activateDropLocations(elem: JQuery<HTMLElement>) {
 
 export function activateFITBDropBank(elem: JQuery<HTMLElement>, group_id: string) {
   
-  console.log(++sortabble_count)
   Sortable.create(elem[0], {
     swapThreshold: 0.2,
     group: {
@@ -216,33 +213,31 @@ export function activateFITBDropBank(elem: JQuery<HTMLElement>, group_id: string
     sort: false,
     animation: 150,
     // TODO
-    // TODO ^^ figure out what that TODO was for
+    // TODO ^^ figure out what that TODO was for... maybe it was evt.item vs. evt.clone?
     onClone: evt => activateDropLocations($(evt.item))
   });
 }
 
-function getFirstLevelFITBDropElements(responseElem: JQuery<HTMLElement>) {
-  return responseElem.find("input, textarea, .examma-ray-fitb-drop-location")
-    .filter(function () {
-      // Exclude elements that are nested inside an .examma-ray-fitb-drop-location element. Those
-      // will be explored via the recursion below to properly populate the "children" array for a drop location.
-      if ($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length !== 0) {
-        return false;
-      }
+export function getFirstLevelFITBDropElements(responseElem: JQuery<HTMLElement>) {
+  return responseElem.find(".examma-ray-fitb-blank-input, .examma-ray-fitb-box-input, .examma-ray-fitb-drop-location").filter(function () {
+    // Exclude elements that are nested inside an .examma-ray-fitb-drop-location element. Those
+    // will be explored via the recursion below to properly populate the "children" array for a drop location.
+    if ($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length !== 0) {
+      return false;
+    }
 
-      // Exclude elements that are inside of the hidden original droppables element
-      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-originals").length !== 0) {
-        return false;
-      }
+    // Exclude elements that are inside of the hidden original droppables element
+    if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-originals").length !== 0) {
+      return false;
+    }
 
-      // Exclude elements that are inside of a drop bank
-      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-bank").length !== 0) {
-        return false;
-      }
+    // Exclude elements that are inside of a drop bank
+    if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-bank").length !== 0) {
+      return false;
+    }
 
-      return true;
-    })
-    .get();
+    return true;
+  }).get();
 }
 
 function extractHelper(responseElem: JQuery) : FITBDropSubmission{
@@ -361,14 +356,14 @@ function cloneFromOriginals(originalsElem: JQuery, id: string) {
 const BLANK_PATTERN = /_+ *blank *_+/gi;
 
 /**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
+ * Matches anything that looks like e.g. [[_____BOX_____\n\n\n\n\n]] or [[Box\n\n]].
  * Those are real newlines, and at least 1 is required.
  */
 const BOX_PATTERN = /\[\[[ _]*box[ _]*( *\n)+ *\]\]/gi;
 
 /**
- * Matches anything that looks like e.g. [[DROP\n\n\n\n\n__________] or [[Drop\n\n]].
- * Those are real newlines, and at least 1 is required.
+ * Matches anything that looks like e.g. [[_____DROP_____\n\n\n\n\n] or [[Drop\n\n]].
+ * Those are real newlines, but none are actually required.
  */
 const DROP_LOCATION_PATTERN = /\[\[[ _]*drop[ _]*( *\n)* *\]\]/gi;
 

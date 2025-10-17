@@ -11,7 +11,7 @@ import { assert } from "../core/util";
 export const BLANK_PATTERN = /_+ *(BLANK|Blank|blank) *_+/g;
 
 /**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
+ * Matches anything that looks like e.g. [[_____BOX______\n\n\n\n\n]] or [[Box\n\n]].
  * Those are real newlines, and at least 1 is required.
  */
 export const BOX_PATTERN = /\[\[[ _]*(BOX|Box|box)[ _]*( *\n)+ *\]\]/g;

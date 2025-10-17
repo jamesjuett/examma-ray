@@ -1,6 +1,6 @@
 {
   "name": "examma-ray",
-  "version": "1.0.433",
+  "version": "1.0.442",
   "description": "## Setup",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
@@ -75,6 +75,7 @@
     "storage-available": "^1.1.0",
     "toposort": "^2.0.2",
     "ts-dedent": "^2.2.0",
+    "ts-expect": "^1.3.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.2",
     "unique-names-generator": "^4.4.0",

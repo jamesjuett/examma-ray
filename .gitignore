@@ -103,6 +103,8 @@ dist
 # TernJS port file
 .tern-port
 
+.VSCodeCounter/
+
 # examma-ray custom
 dist/
 data/
