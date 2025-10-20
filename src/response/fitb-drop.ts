@@ -183,7 +183,7 @@ function groupsMatch(to: Sortable, from: Sortable) {
   return to_group_name === from_group_name; // also covers undefined === undefined case
 }
 
-function activateDropLocations(elem: JQuery<HTMLElement>) {
+export function activateDropLocations(elem: JQuery<HTMLElement>) {
   elem.find(".examma-ray-fitb-drop-location").each(function() {
     Sortable.create(this, {
       swapThreshold: 0.2,

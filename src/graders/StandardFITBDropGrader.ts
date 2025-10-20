@@ -6,10 +6,10 @@ import { mk2html, mk2html_unwrapped, applySkin } from "../core/render";
 import { renderRandomColorBadge, renderPointsWorthBadge, renderScoreBadge } from "../core/ui_components";
 import { asMutable, assert, assertFalse, assertNever } from "../core/util";
 import { ResponseKind } from "../response/common";
-import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission, DropSubmissionItem, renderFITBDropBank, DroppableSpecification, getFirstLevelFITBDropElements } from "../response/fitb-drop";
+import { FITBDropSubmission, createFilledFITBDrop, mapSkinOverSubmission, DropSubmission, DropSubmissionItem, renderFITBDropBank, DroppableSpecification, getFirstLevelFITBDropElements, activateDropLocations } from "../response/fitb-drop";
 import { GradingResult } from "./QuestionGrader";
 import { expectType, TypeOf } from "ts-expect";
-import { match } from "assert";
+import { assertAsSingleton } from "../core/util";
 
 const ICON_INFO = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
   <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
@@ -76,9 +76,7 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
   }
 
   public pointsEarned(gr: FITBDropGradingResult): number {
-    return gr.wasBlankSubmission === true // the === true is apparently required by the type system for discriminating the union???
-      ? 0
-      : gr.evaluation.reduce((prev, cur) => prev + cur.pointsEarned, 0);
+    return gr.wasBlankSubmission ? 0 : gr.evaluation.reduce((prev, cur) => prev + cur.pointsEarned, 0);
   }
 
   public renderReport(gq: GradedQuestion<"fitb_drop", FITBDropGradingResult>): string {
@@ -413,9 +411,9 @@ export const SPECIAL_MATCHER_DROPPABLES = [
         <div class="examma-ray-drop-matcher-config">
           <i class="bi bi-diagram-3"></i>
           Min
-          <input type="number" min="0" max="9" value="0" class="examma-ray-drop-matcher-depth-number" name="examma-ray-drop-matcher-min-depth" />
+          <input type="number" min="0" max="9" value="0" name="examma-ray-drop-matcher-min-depth" />
           Max
-          <input type="number" min="0" max="9" value="1" class="examma-ray-drop-matcher-depth-number" name="examma-ray-drop-matcher-max-depth" />
+          <input type="number" min="0" max="9" value="1" name="examma-ray-drop-matcher-max-depth" />
         </div>
         [[DROP__________]]
       </div>
@@ -443,32 +441,41 @@ type SPECIAL_MATCHER_ID = typeof SPECIAL_MATCHER_DROPPABLES[number]["id"];
 expectType<TypeOf<DroppableSpecification, typeof SPECIAL_MATCHER_DROPPABLES>>(true);
 
 
-interface IDDropItemMatcher {
+interface DropItemMatcherBase {
+  readonly id: string;
+  readonly children?: readonly DropLocationMatcher[];
+}
+
+interface IDDropItemMatcher extends DropItemMatcherBase {
   readonly id: string;
   readonly kind: "id";
   readonly children?: readonly DropLocationMatcher[];
 }
 
-interface GroupDropItemMatcher {
+interface GroupDropItemMatcher extends DropItemMatcherBase {
+  readonly id: string;
   readonly kind: "group";
-  readonly child : DropLocationMatcher; // there's only one drop location inside a group matcher
+  readonly children : [DropLocationMatcher]; // there's only one drop location inside a group matcher
 }
 
-interface DepthDropItemMatcher {
+interface DepthDropItemMatcher extends DropItemMatcherBase {
+  readonly id: string;
   readonly kind: "depth";
   readonly min_depth: number;
   readonly max_depth: number;
-  readonly child : DropLocationMatcher; // there's only one drop location inside a depth matcher
+  readonly children : [DropLocationMatcher]; // there's only one drop location inside a depth matcher
 }
 
-interface ShuffleDropItemMatcher {
+interface ShuffleDropItemMatcher extends DropItemMatcherBase {
+  readonly id: string;
   readonly kind: "shuffle";
-  readonly child: DropLocationMatcher; // there's only one drop location inside a shuffle matcher
+  readonly children: [DropLocationMatcher]; // there's only one drop location inside a shuffle matcher
 }
 
-interface OrDropItemMatcher {
+interface OrDropItemMatcher extends DropItemMatcherBase {
+  readonly id: string;
   readonly kind: "or";
-  readonly child : DropLocationMatcher; // there's only one drop location inside an or matcher
+  readonly children : [DropLocationMatcher]; // there's only one drop location inside an or matcher
 }
 
 export type DropItemMatcher =
@@ -505,6 +512,8 @@ export function extractFromDropLocation(elem: JQuery) : DropLocationMatcher {
   }
 }
 
+
+
 export function extractDropItemMatch(elem: JQuery) : DropItemMatcher {
 
   const first_level_elems = getFirstLevelFITBDropElements(elem);
@@ -512,30 +521,33 @@ export function extractDropItemMatch(elem: JQuery) : DropItemMatcher {
   const id = $(elem).data("examma-ray-fitb-drop-id");
   assert(typeof id === "string");
   const children = first_level_elems.map(elem => extractFromDropLocation($(elem)));
-
   if (id === "__examma-ray-drop-matcher-group") {
     return {
+      id: id,
       kind: "group",
-      child: children[0],
+      children: assertAsSingleton(children),
     };
   } else if (id === "__examma-ray-drop-matcher-shuffle") {
     return {
+      id: id,
       kind: "shuffle",
-      child: children[0],
+      children: assertAsSingleton(children),
     };
   }
   else if (id === "__examma-ray-drop-matcher-depth") {
     return {
+      id: id,
       kind: "depth",
       min_depth: parseInt($(elem).find("input[name='examma-ray-drop-matcher-min-depth']").val() as string) ?? 0,
       max_depth: parseInt($(elem).find("input[name='examma-ray-drop-matcher-max-depth']").val() as string) ?? 0,
-      child: children[0],
+      children: assertAsSingleton(children),
     };
   }
   else if (id === "__examma-ray-drop-matcher-or") {
     return {
+      id: id,
       kind: "or",
-      child: children[0],
+      children: assertAsSingleton(children),
     };
   }
   else {
@@ -547,25 +559,32 @@ export function extractDropItemMatch(elem: JQuery) : DropItemMatcher {
   }
 }
 
+export function fillDropLocation(dropLocationElem: JQuery, matcher: DropLocationMatcher, originalsElem: JQuery) {
 
-// function topLevelMatch(structure_item: Omit<DropItemMatch, "id">, sub_item: FITBDropSubmission) : boolean {
-//   return matchItem({...structure_item, id: "placeholder"}, {children: sub_item, id: "placeholder"});
-// }
+  // clear out previous submission elements
+  dropLocationElem.empty();
 
-// function matchItem(item_matcher: IDDropItemMatcher | DepthDropItemMatcher, sub_item: DropSubmissionItem) : boolean {
-//   // console.log("!!!Matching", JSON.stringify(structure_item), "against", JSON.stringify(sub_item));
-//   switch(item_matcher.kind) {
-//     case "id":
-//       return matchItemRegular(item_matcher, sub_item);
-//     case "depth":
-//       if (item_matcher.children === undefined || item_matcher.children.length === 0) { return false; }
-//       if (item_matcher.min_depth <= 0 && matchItemRegular({kind: "id", id: item_matcher.children}, sub_item)) {
-//   if (structure_item.ignore_nesting && !!sub_item.children?.some(child => typeof child !== "string" && child.some(child_item => matchItem(structure_item, child_item)))) {
-//     return true;
-//   }
+  matcher.dropped_items.forEach(s => {
 
-//   return false;
-// }
+    let droppedElem = cloneFromOriginals(originalsElem, s.id);
+    if (s.kind === "depth") {
+      droppedElem.find("input[name='examma-ray-drop-matcher-min-depth']").val(s.min_depth.toString());
+      droppedElem.find("input[name='examma-ray-drop-matcher-max-depth']").val(s.max_depth.toString());
+    }
+    dropLocationElem.append(droppedElem);
+    activateDropLocations(droppedElem);
+    
+    // Recursively process any children on the dropped element/submission
+    const child_elems = getFirstLevelFITBDropElements(droppedElem);
+    assert(child_elems.length === (s.children?.length ?? 0));
+    s.children?.forEach((child_sub, i) => fillDropLocation($(child_elems[i]), child_sub, originalsElem));
+  });
+}
+
+function cloneFromOriginals(originalsElem: JQuery, id: string) {
+  return originalsElem.find(`[data-examma-ray-fitb-drop-id='${id}']`).clone();
+}
+
 
 function matchItemRegular(structure_item: IDDropItemMatcher, sub_item: DropSubmissionItem) : boolean {
   if (structure_item.id !== sub_item.id) { return false; } // not a match
@@ -594,23 +613,27 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
 
   const item_matchers = dl_match.dropped_items;
   const first_item_matcher = item_matchers[0];
-  // We will be recursively matching the remaining matchers and submission items.
-  // const remaining_matchers = dl_match.dropped_items.slice(1);
+
+  // Handle the "regular" ID matchers first as a special (i.e. because it's not special lol) case
+  if (first_item_matcher.kind === "id") {
+    return matchItemRegular(first_item_matcher, submission[0])
+      ? matchDropLocation({dropped_items: item_matchers.slice(1)}, submission.slice(1))
+      : matchDropLocation(dl_match, submission.slice(1));
+  }
+
+  // Otherwise it's one of the special matchers with unique logic.
+  // These all are guaranteed to have exactly one child drop location.
+  const first_child_dropped_items = assertAsSingleton(first_item_matcher.children)[0].dropped_items;
 
   switch(first_item_matcher.kind) {
 
-    case "id":
-      return matchItemRegular(first_item_matcher, submission[0])
-        ? matchDropLocation({dropped_items: item_matchers.slice(1)}, submission.slice(1))
-        : matchDropLocation(dl_match, submission.slice(1));
-
     case "group":
       // Must match in order all at the current level, just unwrap and call recursively
-      return matchDropLocation({ dropped_items: [...first_item_matcher.child.dropped_items, ...item_matchers.slice(1)] }, submission);
+      return matchDropLocation({ dropped_items: [...first_child_dropped_items, ...item_matchers.slice(1)] }, submission);
 
     case "depth":
       // Empty depth matches anything
-      if (first_item_matcher.child.dropped_items.length === 0) {
+      if (first_child_dropped_items.length === 0) {
         return matchDropLocation({dropped_items: item_matchers.slice(1)}, submission);
       }
 
@@ -621,7 +644,7 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
         // Attempt to match the "unwrapped" group items at the current level using N submissions.
         // The current level has depth = 0, so we can only do this if min_depth <= 0.
         // This consumes N submission items for 1 matcher.
-        if (first_item_matcher.min_depth <= 0 && matchDropLocation({dropped_items: first_item_matcher.child.dropped_items}, first_N_sub_items)) {
+        if (first_item_matcher.min_depth <= 0 && matchDropLocation({dropped_items: first_child_dropped_items}, first_N_sub_items)) {
           return matchDropLocation({dropped_items: item_matchers.slice(1)}, submission.slice(N));
         }
 
@@ -642,7 +665,7 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
 
     case "shuffle":
       // Empty shuffle matches anything
-      if (first_item_matcher.child.dropped_items.length === 0) {
+      if (first_child_dropped_items.length === 0) {
         return matchDropLocation({dropped_items: item_matchers.slice(1)}, submission);
       }
 
@@ -651,7 +674,7 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
       // submission items, and so on... When we find any matches, we greedily lock in the value of N.
       for(let N = 1; N <= submission.length; ++N) {
         const first_N_sub_items = submission.slice(0, N);
-        const shuffled_matchers = first_item_matcher.child.dropped_items;
+        const shuffled_matchers = first_child_dropped_items;
         const matched_indices = shuffled_matchers
           .map((matcher,i) => matchDropLocation({dropped_items: [matcher]}, first_N_sub_items) ? i : undefined)
           .filter(i => i !== undefined);
@@ -663,7 +686,7 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
         const potential_remaining_subs = matched_indices.map(matched_i => matchDropLocation(
           {
             dropped_items: [
-              {...first_item_matcher, child: { dropped_items: shuffled_matchers.filter((_, i) => i !== matched_i)} }, // group matcher with some child items removed
+              {...first_item_matcher, children: [{ dropped_items: shuffled_matchers.filter((_, i) => i !== matched_i)}] }, // group matcher with some child items removed
               ...item_matchers.slice(1)
             ]
           },
@@ -683,12 +706,12 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
 
     case "or":
       // An empty OR matches anything
-      if (first_item_matcher.child.dropped_items.length === 0) {
+      if (first_child_dropped_items.length === 0) {
         return matchDropLocation({dropped_items: item_matchers.slice(1)}, submission);
       }
 
       // For each of the children within the OR, we try matching it plus the remaining matchers following the OR.
-      const potential_remaining_subs = first_item_matcher.child.dropped_items.map(
+      const potential_remaining_subs = first_child_dropped_items.map(
         matcher => matchDropLocation({ dropped_items: [matcher, ...item_matchers.slice(1)] }, submission)
       ).filter(v => v !== false);
 
@@ -707,62 +730,6 @@ function matchDropLocation(dl_match: DropLocationMatcher, submission: string | D
 }
 
 
-// function matchDropLocation(dl_match: DropLocationMatcher, submission: string | DropSubmission | undefined) : boolean {
-//   // console.log(JSON.stringify({dl_match, submission, ignore_ordering}, null, 2));
-  
-//   if (typeof submission === "string") {
-//     return false;
-//   }
-  
-//   if (dl_match.dropped_items.length === 0) {
-//     return true;
-//   }
-
-//   if (submission === undefined) {
-//     return false;
-//   }
-  
-//   if (matchDropLocationAtCurrentLevel(dl_match, submission)) {
-//     return true;
-//   }
-
-//   if (dl_match.ignore_nesting && submission.some(sub_item => sub_item.children?.some(child_submission => matchDropLocation(dl_match, child_submission)))) {
-//     return true;
-//   }
-
-//   return false;
-// }
-
-// function matchDropLocationAtCurrentLevel(dl_match: DropLocationMatcher, submission: DropSubmission) : boolean {
-//   if (dl_match.ignore_ordering) {
-//     // If we don't care about ordering, then each dl_match item
-//     // just needs to be matched by at least one submission item.
-//     return dl_match.dropped_items.every(dl_match_item => submission.some(
-//       sub_item => matchItem(dl_match_item, sub_item)
-//     ));
-//   }
-//   else {
-//     let to_match = dl_match.dropped_items.slice();
-      
-//     // If we care about ordering, then iterate through the
-//     // submission and try to match each dl_match item in order.
-//     // No need to ever "rewind" here.
-//     submission.forEach(sub_item => {
-//       if (to_match.length === 0) {
-//         return; // already matched everything
-//       }
-
-//       // console.log("original");
-//       if (matchItem(to_match[0], sub_item)) {
-//         to_match.shift();
-//         return;
-//       }
-//     });
-
-//     // If we matched everything, then the match was successful.
-//     return to_match.length === 0;
-//   }
-// }
 
 export function matchingDropEvaluation(evaluator: MatchingDropEvaluatorSpecification, submission: FITBDropSubmission) {
   

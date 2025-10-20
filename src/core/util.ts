@@ -21,6 +21,11 @@ export function assertNever(x: never): never {
   throw new Error("Unexpected object: " + x);
 }
 
+export function assertAsSingleton<T>(arr: readonly T[]): [T] {
+  assert(arr.length === 1);
+  return arr as [T];
+}
+
 export function asMutable<T>(obj: T) : Mutable<T> {
     return <Mutable<T>>obj;
 }
