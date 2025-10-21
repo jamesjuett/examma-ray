@@ -260,6 +260,10 @@ async function checkSession() {
 
       $("#exam-finished-modal").modal("show");
     }
+    
+    // TODO - if the exam was forced open and abruptly closed, last answers may not have been saved.
+    // Maybe this is a server thing? But perhaps the frontend should handle something like this gracefully
+    // due to exceptional circumstances the last submission attempt is rejected by the server.
   }
   catch (e) {
     // ignore errors for now

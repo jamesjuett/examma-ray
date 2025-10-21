@@ -317,10 +317,10 @@ export class ExamGrader {
 
   public writeGraderPages() {
     writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
-    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
+    // writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
     
     const specDir = path.join("out", this.exam.exam_id, "graded", "spec");
-    mkdirSync(specDir);
+    mkdirSync(specDir, { recursive: true });
     ExamUtils.writeExamSpecificationToFileSync(
       path.join(specDir, "exam-spec.json"),
       exam_spec_without_assets_dirs(this.exam.spec)
