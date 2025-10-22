@@ -316,8 +316,8 @@ export class ExamGrader {
   }
 
   public writeGraderPages() {
-    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
-    // writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", "questions", this.options.frontend_js_path), "grader-page-fitb.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
     
     const specDir = path.join("out", this.exam.exam_id, "graded", "spec");
     mkdirSync(specDir, { recursive: true });
