@@ -23,6 +23,7 @@ export type CodeWritingRubricItem = {
 
 export type ManualGenericGraderSpecification = {
   readonly grader_kind: "manual_generic",
+  readonly points_possible: number,
 }
 
 export type CodeWritingRubricItemResult = {
@@ -70,6 +71,11 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
 
   public constructor(spec: ManualGenericGraderSpecification) {
     this.spec = spec;
+  }
+  
+  public scale(new_points_possible: number) {
+    assert(new_points_possible === this.spec.points_possible, "ManualGenericGrader cannot be scaled to a different number of points possible.");
+    return this;
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {

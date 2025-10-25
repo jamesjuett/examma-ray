@@ -123,6 +123,11 @@ For now, refer to examples of existing graders. More thorough documentation comi
 export interface QuestionGrader<RK extends ResponseKind = ResponseKind, GR extends GradingResult = GradingResult> {
 
   /**
+   * Returns a new grader scaled to the given number of points possible.
+   */
+  scale(newPointsPossible: number): QuestionGrader<RK, GR>;
+
+  /**
    * Returns whether or not this grader can be used for the given response kind
    * @param responseKind 
    */

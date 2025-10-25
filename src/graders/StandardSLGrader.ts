@@ -33,7 +33,8 @@ function gradeSLRubricItem(rubricItem: SLRubricItem, submission: SLSubmission) {
 
 export type StandardSLGraderSpecification = {
   readonly grader_kind: "standard_select_lines",
-  readonly rubric: readonly SLRubricItem[]
+  readonly rubric: readonly SLRubricItem[],
+  readonly points_possible: number,
 };
 
 export class StandardSLGrader implements QuestionGrader<"select_lines"> {
@@ -44,6 +45,17 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
 
   public constructor(spec: StandardSLGraderSpecification) {
     this.spec = spec;
+  }
+
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.points_possible;
+    return new StandardSLGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {

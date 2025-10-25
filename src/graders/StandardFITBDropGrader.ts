@@ -39,7 +39,8 @@ export type FITBDropRubricItem = {
 
 export type StandardFITBDropGraderSpecification = {
   readonly grader_kind: "standard_fitb_drop",
-  readonly rubric: readonly FITBDropRubricItem[]
+  readonly rubric: readonly FITBDropRubricItem[],
+  readonly points_possible: number,
 };
 
 export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
@@ -50,6 +51,17 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
 
   public constructor(spec: StandardFITBDropGraderSpecification) {
     this.spec = spec;
+  }
+  
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.points_possible;
+    return new StandardFITBDropGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
   }
   
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T, GradingResult> {

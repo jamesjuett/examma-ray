@@ -10,11 +10,6 @@ export type FreebieGraderSpecification = {
   readonly grader_kind: "freebie",
 
   /**
-   * How many points are awarded to submissions.
-   */
-  readonly points: number,
-
-  /**
    * Whether or not blank submissions earn points. If this option is
    * not specified, it is interpreted as false.
    */
@@ -40,6 +35,11 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   public constructor(spec: FreebieGraderSpecification) {
     this.spec = spec;
   }
+  
+  public scale(new_points_possible: number) {
+    return this;
+  }
+
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return true;
@@ -50,7 +50,7 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   public grade(aq: AssignedQuestion) : FreebieGradingResult {
     return {
       wasBlankSubmission: aq.submission.validity === "blank",
-      pointsEarned: (this.spec.allow_blanks || aq.submission.validity) !== "blank" ? this.spec.points : 0
+      pointsEarned: (this.spec.allow_blanks || aq.submission.validity) !== "blank" ? aq.question.pointsPossible : 0
     };
   }
 
@@ -62,7 +62,7 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
     
     const message = !this.spec.allow_blanks && aq.gradingResult.wasBlankSubmission
       ? `You did not select an answer for this question.`
-      : `You earned ${this.spec.points}/${aq.question.pointsPossible} points for answering this question.`;
+      : `You earned ${aq.question.pointsPossible}/${aq.question.pointsPossible} points for answering this question.`;
 
     return `
       <p class="examma-ray-grading-annotation">
@@ -84,12 +84,12 @@ export class FreebieGrader implements QuestionGrader<ResponseKind> {
   public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) {
     let submissions = gqs.map(gq => gq.submission);
     if (this.spec.allow_blanks) {
-      return `Assigned ${this.spec.points} freebie points to all ${submissions.length} submissions.`;
+      return `Assigned full points to all ${submissions.length} submissions.`;
     }
     else {
       let numBlank = submissions.filter(sub => sub.validity === "blank").length;
       let numNonBlank = submissions.length - numBlank;
-      return `Assigned ${this.spec.points} freebie points to ${numNonBlank} submissions.<br />Assigned 0 points to ${numBlank} blank submissions.`;
+      return `Assigned full points to ${numNonBlank} submissions.<br />Assigned 0 points to ${numBlank} blank submissions.`;
     }
   }
 }

@@ -33,6 +33,10 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
   public constructor(spec: SimpleMCGraderSpecification) {
     this.spec = spec;
   }
+  
+  public scale(new_points_possible: number) {
+    return this;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "multiple_choice";

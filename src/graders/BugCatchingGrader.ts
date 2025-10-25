@@ -63,6 +63,13 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
       }
     }
   }
+
+  public scale(new_points_possible: number) {
+    return new BugCatchingGrader({
+      ...this.spec,
+      points_possible: new_points_possible
+    });
+  }
   
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T, GradingResult> {
     return responseKind === "multiple_choice";
@@ -100,13 +107,7 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
   }
 
   public pointsEarned(gr: TestCaseGradingResult): number {
-    let bug_shortfall = this.spec.target - gr.bugs_caught.length;
-    if (bug_shortfall <= 0) {
-      return this.spec.points_possible;
-    }
-    else {
-      return Math.max(0, this.spec.points_possible-bug_shortfall);
-    }
+    return Math.min(this.spec.points_possible, gr.bugs_caught.length / this.spec.target * this.spec.points_possible);
   }
 
   public renderReport(gq: GradedQuestion<"multiple_choice", TestCaseGradingResult>): string {

@@ -91,6 +91,17 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
     this.spec = spec;
     this.minRubricItemPoints = min(this.spec.rubric.map(ri => ri.points));
   }
+  
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.rubric.reduce((p, ri) => p + ri.points, 0);
+    return new FITBRegexGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "fill_in_the_blank";

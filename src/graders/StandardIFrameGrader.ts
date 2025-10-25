@@ -25,6 +25,7 @@ export type StandardIFrameGraderRubricItem = {
 export type StandardIFrameGraderSpecification = {
   readonly grader_kind: "standard_iframe",
   readonly rubric: StandardIFrameGraderRubricItem[],
+  readonly points_possible: number,
 };
 
 export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIFrameGradingResult> {
@@ -35,6 +36,17 @@ export class StandardIFrameGrader implements QuestionGrader<"iframe", StandardIF
 
   public constructor(spec: StandardIFrameGraderSpecification) {
     this.spec = spec;
+  }
+  
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.points_possible;
+    return new StandardIFrameGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
   }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
