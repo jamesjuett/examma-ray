@@ -207,8 +207,11 @@ export class ExamGrader {
       (<readonly GraderSpecificationMap[]>graderMap).forEach(gm => this.registerGraders(gm));
     }
     else {
-      for (const spec in graderMap) {
-        this.graderMap[spec] = realizeGrader((<GraderSpecificationMap>graderMap)[spec]!);
+      for (const question_id in graderMap) {
+        const question = this.exam.allQuestions.find(q => q.question_id === question_id);
+        if (question) {
+          this.graderMap[question_id] = realizeGrader((<GraderSpecificationMap>graderMap)[question_id]!).scale(question.pointsPossible);
+        }
       }
     }
   }
