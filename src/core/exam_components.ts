@@ -72,7 +72,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
         : spec.skin
     ) : DEFAULT_SKIN;
     this.sampleSolution = spec.response.sample_solution ? VIABLE_SUBMISSION(<SubmissionType<QT>>spec.response.sample_solution) : undefined;
-    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
+    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader).scale(this.pointsPossible));
     this.verifier = spec.verifier && realizeVerifier(spec.verifier);
     this.assets_dir = spec.assets_dir;
   }
