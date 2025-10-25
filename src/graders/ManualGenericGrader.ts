@@ -74,7 +74,9 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
   }
   
   public scale(new_points_possible: number) {
-    assert(new_points_possible === this.spec.points_possible, "ManualGenericGrader cannot be scaled to a different number of points possible.");
+    if (new_points_possible !== this.spec.points_possible) {
+      console.log(`Warning: ManualGenericGrader does not support scaling. Requested points possible: ${new_points_possible}, original points possible: ${this.spec.points_possible}`);
+    }
     return this;
   }
 

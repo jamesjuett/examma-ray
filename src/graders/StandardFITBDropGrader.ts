@@ -59,6 +59,8 @@ export class StandardFITBDropGrader implements QuestionGrader<"fitb_drop"> {
       ...this.spec,
       rubric: this.spec.rubric.map(ri => ({
         ...ri,
+        // evaluators: ri.evaluators.map(ev => {
+
         points: ri.points * scaling_factor
       }))
     });
@@ -756,6 +758,41 @@ export type FITBDropEvaluatorSpecification =
   | SimpleDropEvaluatorSpecification
   | TargetDropEvaluatorSpecification
   | MatchingDropEvaluatorSpecification;
+
+export function scaleFITBDropEvaluatorSpecification(evaluator: FITBDropEvaluatorSpecification, scaling_factor: number): FITBDropEvaluatorSpecification {
+  if (evaluator.kind === "simple_drop_evaluator") {
+    return {
+      ...evaluator,
+      evaluations_by_droppable_id: Object.fromEntries(
+        Object.entries(evaluator.evaluations_by_droppable_id).map(
+          ([droppable_id, evaluation]) => [droppable_id, {...evaluation!, pointsEarned: evaluation!.pointsEarned * scaling_factor}]
+        )
+      )
+    };
+  }
+  else if (evaluator.kind === "target_drop_evaluator") {
+    return {
+      ...evaluator,
+      evaluation: {
+        ...evaluator.evaluation,
+        pointsEarned: evaluator.evaluation.pointsEarned * scaling_factor
+      }
+    };
+  }
+  else if (evaluator.kind === "matching_drop_evaluator") {
+    return {
+      ...evaluator,
+      evaluation: {
+        ...evaluator.evaluation,
+        pointsEarned: evaluator.evaluation.pointsEarned * scaling_factor
+      }
+    };
+  }
+  else {
+    return assertNever(evaluator);
+  }
+}
+
 
 export function fitbDropEvaluate(evaluator: FITBDropEvaluatorSpecification, submission: FITBDropSubmission) {
 

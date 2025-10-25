@@ -98,6 +98,10 @@ export class FITBRegexGrader implements QuestionGrader<"fill_in_the_blank"> {
       ...this.spec,
       rubric: this.spec.rubric.map(ri => ({
         ...ri,
+        patterns: ri.patterns.map(pat => ({
+          ...pat,
+          points: pat.points * scaling_factor
+        })),
         points: ri.points * scaling_factor
       }))
     });
