@@ -12,11 +12,29 @@ export function assertFalse(message: string = "") : never {
     throw Error("Assert failed: " + message);
 };
 
+export function assertExists<T>(value: T | null | undefined, message: string = "") : T {
+  return value === null || value === undefined ? assertFalse(message) : value;
+}
+
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking
 export function assertNever(x: never): never {
   throw new Error("Unexpected object: " + x);
 }
 
+export function assertAsSingleton<T>(arr: readonly T[]): [T] {
+  assert(arr.length === 1);
+  return arr as [T];
+}
+
 export function asMutable<T>(obj: T) : Mutable<T> {
     return <Mutable<T>>obj;
 }
+
+type SimpleJSONComponent =
+  | string | number | boolean
+  | SimpleJSONComponent[]
+  | { [key: string]: SimpleJSONComponent };
+
+export type SimpleJSON = {
+  [key: string]: SimpleJSONComponent
+};

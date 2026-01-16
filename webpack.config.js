@@ -10,6 +10,7 @@ module.exports = {
     'frontend-solution': './frontend/frontend-solution',
     'frontend-graded': './frontend/frontend-graded',
     'grader-page-fitb': './frontend/grader-page-fitb',
+    'grader-page-fitb-drop': './frontend/grader-page-fitb-drop',
     'overview': './frontend/overview',
   },
   output: {

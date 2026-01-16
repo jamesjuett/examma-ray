@@ -3,6 +3,7 @@ import minimist from "minimist";
 import { EXAM_GENERATOR, EXAM_PREVIEW } from '../exam-spec';
 import { ExamUtils } from "examma-ray/dist/ExamUtils";
 import { OriginalExamRenderer, SampleSolutionExamRenderer } from "examma-ray";
+import { mkdirSync } from "fs";
 
 function main() {
   const argv = minimist(process.argv, {
@@ -21,10 +22,16 @@ function main() {
   const preview: string = argv["preview"];
   const sample_solution: string = argv["sample-solution"];
   const spec_only: string = argv["spec-only"];
+
+  const exam = EXAM_GENERATOR.exam;
   
   if (spec_only) {
     // Render exam specification only, not individual exams
-    EXAM_GENERATOR.writeExamSpec();
+    mkdirSync(`data/${exam.exam_id}`, { recursive: true });
+    ExamUtils.writeExamSpecificationToFileSync(
+      `data/${exam.exam_id}/exam-spec.json`,
+      exam.spec
+    );
     return;
   }
   

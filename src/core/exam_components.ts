@@ -1,6 +1,7 @@
 import { GraderFor, realizeGrader } from "../graders/QuestionGrader";
 import { ResponseKind } from "../response/common";
-import { ResponseSpecification, SubmissionType, ViableSubmissionType, render_response, render_solution } from "../response/responses";
+import { ResponseSpecification, SubmissionType, VIABLE_SUBMISSION, ValidSubmission, ViableSubmission } from "../response/responses";
+import { render_response, render_solution } from "../response/handlers";
 import { QuestionVerifier, realizeVerifier } from "../verifiers/QuestionVerifier";
 import { CredentialsStrategy, ExamCompletionSpecification, ExamSpecification, MinMaxPoints, QuestionChooser, QuestionSpecification, SectionChooser, SectionSpecification, SkinChooser, chooseAllQuestions, chooseAllSections, isValidID, minMaxPoints, realizeChooser, realizeQuestion, realizeQuestions, realizeSections } from "./exam_specification";
 import { mk2html } from "./render";
@@ -23,7 +24,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
   public readonly kind: QT;
   public readonly response : ResponseSpecification<QT>;
   public readonly skin: ExamComponentSkin | SkinChooser;
-  public readonly sampleSolution?: ViableSubmissionType<QT>;
+  public readonly sampleSolution?: ViableSubmission<QT>;
   public readonly defaultGrader?: GraderFor<QT>;
   public readonly verifier?: QuestionVerifier;
   public readonly assets_dir?: string;
@@ -70,8 +71,8 @@ export class Question<QT extends ResponseKind = ResponseKind> {
         ? realizeChooser(spec.skin)
         : spec.skin
     ) : DEFAULT_SKIN;
-    this.sampleSolution = <ViableSubmissionType<QT>>spec.response.sample_solution;
-    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader));
+    this.sampleSolution = spec.response.sample_solution ? VIABLE_SUBMISSION(<SubmissionType<QT>>spec.response.sample_solution) : undefined;
+    this.defaultGrader = (this.response.default_grader && <GraderFor<QT>>realizeGrader(this.response.default_grader).scale(this.pointsPossible));
     this.verifier = spec.verifier && realizeVerifier(spec.verifier);
     this.assets_dir = spec.assets_dir;
   }
@@ -80,7 +81,7 @@ export class Question<QT extends ResponseKind = ResponseKind> {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_response(this.response, this.question_id, uuid, skin)}</div>`;
   }
 
-  public renderResponseSolution(uuid: string, solution: SubmissionType<QT>, skin?: ExamComponentSkin) {
+  public renderResponseSolution(uuid: string, solution: ValidSubmission<QT>, skin?: ExamComponentSkin) {
     return `<div class="examma-ray-question-response examma-ray-question-response-${this.kind}" data-response-kind="${this.kind}">${render_solution(this.response, solution, this.question_id, uuid, skin)}</div>`;
   }
 
@@ -119,8 +120,12 @@ export class Section {
    * Desired width of reference material as a percent (e.g. 40 means 40%).
    * Guaranteed to be an integral value.
    */
-  public readonly reference_width: number;
+  public readonly right_column_width: number;
   public readonly assets_dir?: string;
+
+  public readonly allQuestions: readonly Question[];
+  
+  private readonly questionsMap: { [index: string]: Question | undefined } = {};
 
   private readonly descriptionCache: {
     [index:string] : string | undefined
@@ -163,13 +168,23 @@ export class Section {
         : spec.skin
     ) : DEFAULT_SKIN;
 
-    this.reference_width = spec.reference_width ?? DEFAULT_REFERENCE_WIDTH;
+    this.right_column_width = spec.right_column_width ?? DEFAULT_REFERENCE_WIDTH;
     this.assets_dir = spec.assets_dir;
 
+    this.allQuestions = this.questions.flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
+    this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    // There shouldn't be any duplicates
+    assert(Object.keys(this.questionsMap).length === this.allQuestions.length, `Duplicate question IDs found within section ${this.section_id}`);
+
     assert(
-      Number.isInteger(this.reference_width) && 0 <= this.reference_width && this.reference_width <= 100,
-      "Reference material width must be an integer between 0 and 100, inclusive."
+      Number.isInteger(this.right_column_width) && 0 <= this.right_column_width && this.right_column_width <= 100,
+      `Right panel width must be an integer between 0 and 100, inclusive, representing a percent. Value provided: ${this.right_column_width}`
     );
+  }
+  
+  public getQuestionById(question_id: string) {
+    return this.questionsMap[question_id];
   }
 
   public renderDescription(skin: ExamComponentSkin) {
@@ -185,33 +200,11 @@ export class Section {
 
 
 
-
-
-
-export const MK_DEFAULT_SAVER_MESSAGE_CANVAS = 
-`Click the button below to save a copy of your answers as a \`.json\`
-file. You may save as many times as you like. You can also restore answers
-from a previously saved file.
-
-**Important!** You MUST submit your \`.json\` answers file to **Canvas**
-BEFORE exam time is up. This webpage does not save your answers anywhere other than your local computer.
-It is up to you to download your answer file and turn it in on **Canvas**.
-
-**Note:** If you download multiple times, make sure to submit the most recent one. (The name of the file you submit to Canvas does not matter.)`;
-
 export const MK_DEFAULT_QUESTIONS_MESSAGE = "";
 
 export const MK_DEFAULT_DOWNLOAD_MESSAGE = "Download an answers file to submit separately.";
 
-// export const MK_DEFAULT_BOTTOM_MESSAGE_CANVAS = 
-// `You've reached the bottom of the exam! If you're done, make sure to
-// click the **"Answers File"** button, download a **\`.json\`
-// answers file**, and submit to **Canvas** before the end of the exam!`;
-
-export const MK_DEFAULT_BOTTOM_MESSAGE = 
-`You've reached the bottom of the exam! If you're done, make sure to
-click the **"Answers File"** button, download a **\`.json\`
-answers file**, and submit it before the end of the exam!`;
+export const MK_DEFAULT_BOTTOM_MESSAGE = "You've reached the bottom of the exam!";
 
 
 // const MK_DEFAULT_REGRADE_MESSAGE = 
@@ -233,7 +226,8 @@ export class Exam {
   public readonly mk_questions_message: string;
   public readonly mk_download_message: string;
   public readonly mk_bottom_message: string;
-  public readonly mk_saver_message: string;
+  public readonly enable_bottom_im_finished_button: boolean;
+  public readonly mk_saver_message?: string;
   public readonly assets_dir?: string;
 
   public readonly points: MinMaxPoints;
@@ -278,7 +272,8 @@ export class Exam {
     this.mk_questions_message = spec.mk_questions_message ?? MK_DEFAULT_QUESTIONS_MESSAGE;
     this.mk_download_message = spec.mk_download_message ?? MK_DEFAULT_DOWNLOAD_MESSAGE;
     this.mk_bottom_message = spec.mk_bottom_message ?? MK_DEFAULT_BOTTOM_MESSAGE;
-    this.mk_saver_message = spec.mk_saver_message ?? MK_DEFAULT_SAVER_MESSAGE_CANVAS;
+    this.enable_bottom_im_finished_button = !!spec.enable_bottom_im_finished_button;
+    this.mk_saver_message = spec.mk_saver_message;
     this.points = minMaxPoints(spec);
     this.sections = realizeSections(spec.sections);
     this.completion = spec.completion;
@@ -293,8 +288,32 @@ export class Exam {
     this.allSections = this.sections.flatMap(chooser => realizeSections(chooseAllSections(chooser)));
     this.allSections.forEach(section => this.sectionsMap[section.section_id] = section);
 
+    // Remove duplicate sections (can happen if the same section appears multiple times)
+    const section_id_set = new Set<string>(Object.keys(this.sectionsMap));
+    this.allSections = this.allSections.filter(s => {
+      if (section_id_set.has(s.section_id)) {
+        section_id_set.delete(s.section_id);
+        return true;
+      }
+      else {
+        return false;
+      }
+    });
+
     this.allQuestions = this.allSections.flatMap(s => s.questions).flatMap(chooser => realizeQuestions(chooseAllQuestions(chooser)));
     this.allQuestions.forEach(question => this.questionsMap[question.question_id] = question);
+
+    // Remove duplicate questions (can happen if the same question appears in multiple sections)
+    const question_id_set = new Set<string>(Object.keys(this.questionsMap));
+    this.allQuestions = this.allQuestions.filter(q => {
+      if (question_id_set.has(q.question_id)) {
+        question_id_set.delete(q.question_id);
+        return true;
+      }
+      else {
+        return false;
+      }
+    });
   }
 
   public addAnnouncement(announcement_mk: string) {

@@ -100,41 +100,42 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { unparse } from 'papaparse';
 import path from 'path';
 import { average, mean, sum } from 'simple-statistics';
-import { AssignedExam, AssignedQuestion, isGradedQuestion } from './core/assigned_exams';
+import { AssignedExam, AssignedQuestion, createStudentUuid, isGradedQuestion, UUID_Options, UUID_Strategy } from './core/assigned_exams';
 import { ExamCurve } from "./core/ExamCurve";
 import { Exam, Question, Section } from './core/exam_components';
 import { GradedExamRenderer, SubmittedExamRenderer } from './core/exam_renderer';
-import { StudentInfo } from './core/exam_specification';
+import { exam_spec_without_assets_dirs, StudentInfo } from './core/exam_specification';
 import { GradedStats } from "./core/GradedStats";
 import { ICON_BOX_CHECK } from './core/icons';
 import { TrustedExamSubmission } from './core/submissions';
 import { renderGradingProgressBar, renderPointsProgressBar } from './core/ui_components';
 import { asMutable, assert } from './core/util';
-import { UUID_Strategy } from './ExamGenerator';
-import { createStudentUuid, ExamUtils, writeFrontendJS } from './ExamUtils';
+import { ExamUtils, writeFrontendFile } from './ExamUtils';
 import { GraderSpecification, QuestionGrader, realizeGrader } from './graders/QuestionGrader';
+import ncp from 'ncp';
 
 
 
-export type ExamGraderOptions = {
-  frontend_js_path: string,
-  frontend_assets_dir: string,
-  uuid_strategy: UUID_Strategy,
-  uuidv5_namespace?: string,
+type FullExamGraderOptions = {
+  readonly frontend_js_path: string,
+  readonly frontend_assets_dir: string,
+  readonly assets_bundle_dir?: string,
+  readonly uuid_options: UUID_Options,
 };
+
+export type ExamGraderOptions = Partial<FullExamGraderOptions>;
 
 const DEFAULT_OPTIONS = {
   frontend_js_path: "js/",
   frontend_assets_dir: "assets",
-  uuid_strategy: "plain",
+  uuid_options: { strategy: "plain" },
 };
 
-function verifyOptions(options: Partial<ExamGraderOptions>) {
-  assert(options.uuid_strategy !== "uuidv5" || options.uuidv5_namespace, "If uuidv5 filenames are selected, a uuidv5_namespace option must be specified.");
-  assert(!options.uuidv5_namespace || options.uuidv5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+function verifyOptions(options: FullExamGraderOptions) {
+  if (options.uuid_options.strategy === "uuidv5") {
+    assert(options.uuid_options.v5_namespace.length >= 16, "uuidv5 namespace must be at least 16 characters.");
+  }
 }
-
-export type ExamGraderSpecification = Partial<ExamGraderOptions>;
 
 export class ExamGrader {
 
@@ -154,18 +155,18 @@ export class ExamGrader {
   private readonly graderMap: GraderMap = {};
   private readonly exceptionMap: ExceptionMap = {};
 
-  private options: ExamGraderOptions;
+  private readonly options: FullExamGraderOptions;
 
   private renderer = new GradedExamRenderer();
   private submission_renderer = new SubmittedExamRenderer();
 
   private onStatus?: (status: string) => void;
 
-  public constructor(exam: Exam, options: Partial<ExamGraderOptions> = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
+  public constructor(exam: Exam, options: ExamGraderOptions = {}, graders?: GraderSpecificationMap | readonly GraderSpecificationMap[], exceptions?: ExceptionMap | readonly ExceptionMap[], onStatus?: (status: string) => void) {
     this.exam = exam;
     this.onStatus = onStatus;
-    verifyOptions(options);
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    verifyOptions(this.options);
 
     graders && this.registerGraders(graders);
     exceptions && this.registerExceptions(exceptions);
@@ -206,8 +207,11 @@ export class ExamGrader {
       (<readonly GraderSpecificationMap[]>graderMap).forEach(gm => this.registerGraders(gm));
     }
     else {
-      for (const spec in graderMap) {
-        this.graderMap[spec] = realizeGrader((<GraderSpecificationMap>graderMap)[spec]!);
+      for (const question_id in graderMap) {
+        const question = this.exam.allQuestions.find(q => q.question_id === question_id);
+        if (question) {
+          this.graderMap[question_id] = realizeGrader((<GraderSpecificationMap>graderMap)[question_id]!).scale(question.pointsPossible);
+        }
       }
     }
   }
@@ -231,7 +235,7 @@ export class ExamGrader {
   public gradeAll() {
 
     // Prepare all graders (e.g. load manual grading data)
-    this.exam.allQuestions.forEach(question => {
+    this.exam.allSections.forEach(s => s.allQuestions.forEach(question => {
       let grader = this.getGrader(question);
       if (grader) {
         let grading_data = this.prepareGradingData(question, grader);
@@ -242,7 +246,7 @@ export class ExamGrader {
       else {
         console.log(`WARNING: No grader registered for question: ${question.question_id}`);
       }
-    });
+    }));
 
     // Apply any exceptions to individual questions
     this.submittedExams.forEach(
@@ -298,26 +302,46 @@ export class ExamGrader {
 
   private writeAssets(outDir: string) {
     let assetOutDir = path.join(outDir, this.options.frontend_assets_dir);
-    ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    if (this.options.assets_bundle_dir) {
+      ncp(
+        this.options.assets_bundle_dir,
+        assetOutDir,
+        (err) => { // callback
+          if (err) {
+            console.error("Error copying exam assets: ".red + err);
+          }
+        }
+      );
+    }
+    else {
+      ExamUtils.writeExamAssets(assetOutDir, this.exam, <Section[]>Object.values(this.sectionsMap), <Question[]>Object.values(this.questionsMap));
+    }
   }
 
   public writeGraderPages() {
-    writeFrontendJS(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", "questions", this.options.frontend_js_path), "grader-page-fitb.js");
+    writeFrontendFile(path.join("out", this.exam.exam_id, "graded", this.options.frontend_js_path), "grader-page-fitb-drop.js");
+    
+    const specDir = path.join("out", this.exam.exam_id, "graded", "spec");
+    mkdirSync(specDir, { recursive: true });
+    ExamUtils.writeExamSpecificationToFileSync(
+      path.join(specDir, "exam-spec.json"),
+      exam_spec_without_assets_dirs(this.exam.spec)
+    );
 
     this.onStatus && this.onStatus(`Rendering grader pages...`);
     console.log("Rendering grader pages...");
     this.exam.allQuestions.forEach(q => this.renderStatsToFile(q));
   }
 
-  public writeReports() {
-    const examDir = `out/${this.exam.exam_id}/graded/exams`;
+  public writeReports(reportsDir: string) {
 
     // Create output directories and clear previous contents
-    mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
+    mkdirSync(reportsDir, { recursive: true });
+    del.sync(`${reportsDir}/*`);
 
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-graded.js");
-    this.writeAssets(`${examDir}`);
+    writeFrontendFile(path.join(reportsDir, this.options.frontend_js_path), "frontend-graded.js");
+    this.writeAssets(`${reportsDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -326,19 +350,18 @@ export class ExamGrader {
         let filenameBase = this.createGradedFilenameBase(ex);
         this.onStatus && this.onStatus(`Rendering graded exam reports... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering graded exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`out/${this.exam.exam_id}/graded/exams/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${reportsDir}/${filenameBase}.html`, this.renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
-  public writeSubmissions() {
-    const examDir = `out/${this.exam.exam_id}/submitted/`;
+  public writeSubmissions(submittedDir: string) {
 
     // Create output directories and clear previous contents
-    mkdirSync(examDir, { recursive: true });
-    del.sync(`${examDir}/*`);
+    mkdirSync(submittedDir, { recursive: true });
+    del.sync(`${submittedDir}/*`);
 
-    writeFrontendJS(path.join(examDir, this.options.frontend_js_path), "frontend-solution.js");
-    this.writeAssets(`${examDir}`);
+    writeFrontendFile(path.join(submittedDir, this.options.frontend_js_path), "frontend-solution.js");
+    this.writeAssets(`${submittedDir}`);
 
     // Write out graded exams for all, sorted by uniqname
     [...this.submittedExams]
@@ -348,7 +371,7 @@ export class ExamGrader {
         let filenameBase = ex.student.uniqname + "-" + ex.uuid;
         this.onStatus && this.onStatus(`Rendering submitted exams... (${i + 1}/${this.submittedExams.length})`);
         console.log(`${i + 1}/${arr.length} Rendering submitted exam html for: ${ex.student.uniqname}...`);
-        writeFileSync(`${examDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
+        writeFileSync(`${submittedDir}/${filenameBase}.html`, this.submission_renderer.renderAll(ex, this.options.frontend_js_path), {encoding: "utf-8"});
       });
   }
 
@@ -359,7 +382,7 @@ export class ExamGrader {
   }
 
   private createGradedFilenameBase(ex: AssignedExam) {
-    return ex.student.uniqname + "-" + createStudentUuid(this.options, ex.student, this.exam.exam_id + "-graded");
+    return ex.student.uniqname + "-" + ex.uuid;
   }
 
   public writeScoresCsv() {
@@ -406,8 +429,8 @@ export class ExamGrader {
     }
 
     // Create output directories
-    mkdirSync(`out/${this.exam.exam_id}/graded/questions/`, { recursive: true });
-    let out_filename = `out/${this.exam.exam_id}/graded/questions/${question.question_id}.html`;
+    mkdirSync(`out/${this.exam.exam_id}/graded/questions/${question.question_id}`, { recursive: true });
+    let out_filename = `out/${this.exam.exam_id}/graded/questions/${question.question_id}/grader.html`;
     // console.log(`Writing details for question ${question.id} to ${out_filename}.`);
 
     if (!grader || !grader.isGrader(question.kind)) {
@@ -423,7 +446,7 @@ export class ExamGrader {
   
   public writeOverview() {
 
-    writeFrontendJS(path.join("out", this.options.frontend_js_path), "overview.js");
+    writeFrontendFile(path.join("out", this.options.frontend_js_path), "overview.js");
 
     mkdirSync(`out/${this.exam.exam_id}/graded/`, {recursive: true});
     let out_filename = `out/${this.exam.exam_id}/graded/overview.html`;
@@ -490,7 +513,7 @@ export class ExamGrader {
           </div>
           <div class="collapse" id="${overview_id}-details">
             <div class="card-body">
-              <div><a href="questions/${question.question_id}.html">Question Analysis Page</a></div>
+              <div><a href="questions/${question.question_id}/grader.html">Question Analysis Page</a></div>
               ${question.renderDescription(assignedQuestions[0].skin)}
               ${question_overview}
               ${question.renderPostscript(assignedQuestions[0].skin)}

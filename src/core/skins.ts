@@ -20,9 +20,13 @@ export function isDefaultSkin(skin: ExamComponentSkin) {
   return skin.skin_id === DEFAULT_SKIN.skin_id || skin.skin_id === DEFAULT_SKIN.skin_id + "-" + DEFAULT_SKIN.skin_id;
 }
 
+export function compositeSkinId(section_skin_id: string, question_skin_id: string) {
+  return section_skin_id + "-" + question_skin_id;
+}
+
 export function createCompositeSkin(sectionSkin: ExamComponentSkin, questionSkin: ExamComponentSkin) : ExamComponentSkin{
   return {
-    skin_id: sectionSkin.skin_id + "-" + questionSkin.skin_id,
+    skin_id: compositeSkinId(sectionSkin.skin_id, questionSkin.skin_id),
     non_composite_skin_id: questionSkin.skin_id,
     replacements: Object.assign({}, sectionSkin.replacements, questionSkin.replacements)
   };

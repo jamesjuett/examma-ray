@@ -3,12 +3,12 @@ import { encode } from "he";
 import Sortable from "sortablejs";
 import { applySkin, mk2html_rewrapped } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { assert, assertFalse } from "../core/util";
+import { assert, assertFalse, assertNever } from "../core/util";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 
-export type DroppableSpecification = {
+// TODO: ensure droppable IDs cannot contain characters like {{}} for skins
+export type DroppableSpecification = readonly {
   id: string,
   content: string;
 }[];
@@ -22,21 +22,23 @@ export type FITBDropSpecification = {
   kind: "fitb_drop";
   content: string;
   droppables: DroppableSpecification /* | [DroppableGroupSpecification] */;
-  starter?: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>;
-  sample_solution?: ViableSubmission<FITBDropSubmission>;
+  starter?: FITBDropSubmission;
+  sample_solution?: SubmissionType<"fitb_drop">;
   default_grader?: GraderSpecificationFor<"fitb_drop">;
   group_id?: string;
 };
 
-export type DropSubmission = {
+export type DropSubmissionItem = {
   id: string,
   children?: (string | DropSubmission)[]
-}[];
+};
 
-export type FITBDropSubmission = (string | DropSubmission)[] | typeof BLANK_SUBMISSION;
+export type DropSubmission = DropSubmissionItem[];
+
+export type FITBDropSubmission = (string | DropSubmission)[];
 
 
-function isValidFITBDropSubmission(obj: any) : obj is Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION> {
+function isValidFITBDropSubmission(obj: any) : obj is FITBDropSubmission {
   return Array.isArray(obj) && obj.every(
     elem =>
       typeof elem === "string" ||
@@ -47,23 +49,23 @@ function isValidFITBDropSubmission(obj: any) : obj is Exclude<FITBDropSubmission
   )
 }
 
-function FITB_DROP_PARSER(rawSubmission: string | null | undefined) : FITBDropSubmission | typeof MALFORMED_SUBMISSION {
+function FITB_DROP_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"fitb_drop"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isValidFITBDropSubmission(parsed)) {
-      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+      return parsed.length > 0 ? UNCHECKED_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
@@ -79,7 +81,26 @@ function createDroppableElement(id: string, html: string) {
   return `<div class="examma-ray-fitb-droppable" data-examma-ray-fitb-drop-id="${id}">${html}</div>`
 }
 
+function verifyDroppables(droppables: DroppableSpecification) {
+  // Verify droppable IDs only contain valid characters a-zA-Z0-9_- (no spaces or special characters, no {{ }} for skins)
+  droppables.forEach(d => assert(/^[a-zA-Z0-9_-]+$/.test(d.id), `Droppable ID "${d.id}" contains invalid characters. Only a-z, A-Z, 0-9, _, and - are allowed.`));
+
+  // Ensure droppable IDs are unique
+  if(!(new Set<string>(droppables.map(d => d.id)).size === droppables.length)) {
+    droppables.forEach(d1 => {
+      if (droppables.filter(d2 => d2.id === d1.id).length > 1) {
+        console.log("Duplicate droppable ID: " + d1.id);
+      }
+    })
+    assertFalse("Error: duplicate droppable ID detected (see above)");
+  }
+
+}
+
 function renderDroppables(droppables: DroppableSpecification, group_id: string, skin?: ExamComponentSkin) {
+  
+  verifyDroppables(droppables);
+  
   return droppables.map(
     droppable => createDroppableElement(droppable.id, createFilledFITBDrop(droppable.content, droppables, group_id, skin))
   ).join("");
@@ -87,15 +108,7 @@ function renderDroppables(droppables: DroppableSpecification, group_id: string, 
 
 function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
 
-  // Ensure droppable IDs are unique
-  if(!(new Set<string>(response.droppables.map(d => d.id)).size === response.droppables.length)) {
-    response.droppables.forEach(d1 => {
-      if (response.droppables.filter(d2 => d2.id === d1.id).length > 1) {
-        console.log("Duplicate droppable ID: " + d1.id);
-      }
-    })
-    assertFalse("Error: duplicate droppable ID detected (see above)");
-  }
+  verifyDroppables(response.droppables);
 
   let group_id = response.group_id ?? question_id;
   return `
@@ -108,10 +121,28 @@ function FITB_DROP_RENDERER(response: FITBDropSpecification, question_id: string
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
 
-function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: FITBDropSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function FITB_DROP_VALIDATE(response: FITBDropSpecification, submission: WellFormedSubmission<"fitb_drop">) : CheckedSubmission<"fitb_drop"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+  
+  const enc = submission.encoding;
+  
+  if (enc.length === 0) { return BLANK_SUBMISSION(); }
 
+  // Issue #239: this doesn't actually validate against the response structure at all,
+  // it just checks that the parsed submission could be valid for a fitb-drop in general.
+  if(isValidFITBDropSubmission(enc)) {
+    return VIABLE_SUBMISSION(enc);
+  }
+  else {
+    return INVALID_SUBMISSION(enc);
+  }
+}
+
+function FITB_DROP_SOLUTION_RENDERER(response: FITBDropSpecification, solution: ValidSubmission<"fitb_drop">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+  const encoding = solution.validity !== "blank" ? solution.encoding : undefined;
   let group_id = response.group_id ?? question_id;
-  return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, solution);
+  return createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, encoding);
 
   // TODO: should the skin actually be applied before passing to createFilledFITBDrop? Shouldn't it already apply in that function  ?
 }
@@ -141,7 +172,7 @@ function FITB_DROP_ACTIVATE(responseElem: JQuery, is_sample_solution: boolean) {
     });
 
     // Activate sortablejs for the bank overall
-    activateBank(bank, group_id);
+    activateFITBDropBank(bank, group_id);
   });
 
 }
@@ -152,7 +183,7 @@ function groupsMatch(to: Sortable, from: Sortable) {
   return to_group_name === from_group_name; // also covers undefined === undefined case
 }
 
-function activateDropLocations(elem: JQuery<HTMLElement>) {
+export function activateDropLocations(elem: JQuery<HTMLElement>) {
   elem.find(".examma-ray-fitb-drop-location").each(function() {
     Sortable.create(this, {
       swapThreshold: 0.2,
@@ -163,14 +194,15 @@ function activateDropLocations(elem: JQuery<HTMLElement>) {
           return groupsMatch(to, from) // drop group ids must match
             && elem.closest("#bank").length === 0; // not dropping into a nested drop location in a bank element
         },
-        pull: true
+        pull: true,
       },
       removeOnSpill: true
     });
   });
 }
 
-export function activateBank(elem: JQuery<HTMLElement>, group_id: string) {
+export function activateFITBDropBank(elem: JQuery<HTMLElement>, group_id: string) {
+  
   Sortable.create(elem[0], {
     swapThreshold: 0.2,
     group: {
@@ -181,35 +213,34 @@ export function activateBank(elem: JQuery<HTMLElement>, group_id: string) {
     sort: false,
     animation: 150,
     // TODO
+    // TODO ^^ figure out what that TODO was for... maybe it was evt.item vs. evt.clone?
     onClone: evt => activateDropLocations($(evt.item))
   });
 }
 
-function getFirstLevelFITBDropElements(responseElem: JQuery<HTMLElement>) {
-  return responseElem.find("input, textarea, .examma-ray-fitb-drop-location")
-    .filter(function () {
-      // Exclude elements that are nested inside an .examma-ray-fitb-drop-location element. Those
-      // will be explored via the recursion below to properly populate the "children" array for a drop location.
-      if ($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length !== 0) {
-        return false;
-      }
+export function getFirstLevelFITBDropElements(responseElem: JQuery<HTMLElement>) {
+  return responseElem.find(".examma-ray-fitb-blank-input, .examma-ray-fitb-box-input, .examma-ray-fitb-drop-location").filter(function () {
+    // Exclude elements that are nested inside an .examma-ray-fitb-drop-location element. Those
+    // will be explored via the recursion below to properly populate the "children" array for a drop location.
+    if ($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-location").length !== 0) {
+      return false;
+    }
 
-      // Exclude elements that are inside of the hidden original droppables element
-      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-originals").length !== 0) {
-        return false;
-      }
+    // Exclude elements that are inside of the hidden original droppables element
+    if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-originals").length !== 0) {
+      return false;
+    }
 
-      // Exclude elements that are inside of a drop bank
-      if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-bank").length !== 0) {
-        return false;
-      }
+    // Exclude elements that are inside of a drop bank
+    if($(this).parentsUntil(responseElem, ".examma-ray-fitb-drop-bank").length !== 0) {
+      return false;
+    }
 
-      return true;
-    })
-    .get();
+    return true;
+  }).get();
 }
 
-function extractHelper(responseElem: JQuery) : Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>{
+function extractHelper(responseElem: JQuery) : FITBDropSubmission{
   return getFirstLevelFITBDropElements(responseElem).map((elem: HTMLElement) => {
       let v: string | DropSubmission;
       if ($(elem).hasClass("examma-ray-fitb-drop-location")) {
@@ -235,22 +266,24 @@ function extractHelper(responseElem: JQuery) : Exclude<FITBDropSubmission, typeo
 
 function FITB_DROP_EXTRACTOR(responseElem: JQuery) {
   let filledResponses = extractHelper(responseElem);
-  return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? BLANK_SUBMISSION : filledResponses;
+  return filledResponses.every(resp => resp === "" || Array.isArray(resp) && resp.length === 0) ? [] : filledResponses;
 }
 
-function FITB_DROP_FILLER(responseElem: JQuery, submission: FITBDropSubmission) {
+function FITB_DROP_FILLER(responseElem: JQuery, submission: ValidSubmission<"fitb_drop">) {
 
-  if (submission === BLANK_SUBMISSION) {
+  if (submission.validity === "viable") {
+    fillerHelper(responseElem, submission.encoding, responseElem.find(".examma-ray-fitb-drop-originals"));
+  }
+  else if (submission.validity === "blank") {
     // blank out all the blanks/boxes
     responseElem.find("input, textarea").val("");
     
     // empty the drop locations
     responseElem.find(".examma-ray-fitb-drop-location").empty();
-
-    return;
   }
-
-  fillerHelper(responseElem, submission, responseElem.find(".examma-ray-fitb-drop-originals"));
+  else {
+    assertNever(submission);
+  }
 }
 
 
@@ -276,6 +309,7 @@ function FITB_DROP_DIFF(r1: FITBDropSpecification, r2: FITBDropSpecification) : 
 
 export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   parse: FITB_DROP_PARSER,
+  validate: FITB_DROP_VALIDATE,
   render: FITB_DROP_RENDERER,
   render_solution: FITB_DROP_SOLUTION_RENDERER,
   activate: FITB_DROP_ACTIVATE,
@@ -284,7 +318,7 @@ export const FITB_DROP_HANDLER : ResponseHandler<"fitb_drop"> = {
   diff: FITB_DROP_DIFF,
 };
 
-function fillerHelper(elem: JQuery, submission: Exclude<FITBDropSubmission, typeof BLANK_SUBMISSION>, originalsElem: JQuery) {
+function fillerHelper(elem: JQuery, submission: FITBDropSubmission, originalsElem: JQuery) {
 
   let elems = getFirstLevelFITBDropElements(elem);
   assert(elems.length === submission.length);
@@ -322,14 +356,14 @@ function cloneFromOriginals(originalsElem: JQuery, id: string) {
 const BLANK_PATTERN = /_+ *blank *_+/gi;
 
 /**
- * Matches anything that looks like e.g. [[BOX\n\n\n\n\n__________]] or [[Box\n\n]].
+ * Matches anything that looks like e.g. [[_____BOX_____\n\n\n\n\n]] or [[Box\n\n]].
  * Those are real newlines, and at least 1 is required.
  */
 const BOX_PATTERN = /\[\[[ _]*box[ _]*( *\n)+ *\]\]/gi;
 
 /**
- * Matches anything that looks like e.g. [[DROP\n\n\n\n\n__________] or [[Drop\n\n]].
- * Those are real newlines, and at least 1 is required.
+ * Matches anything that looks like e.g. [[_____DROP_____\n\n\n\n\n] or [[Drop\n\n]].
+ * Those are real newlines, but none are actually required.
  */
 const DROP_LOCATION_PATTERN = /\[\[[ _]*drop[ _]*( *\n)* *\]\]/gi;
 
@@ -346,6 +380,11 @@ function count_char(str: string, c: string) {
   return count;
 }
 
+/**
+ * Precondition: submission (if provided) is a valid submission encoding for the given
+ * FITB-Drop response. That is, the number of strings in the submission matches the
+ * number of blanks and boxes in the content.
+ */
 export function createFilledFITBDrop(
   content: string,
   dropOriginals: DroppableSpecification,
@@ -357,6 +396,8 @@ export function createFilledFITBDrop(
   dropLocationRenderer = DEFAULT_DROP_LOCATION_RENDERER,
   dropBankRenderer = DEFAULT_DROP_BANK_RENDERER,
   encoder: (s:string)=>string = encode) {
+
+  verifyDroppables(dropOriginals);
 
   // count the number of underscores in each blank pattern
   let blankLengths = content.match(BLANK_PATTERN)?.map(m => count_char(m, "_")) ?? [];
@@ -409,7 +450,8 @@ export function createFilledFITBDrop(
   content = content.replace(new RegExp(drop_bank_id, "g"), dropBankRenderer(group_id));
 
   // Replace placeholders with submission values
-  if (submission && submission !== BLANK_SUBMISSION) {
+  if (submission) {
+
     submission.forEach(sub => {
       let submission_replacement = typeof sub === "string"
         ? encoder(applySkin(sub, skin))
@@ -465,14 +507,11 @@ export function renderFITBDropBank(droppables: DroppableSpecification, group_id:
 }
 
 export function mapSkinOverSubmission(submission: FITBDropSubmission, skin: ExamComponentSkin) : FITBDropSubmission {
-  if (submission === BLANK_SUBMISSION) {
-    return BLANK_SUBMISSION;
-  }
   return submission.map(dropSub => typeof dropSub === "string"
     ? applySkin(dropSub, skin)
     : dropSub.map(s => ({
       id: s.id,
-      children: s.children && <(string | DropSubmission)[]>mapSkinOverSubmission(s.children, skin)
+      children: s.children && mapSkinOverSubmission(s.children, skin)
     }))
   )
 }

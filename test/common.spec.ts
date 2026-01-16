@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { ExamSubmission, fillManifest } from '../src/core/submissions';
+import { ExamManifest, ExamSubmission, fillManifest, OpaqueExamSubmission, TransparentExamManifest, TransparentExamSubmission } from '../src/core/submissions';
 
 export const VALID_IDS = [
   "blah",
@@ -22,7 +22,7 @@ export const INVALID_IDS = [
   "0azaz",
 ];
 
-const manifest : ExamSubmission = {
+const manifest : TransparentExamManifest = {
   "uuid": "exam_uuid_1",
   "exam_id": "eecs280sp20test",
   "student": {
@@ -30,7 +30,8 @@ const manifest : ExamSubmission = {
     "name": "Stu Dent"
   },
   "timestamp": 1616624061809,
-  "trusted": false,
+  "trusted": true,
+  "transparent": true,
   "saverId": 0,
   "sections": [
     {
@@ -45,7 +46,6 @@ const manifest : ExamSubmission = {
           "skin_id": "skin1",
           "display_index": "1.1",
           "kind": "multiple_choice",
-          "response": ""
         },
         {
           "uuid": "question_uuid_2",
@@ -53,7 +53,6 @@ const manifest : ExamSubmission = {
           "skin_id": "skin2",
           "display_index": "1.2",
           "kind": "multiple_choice",
-          "response": ""
         }
       ]
     },
@@ -69,7 +68,6 @@ const manifest : ExamSubmission = {
           "skin_id": "skin3",
           "display_index": "2.1",
           "kind": "fill_in_the_blank",
-          "response": ""
         },
         {
           "uuid": "question_uuid_4",
@@ -77,7 +75,6 @@ const manifest : ExamSubmission = {
           "skin_id": "skin4",
           "display_index": "2.2",
           "kind": "code_editor",
-          "response": ""
         }
       ]
     }
@@ -89,7 +86,7 @@ const manifest : ExamSubmission = {
 //  - question types changed
 //  - metadata changed
 //  - student info changed
-const submitted : ExamSubmission = {
+const submitted : TransparentExamSubmission = {
   "uuid": "exam_uuid_1",
   "exam_id": "eecs280sp20test1",
   "student": {
@@ -97,7 +94,7 @@ const submitted : ExamSubmission = {
     "name": "Stu Dent1"
   },
   "timestamp": 43,
-  "trusted": false,
+  "transparent": true,
   "saverId": 234,
   "sections": [
     {

@@ -1,21 +1,19 @@
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import Papa from "papaparse";
 import path from "path";
-import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
-import { ExamManifest, ExamSubmission, fillManifest, hasResponses, isTransparentExamManifest, parseExamManifest, parseExamSubmission, TrustedExamSubmission } from "./core/submissions";
-import { assert, assertNever } from "./core/util";
+import { ExamManifest, ExamSubmission, fillManifest, isTransparentExamManifest, parseExamManifest, parseExamSubmission, TrustedExamSubmission } from "./core/submissions";
+import { assert } from "./core/util";
 
 import "colors";
 
 import { ncp } from "ncp";
 import { Exam, Question, Section } from "./core";
-import { ExamSpecification, parseExamComponentSpecification, stringifyExamComponentSpecification, StudentInfo } from "./core/exam_specification";
-import { UUID_Strategy } from "./ExamGenerator";
+import { ExamSpecification, parseExamSpecification, stringifyExamComponentSpecification, StudentInfo } from "./core/exam_specification";
 
 export namespace ExamUtils {
 
   export function readExamSpecificationFromFileSync(filename: string) : ExamSpecification {
-    return <ExamSpecification>parseExamComponentSpecification(readFileSync(filename, "utf8"));
+    return parseExamSpecification(readFileSync(filename, "utf8"));
   }
 
   export function writeExamSpecificationToFileSync(filename: string, spec: ExamSpecification) {
@@ -91,25 +89,21 @@ export namespace ExamUtils {
   }
 }
 
-export function writeFrontendJS(outDir: string, filename: string) {
+export function writeFrontendFile(outDir: string, filename: string) {
   mkdirSync(outDir, { recursive: true });
   try {
     let path = require.resolve(`examma-ray/dist/frontend/${filename}`);
-    copyFileSync(
-      path,
-      `${outDir}/${filename}`
-    );
-    console.log("Copied frontend JS bundle.")
+    copyFileSync(path, `${outDir}/${filename}`);
+    console.log(`Copied frontend file ${filename}`);
   }
   catch(e: any) {
     if (e.code === "MODULE_NOT_FOUND") {
-
       try {
         copyFileSync(
           `../node_modules/examma-ray/dist/frontend/${filename}`,
           `${outDir}/${filename}`
         );
-        console.log("Cannot resolve and copy frontend JS, using local copy instead.");
+        console.log(`Cannot resolve and copy frontend file ${filename}, using local copy instead.`);
       }
       catch(e) {
         try {
@@ -117,10 +111,10 @@ export function writeFrontendJS(outDir: string, filename: string) {
             `dist/frontend/${filename}`,
             `${outDir}/${filename}`
           );
-          console.log("Cannot resolve and copy frontend JS, using local copy instead.");
+          console.log(`Cannot resolve and copy frontend file ${filename}, using local copy instead.`);
         }
         catch(e) {
-          console.log(`Failed to find and copy frontend JS: ${filename}`.red);
+          console.error(`Failed to find and copy frontend file ${filename}`.red);
         }
       }
     }
@@ -142,37 +136,9 @@ export function copyFrontendAssets(asset_source_dir: string, frontend_assets_dir
       }
       else {
         console.error("ERROR copying frontend assets".red);
+        console.error(err);
       }
     }
   )
 
-}
-
-
-/**
- * Takes an ID for an exam, section, or question and creates a uuid
- * for a particular student's instance of that entity. The uuid is
- * created based on the policy specified in the `ExamGenerator`'s
- * options when it is created.
- * @param student 
- * @param id 
- * @returns 
- */
-export function createStudentUuid(options: {
-  uuid_strategy: UUID_Strategy,
-  uuidv5_namespace?: string,
-}, student: StudentInfo, id: string) {
-  if(options.uuid_strategy === "plain") {
-    return student.uniqname + "-" + id;
-  }
-  else if (options.uuid_strategy === "uuidv4") {
-    return uuidv4();
-  }
-  else if (options.uuid_strategy === "uuidv5") {
-    assert(options.uuidv5_namespace);
-    return uuidv5(student.uniqname + "-" + id, options.uuidv5_namespace!);
-  }
-  else {
-    assertNever(options.uuid_strategy);
-  }
 }

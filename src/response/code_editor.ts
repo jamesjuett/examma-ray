@@ -3,8 +3,7 @@ import { encode } from "he";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
 import { GraderSpecificationFor } from "../graders/QuestionGrader";
-import { BLANK_SUBMISSION } from "./common";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
+import { BLANK_SUBMISSION, CheckedSubmission, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, ViableSubmission, WellFormedSubmission } from "./responses";
 
 /**
  * ## Code Editor Response Element Specification
@@ -90,25 +89,35 @@ export type CodeEditorSpecification = {
   starter: string,
   header?: string,
   footer?: string,
-  sample_solution?: ViableSubmission<CodeEditorSubmission>,
+  sample_solution?: SubmissionType<"code_editor">,
   default_grader?: GraderSpecificationFor<"code_editor">
 };
 
 /**
  * A submission for a code editor response is simply a string with whatever content
- * was in the code editor box. The submission may also be the symbol [[BLANK_SUBMISSION]]
- * if the contents of the code editor box were entirely blank or consisted of only whitespace.
- * Note that unmodified starter code would not be considered blank.
+ * was in the code editor box.
  */
-export type CodeEditorSubmission = string | typeof BLANK_SUBMISSION;
+export type CodeEditorSubmission = string;
 
-
-function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : CodeEditorSubmission {
+function CODE_EDITOR_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"code_editor"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
-  return rawSubmission;
+  return UNCHECKED_SUBMISSION(rawSubmission);
+}
+
+function CODE_EDITOR_VALIDATOR(response: CodeEditorSpecification, submission: WellFormedSubmission<"code_editor">) : CheckedSubmission<"code_editor"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+
+  if (submission.encoding.trim() === "") {
+    return BLANK_SUBMISSION();
+  }
+
+  // Anything else is viable since any non-blank string is a
+  // valid code editor submission.
+  return VIABLE_SUBMISSION(submission.encoding);
 }
 
 function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -139,17 +148,16 @@ function CODE_EDITOR_RENDERER(response: CodeEditorSpecification, question_id: st
   `;
 }
 
-function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: CodeEditorSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
-  if (solution === BLANK_SUBMISSION) {
-    solution = "";
-  }
+function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, solution: ValidSubmission<"code_editor">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
+  const encoding = solution.validity !== "blank" ? solution.encoding : "";
+
   return `
     <div class="examma-ray-code-editor-header">
       ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
     </div>
     <div class="examma-ray-code-editor-submission">
-      ${`<pre><code>${highlightCode(""+applySkin(solution, skin), response.code_language)}</code></pre>`}
+      ${`<pre><code>${highlightCode(""+applySkin(encoding, skin), response.code_language)}</code></pre>`}
     </div>
     <div class="examma-ray-code-editor-footer">
       ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
@@ -158,18 +166,18 @@ function CODE_EDITOR_SOLUTION_RENDERER(response: CodeEditorSpecification, soluti
 }
 
 
-function CODE_EDITOR_EXTRACTOR(responseElem: JQuery) {
+function CODE_EDITOR_EXTRACTOR(responseElem: JQuery) : SubmissionType<"code_editor"> {
   
   // .getValue() is for the CodeMirror object
   let code : string = $(responseElem).find(".examma-ray-codemirror").data("examma-ray-codemirror").getValue() ?? "";
-  return code.trim() !== "" ? code : BLANK_SUBMISSION;
+  return code;
 
 }
 
-function CODE_EDITOR_FILLER(elem: JQuery, submission: CodeEditorSubmission) {
+function CODE_EDITOR_FILLER(elem: JQuery, submission: ValidSubmission<"code_editor">) {
 
   // .setValue() is for the CodeMirror object
-  $(elem).find(".examma-ray-codemirror").data("examma-ray-codemirror").setValue(submission === BLANK_SUBMISSION ? "" : submission);
+  $(elem).find(".examma-ray-codemirror").data("examma-ray-codemirror").setValue(submission.validity !== "blank" ? submission.encoding : "");
 }
 
 
@@ -196,6 +204,7 @@ function CODE_EDITOR_DIFF(r1: CodeEditorSpecification, r2: CodeEditorSpecificati
 
 export const CODE_EDITOR_HANDLER : ResponseHandler<"code_editor"> = {
   parse: CODE_EDITOR_PARSER,
+  validate: CODE_EDITOR_VALIDATOR,
   render: CODE_EDITOR_RENDERER,
   render_solution: CODE_EDITOR_SOLUTION_RENDERER, 
   extract: CODE_EDITOR_EXTRACTOR,

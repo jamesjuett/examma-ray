@@ -11,8 +11,10 @@ export const GRADERS : GraderSpecificationMap[] = [
 ];
 
 export const EXAM_GRADER = new ExamGrader(EXAM, {
-  uuid_strategy: "uuidv5",
-  uuidv5_namespace: readFileSync("secret", "utf-8"),
+  uuid_options: {
+    strategy: "uuidv5",
+    v5_namespace: readFileSync("secret", "utf-8"),
+  },
   frontend_js_path: "js/",
 }, GRADERS, EXCEPTIONS);
 

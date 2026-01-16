@@ -15,13 +15,13 @@ export {
 } from "./core/exam_components";
 
 export {
-  QuestionAnswer,
-  SectionAnswers,
+  QuestionSubmission,
+  SectionSubmission,
   ExamSubmission,
-  TransparentQuestionAnswer,
-  OpaqueQuestionAnswer,
-  TransparentSectionAnswers,
-  OpaqueSectionAnswers,
+  TransparentQuestionSubmission,
+  OpaqueQuestionSubmission,
+  TransparentSectionSubmission,
+  OpaqueSectionSubmission,
   OpaqueExamSubmission,
   TransparentExamSubmission,
   TrustedExamSubmission,

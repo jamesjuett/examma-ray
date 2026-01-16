@@ -1,11 +1,11 @@
-import { FITB_HANDLER, FITBSpecification, FITBSubmission } from "./fitb";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ResponseKind } from "./common";
-import { MCSpecification, MCSubmission, MC_HANDLER } from "./mc";
-import { SLSpecification, SLSubmission, SL_HANDLER } from "./select_lines";
-import { CodeEditorSpecification, CodeEditorSubmission, CODE_EDITOR_HANDLER } from "./code_editor";
-import { FITBDropSpecification, FITBDropSubmission, FITB_DROP_HANDLER } from "./fitb-drop";
-import { IFrameResponseSpecification, IFrameSubmission, IFRAME_HANDLER } from "./iframe";
 import { ExamComponentSkin } from "../core/skins";
+import { CodeEditorSpecification, CodeEditorSubmission } from "./code_editor";
+import { ResponseKind } from "./common";
+import { FITBSpecification, FITBSubmission } from "./fitb";
+import { FITBDropSpecification, FITBDropSubmission } from "./fitb-drop";
+import { IFrameResponseSpecification, IFrameSubmission } from "./iframe";
+import { MCSpecification, MCSubmission } from "./mc";
+import { SLSpecification, SLSubmission } from "./select_lines";
 
 export type ResponseSpecification<QT extends ResponseKind> =
   QT extends "multiple_choice" ? MCSpecification :
@@ -25,20 +25,83 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "iframe" ? IFrameSubmission :
   never;
 
-/**
- * A helper type that represents only the "viable" submissions from a submission type
- * by excluding [[BLANK_SUBMISSION]] and [[INVALID_SUBMISSION]]. There is a general
- * understanding that viable submissions represent those that could earn points or
- * are e.g. valid to specify as a sample solution.
- */
-export type ViableSubmission<ST> = Exclude<ST, typeof BLANK_SUBMISSION | typeof INVALID_SUBMISSION>;
+// export type ResponseValidity =
+//   "malformed" |
+//   "blank" |
+//   "invalid" |
+//   "viable";
+
+export type MalformedSubmission = { readonly validity: "malformed", raw: string };
+export type BlankSubmission = { readonly validity: "blank" };
+export type UncheckedSubmission<QT extends ResponseKind> = { validity: "unchecked", encoding: SubmissionType<QT> }
+export type InvalidSubmission<QT extends ResponseKind> = { readonly validity: "invalid", encoding: SubmissionType<QT> };
+export type ViableSubmission<QT extends ResponseKind> = { readonly validity: "viable", encoding: SubmissionType<QT> };
+
+export type AnySubmission<QT extends ResponseKind> =
+  | MalformedSubmission
+  | BlankSubmission
+  | UncheckedSubmission<QT>
+  | InvalidSubmission<QT>
+  | ViableSubmission<QT>;
+
+export type ParsedSubmission<QT extends ResponseKind> =
+  | MalformedSubmission
+  | BlankSubmission
+  | UncheckedSubmission<QT>;
+  // Note: We don't include InvalidSubmission and ViableSubmission here
+  // because validity generally cannot be determined by parsing, instead
+  // it requires validation against a specific response specification.
+
+export type WellFormedSubmission<QT extends ResponseKind> = Exclude<AnySubmission<QT>, MalformedSubmission>;
+
+export type CheckedSubmission<QT extends ResponseKind> = Exclude<WellFormedSubmission<QT>, UncheckedSubmission<QT>>;
+
+// export type NonBlankSubmission<QT extends ResponseKind> =
+//   | InvalidSubmission<QT>
+//   | ViableSubmission<QT>;
+
+export type ValidSubmission<QT extends ResponseKind> = Exclude<CheckedSubmission<QT>, InvalidSubmission<QT>>;
+
 
 /**
- * A helper type that gives the type representing viable submissions for a given
- * response kind.
+ * Creates a wrapper representing a raw submission that
+ * could not be parsed successfully into a well-formed encoding.
  */
-export type ViableSubmissionType<QT extends ResponseKind> = ViableSubmission<SubmissionType<QT>>;
+export function MALFORMED_SUBMISSION(raw_submission: string) : MalformedSubmission {
+  return { validity: "malformed", raw: raw_submission };
+}
 
+const _blank_submission : BlankSubmission = Object.freeze({ validity: "blank" });
+
+/**
+ * Returns the representation of a blank submission.
+*/
+export function BLANK_SUBMISSION() : BlankSubmission {
+  return _blank_submission;
+}
+
+/**
+ * Creates a wrapper representing an unchecked submission.
+ */
+export function UNCHECKED_SUBMISSION<QT extends ResponseKind>(encoding: SubmissionType<QT>) : UncheckedSubmission<QT> {
+  return { validity: "unchecked", encoding: encoding };
+}
+
+/**
+ * Creates a wrapper representing a submission that has been
+ * checked and determined to be invalid.
+ */
+export function INVALID_SUBMISSION<QT extends ResponseKind>(encoding: SubmissionType<QT>) : InvalidSubmission<QT> {
+  return { validity: "invalid", encoding: encoding };
+}
+
+/**
+ * Creates a wrapper representing a submission that has been
+ * checked and determined to be viable.
+ */
+export function VIABLE_SUBMISSION<QT extends ResponseKind>(encoding: SubmissionType<QT>) : ViableSubmission<QT> {
+  return { validity: "viable", encoding: encoding };
+}
 
 /**
  * A type used to represent differences between two response specifications.
@@ -54,71 +117,16 @@ export type ResponseSpecificationDiff = {
 
 
 export type ResponseHandler<QT extends ResponseKind> = {
-  parse: (rawSubmission: string | null | undefined) => SubmissionType<QT> | typeof MALFORMED_SUBMISSION,
-  validate?: (response: ResponseSpecification<QT>, submission: SubmissionType<QT>) => SubmissionType<QT>,
+  parse: (rawSubmission: string | null | undefined) => ParsedSubmission<QT>,
+  validate: (response: ResponseSpecification<QT>, submission: WellFormedSubmission<QT>) => CheckedSubmission<QT>,
   render: (response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
-  render_solution: (response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
+  render_solution: (response: ResponseSpecification<QT>, solution: ValidSubmission<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) => string,
   activate?: (responseElem: JQuery, is_sample_solution: boolean) => void,
   extract: (responseElem: JQuery) => SubmissionType<QT>,
-  fill: (elem: JQuery, submission: SubmissionType<QT>) => void,
+  fill: (elem: JQuery, submission: ValidSubmission<QT>) => void,
   diff: (response1: ResponseSpecification<QT>, response2: ResponseSpecification<QT>) => ResponseSpecificationDiff;
 };
 
-export const RESPONSE_HANDLERS : {
-  [QT in ResponseKind]: ResponseHandler<QT>
-} = {
-  "multiple_choice": MC_HANDLER,
-  "fill_in_the_blank": FITB_HANDLER,
-  "select_lines": SL_HANDLER,
-  "code_editor": CODE_EDITOR_HANDLER,
-  "fitb_drop": FITB_DROP_HANDLER,
-  "iframe": IFRAME_HANDLER,
-};
-
-export function parse_submission<QT extends ResponseKind>(kind: QT, rawSubmission: string | null | undefined) : SubmissionType<QT> {
-  return <SubmissionType<QT>>RESPONSE_HANDLERS[kind].parse(rawSubmission);
-}
-
-export function validate_submission<QT extends ResponseKind>(response: ResponseSpecification<QT>, submission: SubmissionType<QT>) : SubmissionType<QT> {
-  let handler = <ResponseHandler<QT>>RESPONSE_HANDLERS[response.kind];
-  return handler.validate ? handler.validate(response, submission) : submission;
-}
-
-export function render_response<QT extends ResponseKind>(response: ResponseSpecification<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render(response, question_id, question_uuid, skin);
-}
-
-export function render_solution<QT extends ResponseKind>(response: ResponseSpecification<QT>, solution: SubmissionType<QT>, question_id: string, question_uuid: string, skin?: ExamComponentSkin) : string {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[<QT>response.kind]).render_solution(response, solution, question_id, question_uuid, skin);
-}
-
-export function activate_response<QT extends ResponseKind>(kind: QT, is_sample_solution: boolean, responseElem: JQuery) : void {
-  let activateFn = (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).activate;
-  activateFn && activateFn(responseElem, is_sample_solution);
-}
-
-export function extract_response<QT extends ResponseKind>(kind: QT, responseElem: JQuery) : SubmissionType<QT> {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).extract(responseElem);
-}
-
-export function stringify_response<QT extends ResponseKind>(submission: SubmissionType<QT>) {
-  return submission === BLANK_SUBMISSION ? "" : 
-        typeof submission === "string" ? submission :
-        JSON.stringify(submission);
-}
-
-export function fill_response<QT extends ResponseKind>(elem: JQuery, kind: QT, response: SubmissionType<QT>) : void {
-  return (<ResponseHandler<QT>><unknown>RESPONSE_HANDLERS[kind]).fill(elem, response);
-}
-
-export function response_specification_diff(response1: ResponseSpecification<ResponseKind>, response2: ResponseSpecification<ResponseKind>) : ResponseSpecificationDiff | undefined {
-  if (response1.kind !== response2.kind) {
-    return { incompatible: true };
-  }
-  const diff = RESPONSE_HANDLERS[response1.kind].diff(<any>response1, <any>response2);
-  return is_empty_response_diff(diff) ? undefined : diff;
-}
-
-function is_empty_response_diff(diff: ResponseSpecificationDiff) {
+export function is_empty_response_diff(diff: ResponseSpecificationDiff) {
   return !Object.values(diff).some(v => v);
 }

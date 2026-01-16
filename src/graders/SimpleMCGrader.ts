@@ -1,11 +1,10 @@
+import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
+import { CHECK_ICON, RED_X_ICON } from "../core/icons";
 import { mk2html } from "../core/render";
 import { renderNumBadge } from "../core/ui_components";
-import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
-import { MCSubmission } from "../response/mc";
-import { assert } from "../core/util";
-import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
-import { CHECK_ICON, RED_X_ICON } from "../core/icons";
+import { asMutable, assert } from "../core/util";
+import { ResponseKind } from "../response/common";
+import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
 /**
  * chosen is -1 if the submission was blank
@@ -34,28 +33,34 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
   public constructor(spec: SimpleMCGraderSpecification) {
     this.spec = spec;
   }
+  
+  public scale(new_points_possible: number) {
+    return this;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "multiple_choice";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: SimpleMCGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SimpleMCGradingResult {
     let question = aq.question;
     let submission = aq.submission;
 
-    if (submission === INVALID_SUBMISSION) {
-      return {
-        wasBlankSubmission: false,
-        wasInvalidSubmission: true,
-        pointsEarned: 0,
-        indexChosen: -1,
-        indexCorrect: this.spec.correct_index
-      };
-    }
+    // if (submission.validity === "invalid") {
+    //   return {
+    //     wasBlankSubmission: false,
+    //     wasInvalidSubmission: true,
+    //     pointsEarned: 0,
+    //     indexChosen: -1,
+    //     indexCorrect: this.spec.correct_index
+    //   };
+    // }
 
-    if (submission === BLANK_SUBMISSION || submission.length === 0) {
+    if (submission.validity === "blank") {
       return {
         wasBlankSubmission: true,
         pointsEarned: 0,
@@ -64,12 +69,13 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
       };
     }
 
-    assert(submission.length <= 1, `${question}\nSimpleMCGrader cannot be used for questions where more than one selection is allowed.`);
+    const enc = submission.encoding;
+    assert(enc.length <= 1, `${question}\nSimpleMCGrader cannot be used for questions where more than one selection is allowed.`);
 
     return {
       wasBlankSubmission: false,
-      pointsEarned: submission[0] === this.spec.correct_index ? question.pointsPossible : 0,
-      indexChosen: submission[0],
+      pointsEarned: enc[0] === this.spec.correct_index ? question.pointsPossible : 0,
+      indexChosen: enc[0],
       indexCorrect: this.spec.correct_index
     };
   }
@@ -113,12 +119,10 @@ export class SimpleMCGrader implements QuestionGrader<"multiple_choice", SimpleM
   public renderOverview(gqs: readonly GradedQuestion<"multiple_choice">[]) {
     let question = gqs[0].question;
     let submissions = gqs.map(gq => gq.submission);
-    let f = function (sub: MCSubmission): sub is number[] {
-      return sub !== BLANK_SUBMISSION && sub !== INVALID_SUBMISSION && sub.length > 0;
-    };
-    let normalSubmissions = submissions.filter(f);
-    let numBlank = submissions.filter(s => s === BLANK_SUBMISSION).length;
-    let numInvalid = submissions.filter(s => s === INVALID_SUBMISSION).length;
+    let normalSubmissions = submissions.filter(s => s.validity === "viable").map(s => s.encoding);
+    let numBlank = submissions.filter(s => s.validity === "blank").length;
+    // let numInvalid = submissions.filter(s => !validate_submission(question.response, s)).length;
+    let numInvalid = 0;
 
     assert(normalSubmissions.every(sub => sub.length === 1), "SimpleMCGrader cannot be used for questions where more than one selection is allowed.");
 

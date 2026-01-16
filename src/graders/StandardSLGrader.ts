@@ -1,11 +1,11 @@
 import { applySkin, highlightCode, mk2html } from "../core/render";
 import { renderPercentChosenProgressBar, renderPointsProgressBar, renderScoreBadge } from "../core/ui_components";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { SLItem, SLSubmission } from "../response/select_lines";
 import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
 import { CHECK_ICON, GRAY_DASH_ICON, INFO_OCTICON, RED_X_ICON } from "../core/icons";
-import { assert } from "../core/util";
+import { asMutable, assert } from "../core/util";
 
 
 export type StandardSLGradingResult = ImmutableGradingResult & {
@@ -24,7 +24,7 @@ type SLRubricItem = {
   description: string;
 };
 
-function gradeSLRubricItem(rubricItem: SLRubricItem, submission: Exclude<SLSubmission, typeof BLANK_SUBMISSION>) {
+function gradeSLRubricItem(rubricItem: SLRubricItem, submission: SLSubmission) {
   return {
     applied: rubricItem.required.every(line => submission.indexOf(line) !== -1) && !rubricItem.prohibited.some(line => submission.indexOf(line) !== -1),
     submittedLines: rubricItem.required.concat(rubricItem.prohibited).filter(line => submission.indexOf(line) !== -1)
@@ -33,7 +33,8 @@ function gradeSLRubricItem(rubricItem: SLRubricItem, submission: Exclude<SLSubmi
 
 export type StandardSLGraderSpecification = {
   readonly grader_kind: "standard_select_lines",
-  readonly rubric: readonly SLRubricItem[]
+  readonly rubric: readonly SLRubricItem[],
+  readonly points_possible: number,
 };
 
 export class StandardSLGrader implements QuestionGrader<"select_lines"> {
@@ -46,24 +47,36 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     this.spec = spec;
   }
 
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.points_possible;
+    return new StandardSLGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
+  }
+
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "select_lines";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: StandardSLGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"select_lines">) : StandardSLGradingResult {
-    let orig_submission = aq.submission;
-    if (orig_submission === BLANK_SUBMISSION || orig_submission.length === 0) {
+    const submission = aq.submission;
+    if (submission.validity === "blank") {
       return {
         wasBlankSubmission: true,
         pointsEarned: 0,
         itemResults: []
       };
     }
-    let submission = orig_submission;
 
-    let itemResults = this.spec.rubric.map(rubricItem => gradeSLRubricItem(rubricItem, submission));
+    let itemResults = this.spec.rubric.map(rubricItem => gradeSLRubricItem(rubricItem, submission.encoding));
     return {
       wasBlankSubmission: false,
       pointsEarned: itemResults.reduce((p, r, i) => p + (r.applied ? this.spec.rubric[i].points : 0), 0),
@@ -78,21 +91,16 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
   public renderReport(aq: GradedQuestion<"select_lines", StandardSLGradingResult>) {
     const question = aq.question;
     const response = question.response;
-    let orig_submission = aq.submission;
-    let submission: readonly number[];
     let gr = aq.gradingResult;
-    if (gr.wasBlankSubmission) {
+    if (aq.submission.validity === "blank" || gr.wasBlankSubmission) {
       return "Your answer for this question was blank.";
-    }
-    else {
-      assert(orig_submission !== BLANK_SUBMISSION)
-      submission = orig_submission;
     }
 
     let skin = aq.skin;
 
     let itemResults = gr.itemResults;
     assert(itemResults.length === this.spec.rubric.length);
+    const encoding = aq.submission.encoding;
 
     return `
     <table class="examma-ray-sl-diff table table-sm">
@@ -109,7 +117,7 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
       ${itemResults.map((itemResult, i) => {
         let rubricItem = this.spec.rubric[i];
         let relevant_lines = rubricItem.required.concat(rubricItem.prohibited).concat(rubricItem.optional ?? []).sort((a, b) => a - b);
-        let student_selected = relevant_lines.filter(line => submission.indexOf(line) !== -1);
+        let student_selected = relevant_lines.filter(line => encoding.indexOf(line) !== -1);
         let riScore: number = itemResult.applied ? rubricItem.points : 0;
 
         // let details: string;
@@ -192,7 +200,7 @@ export class StandardSLGrader implements QuestionGrader<"select_lines"> {
     const rubric = this.spec.rubric;
 
     let lines_n_chosen = new Array(question.response.choices.length).fill(0);
-    submissions.forEach(sub => sub !== BLANK_SUBMISSION && sub.forEach(s => ++lines_n_chosen[s]));
+    submissions.forEach(sub => sub.validity !== "blank" && sub.encoding.forEach(s => ++lines_n_chosen[s]));
 
     // let itemResults = gr.itemResults;
     // assert(itemResults.length === this.spec.rubric.length);

@@ -8,7 +8,7 @@ import { chooseAllSkins, minMaxChosenItems, minMaxPoints, MinMaxPoints, Question
 import { createCompositeSkin, ExamComponentSkin, isDefaultSkin } from './core/skins';
 import { renderPointsWorthBadge } from './core/ui_components';
 import { assertNever } from './core/util';
-import { ExamUtils, writeFrontendJS } from './ExamUtils';
+import { ExamUtils, writeFrontendFile } from './ExamUtils';
 import { mk2html_unwrapped } from './core/render';
 
 export type ExamPreviewOptions = {
@@ -50,8 +50,10 @@ export class ExamPreview {
       <html>
       ${renderHead(`
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
-        <script src="${path.join(this.options.frontend_js_path, "frontend-preview.js")}"></script>
-      `, this.options.custom_css || "")}
+        <script src="${path.join(this.options.frontend_js_path, "frontend-preview.js")}"></script>`, 
+        "",
+        this.options.custom_css || ""
+      )}
       <body>
         ${this.renderBody()}
       </body>
@@ -256,14 +258,14 @@ export class ExamPreview {
                   ${section.questions.map((q, i) => this.renderQuestionOrChooser(q, section_index, i+1, skin)).join("<br />")}
                 </td>
                 ${!section.mk_reference ? "" :
-                  `<td class="examma-ray-section-right-column" style="width: ${section.reference_width}%;">
+                  `<td class="examma-ray-section-right-column" style="width: ${section.right_column_width}%;">
                     <div class="examma-ray-section-right-column-container">
                       <div class="examma-ray-section-right-column-contents">
+                        <div class="examma-ray-section-right-column-width-slider-container">
+                          <div class="examma-ray-section-right-column-width-value">${section.right_column_width}%</div>
+                          <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${section.right_column_width}">
+                        </div>
                         <div class="examma-ray-section-reference">
-                          <div class="examma-ray-section-right-column-width-slider-container">
-                            <div class="examma-ray-section-right-column-width-value">${section.reference_width}%</div>
-                            <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${section.reference_width}">
-                          </div>
                           <h6>Reference Material (Section ${section_index})</h6>
                           ${section.renderReference(skin)}
                         </div>
@@ -350,7 +352,7 @@ export class ExamPreview {
                 </div>
                 ${this.renderQuestionContent(question, q_id, skin)}
                 <div class="examma-ray-question-postscript">
-                  ${question.renderDescription(skin)}
+                  ${question.renderPostscript(skin)}
                 </div>
               </div>
             </div>
@@ -426,9 +428,9 @@ export class ExamPreview {
     mkdirSync(previewDir, { recursive: true });
     del.sync(`${previewDir}/*`);
 
-    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend.js");
-    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-preview.js");
-    writeFrontendJS(path.join(previewDir, this.options.frontend_js_path), "frontend-solution.js");
+    writeFrontendFile(path.join(previewDir, this.options.frontend_js_path), "frontend.js");
+    writeFrontendFile(path.join(previewDir, this.options.frontend_js_path), "frontend-preview.js");
+    writeFrontendFile(path.join(previewDir, this.options.frontend_js_path), "frontend-solution.js");
     this.writeAssets(`${previewDir}`);
 
     writeFileSync(`${previewDir}/preview.html`, this.renderPreview(), {encoding: "utf-8"});

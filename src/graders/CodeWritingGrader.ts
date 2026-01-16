@@ -4,7 +4,7 @@ import { ICON_INFO } from "../core/icons";
 import { applySkin, highlightCode, mk2html, mk2html_unwrapped } from "../core/render";
 import { renderGradingProgressBar, renderShortPointsWorthBadge, renderWideNumBadge } from "../core/ui_components";
 import { assert, assertFalse } from "../core/util";
-import { BLANK_SUBMISSION, ResponseKind } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { FITBSubmission } from "../response/fitb";
 import { createFilledFITBDrop, FITBDropSubmission, mapSkinOverSubmission } from "../response/fitb-drop";
 import { createFilledFITB } from "../response/util-fitb";
@@ -25,6 +25,7 @@ export type CodeWritingRubricItem = {
 
 export type CodeWritingGraderSpecification = {
   readonly grader_kind: "manual_code_writing",
+  readonly points_possible: number,
 }
 
 export type CodeWritingRubricItemResult = {
@@ -73,6 +74,13 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   public constructor(spec: CodeWritingGraderSpecification) {
     this.spec = spec;
   }
+  
+  public scale(new_points_possible: number) {
+    if (new_points_possible !== this.spec.points_possible) {
+      console.log(`Warning: CodeWritingGrader does not support scaling. Requested points possible: ${new_points_possible}, original points possible: ${this.spec.points_possible}`);
+    }
+    return this;
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return true;
@@ -96,9 +104,9 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   // }
 
   public grade(aq: AssignedQuestion<ResponseKind>) : CodeWritingGraderGradingResult | undefined {
-    assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
-    let submission = aq.submission;
-    if (submission === BLANK_SUBMISSION || submission === "") {
+    assert(this.grading_data, `Question ${aq.question.question_id}: Grader prepare() function must be called before attempting grading.`);
+
+    if (aq.submission.validity === "blank") {
       return {
         submission_uuid: aq.uuid,
         wasBlankSubmission: true,
@@ -128,36 +136,36 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   public renderReport(aq: GradedQuestion<ResponseKind, CodeWritingGraderGradingResult>) {
     let gr = aq.gradingResult;
 
-    if (aq.submission === BLANK_SUBMISSION || gr.wasBlankSubmission) {
+    if (aq.submission.validity === "blank") {
       return "Your answer for this question was blank.";
     }
 
     let skin = aq.skin;
-    let question = aq.question;
+    // let question = aq.question;
     let studentSubmission_html = "";
     let sampleSolution_html = "";
     let res = aq.gradingResult;
-    if (question.isKind("code_editor")) {
-      let response = question.response;
+    if (aq.isKind("code_editor")) {
+      let response = aq.question.response;
       studentSubmission_html = `
         <div class="examma-ray-code-editor-header">
           ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
         </div>
         <div class="examma-ray-code-editor-submission">
-          ${`<pre><code>${highlightCode(aq.submission as string, response.code_language)}</code></pre>`}
+          ${`<pre><code>${highlightCode(aq.submission.encoding, response.code_language)}</code></pre>`}
         </div>
         <div class="examma-ray-code-editor-footer">
           ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
         </div>
       `;
       // TODO: eliminate code duplication
-      if (question.sampleSolution) {
+      if (aq.question.sampleSolution) {
         sampleSolution_html = `
           <div class="examma-ray-code-editor-header">
             ${response.header ? `<pre><code>${highlightCode(applySkin(response.header, skin), response.code_language)}</code></pre>` : ""}
           </div>
           <div class="examma-ray-code-editor-submission">
-            ${`<pre><code>${highlightCode(""+applySkin(question.sampleSolution as string, skin), response.code_language)}</code></pre>`}
+            ${`<pre><code>${highlightCode(""+applySkin(aq.question.sampleSolution.encoding, skin), response.code_language)}</code></pre>`}
           </div>
           <div class="examma-ray-code-editor-footer">
             ${response.footer ? `<pre><code>${highlightCode(applySkin(response.footer, skin), response.code_language)}</code></pre>` : ""}
@@ -165,29 +173,26 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         `;
       }
     }
-    else if (question.isKind("fill_in_the_blank")) {
-      let content = question.response.content;
-      let submission = <FITBSubmission>aq.submission;
-      assert(submission !== BLANK_SUBMISSION);
+    else if (aq.isKind("fill_in_the_blank")) {
+      let content = aq.question.response.content;
 
-      studentSubmission_html = createFilledFITB(applySkin(content, skin), submission); //, content, scores);
-      if (question.sampleSolution) {
-        sampleSolution_html = createFilledFITB(applySkin(content, skin), (<string[]>question.sampleSolution).map(s => applySkin(s, skin))); //, content, scores);
+      studentSubmission_html = createFilledFITB(applySkin(content, skin), aq.submission.encoding); //, content, scores);
+      if (aq.question.sampleSolution) {
+        sampleSolution_html = createFilledFITB(applySkin(content, skin), aq.question.sampleSolution.encoding.map(s => applySkin(s, skin))); //, content, scores);
       }
       
     }
-    else if (question.isKind("fitb_drop")) {
-      let response = question.response;
-      let submission = <FITBDropSubmission>aq.submission;
-      let group_id = response.group_id ?? question.question_id;
-      assert(submission !== BLANK_SUBMISSION);
-      // createFilledFITBDrop(applySkin(response.content, skin), response.droppables, group_id, skin, response.starter)
+    else if (aq.isKind("fitb_drop")) {
+      const question = aq.question
+      const response = question.response;
+      const submission = aq.submission;
+      const group_id = response.group_id ?? question.question_id;
       studentSubmission_html = createFilledFITBDrop(
         applySkin(response.content, skin),
         response.droppables,
         group_id,
         skin,
-        submission
+        submission.encoding
       );
 
       if (question.sampleSolution) {
@@ -197,7 +202,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
           response.droppables,
           group_id,
           skin,
-          mapSkinOverSubmission(question.sampleSolution, skin)
+          mapSkinOverSubmission(question.sampleSolution.encoding, skin)
         );
       }
       
@@ -213,7 +218,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
         <tr style="text-align: center;">
           <th>Rubric</th>
           <th>Your Submission</th>
-          ${question.sampleSolution ? `<th>Sample Solution</th>` : ""}
+          ${aq.question.sampleSolution ? `<th>Sample Solution</th>` : ""}
         </tr>
         <tr>
           <td>

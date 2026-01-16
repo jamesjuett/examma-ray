@@ -1,22 +1,25 @@
-import path from 'path';
+import path from 'path-browserify';
 import { AssignedSection, Exam } from '../core';
+import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
 import { AssignedExam, AssignedQuestion } from './assigned_exams';
 import { StudentInfo } from './exam_specification';
-import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_BOX, ICON_SCALE, ICON_USER } from './icons';
+import { FILE_CHECK, FILE_DOWNLOAD, FILE_UPLOAD, ICON_ARROW_BAR_DOWN, ICON_SCALE, ICON_USER } from './icons';
+import { NO_PLUGINS, PluginCollection, PLUGINS } from './plugin';
 import { mk2html, mk2html_unwrapped } from './render';
 import { maxPrecisionString, renderPointsWorthBadge, renderScoreBadge, renderUngradedBadge } from "./ui_components";
-import { renderQuestionVerifierMiniStatus, renderQuestionVerifierStatus } from '../verifiers/QuestionVerifier';
+import { SectionReferencePlugin } from '../plugins/SectionReference';
 
-export function renderHead(scripts: string, css: string) {
+export function renderHead(scripts: string, plugin_configs: string, css: string) {
   return (
 `<head>
   <meta charset="UTF-8">
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://unpkg.com/@popperjs/core@2" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
   ${scripts}
+  ${plugin_configs}
   <style>
     ${css}
   </style>
@@ -44,23 +47,39 @@ export function renderAnnouncements(exam: Exam) {
   </div>`;
 }
 
+export interface ExamRendererPlugin<Config_t extends {}, State_t extends {}> {
+  config(ae: AssignedExam): Config_t;
+  initial_state(ae: AssignedExam) : State_t;
+  section_nav?(as: AssignedSection) : string;
+  section_right_column?(as: AssignedSection) : {
+    readonly right_column_id: string,
+    readonly tab_header: string,
+    readonly tab_content: string,
+  } | undefined
+};
+
 type ExamRendererOptions = {
   /**
    * A string containing custom css rules, which will be rendered into a style
    * tag within the <head> tag of the generated html.
    */
-  custom_css?: string
+  custom_css?: string,
+  plugins?: PluginCollection
 };
 
 const DEFAULT_OPTIONS : Readonly<ExamRendererOptions> = {
-  // custom_css is undefined
+  // custom_css is undefined by default
+  plugins: PLUGINS([new SectionReferencePlugin()])
 };
+
 export abstract class ExamRenderer {
 
-  public options: Readonly<ExamRendererOptions>;
+  public readonly options: Readonly<ExamRendererOptions>;
+  public readonly plugins: PluginCollection;
 
   public constructor(options: Partial<ExamRendererOptions> = {}) {
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    this.plugins = this.options.plugins ?? NO_PLUGINS();
   }
 
   public renderTimer() {
@@ -71,14 +90,14 @@ export abstract class ExamRenderer {
         <br>
         <b><span class="collapse show" id="examma-ray-time-elapsed">?</span></b>
         <br>
-        This is not an official timer. Please submit your answers file before the deadline.
+        This is not an official timer.
       </div>
     `;
   }
 
   public renderNav(ae: AssignedExam) {
     return `
-      <nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+      <nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; overflow-y: scroll">
         ${ae.assignedSections.map(s => `<nav class="nav">
           <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
         </nav>`).join("")}
@@ -95,7 +114,7 @@ export abstract class ExamRenderer {
           ${mk2html_unwrapped(ae.exam.mk_questions_message)}
         </div>
         <br />
-        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Answers File</button></div>
+        <div><button class="examma-ray-exam-answers-file-button btn btn-primary" data-toggle="modal" data-target="#exam-saver" aria-expanded="false" aria-controls="exam-saver">Submission</button></div>
         <div class="examma-ray-exam-saver-status-note">${mk2html_unwrapped(ae.exam.mk_download_message)}</div>
       </div>`
   }
@@ -115,6 +134,17 @@ export abstract class ExamRenderer {
 
   public abstract renderScripts(ae: AssignedExam, frontendPath: string): string;
 
+  public renderPluginConfigs(ae: AssignedExam): string {
+    return `<script id="examma-ray-plugin-data" type="application/json">
+      ${JSON.stringify(Object.fromEntries(
+        this.plugins.ordered.map(p => [p.plugin_id, p.renderer ? {
+          config: p.renderer.config(ae),
+          initial_state: p.renderer.initial_state(ae)
+        } : {}])
+      ))}
+    </script>`;
+  }
+
   public abstract renderBody(ae: AssignedExam): string;
 
   public renderSections(ae: AssignedExam) {
@@ -127,6 +157,7 @@ export abstract class ExamRenderer {
       <html>
       ${renderHead(
         this.renderScripts(ae, frontendPath),
+        this.renderPluginConfigs(ae),
         this.options.custom_css ?? ""
       )}
       <body style="position: relative;" data-spy="scroll" data-target="#er-exam-nav" data-offset="100">
@@ -180,28 +211,59 @@ export abstract class ExamRenderer {
         ${this.renderSectionHeader(as)}
         <div class="examma-ray-section-description">${as.html_description}</div>
         ${as.assignedQuestions.map(aq => this.renderQuestion(aq)).join("<br />")}
+        <div class="examma-ray-section-main-column-footer">
+          <div>
+            Additional Sections Below<br />
+            ${ICON_ARROW_BAR_DOWN}
+          </div>
+        </div>
       </td>
     `;
   }
 
+  private hasRightColumnContent(as: AssignedSection) {
+    return this.plugins.ordered.some(p => p.renderer?.section_right_column?.(as));
+  }
+
   public renderSectionRightColumn(as: AssignedSection) {
-    if (!as.html_reference) { return ""; }
+    if (!this.hasRightColumnContent(as)) { return ""; }
 
     return `
-      <td class="examma-ray-section-right-column" style="width: ${as.section.reference_width}%;">
+      <td class="examma-ray-section-right-column" style="width: ${as.section.right_column_width}%;">
         <div class="examma-ray-section-right-column-container">
           <div class="examma-ray-section-right-column-contents">
             <div class="examma-ray-section-right-column-width-slider-container">
-              <div class="examma-ray-section-right-column-width-value">${as.section.reference_width}%</div>
-              <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.reference_width}">
+              <div class="examma-ray-section-right-column-width-value">${as.section.right_column_width}%</div>
+              <input class="examma-ray-section-right-column-width-slider" type="range" min="10" max="100" step="10" value="${as.section.right_column_width}">
             </div>
-            <div class="examma-ray-section-reference">
-              <h6>Reference Material (Section ${as.displayIndex})</h6>
-              ${as.html_reference}
-            </div>
+            ${this.renderRightColumnPanels(as)}
           </div>
         </div>
       </td>
+    `;
+  }
+
+  protected renderRightColumnPanels(as: AssignedSection) {
+    const right_columns = this.plugins.ordered.map(p => p.renderer?.section_right_column?.(as)).filter(x => x !== undefined);
+    return `
+      <ul class="nav nav-pills mb-3" role="tablist">
+        ${right_columns.map((r,i) => `
+          <li class="nav-item" role="presentation">
+            <button class="nav-link ${i === 0 ? "active" : ""}" id="${as.uuid}-right-column-tab-header-${r.right_column_id}"
+                    data-toggle="pill" data-target="#${as.uuid}-right-column-tab-content-${r.right_column_id}"
+                    type="button" role="tab" aria-controls="${as.uuid}-right-column-tab-content-${r.right_column_id}"
+                    aria-selected="${i === 0 ? "true" : "false"}">${r.tab_header}
+            </button>
+          </li>`
+        ).join("\n")}
+      </ul>
+      <div class="tab-content">
+        ${right_columns.map((r,i) => `
+          <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="${as.uuid}-right-column-tab-content-${r.right_column_id}"
+               role="tabpanel" aria-labelledby="${as.uuid}-right-column-tab-header-${r.right_column_id}">${r.tab_content}
+          </div>`
+        ).join("\n")}
+      </div>
     `;
   }
   
@@ -236,13 +298,13 @@ export abstract class ExamRenderer {
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Answers File</h5>
+              <h5 class="modal-title">Submission</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
-              <div class="alert alert-info">${mk2html(ae.exam.mk_saver_message)}</div>
+              ${ae.exam.mk_saver_message ? `<div class="alert alert-info">${mk2html(ae.exam.mk_saver_message)}</div>` : ''}
               <div style="text-align: center;">
                 <div id="exam-saver-download-status" style="margin-bottom: 5px;"></div>
                 <div><a id="exam-saver-download-link" class="btn btn-primary">${FILE_DOWNLOAD} Download Answers</a></div>
@@ -307,19 +369,10 @@ export abstract class ExamRenderer {
               <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body">
-              <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
-              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-info">Are you <b>${ae.student.uniqname}</b>?. If this is not you, please close this page.</div>
               <div class="alert alert-warning">If something goes wrong (e.g. in case your computer crashes, you accidentally close the page, etc.), this page will attempt to restore your work when you come back. <b>Warning!</b> If you take the exam in private/incognito mode, or if you have certain privacy extensions/add-ons enabled, this won't work.</div>
-  
-              <p style="margin-left: 2em; margin-right: 2em;">
-                By taking this exam and submitting an answers file, you attest to the CoE Honor Pledge:
-              </p>
-              <p style="margin-left: 4em; margin-right: 4em;">
-                <span style="font-style: italic">I have neither given nor received unauthorized aid on this examination, nor have I concealed any violations of the Honor Code."
-              </p>
-              
               <div style="text-align: center;">
-                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b> and I understand</button>
+                <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b></button>
               </div>
             </div>
           </div>
@@ -334,8 +387,7 @@ export abstract class ExamRenderer {
               <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
             </div>
             <div class="modal-body" style="text-align: center;">
-              <div class="alert alert-info">This exam is for <b>${ae.student.uniqname}</b>. If this is not you, please close this page.</div>
-              <div class="alert alert-info">This page shows your exam questions and gives you a place to work. <b>However, we will not grade anything here</b>. You must <b>download</b> an "answers file" and submit that to <b>Canvas</b> BEFORE the exam ends</b>.</div>
+              <div class="alert alert-info">Are you <b>${ae.student.uniqname}</b>? If this is not you, please close this page.</div>
               <div class="alert alert-danger">It appears your browser will not support backing up your answers to local storage (e.g. in case your computer crashes, you accidentally close the page, etc.).<br /><br />While you may still take the exam like this, we do not recommend it. Make sure you are <b>not</b> using private/incognito mode, temporarily disable privacy add-ons/extensions, or try a different web browser to get autosave to work.</div>
               <div>
                 <button class="btn btn-primary" data-dismiss="modal">I am <b>${ae.student.uniqname}</b> and I understand</button>
@@ -358,6 +410,34 @@ export abstract class ExamRenderer {
                 <button class="btn btn-primary" data-dismiss="modal">OK</button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="exam-finished-modal" class="modal" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${mk2html_unwrapped(ae.exam.title)}</h5>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div id="exam-finished-modal-message-window-closed" style="display: none;">
+                The testing window has closed. You're no longer able to continue working.
+              </div>
+              <div id="exam-finished-modal-message-duration-elapsed" style="display: none;">
+                Allowed time has elapsed. You're no longer able to continue working.
+              </div>
+              <div id="exam-finished-modal-message-user-finished" style="display: none;">
+                You've indicated you're finished with the exam. You may continue working if you wish.
+              </div>
+              <div id="exam-finished-modal-message-saving-answers" class="alert alert-warning" style="display: none;">Hold on a moment while we save your final answers...</div>
+              <br />
+              <div id="exam-finished-modal-message-answers-saved" class="alert alert-success" style="display: none;">Your final answers have been saved! Go ahead and close the page.</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="exam-finished-modal-return-to-exam-button" class="btn btn-primary" data-dismiss="modal">Return to Exam</button>
+              <a id="exam-finished-modal-exit-page-button" class="btn btn-success" href="/">Close Page</a>
+            <div>
           </div>
         </div>
       </div>
@@ -394,7 +474,7 @@ abstract class TakenExamRenderer extends ExamRenderer {
   }
 
   public override renderNav(ae: AssignedExam): string {
-    return `<nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; font-weight: 500; overflow-y: scroll">
+    return `<nav id="er-exam-nav" class="nav er-exam-nav show-small-scrollbar" style="display: unset; flex-grow: 1; overflow-y: scroll">
       ${ae.assignedSections.map(s => `
         <nav class="nav">
           <a class="nav-link er-section-nav-link text-truncate" style="padding: 0.1rem" data-section-uuid="${s.uuid}" href="#section-${s.uuid}">${this.renderSectionNavBadges(s)} ${s.displayIndex + ": " + mk2html_unwrapped(s.section.title, s.skin)}</a>
@@ -402,7 +482,7 @@ abstract class TakenExamRenderer extends ExamRenderer {
           ${s.assignedQuestions.map(q => `
             <div id="starred-question-${q.uuid}" class="nav-item examma-ray-starred-nav" data-question-uuid="${q.uuid}" style="display: none">
               ${this.renderQuestionNavBadges(q)}
-              <a class="nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
+              <a class="nav-link er-question-nav-link text-truncate" style="padding: 0.1rem; display: inline" href="#question-anchor-${q.uuid}">
                 ${q.question.title ? `${q.displayIndex}: ${mk2html_unwrapped(q.question.title, q.skin)}` : `Question ${q.displayIndex}`}
               </a>
             </div>
@@ -502,9 +582,16 @@ export class OriginalExamRenderer extends TakenExamRenderer {
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
           <div class="container examma-ray-bottom-message">
-            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
-            </div>
+            ${ae.exam.mk_bottom_message
+              ? `<div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+                ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
+              </div>`
+              : ""
+            }
+            ${ae.exam.enable_bottom_im_finished_button
+              ? `<button class="examma-ray-im-finished-button btn btn-primary btn-lg" data-toggle="modal" data-target="#exam-finished-modal" aria-expanded="false" aria-controls="exam-finished-modal">I'm Finished</button></div>`
+              : ""
+            }
           </div>
         </div>
       </div>
@@ -751,18 +838,18 @@ export class GradedExamRenderer extends ExamRenderer {
       </div>`; 
     }
 
-    let regrades = `
-      <div style="text-align: right">
-        <input type="checkbox" id="regrade-${aq.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${aq.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${aq.uuid}"></input>
-        <label for="regrade-${aq.uuid}-checkbox">Mark for Regrade</label>
-      </div>
-      <div class="collapse examma-ray-question-regrade" id="regrade-${aq.uuid}">
-        <p>Please describe your regrade request for this question in the box below. After
-        marking <b>all</b> questions for which you would like to request a regrade,
-        click "Submit Regrade Request" at the bottom of the page.</p>
-        <textarea class="examma-ray-regrade-entry"></textarea>
-      </div>
-    `;
+    // let regrades = `
+    //   <div style="text-align: right">
+    //     <input type="checkbox" id="regrade-${aq.uuid}-checkbox" class="examma-ray-regrade-checkbox" data-toggle="collapse" data-target="#regrade-${aq.uuid}" role="button" aria-expanded="false" aria-controls="regrade-${aq.uuid}"></input>
+    //     <label for="regrade-${aq.uuid}-checkbox">Mark for Regrade</label>
+    //   </div>
+    //   <div class="collapse examma-ray-question-regrade" id="regrade-${aq.uuid}">
+    //     <p>Please describe your regrade request for this question in the box below. After
+    //     marking <b>all</b> questions for which you would like to request a regrade,
+    //     click "Submit Regrade Request" at the bottom of the page.</p>
+    //     <textarea class="examma-ray-regrade-entry"></textarea>
+    //   </div>
+    // `;
 
     return `
       <div class="examma-ray-question-exception">
@@ -771,8 +858,9 @@ export class GradedExamRenderer extends ExamRenderer {
       <div class="examma-ray-grading-report">
         ${graded_html}
       </div>
-      ${aq.exam.enable_regrades ? regrades : ""}
-    `;
+      `;
+      // TODO: regrades have been taken out for now (they were never finished)
+      // ${aq.exam.enable_regrades ? regrades : ""}
   }
 
   private renderExceptionIfPresent(aq: AssignedQuestion) {
@@ -818,9 +906,16 @@ export class DocRenderer extends TakenExamRenderer {
           ${this.renderHeader(ae, ae.student)}
           ${this.renderSections(ae)}
           <div class="container examma-ray-bottom-message">
-            <div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
-              ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
-            </div>
+            ${ae.exam.mk_bottom_message
+              ? `<div class="alert alert-success" style="margin: 2em; margin-top: 4em;">
+                ${mk2html_unwrapped(ae.exam.mk_bottom_message)}
+              </div>`
+              : ""
+            }
+            ${ae.exam.enable_bottom_im_finished_button
+              ? `<button class="examma-ray-im-finished-button btn btn-primary btn-lg" data-toggle="modal" data-target="#exam-finished-modal" aria-expanded="false" aria-controls="exam-finished-modal">I'm Finished</button></div>`
+              : ""
+            }
           </div>
         </div>
       </div>

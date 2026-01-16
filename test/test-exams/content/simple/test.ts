@@ -42,6 +42,7 @@ This is another simple test question!
       "I",
       "J"
     ],
+    sample_solution: [2],
     multiple: false,
     default_grader: {
       grader_kind: "freebie",

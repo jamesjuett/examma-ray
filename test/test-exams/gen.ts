@@ -6,8 +6,12 @@ import { Test_Question_Fitb_Drop } from "./content/fitb-drop";
 import { Question_Simple_Test_1, Question_Simple_Test_2 } from "./content/simple/test";
 import { renderFITBDropBank } from "../../src/response/fitb-drop";
 import { Exam } from "../../src/core/exam_components";
-import { DocRenderer, OriginalExamRenderer } from "../../src/core";
+import { DocRenderer, ExamRenderer, OriginalExamRenderer } from "../../src/core";
 import { DateTime } from "luxon";
+import { MACHINE_MODEL_PART_1 } from "./content/lec";
+import { PLUGINS } from "../../src/core/plugin";
+import { SectionReferencePlugin } from "../../src/plugins/SectionReference";
+import { CommunityPlugin } from "../../src/plugins/CommunityPlugin";
 
 function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   return Exam.create({
@@ -47,9 +51,9 @@ function makeTestExam(id: string, questions: readonly QuestionSpecification[]) {
   });
 }
 
-function genTestExam(exam: Exam, renderer = new DocRenderer()) {
+function genTestExam(exam: Exam, renderer : ExamRenderer = new OriginalExamRenderer()) {
   let gen = new ExamGenerator(exam, {
-    uuid_strategy: "plain",
+    uuid_options: { strategy: "plain" },
     frontend_js_path: "js/"
   });
   gen.assignExam({
@@ -144,7 +148,7 @@ genTestExam(Exam.create({
       title: "[Section Title 1]",
       mk_description: "[Section Description 1]",
       mk_reference: "[Section Reference 1]",
-      reference_width: 20,
+      right_column_width: 20,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_1"}),
       ]
@@ -154,7 +158,7 @@ genTestExam(Exam.create({
       title: "[Section Title 2]",
       mk_description: "[Section Description 2]",
       mk_reference: "[Section Reference 2]",
-      reference_width: 40,
+      right_column_width: 40,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_2"}),
       ]
@@ -164,7 +168,7 @@ genTestExam(Exam.create({
       title: "[Section Title 3]",
       mk_description: "[Section Description 3]",
       mk_reference: "[Section Reference 3]",
-      reference_width: 60,
+      right_column_width: 60,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_3"}),
       ]
@@ -174,7 +178,7 @@ genTestExam(Exam.create({
       title: "[Section Title 4]",
       mk_description: "[Section Description 4]",
       mk_reference: "[Section Reference 4]",
-      reference_width: 60,
+      right_column_width: 60,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_4"}),
       ]
@@ -184,7 +188,7 @@ genTestExam(Exam.create({
       title: "[Section Title 5]",
       mk_description: "[Section Description 5]",
       mk_reference: "[Section Reference 5]",
-      reference_width: 60,
+      right_column_width: 60,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_5"}),
       ]
@@ -194,10 +198,31 @@ genTestExam(Exam.create({
       title: "[Section Title 6]",
       mk_description: "[Section Description 6]",
       mk_reference: "[Section Reference 6]",
-      reference_width: 60,
+      right_column_width: 60,
       questions: [
         CUSTOMIZE(Test_Question_MC_Single, {question_id: "test_question_mc_single_6"}),
       ]
     },
   ]
+}), new OriginalExamRenderer({
+  plugins: PLUGINS([
+    new SectionReferencePlugin(),
+    new CommunityPlugin({
+      url: "https://localhost/community"
+    })
+  ])
 }));
+
+
+
+genTestExam(
+  Exam.create(CUSTOMIZE(MACHINE_MODEL_PART_1, { exam_id: "test_lec"} )),
+  new DocRenderer({
+    plugins: PLUGINS([
+      new SectionReferencePlugin(),
+      new CommunityPlugin({
+        url: "https://localhost/community"
+      })
+    ])
+  })
+);

@@ -54,7 +54,8 @@
 import { Randomizer } from "./randomization";
 import { QuestionBank } from "./QuestionBank";
 import { ResponseKind } from "../response/common";
-import {response_specification_diff, ResponseSpecification, ResponseSpecificationDiff } from "../response/responses";
+import {ResponseSpecification, ResponseSpecificationDiff } from "../response/responses";
+import { response_specification_diff } from "../response/handlers";
 import { ExamComponentSkin } from "./skins";
 import { assert, assertFalse, assertNever } from "./util";
 import { Exam, Question, Section } from "./exam_components";
@@ -188,9 +189,9 @@ export type SectionSpecification = {
   readonly skin?: ExamComponentSkin | SkinChooserSpecification,
 
   /**
-   * The initial width, in percent 0-100, of the reference material for this section.
+   * The initial width, in percent 0-100, of the right panel for this section.
    */
-  readonly reference_width?: number,
+  readonly right_column_width?: number,
 
 
   /**
@@ -254,20 +255,20 @@ export type ExamSpecification = {
 
   /**
    * A markdown-formatted message that appears at the bottom left of the page, right above the
-   * "Answers File" button. A suggested use is to specify how students can ask questions during
+   * "Submission" button. A suggested use is to specify how students can ask questions during
    * the exam, perhaps including a link to e.g. a course forum or video meeting with proctors.
    */
   readonly mk_questions_message?: string,
 
   /**
    * A markdown-formatted message that appears at the bottom left of the page, right below the
-   * "Answers File" button. A suggested use is to remind students why to click the "Answers File"
+   * "Submission" button. A suggested use is to remind students why to click the "Submission"
    * button, e.g. "Download an answers file to submit to Canvas".
    */
   readonly mk_download_message?: string,
 
   /**
-   * A markdown-formatted message that appears when students open the "Answers File" modal.
+   * A markdown-formatted message that appears when students open the "Submission" modal.
    * A suggested use is to give students instructions for downloading and turning in their
    * answers file.
    */
@@ -281,6 +282,13 @@ export type ExamSpecification = {
    * Defaults to [[MK_DEFAULT_DOWNLOAD_MESSAGE]]
    */
   readonly mk_bottom_message?: string,
+
+  /**
+   * If true, an "I'm Finished" button will be shown at the bottom of the exam.
+   * When clicked, it opens a modal to confirm.
+   * Defaults to undefined (interpreted as false).
+   */
+  readonly enable_bottom_im_finished_button?: boolean;
 
   /**
    * TODO this will probably be moved elsewhere.
@@ -298,7 +306,7 @@ export type ExamSpecification = {
   readonly assets_dir?: string;
 
   /**
-   * Whether or not the exam content is available in the clienside exam spec,
+   * Whether or not the exam content is available in the clientside exam spec,
    * which is written to spec/exam_spec.json. Defaults to undefined (interpreted as false).
    * 
    * Enabling this is required for certain client-side features, for example, local
@@ -327,6 +335,40 @@ export function without_content(spec: ExamSpecification) : ExamSpecification {
   return {
     ...others,
     sections: []
+  };
+}
+
+export function question_spec_without_assets_dir(spec: QuestionSpecification) : QuestionSpecification;
+export function question_spec_without_assets_dir(spec: QuestionChooserSpecification) : QuestionChooserSpecification;
+export function question_spec_without_assets_dir(spec: QuestionSpecification | QuestionChooserSpecification) : QuestionSpecification | QuestionChooserSpecification;
+export function question_spec_without_assets_dir(spec: QuestionSpecification | QuestionChooserSpecification) : QuestionSpecification | QuestionChooserSpecification {
+  if (spec.component_kind === "chooser_specification") {
+    return {...spec, choices: spec.choices.map(c => question_spec_without_assets_dir(c))};
+  }
+  const {assets_dir, ...others} = spec;
+  return others;
+}
+
+
+export function section_spec_without_assets_dir(spec: SectionSpecification) : SectionSpecification;
+export function section_spec_without_assets_dir(spec: SectionChooserSpecification) : SectionChooserSpecification;
+export function section_spec_without_assets_dir(spec: SectionSpecification | SectionChooserSpecification) : SectionSpecification | SectionChooserSpecification;
+export function section_spec_without_assets_dir(spec: SectionSpecification | SectionChooserSpecification) : SectionSpecification | SectionChooserSpecification {
+  if (spec.component_kind === "chooser_specification") {
+    return {...spec, choices: spec.choices.map(c => section_spec_without_assets_dir(c))};
+  }
+  const {assets_dir, questions, ...others} = spec;
+  return {
+    ...others,
+    questions: questions.map(q => question_spec_without_assets_dir(q)),
+  };
+}
+
+export function exam_spec_without_assets_dirs(spec: ExamSpecification) : ExamSpecification {
+  const {assets_dir, sections, ...others} = spec;
+  return {
+    ...others,
+    sections: sections.map(s => section_spec_without_assets_dir(s)),
   };
 }
 
@@ -590,10 +632,12 @@ export function chooseAllSkins(chooser: ExamComponentSkin | SkinChooser) {
 
 
 /**
- * 
+ * This factory function returns a specification for a [[SectionChooser]] that will randomly
+ * select a set of n questions from the given set of questions or question bank. If there are
+ * not enough to choose n of them, the chooser will throw an exception.
  * @param n 
  * @param sections 
- * @returns 
+ * @returns [[SectionChooserSpecification]]
  */
 export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecification | SectionChooserSpecification)[]): SectionChooserSpecification {
   return {
@@ -613,7 +657,7 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
  * @param tag Choose only questions with this tag
  * @param n The number of questions to choose
  * @param questionBank The bank to choose questions from
- * @returns 
+ * @returns [[SectionChooserSpecification]]
  */
  export function RANDOM_BY_TAG(tag: string, n: number, questions: QuestionBank | readonly QuestionSpecification[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
@@ -626,12 +670,12 @@ export function RANDOM_SECTION(n: number, sections: readonly (SectionSpecificati
 }
 
 /**
- * This factory function returns a [[QuestionChooser]] that will randomly select a set
- * of n questions from the given set of questions or question bank. If there are not enough
- * to choose n of them, the chooser will throw an exception.
+ * This factory function returns a specification for a [[QuestionChooser]] that will randomly
+ * select a set of n questions from the given set of questions or question bank. If there are
+ * not enough to choose n of them, the chooser will throw an exception.
  * @param n 
- * @param questions 
- * @returns 
+ * @param sections 
+ * @returns [[QuestionChooserSpecification]]
  */
 export function RANDOM_QUESTION(n: number, questions: QuestionBank | readonly (QuestionSpecification | QuestionChooserSpecification)[]): QuestionChooserSpecification {
   let qs = questions instanceof QuestionBank ? questions.questions : questions;
@@ -946,7 +990,7 @@ export function stringifyExamComponentSpecification(spec: ExamComponentOrChooser
 //     skin:
 //       !deepEqual(spec1.skin, spec2.skin, { strict: true }),
 //     format:
-//       spec1.reference_width !== spec2.reference_width
+//       spec1.right_column_width !== spec2.right_column_width
 //   };
 
 //   return Object.values(diff).some(v => v) ? diff : undefined;

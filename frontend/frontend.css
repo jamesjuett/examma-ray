@@ -114,8 +114,8 @@ code {
 .examma-ray-section-reference code:not(pre code),
 .examma-ray-question-response code:not(pre code) {
   background: #eee;
-  border-radius: 3px;
-  padding: 2px;
+  border-radius: 0.24em;
+  padding: 0.16em;
 }
 
 .examma-ray-question-response-fill_in_the_blank {
@@ -154,6 +154,7 @@ code {
 }
 
 .examma-ray-section-heading {
+  display: flex;
   margin-bottom: 10px;
   position: -webkit-sticky;
   position: sticky;
@@ -195,7 +196,24 @@ code {
 
 .examma-ray-section-main-column {
   padding-top: 0;
-  padding-bottom: 30vh;
+}
+
+.examma-ray-section-main-column-footer {
+  height: 30vh;
+  font-size: 24pt;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.examma-ray-section-main-column-footer svg {
+  width: 2.5em;
+  height: 2.5em;
+}
+
+.examma-ray-section:has(+ .examma-ray-bottom-message) .examma-ray-section-main-column-footer > * {
+  display: none !important;
 }
 
 .examma-ray-question .card-body {
@@ -213,6 +231,7 @@ code {
 
 .examma-ray-bottom-message {
   max-width: 850px;
+  text-align: center;
 }
 
 .examma-ray-section-description {
@@ -498,7 +517,7 @@ pre code .examma-ray-fitb-droppable .examma-ray-fitb-droppable {
 }
 
 .examma-ray-fitb-droppable .hljs {
-  padding: 1px;
+  padding: 0.08em;
 }
 
 
@@ -512,13 +531,14 @@ pre code .examma-ray-fitb-droppable .examma-ray-fitb-droppable {
 .examma-ray-fitb-droppable {
   display: table;
   border-collapse: separate;
-  margin: 3px;
+  margin: 0.24em;
+  white-space: initial;
 }
 
 .examma-ray-fitb-droppable:not(:only-child) {
-  padding: 2px;
+  padding: 0.16em;
   border: solid 1px rgba(0, 0, 255, 0.2);
-  border-radius: 4px;
+  border-radius: 0.32em;
   background-color: rgba(0, 0, 255, 0.05);
 }
 
@@ -571,7 +591,7 @@ pre .examma-ray-fitb-droppable pre {
   font-size: 0.8rem;
 }
 
-#er-exam-nav .badge .examma-ray-score-badge {
+#er-exam-nav .badge.examma-ray-score-badge {
   width: 5em;
 }
 
@@ -579,8 +599,16 @@ pre .examma-ray-fitb-droppable pre {
   display: block;
 }
 
+er-section-nav-link {
+  font-weight: bold;
+}
+
 .er-section-nav-link.active {
-  text-decoration: bolder;
+  text-decoration: underline;
+}
+
+er-question-nav-link {
+  font-weight: bold;
 }
 
 .rubric-item-card {
@@ -755,4 +783,19 @@ The show-small-scrollbar class will force a scrollbar to show at all times if co
   margin-left: 210px;
   width: calc(100% - 220px);
   padding-bottom: 50vh;
+}
+
+.examma-ray-avatar {
+  pointer-events: none;
+}
+
+.examma-ray-avatar-container {
+  /* position: relative; */
+  width: 15px;
+  overflow: visible;
+}
+
+.examma-ray-avatar-container:hover {
+  z-index: 10;
+  margin-top: -2px;
 }

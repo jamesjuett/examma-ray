@@ -1,9 +1,10 @@
 import { encode } from "he";
-import { ResponseKind, BLANK_SUBMISSION } from "../response/common";
+import { ResponseKind } from "../response/common";
 import { AssignedQuestion, GradedQuestion } from "../core/assigned_exams";
 import { mk2html } from "../core/render";
-import { INVALID_SUBMISSION } from "../response/common";
 import { GradingResult, QuestionGrader } from "./QuestionGrader";
+import { validate_submission } from "../response/handlers";
+import { asMutable } from "../core/util";
 
 const ICON_BUG_EMPTY = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bug" viewBox="0 0 16 16">
   <path d="M4.355.522a.5.5 0 0 1 .623.333l.291.956A4.979 4.979 0 0 1 8 1c1.007 0 1.946.298 2.731.811l.29-.956a.5.5 0 1 1 .957.29l-.41 1.352A4.985 4.985 0 0 1 13 6h.5a.5.5 0 0 0 .5-.5V5a.5.5 0 0 1 1 0v.5A1.5 1.5 0 0 1 13.5 7H13v1h1.5a.5.5 0 0 1 0 1H13v1h.5a1.5 1.5 0 0 1 1.5 1.5v.5a.5.5 0 1 1-1 0v-.5a.5.5 0 0 0-.5-.5H13a5 5 0 0 1-10 0h-.5a.5.5 0 0 0-.5.5v.5a.5.5 0 1 1-1 0v-.5A1.5 1.5 0 0 1 2.5 10H3V9H1.5a.5.5 0 0 1 0-1H3V7h-.5A1.5 1.5 0 0 1 1 5.5V5a.5.5 0 0 1 1 0v.5a.5.5 0 0 0 .5.5H3c0-1.364.547-2.601 1.432-3.503l-.41-1.352a.5.5 0 0 1 .333-.623zM4 7v4a4 4 0 0 0 3.5 3.97V7H4zm4.5 0v7.97A4 4 0 0 0 12 11V7H8.5zM12 6a3.989 3.989 0 0 0-1.334-2.982A3.983 3.983 0 0 0 8 2a3.983 3.983 0 0 0-2.667 1.018A3.989 3.989 0 0 0 4 6h8z"/>
@@ -62,33 +63,41 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
       }
     }
   }
+
+  public scale(new_points_possible: number) {
+    return new BugCatchingGrader({
+      ...this.spec,
+      points_possible: new_points_possible
+    });
+  }
   
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T, GradingResult> {
     return responseKind === "multiple_choice";
   }
-
-  public prepare(exam_id: string, question_id: string, grader_data: any) {
-    // do nothing
+  
+  public prepare(exam_id: string, question_id: string, spec: BugCatchingGraderSpecification) {
+    asMutable(this).spec = spec;
   }
 
   public grade(aq: AssignedQuestion<"multiple_choice">): TestCaseGradingResult {
-    const choices = aq.submission;
+    
 
-    if(choices === INVALID_SUBMISSION) {
-      return {
-        bugs_caught: [],
-        wasBlankSubmission: false,
-      }
-    }
+    // if(aq.submission?.validity === "invalid") {
+    //   return {
+    //     bugs_caught: [],
+    //     wasBlankSubmission: false,
+    //   }
+    // }
 
-    if (choices === BLANK_SUBMISSION || choices.length === 0) {
+    if (aq.submission.validity === "blank") {
       return {
         bugs_caught: [],
         wasBlankSubmission: true,
       }
     }
 
-    let bugs_caught = this.spec.bugs.filter(bug => bug.test_cases.some(tc => choices.indexOf(tc) !== -1));
+    const choices = aq.submission.encoding;
+    const bugs_caught = this.spec.bugs.filter(bug => bug.test_cases.some(tc => choices.indexOf(tc) !== -1));
 
     return {
       bugs_caught: bugs_caught,
@@ -98,13 +107,7 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
   }
 
   public pointsEarned(gr: TestCaseGradingResult): number {
-    let bug_shortfall = this.spec.target - gr.bugs_caught.length;
-    if (bug_shortfall <= 0) {
-      return this.spec.points_possible;
-    }
-    else {
-      return Math.max(0, this.spec.points_possible-bug_shortfall);
-    }
+    return Math.min(this.spec.points_possible, gr.bugs_caught.length / this.spec.target * this.spec.points_possible);
   }
 
   public renderReport(gq: GradedQuestion<"multiple_choice", TestCaseGradingResult>): string {
@@ -112,15 +115,15 @@ export class BugCatchingGrader implements QuestionGrader<"multiple_choice"> {
     let gr = gq.gradingResult;
     let gr_bugs_caught = gr.bugs_caught.map(b=>b.num);
     let pts = this.pointsEarned(gr);
-    if (gq.submission === BLANK_SUBMISSION) {
+    if (gq.submission.validity === "blank") {
       return "Your submission for this question was blank.";
     }
 
-    if (gq.submission === INVALID_SUBMISSION) {
+    if (!validate_submission(question.response, gq.submission)) {
       return "Your submission for this question was invalid.";
     }
 
-    const chosen = gq.submission;
+    const chosen = gq.submission.encoding;
 
     return `
       <p>

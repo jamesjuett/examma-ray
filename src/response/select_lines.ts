@@ -1,10 +1,9 @@
-import { GraderSpecificationFor, QuestionGrader } from "../graders/QuestionGrader";
+import deepEqual from "deep-equal";
 import { applySkin, highlightCode } from "../core/render";
 import { ExamComponentSkin } from "../core/skins";
-import { BLANK_SUBMISSION, MALFORMED_SUBMISSION } from "./common";
+import { GraderSpecificationFor } from "../graders/QuestionGrader";
+import { BLANK_SUBMISSION, CheckedSubmission, INVALID_SUBMISSION, MALFORMED_SUBMISSION, ParsedSubmission, ResponseHandler, ResponseSpecificationDiff, SubmissionType, UNCHECKED_SUBMISSION, ValidSubmission, VIABLE_SUBMISSION, WellFormedSubmission } from "./responses";
 import { isNumericArray } from "./util";
-import { ResponseHandler, ResponseSpecificationDiff, ViableSubmission } from "./responses";
-import deepEqual from "deep-equal";
 
 /**
  * One of the "lines" of code that may be toggled on/off in a select lines response.
@@ -148,7 +147,7 @@ export type SLSpecification = {
   /**
    * A sample solution for this response.
    */
-  sample_solution?: ViableSubmission<SLSubmission>,
+  sample_solution?: SubmissionType<"select_lines">,
 
   /**
    * A default grader for this response.
@@ -159,32 +158,55 @@ export type SLSpecification = {
 /**
  * A submission for a select lines response is an array of numbers corresponding to the indices
  * of selected lines. Note that any "forced" items will always be included in a submission.
- * The submission may also be [[BLANK_SUBMISSION]] if no items were selected.
+ * 
+ * The subset of [[`FITBSubmissions`]] that are valid (see [[`validate_submission`]]) for a
+ * particular FITB response are those that do not contain duplicate or out-of-range indices.
  */
-export type SLSubmission = readonly number[] | typeof BLANK_SUBMISSION;
+export type SLSubmission = readonly number[];
 
-function SL_PARSER(rawSubmission: string | null | undefined) : SLSubmission | typeof MALFORMED_SUBMISSION {
+function SL_PARSER(rawSubmission: string | null | undefined) : ParsedSubmission<"select_lines"> {
   if (rawSubmission === undefined || rawSubmission === null || rawSubmission.trim() === "") {
-    return BLANK_SUBMISSION;
+    return BLANK_SUBMISSION();
   }
 
   try {
     let parsed = JSON.parse(rawSubmission);
     if (isNumericArray(parsed)) {
-      return parsed.length > 0 ? parsed : BLANK_SUBMISSION;
+      return parsed.length > 0 ? UNCHECKED_SUBMISSION(parsed) : BLANK_SUBMISSION();
     }
     else {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
   }
   catch(e) {
     if (e instanceof SyntaxError) {
-      return MALFORMED_SUBMISSION;
+      return MALFORMED_SUBMISSION(rawSubmission);
     }
     else {
       throw e;
     }
   }
+}
+
+function SL_VALIDATOR(response: SLSpecification, submission: WellFormedSubmission<"select_lines">) : CheckedSubmission<"select_lines"> {
+  // Turns out it was already checked, just leave it.
+  if (submission.validity !== "unchecked") { return submission; }
+
+  const enc = submission.encoding;
+
+  if (enc.length === 0) { return BLANK_SUBMISSION(); }
+
+  // duplicate selections
+  if (new Set(enc).size !== enc.length) {
+    return INVALID_SUBMISSION(enc);
+  }
+
+  // out of range selections
+  if (enc.some(n => n < 0 || n >= response.choices.length)) {
+    return INVALID_SUBMISSION(enc);
+  }
+
+  return VIABLE_SUBMISSION(enc);
 }
 
 function SL_RENDERER(response: SLSpecification, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
@@ -226,13 +248,9 @@ function renderSLItem(item: SLItem, question_id: string, item_index: number, cod
     </div>`;
 }
 
-function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmission, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
+function SL_SOLUTION_RENDERER(response: SLSpecification, solution: ValidSubmission<"select_lines">, question_id: string, question_uuid: string, skin?: ExamComponentSkin) {
   
-  if (orig_solution === BLANK_SUBMISSION) {
-    orig_solution = [];
-  }
-
-  const solution = orig_solution; // Allow type inference within the map() below
+  const encoding = solution.validity !== "blank" ? solution.encoding : [];
   
   let item_index = 0;
   return `
@@ -252,8 +270,8 @@ function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmis
     <div class="examma-ray-sl-choices sl-view-choices">
       ${response.choices.map(
         group => group.kind === "item"
-          ? renderSolutionSLItem(group, solution, question_uuid, item_index++, response.code_language, skin)
-          : group.items.map(item => renderSolutionSLItem(item, solution, question_uuid, item_index++, response.code_language, skin)).join("\n")
+          ? renderSolutionSLItem(group, encoding, question_uuid, item_index++, response.code_language, skin)
+          : group.items.map(item => renderSolutionSLItem(item, encoding, question_uuid, item_index++, response.code_language, skin)).join("\n")
       ).join("\n")}
     </div>
     <div class="examma-ray-sl-footer">
@@ -262,8 +280,8 @@ function SL_SOLUTION_RENDERER(response: SLSpecification, orig_solution: SLSubmis
   `;
 }
 
-function renderSolutionSLItem(item: SLItem, solution: ViableSubmission<SLSubmission>, question_id: string, item_index: number, code_language: string, skin: ExamComponentSkin | undefined) {
-  const in_solution = solution.indexOf(item_index) !== -1;
+function renderSolutionSLItem(item: SLItem, solution_encoding: SubmissionType<"select_lines">, question_id: string, item_index: number, code_language: string, skin: ExamComponentSkin | undefined) {
+  const in_solution = solution_encoding.indexOf(item_index) !== -1;
   return `
     <div class="examma-ray-sl-line">
       <input type="checkbox" id="${question_id}-sl-choice-${item_index}" value="${item_index}" class="sl-select-input" style="pointer-events: none;" ${item.forced ? "checked disabled" : in_solution ? "checked" : "disabled"}></input> 
@@ -306,10 +324,10 @@ function SL_EXTRACTOR(responseElem: JQuery) {
   let chosen = responseElem.find(".examma-ray-sl-choices input:checked").map(function() {
     return parseInt(<string>$(this).val());
   }).get();
-  return chosen.length > 0 ? chosen : BLANK_SUBMISSION;
+  return chosen;
 }
 
-function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
+function SL_FILLER(responseElem: JQuery, submission: ValidSubmission<"select_lines">) {
   
   let inputs = responseElem.find(".examma-ray-sl-choices input");
 
@@ -317,9 +335,9 @@ function SL_FILLER(responseElem: JQuery, submission: SLSubmission) {
   // which would be the "forced" items in the list of SL choices
   inputs.filter(":not(:disabled)").prop("checked", false);
 
-  if (submission !== BLANK_SUBMISSION) {
+  if (submission.validity !== "blank") {
     let inputElems = inputs.get();
-    submission.forEach(n => $(inputElems[n]).prop("checked", true));
+    submission.encoding.forEach(n => $(inputElems[n]).prop("checked", true));
   }
 
   // Initially revert to showing everything
@@ -370,6 +388,7 @@ function SL_DIFF(r1: SLSpecification, r2: SLSpecification) : ResponseSpecificati
 
 export const SL_HANDLER : ResponseHandler<"select_lines"> = {
   parse: SL_PARSER,
+  validate: SL_VALIDATOR,
   render: SL_RENDERER,
   render_solution: SL_SOLUTION_RENDERER,
   activate: SL_ACTIVATE,

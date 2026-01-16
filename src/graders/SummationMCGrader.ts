@@ -1,10 +1,11 @@
-import { mk2html } from "../core/render";
 import { AssignedQuestion, GradedQuestion, wereGradedBy } from "../core/assigned_exams";
-import { BLANK_SUBMISSION, INVALID_SUBMISSION, ResponseKind } from "../response/common";
-import { QuestionGrader, ImmutableGradingResult } from "./QuestionGrader";
-import { assert, assertFalse } from "../core/util";
-import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
 import { RED_X_ICON } from "../core/icons";
+import { mk2html } from "../core/render";
+import { renderNumBadge, renderPercentChosenProgressBar } from "../core/ui_components";
+import { asMutable, assert, assertFalse } from "../core/util";
+import { ResponseKind } from "../response/common";
+import { validate_submission } from "../response/handlers";
+import { ImmutableGradingResult, QuestionGrader } from "./QuestionGrader";
 
 
 export type SummationMCGradingResult = ImmutableGradingResult & {
@@ -36,38 +37,46 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
   public constructor(spec: SummationMCGraderSpecification) {
     this.spec = spec;
   }
+  
+  public scale(new_points_possible: number) {
+    const scaling_factor = new_points_possible / this.spec.rubric.reduce((p, ri) => p + ri.points, 0);
+    return new SummationMCGrader({
+      ...this.spec,
+      rubric: this.spec.rubric.map(ri => ({
+        ...ri,
+        points: ri.points * scaling_factor
+      }))
+    });
+  }
 
   public isGrader<T extends ResponseKind>(responseKind: T): this is QuestionGrader<T> {
     return responseKind === "multiple_choice";
   };
 
-  public prepare() { }
+  public prepare(exam_id: string, question_id: string, spec: SummationMCGraderSpecification) {
+    asMutable(this).spec = spec;
+  }
 
   public grade(aq: AssignedQuestion<"multiple_choice">) : SummationMCGradingResult {
     let question = aq.question;
     assert(this.spec.rubric.length === question.response.choices.length, "Summation MC grader submissions must have the same number of response choices as the grader configuration.")
-    let orig_submission = aq.submission;
 
-    if (orig_submission === INVALID_SUBMISSION) {
-      return {
-        wasBlankSubmission: false,
-        wasInvalidSubmission: true,
-        pointsEarned: 0
-      };
-    }
+    // if (submission.validity === "invalid") {
+    //   return {
+    //     wasBlankSubmission: false,
+    //     wasInvalidSubmission: true,
+    //     pointsEarned: 0
+    //   };
+    // }
 
-    if (orig_submission === BLANK_SUBMISSION) {
-      orig_submission = [];
-    }
+    const enc = aq.submission.validity === "viable" ? aq.submission.encoding : [];
     
-    
-    let submission = orig_submission;
     // let selections = submission.map(selection => ({
     //   optionIndex: selection,
     //   pointsEarned: this.spec.pointValues[selection]
     // }));
     let selections = this.spec.rubric.map((pv,i) => {
-      let isSelected = submission.indexOf(i) !== -1;
+      let isSelected = enc.indexOf(i) !== -1;
       return {
         selected: isSelected,
         pointsForThisItem: isSelected === pv.selected || pv.ignore_selection ? pv.points : 0
@@ -75,7 +84,7 @@ export class SummationMCGrader implements QuestionGrader<"multiple_choice"> {
     });
 
     return {
-      wasBlankSubmission: submission.length === 0,
+      wasBlankSubmission: enc.length === 0,
       pointsEarned: Math.max(0, Math.min(question.pointsPossible, selections.reduce((p, r) => p + r.pointsForThisItem, 0))),
       selections: selections
     };
