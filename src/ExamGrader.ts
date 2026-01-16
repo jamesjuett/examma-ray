@@ -235,7 +235,7 @@ export class ExamGrader {
   public gradeAll() {
 
     // Prepare all graders (e.g. load manual grading data)
-    this.exam.allQuestions.forEach(question => {
+    this.exam.allSections.forEach(s => s.allQuestions.forEach(question => {
       let grader = this.getGrader(question);
       if (grader) {
         let grading_data = this.prepareGradingData(question, grader);
@@ -246,7 +246,7 @@ export class ExamGrader {
       else {
         console.log(`WARNING: No grader registered for question: ${question.question_id}`);
       }
-    });
+    }));
 
     // Apply any exceptions to individual questions
     this.submittedExams.forEach(

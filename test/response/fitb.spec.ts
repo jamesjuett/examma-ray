@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { RESPONSE_HANDLERS } from '../../src/response/responses';
+import { RESPONSE_HANDLERS } from '../../src/response/handlers';
 import { JSDOM } from 'jsdom';
 import jquery from 'jquery';
 

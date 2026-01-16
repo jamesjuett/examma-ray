@@ -25,6 +25,8 @@ export type SubmissionType<QT extends ResponseKind> =
   QT extends "iframe" ? IFrameSubmission :
   never;
 
+let x : SubmissionType<"multiple_choice"> = [1, 2];
+
 // export type ResponseValidity =
 //   "malformed" |
 //   "blank" |

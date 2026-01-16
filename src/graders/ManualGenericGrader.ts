@@ -102,7 +102,7 @@ export class ManualGenericGrader implements QuestionGrader<ResponseKind, ManualG
   // }
 
   public grade(aq: AssignedQuestion<ResponseKind>) : ManualGenericGraderGradingResult | undefined {
-    assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
+    assert(this.grading_data, `Question ${aq.question.question_id}: Grader prepare() function must be called before attempting grading.`);
     if (aq.submission.validity === "blank") {
       return {
         submission_uuid: aq.uuid,

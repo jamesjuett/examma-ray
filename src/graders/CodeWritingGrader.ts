@@ -104,7 +104,7 @@ export class CodeWritingGrader implements QuestionGrader<ResponseKind, CodeWriti
   // }
 
   public grade(aq: AssignedQuestion<ResponseKind>) : CodeWritingGraderGradingResult | undefined {
-    assert(this.grading_data, "Grader prepare() function must be called before attempting grading.");
+    assert(this.grading_data, `Question ${aq.question.question_id}: Grader prepare() function must be called before attempting grading.`);
 
     if (aq.submission.validity === "blank") {
       return {
